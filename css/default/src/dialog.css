@@ -1,0 +1,45 @@
+.flyingon-dialog {
+    border: 1px solid black;
+    box-shadow: 2px 2px 2px silver;
+    background-color: white;
+    z-index: 100;
+}
+
+.flyingon-dialog-header {
+    position: relative;
+    padding: 0;
+    height: 28px;
+    line-height: 28px;
+    background-color: silver;
+}
+
+.flyingon-dialog-body {
+    position: absolute;
+    left: 0;
+    top: 28px;
+    right: 0;
+    bottom: 0;
+    background-color: white;
+}
+
+.flyingon-dialog-icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-left: 4px;
+}
+
+.flyingon-dialog-title {
+    display: inline-block;
+    margin-left: 4px;
+}
+
+.flyingon-dialog-close {
+    position: absolute;
+    display: inline-block;
+    top: 50%;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    margin-top: -11px;
+}

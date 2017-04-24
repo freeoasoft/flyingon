@@ -1,0 +1,250 @@
+.flyingon-grid {
+    border: 1px solid #ccc;
+    font-family: Tahoma;
+    font-size: 12px;
+    color: #666;
+    cursor: default;
+    white-space: normal;
+}
+
+.flyingon-grid-editor {
+    -webkit-box-sizing: border-box;
+    -o-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
+    border: 1px solid orange;
+    background-color: white;
+}
+
+.flyingon-grid-editor input {
+    font-family: Tahoma;
+    font-size: 12px;
+    color: #666;
+    outline: 0;
+    margin: 0;
+    padding-left: 0;
+    white-space: normal;
+}
+
+.flyingon-grid-back {
+    -webkit-box-sizing: border-box;
+    -o-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+}
+
+.flyingon-grid-hcell {
+    -webkit-box-sizing: border-box;
+    -o-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0; 
+    text-align: center;
+}
+
+.flyingon-grid-sort {
+    width: 12px;
+    height: 12px;
+    background: url(../../images/flyingon.gif) no-repeat;
+}
+
+.flyingon-grid-asc {
+    background-position: -2px -80px;
+}
+
+.flyingon-grid-desc {
+    background-position: -42px -80px;
+}
+
+.flyingon-grid-resize {
+    width: 2px;
+    background-color: yellow;
+}
+
+.flyingon-grid-operate {
+    width: 16px;
+    height: 16px;
+    background: url(../../images/flyingon.gif) no-repeat -2px -80px;
+    cursor: pointer;
+}
+
+.flyingon-grid-contextmenu {
+    overflow: auto;
+    border: 1px solid #ccc;
+    padding: 4px;
+    min-width: 100px;
+    max-height: 400px;
+    box-shadow: 2px 2px 2px silver;
+    background-color: white;
+    z-index: 2;
+}
+
+.flyingon-grid-cell {
+    position: absolute;
+    overflow: hidden;
+    -webkit-box-sizing: border-box;
+    -o-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
+    margin: 0;
+    border-style: solid;
+    border-color: #ccc;
+    border-width: 0 1px 1px 0;
+    padding: 0 1px;
+    background-color: white;
+    vertical-align: middle;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.flyingon-grid-rowno.flyingon-grid-cell {
+    background-color: #f0f0f0;
+    text-align: center;
+}
+
+.flyingon-grid-row-checked {
+    background-color: antiquewhite;
+}
+
+.flyingon-grid-row-selected {
+    background-color: #ffdddd;
+}
+
+.flyingon-grid-rowno.flyingon-grid-row-selected {
+    background-color: #ffdddd ;
+}
+
+/*
+.flyingon-grid-column-selected.flyingon-grid-hcell {
+    background-color: #ccde6a;
+}
+
+.flyingon-grid-column-selected.flyingon-grid-cell {
+    background-color: #ccde6a;
+}
+*/
+
+.flyingon-grid-checked input {
+vertical-align: middle;
+}
+
+.flyingon-grid-tree-space {
+    display: inline-block;
+    height: 16px;
+}
+
+.flyingon-grid-tree-expand {
+    display: inline-block;
+    vertical-align: middle;
+    width: 16px;
+    height: 16px;
+    background: url("../../images/flyingon.gif") no-repeat;
+    background-position: -40px -82px;
+}
+
+.flyingon-grid-tree-collapse {
+    display: inline-block;
+    vertical-align: middle;
+    width: 16px;
+    height: 16px;
+    background: url("../../images/flyingon.gif") no-repeat;
+    background-position: 0px -82px;
+}
+
+.flyingon-grid-tree-icon {
+    display: inline-block;
+    vertical-align: middle;
+    width: 16px;
+    height: 16px;
+}
+
+.flyingon-grid-tree-cell {
+    height: 16px;
+    vertical-align: top;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.flyingon-grid-tree-icon1 {
+    background: url("../../images/flyingon.gif") no-repeat;
+    background-position: -97px -100px;
+}
+
+.flyingon-grid-tree-icon2 {
+    background: url("../../images/flyingon.gif") no-repeat;
+    background-position: -97px -117px;
+}
+
+.flyingon-grid-tip {
+    border: 1px solid #ccc;
+    padding: 2px 8px;
+    min-width: 40px;
+    box-shadow: 2px 2px 2px silver;
+    background-color: white;
+    z-index: 2;
+}
+
+
+
+.flyingon-grid-grouptree {
+    background-color: #f0f0f0;
+    border: 0;
+}
+
+.flyingon-grid-grouptree-expand {
+    background: url("../../images/flyingon.gif") no-repeat;
+    background-position: -44px -120px;
+}
+
+.flyingon-grid-grouptree-collapse {
+    background: url("../../images/flyingon.gif") no-repeat;
+    background-position: -62px -156px;
+}
+
+.flyingon-grid-grouptree-line {
+    background: url("../../images/flyingon.gif") no-repeat;
+    background-position: -18px -156px;
+}
+
+.flyingon-grid-grouptree-level {
+    position: absolute;
+    text-align: center;
+}
+
+.flyingon-grid-groupno {
+    position: absolute;
+    overflow: hidden;
+    -webkit-box-sizing: border-box;
+    -o-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
+    top: 0;
+    right:0;
+    bottom: 0;
+    text-align: center;
+    border-style: solid;
+    border-color: #ccc;
+    border-width: 0 1px 1px 0;
+}
+
+.flyingon-grid-groupno-title {
+    position: absolute;
+    overflow: hidden;
+    -webkit-box-sizing: border-box;
+    -o-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
+    top: 0;
+    right:-1px;
+    bottom: 0;
+    text-align: center;
+    border: 0;
+    border-left: 1px solid #ccc;
+}
+
+.flyingon-grid-groupno-expand {
+    border-left-width: 1px;
+}

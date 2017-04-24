@@ -1,0 +1,83 @@
+
+[
+    
+    {
+        source: [
+			'../src/base/oo.js',
+            '../src/base/async.js',
+            '../src/base/extend.js',
+            '../src/base/serialize.js',
+            '../src/base/dataset.js',
+            '../src/base/bindable.js',
+            '../src/base/selector.js',
+			'../src/control/control.js',
+            '../src/control/label.js',
+            '../src/control/button.js',
+            '../src/control/linkbutton.js',
+            '../src/control/textbox.js',
+			'../src/control/panel.js',
+            '../src/control/tab.js',
+            '../src/control/tabpanel.js',
+            '../src/control/tree.js',
+            '../src/control/widget.js',
+            '../src/control/window.js',
+            '../src/control/messagebox.js',
+            '../src/control/popuplayer.js',
+            '../src/control/dialog.js',
+            '../src/control/viewmodel.js',
+            '../src/layout/sublayout.js',
+            '../src/layout/layout.js',
+            '../src/layout/table.js',
+            '../src/browser/web.js',
+            '../src/browser/event.js',
+            '../src/browser/renderer/control.js',
+            '../src/browser/renderer/label.js',
+            '../src/browser/renderer/button.js',
+            '../src/browser/renderer/linkbutton.js',
+            '../src/browser/renderer/textbox.js',
+            '../src/browser/renderer/panel.js',
+            '../src/browser/renderer/messagebox.js',
+            '../src/browser/renderer/popuplayer.js',
+            '../src/browser/renderer/dialog.js',
+            '../src/browser/host.js',
+            '../src/browser/ajax.js',
+            '../src/require/module.js',
+            '../src/require/require.js',
+            '../src/require/browser.js'
+		],
+
+        output: 'flyingon.js',
+        cache: '@flyingon'
+    },
+
+	
+	{
+        source: [
+            [
+                '/*',
+                '* flyingon javascript library v0.0.1.0',
+                '* https://github.com/freeoasoft/flyingon',
+                '*',
+                '* Copyright 2014, yaozhengyang',
+                '* licensed under the LGPL Version 3 licenses',
+                '*/'
+            ],
+            '@flyingon'
+        ],
+
+        output: 'flyingon.min.js',
+
+        plugins: [
+            {
+                name: './webminify_js',
+                options: {
+                    //mangle: false,
+                    //mangleProperties: { vars: [ "define" ... ], props: [ "length" ... ]},
+                    //compress: false,
+                    //advanced: true
+                }
+            }
+        ]
+    }
+
+]

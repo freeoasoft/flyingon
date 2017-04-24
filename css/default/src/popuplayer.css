@@ -1,0 +1,7 @@
+.flyingon-popuplayer {
+    
+    border: 1px solid black;
+    box-shadow: 2px 2px 2px silver;
+    background-color: white;
+    z-index: 100;
+}

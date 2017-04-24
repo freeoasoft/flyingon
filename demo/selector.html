@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>flyingon选择器演示</title>
+    <link rel="stylesheet" type="text/css" href="../css/default/flyingon.css"></link>
+</head>
+<body style="padding:10px;">
+
+    <div style="padding:8px;">
+        选择器:<input id="selector" type="text" value="textbox:first" />
+        属性名:<input id="property-name" type="text" value="backgroundColor" />
+        属性值:<input id="property-value" type="text" value="silver" />
+        <input type="button" value="执行" onclick="execute()" />
+    </div>
+    <div id="host"></div>
+
+    <script type="text/javascript" src="../js/flyingon.js"></script>
+    
+    <script type="text/javascript">
+        
+
+
+        var panel = new flyingon.Panel().sets({
+
+            width: 1000,
+            height: 600,
+            border: 1,
+            borderStyle: 'solid',
+            padding: 8,
+            layout: {
+             
+                type: 'flow',
+                spacingX: 8,
+                spacingY: 8
+            }
+        });
+
+        for (var i = 0; i < 150; i++)
+        {
+            var control = new flyingon.Panel().sets({
+
+                border: 1,
+                borderStyle: 'solid',
+                padding: 2,
+                width: 300,
+                height: 200,
+                layout: 'vertical-line'
+            });
+                        
+            for (var j = 0; j < 20; j++)
+            {
+                control.appendChild(new flyingon.TextBox().sets({
+
+                    id: i * 1000 + j,
+                    text: i + ':' + j
+                }));
+            }
+
+            panel.appendChild(control);
+        }
+
+        
+        flyingon.showControl(panel, 'host');
+
+
+
+        function execute() {
+
+            var selector = document.getElementById('selector').value,
+                name = document.getElementById('property-name').value,
+                value = document.getElementById('property-value').value;
+
+            panel.find(selector)[name](value);
+        };
+        
+        
+    </script>
+
+</body>
+</html>

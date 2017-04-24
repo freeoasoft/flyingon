@@ -1,0 +1,27 @@
+.flyingon-overlay {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    filter:alpha(opacity=10);
+    opacity: 0.1;
+    background-color: silver;
+    z-index: 100;
+}
+
+
+
+.flyingon-textbox {
+    padding: 0 2px;
+}
+
+.flyingon-textbox-text {
+    margin: 0;
+    border: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    outline: none;
+    background-color: transparent;
+}

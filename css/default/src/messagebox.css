@@ -1,0 +1,41 @@
+.flyingon-messagebox {
+    border: 1px solid black;
+    box-shadow: 2px 2px 2px silver;
+    background-color: white;
+    z-index: 100;
+}
+
+.flyingon-messagebox-header {
+    position: relative;
+    padding: 0;
+    height: 28px;
+    line-height: 28px;
+    background-color: silver;
+}
+
+.flyingon-messagebox-body {
+    background-color: white;
+    height: auto;
+}
+
+.flyingon-messagebox-icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-left: 4px;
+}
+
+.flyingon-messagebox-title {
+    display: inline-block;
+    margin-left: 4px;
+}
+
+.flyingon-messagebox-close {
+    position: absolute;
+    display: inline-block;
+    top: 50%;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    margin-top: -11px;
+}

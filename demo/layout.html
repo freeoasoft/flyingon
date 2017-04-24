@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>flyingon布局演示</title>
+</head>
+<body style="padding:10px;">
+    
+    <script type="text/javascript" src="../js/flyingon.js"></script>
+    
+    <script type="text/javascript">
+        
+        
+        flyingon.layout('wall', {
+
+            type: 'table',
+            spacingX: 2,
+            spacingY: 2,
+            data: '*[* * * * * * * *] *[50* * * * * * * * 50*] *[* * * * * * * *]'      
+        });
+
+
+        flyingon.layout('panel', [
+
+            {
+                type: 'dock',
+                spacingX: 10,
+                spacingY: 10,
+                //rtl: true,
+
+                //子布局
+                sublayouts: [
+
+                    {
+                        scale: 25,
+                        dock: 'top',
+                        height: 40,
+                        layout: 'wall'
+                    },
+
+                    {
+                        scale: 25,
+                        dock: 'bottom',
+                        height: 40,
+                        layout: 'wall'
+                    },
+
+                    {
+                        dock: 'fill',
+
+                        layout: {
+
+                            type: 'uniform',
+                            size: 10,
+
+                            location: function (item, index, width, height) {
+
+                                var value = Math.sin(60 * (index + 1) / Math.PI);
+
+                                if (value < 0)
+                                {
+                                    value = -value;
+                                }
+
+                                return {
+
+                                    alignY: 'bottom',
+                                    height: value * height / 2 | 0
+                                };
+                            }
+                        }
+                    }
+
+                ]
+            },
+
+            {
+                condition: { width: [0, 250] },
+                type: 'vertical-line',
+                spacingY: 2
+            },
+
+            {
+                condition: { width: [251, 500] },
+                type: 'flow',
+                spacingX: 2,
+                spacingY: 2
+            },
+
+            {
+                condition: { width: [501, 800] },
+                type: 'table',
+                spacingX: 2,
+                spacingY: 2,
+                data: '20[* * *] *[* *{(50% 50%)L*[* * *]^3} *] 20[* * *]',
+                auto: 2
+            }
+
+        ]);
+
+
+
+        var panel = new flyingon.Panel().sets({
+
+            width: 1000,
+            height: 400,
+            border: 1,
+            borderStyle: 'solid',
+            padding: 8,
+            resizable: 'all',
+            layout: 'panel'
+        });
+
+
+        for (var i = 0; i < 101; i++)
+        {
+            panel.appendChild(new flyingon.Control().sets({
+
+                id: i,
+                border: 1,
+                borderStyle: 'solid',
+                movable: true
+            }));
+        }
+
+        
+        panel.on('move-end', function (e) {
+           
+            e.target.backgroundColor('silver');
+        });
+
+
+        flyingon.showControl(panel, document.body);
+
+
+    </script>
+
+</body>
+</html>

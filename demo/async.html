@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="icon" href="../images/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="../images/favicon.ico" type="image/x-icon" />
+    <title></title>
+</head>
+<body>
+
+    <script type="text/javascript" src="../js/flyingon.js"></script>
+
+    <script type="text/javascript">
+
+      
+    //异步使用示例
+    flyingon.delay(1000).done(true, function (value) { //延时1秒成功后异步等待2秒
+
+        var as = new flyingon.Async();
+
+        console.log('async wait 2s', new Date());
+
+        setTimeout(function () {
+
+            console.log('async wait 2s end', new Date());
+            as.resolve();
+
+        }, 2000);
+
+        return as;
+        
+    }).done(true, function (value) { //成功后异步等待2秒
+
+        console.log('async wait 2s', new Date());
+
+        return flyingon.delay(2000, function () {
+
+            console.log('async wait 2s end', new Date());
+            this.resolve();
+        });
+        
+    }).sleep(1000).complete(function (value, error) { //完成后延时1秒,然后再等待1秒
+
+        console.log('wait 1s', value, new Date());
+
+        return flyingon.delay(1000, function () {
+
+            console.log('wait 1s end', new Date());
+            this.resolve();
+        });
+        
+    }).done(function (value) { //成功后显示成功信息
+
+        console.log('done', value, new Date());
+        
+    }).fail(function (error) { //失败后显示失败信息
+
+        console.log('error', error, new Date());
+    });
+
+    
+    </script>
+
+</body>
+</html>

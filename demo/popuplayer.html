@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>flyingon弹出层演示</title>
+    <link rel="stylesheet" type="text/css" href="../css/default/flyingon.css"></link>
+</head>
+<body style="padding:10px;">
+    
+    <script type="text/javascript" src="../js/flyingon.js"></script>
+    
+    <script type="text/javascript">
+        
+        
+        
+        function createControls(parent) {
+
+            flyingon.each('left,top,right,bottom', function (item) {
+
+                parent.appendChild(new flyingon.Button().text(item).tag(item));
+            });
+        };
+
+
+        var panel = new flyingon.Panel()
+            .width(1000)
+            .height(200)
+            .border(1)
+            .borderStyle('solid')
+            .padding(8);
+
+
+        createControls(panel);
+
+
+        flyingon.on('click', function (e) {
+                
+            var control = e.target,
+                popup;
+
+            if (control instanceof flyingon.Button)
+            {
+                if ((popup = control.popup) && popup.shown)
+                {
+                    control.popup = null;
+                    popup.close('auto');
+                }
+                else
+                {
+                    popup = control.popup = new flyingon.PopupLayer()
+                        .direction(control.tag())
+                        //.closeLeave(true)
+                        //.closeAway(true)
+                        .padding(8);
+
+                    createControls(popup);
+                    popup.show(control);
+                }
+            }
+        });
+
+
+        flyingon.showControl(panel);
+
+
+    </script>
+
+</body>
+</html>

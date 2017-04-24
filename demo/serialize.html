@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>flyingon序列化及反序列化演示</title>
+</head>
+<body>
+    
+    <div style="margin:10px 0;">
+        <input type="button" value="上一条" onclick = "window.dataset.previous();" />
+        <input type="button" value="下一条" onclick = "window.dataset.next();" />
+        <input type="button" value="反序列化生成界面" onclick = "deserialize();" />
+        <input type="button" value="序列化生成json" onclick = "serialize();" />
+    </div>
+    <div>
+        <div id="json1" style="white-space:pre;float:left;border:1px solid black;overflow:auto;width:300px;height:400px;">
+{
+    "type": "panel",
+    "width": 500,
+    "height": 400,
+    "border": 1,
+    "borderStyle": "solid",
+    "padding": 8,
+    "resizable": "all",
+    "layout": {
+        "type": "table",
+        "data": "*[* * *] *[* *{*[* * *] *[* * *] *[* * *]} *] *[* * *]"
+    },
+    "children": [
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field1}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field2}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field3}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field4}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field5}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field6}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field7}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field8}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field9}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field10}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field11}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field12}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field13}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field14}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field15}}"
+        },
+        { 
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field16}}"
+        },
+        {
+            "type": "label", 
+            "border": 1, 
+            "borderStyle": "solid",
+            "backgroundColor": "{{field17}}"
+        }
+    ]
+}
+        </div>
+        <div id="host" style="float:left;margin:0 10px;"></div>
+        <div id="json2" style="display:none;white-space:pre;float:left;border:1px solid black;overflow:auto;width:300px;height:400px;">
+    </div>
+    
+    <script type="text/javascript" src="../js/flyingon.js"></script>
+
+    <script type="text/javascript">
+    
+
+        var dataset = new flyingon.DataSet();
+        
+        var data = [];
+        
+        var colors = ['gold', 'silver', 'skyblue', 'hotpink', 'violet', 'mistyrose', 'lightblue', 'lightgreen', 'linen'];
+        
+        for (var i = 0; i < 10; i++)
+        {
+            var item = {};
+            
+            colors.sort(function () {
+
+                return Math.random() > 0.5 ? 1 : -1;
+            });
+            
+            for (var j = 1; j < 18; j++)
+            {
+                item['field' + j] = colors[j % 9];
+            }
+            
+            data.push(item);
+        }
+        
+        dataset.load(data);
+                
+
+        var panel;
+ 
+        function deserialize() {
+        
+            var dom = document.getElementById('json1');
+
+            panel = flyingon.SerializeReader.deserialize(dom.innerHTML);
+            panel.dataset(dataset);
+            dataset.bind();
+            
+            flyingon.showControl(panel, 'host');
+        };
+        
+        
+        function serialize() {
+            
+            var dom = document.getElementById('json2');
+
+            if (panel)
+            {
+                var text = flyingon.SerializeWriter.serialize(panel);
+                
+                text = text.replace(/("[^"]+")|([,{}\[\]])/g, function (_, a, b) {
+                    
+                    return a ? a : b + '\n';
+                });
+                
+                dom.innerHTML = text;
+                dom.style.display = '';
+            }
+        };
+        
+        
+    
+    </script>
+
+</body>
+</html>

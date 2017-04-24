@@ -1,0 +1,15 @@
+{
+    "error": {
+        "json_parse": "json parse error!",
+        "fragment_target": "fragment extend must be input a target object!",
+        "class_name": "class name can use only letters and numbers and begin with a upper letter!",
+        "class_fn": "class fn must be a function!",
+        "property_name": "property name \"{0}\" is not legal!"
+    },
+
+    "system": {
+        "ok": "ok",
+        "cancel": "cancel",
+        "close": "close"
+    }
+}

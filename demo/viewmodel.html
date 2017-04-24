@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>flyingon视图模型演示</title>
+    <link rel="stylesheet" type="text/css" href="../css/default/flyingon.css"></link>
+</head>
+<body style="padding:10px;">
+
+    <div id="host"></div>
+
+    <script type="text/x-template" id="template">
+        <panel layout="line" :for="data(item, index)">
+            <label :text="item:label" />
+            <textbox :text="item:text" />
+            <button :text="item:operate" @click="operate_click" />
+        </panel>
+    </script>
+
+
+    <script type="text/javascript" src="../js/flyingon.js"></script>
+    
+    <script type="text/javascript">
+        
+
+        flyingon.window({
+            
+            properties: {
+
+            },
+            //template: '#template',
+
+            template: {
+                type: 'panel', 
+                layout: 'line', 
+                model: { 'for': 'data(item, index)' },
+                children: [
+                    { type: 'label', model: { text: 'item:label' } },
+                    { type: 'textbox', model: { text: 'item:text' } },
+                    { type: 'button', model: { text: 'item:operate' }, event: { click: 'operate_click' } }
+                ]
+            },
+
+            defaults: {
+
+                data: [
+                    { text: 'text 1', operate: 'add' },
+                    { text: 'text 2', operate: 'edit' },
+                    { text: 'text 3', operate: 'delete' }
+                ]
+            },
+
+            init: function (vm) {
+
+                vm['item:label'] = function (index) {
+
+                    return index + '. ' + this['item:text'](index);
+                };
+
+                vm.operate_click = function (e) {
+
+                    var index = e.target.viewModelIndex;
+
+                    switch (this['item:operate'](index))
+                    {
+                        case 'add':
+                            this.data.push({ text: 'added', operate: 'delete' });
+                            break;
+
+                        case 'edit':
+                            this['item:text'](index, '' + new Date());
+                            break;
+
+                        case 'delete':
+                            this.data.splice(index, 1);
+                            break;
+                    }
+                };
+
+            },
+
+            created: function (vm) {
+
+            }
+
+        }).show('host');
+
+
+
+        flyingon.widget('demo-widget', {
+
+            template: 'xxx',
+
+            init: function (vm) {
+
+                
+            }
+
+        });
+
+
+
+    </script>
+
+</body>
+</html>

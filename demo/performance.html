@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>flyingon性能测试</title>
+    <link rel="stylesheet" type="text/css" href="../css/default/flyingon.css"></link>
+</head>
+<body style="padding:10px;">
+
+    <div id="tool" style="margin-bottom:8px;">
+        <input type="button" value="修改所有文本框内容" onclick="set_text_one.call(this);" />
+        <input type="button" value="反复修改所有文本框内容" onclick="set_text_more.call(this);" />
+        <input type="button" value="调整所有文本框宽度" onclick="set_size_one.call(this);" />
+        <input type="button" value="反复调整所有文本框宽度" onclick="set_size_more.call(this);" />
+        <input type="button" value="移除前面20个面板" onclick="remove_before.call(this, 20);" />
+        <input type="button" value="移除后面20个面板" onclick="remove_after.call(this, 20);" />
+    </div>
+    <div>
+        <div id="host" style="float:left;"></div>
+        <div id="message" style="box-sizing:border-box;width:200px;height:500px;overflow:auto;margin-left:8px;float:left;border:1px solid black;"></div>
+    </div>
+    
+    <script type="text/javascript">
+
+        var date;
+
+        function start_date() {
+
+            date = new Date();
+        };
+
+        function end_date(text) {
+
+            document.getElementById('message').innerHTML += '<span>' + text + '耗时' + (new Date() - date) + '毫秒</span><br><br>';
+        };
+
+        start_date();
+
+    </script>
+
+    <script type="text/javascript" src="../js/flyingon.js"></script>
+    
+    <script type="text/javascript">
+        
+
+        end_date('flyingon.js加载');
+
+
+        var panel;
+
+
+        flyingon.ready(function () {
+
+
+            var length1 = 200,
+                length2 = 20;
+
+            start_date();
+
+
+            panel = new flyingon.Panel().sets({
+
+                width: 800,
+                height: 500,
+                border: 1,
+                borderStyle: 'solid',
+                padding: 8,
+                layout: {
+                    spacingX: 8,
+                    spacingY: 8
+                }
+            });
+
+            for (var i = 0; i < length1; i++)
+            {
+                var control = new flyingon.Panel().sets({
+                    
+                    width: 300,
+                    border: 1,
+                    borderStyle: 'solid',
+                    padding: 8,
+                    fullRender: true,
+                    layout: 'vertical-line'
+                });
+                            
+                for (var j = 0; j < length2; j++)
+                {
+                    control.appendChild(new flyingon.TextBox().sets({
+
+                        id: i * 1000 + j,
+                        text: i + ':' + j
+                    }));
+                }
+
+                panel.appendChild(control);
+            }
+
+            
+            flyingon.showControl(panel, 'host');
+
+
+            end_date('页面加载(' + length1 + 'panel * ' + length2 + 'textbox)');
+        });
+
+
+        function set_text_one() {
+
+            start_date();
+
+            var list = panel.firstChild,
+                text = '' + new Date(),
+                item;
+
+            while (list)
+            {
+                item = list.firstChild;
+
+                while (item)
+                {
+                    item.text(text);
+                    item = item.nextSibling;
+                }
+                
+                list = list.nextSibling;
+            }
+
+            //立即更新
+            flyingon.__update_patch();
+
+            end_date(this.value);
+        };
+
+
+        function set_text_more() {
+
+            start_date();
+
+            var list = panel.firstChild,
+                text = '' + new Date(),
+                item;
+
+            while (list)
+            {
+                item = list.firstChild;
+
+                while (item)
+                {
+                    item.text('1');
+                    item.text('2');
+                    item.text('3');
+                    item.text('4');
+                    item.text(text);
+                    item = item.nextSibling;
+                }
+                
+                list = list.nextSibling;
+            }
+
+            //立即更新
+            flyingon.__update_patch();
+
+            end_date(this.value);
+        };
+
+
+        function set_size_one() {
+
+            start_date();
+
+            var list = panel.firstChild,
+                size = flyingon.pixel(list.firstChild.width()) - 20,
+                item;
+
+            if (size < 50)
+            {
+                size = list.boxModel.offsetWidth - 50;
+            }
+
+            while (list)
+            {
+                item = list.firstChild;
+
+                while (item)
+                {
+                    item.width(size);
+                    item = item.nextSibling;
+                }
+                
+                list = list.nextSibling;
+            }
+
+            //立即更新
+            panel.update();
+
+            end_date(this.value);
+        };
+
+
+        function set_size_more() {
+
+            start_date();
+
+            var list = panel.firstChild,
+                size = flyingon.pixel(list.firstChild.width()) - 20,
+                item;
+
+            if (size < 50)
+            {
+                size = list.boxModel.offsetWidth - 50;;
+            }
+
+            while (list)
+            {
+                item = list.firstChild;
+
+                while (item)
+                {
+                    item.width(size - 1);
+                    item.width(size - 2);
+                    item.width(size - 3);
+                    item.width(size - 4);
+                    item.width(size);
+                    item = item.nextSibling;
+                }
+                
+                list = list.nextSibling;
+            }
+
+            //立即更新
+            panel.update();
+
+            end_date(this.value);
+        };
+
+
+        function remove_before(count) {
+
+            start_date();
+
+            var host = panel,
+                item = host.firstChild,
+                index = 0;
+
+            while (item)
+            {
+                host.removeChild(item);
+                
+                if (++index >= count)
+                {
+                    break;
+                }
+
+                item = host.firstChild;
+            }
+
+            end_date(this.value);
+        };
+
+
+        function remove_after(count) {
+
+            start_date();
+
+            var host = panel,
+                item = host.lastChild,
+                index = 0;
+
+            while (item)
+            {
+                host.removeChild(item);
+
+                if (++index >= count)
+                {
+                    break;
+                }
+
+                item = host.lastChild;
+            }
+
+            end_date(this.value);
+        };
+        
+        
+    </script>
+
+</body>
+</html>
