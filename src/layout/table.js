@@ -557,8 +557,8 @@ flyingon.defineClass(flyingon.Layout, function (base) {
 
         var data = this.__data || (this.__data = parse(this.data())),
             vertical = this.vertical(),
-            width = container.clientWidth,
-            height = container.clientHeight,
+            width = container.arrangeWidth,
+            height = container.arrangeHeight,
             pixel = flyingon.pixel,
             spacingX = pixel(this.spacingX(), width),
             spacingY = pixel(this.spacingY(), height);
@@ -582,7 +582,6 @@ flyingon.defineClass(flyingon.Layout, function (base) {
         var lineWidth = group.width,
             cell, 
             control, 
-            box,
             any;
         
         for (var i = 0, l = group.length; i < l; i++)
@@ -622,7 +621,6 @@ flyingon.defineClass(flyingon.Layout, function (base) {
         var lineHeight = group.height,
             cell, 
             control, 
-            box,
             any;
         
         for (var i = 0, l = group.length; i < l; i++)

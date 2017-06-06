@@ -1,11 +1,12 @@
+flyingon.require([
+    'flyingon/demo/src/module/module1.js',
+    'flyingon/demo/src/module/module2.js',
+    'flyingon/demo/src/module/module3.js'
+]);
+
+
 //定义主模块
-flyingon.defineModule('main', [
-
-        'flyingon/demo/src/module/module1.js',
-        'flyingon/demo/src/module/module2.js',
-        'flyingon/demo/src/module/module3.js'
-
-    ], function (main) {
+flyingon.defineModule('main', function (main) {
     
 
     var module1 = flyingon.use('module1');

@@ -63,19 +63,20 @@ flyingon.defineClass('Dialog', flyingon.Panel, function (base) {
 
 
     //测量自动大小
-    this.onmeasure = function (box, auto) {
+    this.onmeasure = function (auto) {
         
-        if (auto && this.__visible_area !== false)
+        if (auto)
         {
             this.arrange();
 
-            if (auto === 1)
+            if (auto & 1)
             {
-                box.offsetWidth = box.arrangeRight + box.border.width;
+                this.offsetWidth = this.arrangeRight + this.layout_border.width;
             }
-            else
+            
+            if (auto & 2)
             {
-                box.offsetHeight = this.headerHeight() + box.arrangeBottom + box.border.height;
+                this.offsetHeight = this.headerHeight() + this.arrangeBottom + this.layout_border.height;
             }
         }
         else

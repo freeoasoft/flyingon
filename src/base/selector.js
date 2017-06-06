@@ -882,7 +882,7 @@ flyingon.Selector_property = flyingon.defineClass(function () {
         {
             var exports = [];
 
-            fn.call(this, controls, name, exports);
+            fn.call(this, controls, name, exports, 0);
             return exports;
         }
 
@@ -891,10 +891,9 @@ flyingon.Selector_property = flyingon.defineClass(function () {
     
     
     
-    this[''] = function (controls, name, exports) {
+    this[''] = function (controls, name, exports, length) {
         
         var index = 0,
-            length = 0,
             item;
 
         while (item = controls[index++])
@@ -907,11 +906,10 @@ flyingon.Selector_property = flyingon.defineClass(function () {
     };
     
     
-    this['='] = function (controls, name, exports) {
+    this['='] = function (controls, name, exports, length) {
         
         var value = this.value,
             index = 0,
-            length = 0,
             item,
             any;
 
@@ -934,11 +932,10 @@ flyingon.Selector_property = flyingon.defineClass(function () {
     
     
     // *= 包含属性值XX (由属性解析)
-    this['*='] = function (controls, name, exports) {
+    this['*='] = function (controls, name, exports, length) {
         
         var value = this.value,
             index = 0,
-            length = 0,
             item,
             any;
 
@@ -963,11 +960,10 @@ flyingon.Selector_property = flyingon.defineClass(function () {
     
     
     // ^= 属性值以XX开头 (由属性解析)
-    this['^='] = function (controls, name, exports) {
+    this['^='] = function (controls, name, exports, length) {
         
         var value = this.value,
             index = 0,
-            length = 0,
             item,
             any;
 
@@ -992,12 +988,11 @@ flyingon.Selector_property = flyingon.defineClass(function () {
     
     
     // $= 属性值以XX结尾 (由属性解析)
-    this['$='] = function (controls, name, exports) {
+    this['$='] = function (controls, name, exports, length) {
         
         var value = this.value,
             count = value.length,
             index = 0,
-            length = 0,
             item,
             any;
 
@@ -1022,11 +1017,10 @@ flyingon.Selector_property = flyingon.defineClass(function () {
     
     
     // ~= 匹配以空格分隔的其中一段值 如匹配en US中的en (由属性解析)
-    this['~='] = function (controls, name, exports) {
+    this['~='] = function (controls, name, exports, length) {
         
         var regex = this.regex || (this.regex = new RegExp('(?:^|\s+)' + this.value + '(?:\s+|$)')),
             index = 0,
-            length = 0,
             item,
             any;
 
@@ -1048,11 +1042,10 @@ flyingon.Selector_property = flyingon.defineClass(function () {
     };
 
 
-    this['|='] = function (controls, name, exports) {
+    this['|='] = function (controls, name, exports, length) {
         
         var regex = this.regex || (this.regex = new RegExp('\b' + this.value + '\b')),
             index = 0,
-            length = 0,
             item,
             any;
 
@@ -1113,7 +1106,7 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
         {
             var exports = [];
 
-            fn.call(this, controls, exports);
+            fn.call(this, controls, exports, 0);
             return exports;
         }
 
@@ -1121,29 +1114,19 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
     };
     
 
-    this.active = function (controls, exports) {
+    this.active = function (controls, exports, length) {
 
     };
     
     
-    this.disabled = function (controls, exports) {
+    this.disabled = function (controls, exports, length) {
 
         var index = 0,
-            length = 0,
-            item,
-            any;
+            item;
 
         while (item = controls[index++])
         {
-            if ((any = item.__storage) && (any = any.disabled) === void 0)
-            {
-                if (any = item.__defaults)
-                {
-                    any = any.disabled;
-                }
-            }
-
-            if (any)
+            if ((item.__storage || item.__defaults).disabled)
             {
                 exports[length++] = item;
             }
@@ -1151,24 +1134,14 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
     };
     
 
-    this.enabled = function (controls, exports) {
+    this.enabled = function (controls, exports, length) {
 
         var index = 0,
-            length = 0,
-            item,
-            any;
+            item;
 
         while (item = controls[index++])
         {
-            if ((any = item.__storage) && (any = any.disabled) === void 0)
-            {
-                if (any = item.__defaults)
-                {
-                    any = any.disabled;
-                }
-            }
-
-            if (!any)
+            if (!(item.__storage || item.__defaults).disabled)
             {
                 exports[length++] = item;
             }
@@ -1176,24 +1149,14 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
     };
 
     
-    this.checked = function (controls, exports) {
+    this.checked = function (controls, exports, length) {
 
         var index = 0,
-            length = 0,
-            item,
-            any;
+            item;
 
         while (item = controls[index++])
         {
-            if ((any = item.__storage) && (any = any.checked) === void 0)
-            {
-                if (any = item.__defaults)
-                {
-                    any = any.checked;
-                }
-            }
-
-            if (any)
+            if ((item.__storage || item.__defaults).checked)
             {
                 exports[length++] = item;
             }
@@ -1202,7 +1165,7 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
 
     
     
-    this.has = function (controls, exports) {
+    this.has = function (controls, exports, length) {
 
         var selector = this.value;
 
@@ -1217,16 +1180,15 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
     };
     
     
-    this.not = function (controls, exports) {
+    this.not = function (controls, exports, length) {
 
     };
     
     
 
-    this.empty = function (controls, exports) {
+    this.empty = function (controls, exports, length) {
 
         var index = 0,
-            length = 0,
             item;
 
         while (item = controls[index++])
@@ -1239,10 +1201,9 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
     };
     
     
-    this.only = function (controls, exports) {
+    this.only = function (controls, exports, length) {
         
         var index = 0,
-            length = 0,
             item;
 
         while (item = controls[index++])
@@ -1255,10 +1216,9 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
     };
 
     
-    this.first = function (controls, exports) {
+    this.first = function (controls, exports, length) {
 
         var index = 0,
-            length = 0,
             item;
 
         while (item = controls[index++])
@@ -1271,10 +1231,9 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
     };
 
         
-    this.last = function (controls, exports) {
+    this.last = function (controls, exports, length) {
 
         var index = 0,
-            length = 0,
             item;
 
         while (item = controls[index++])
@@ -1287,11 +1246,10 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
     };
 
     
-    this.odd = function (controls, exports) {
+    this.odd = function (controls, exports, length) {
         
         var value = this.value,
             index = 0,
-            length = 0,
             item;
 
         while (item = controls[index++])
@@ -1304,11 +1262,10 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
     };
     
     
-    this.even = function (controls, exports) {
+    this.even = function (controls, exports, length) {
         
         var value = this.value,
             index = 0,
-            length = 0,
             item;
 
         while (item = controls[index++])
@@ -1321,11 +1278,10 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
     };
     
         
-    this.eq = function (controls, exports) {
+    this.eq = function (controls, exports, length) {
         
         var value = this.value,
             index = 0,
-            length = 0,
             item;
 
         while (item = controls[index++])
@@ -1338,11 +1294,10 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
     };
     
         
-    this.gt = function (controls, exports) {
+    this.gt = function (controls, exports, length) {
 
         var value = this.value,
             index = 0,
-            length = 0,
             item;
 
         while (item = controls[index++])
@@ -1355,11 +1310,10 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
     };
 
     
-    this.lt = function (controls, exports) {
+    this.lt = function (controls, exports, length) {
 
         var value = this.value,
             index = 0,
-            length = 0,
             item;
 
         while (item = controls[index++])

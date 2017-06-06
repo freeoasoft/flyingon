@@ -1,31 +1,3 @@
-//计算单位换算关系
-flyingon.dom_test(function (div) {
-
-    var unit = flyingon.pixel_unit.unit;
-
-    //计算单位换算列表
-    div.innerHTML = '<div style="position:absolute;left:-10000in;"></div>' +
-        '<div style="position:absolute;overflow:scroll;left:-10000em;top:-10000ex;width:100px;height:100px;">' +
-            '<div style="width:200px;height:200px;"></div>' + 
-        '</div>';
-
-    unit.px = 1;
-    unit.pt = (unit.pc = (unit['in'] = -div.children[0].offsetLeft / 10000) / 6) / 12;
-    unit.mm = (unit.cm = unit['in'] / 2.54) / 10;
-
-    div = div.children[1];
-    unit.em = unit.rem = -div.offsetLeft / 10000;
-    unit.ex = -div.offsetTop / 10000;
-
-    //竖直滚动条宽度
-    flyingon.vscroll_width = div.offsetWidth - div.clientWidth;
-
-    //水平滚动条高度
-    flyingon.hscroll_height = div.offsetHeight - div.clientHeight;
-});
-
-
-
 //宿主容器
 (function (flyingon, document) {
     
@@ -97,19 +69,11 @@ flyingon.dom_test(function (div) {
         
         var list = update_list,
             index = 0,
-            item,
-            dom;
+            item;
         
         while (item = list[index++])
         {
             item.__delay_update = false;
-
-            if (item.__update_dirty > 1 && (dom = item.view) && (dom = dom.parentNode))
-            {
-                item.measure(dom.clientWidth, dom.clientHeight);
-                item.locate(0, 0);
-            }
-
             item.update();
         }
         
@@ -139,41 +103,32 @@ flyingon.dom_test(function (div) {
             }
         }
     };
-     
 
-    //显示控件至指定的dom容器
-    flyingon.showControl = function (control, host) {
+
+    //挂载控件至指定的dom容器
+    flyingon.mount = function (control, host) {
 
         control && !control.__top_control && flyingon.ready(function () {
 
-            var dom = host,
+            var node = host,
                 any;
 
+            host = null;
             this.__top_control = true;
 
-            if (typeof dom === 'string')
+            if (typeof node === 'string')
             {
-                dom = document.getElementById(dom);
+                node = document.getElementById(node);
             }
 
-            dom = dom || document.body;
-
-            this.measure(dom.clientWidth, dom.clientHeight);
-            this.locate(0, 0);
-
-            if (!this.view)
-            {
-                this.renderer.createView(this, dom).style.position = 'relative';
-            }
-
-            control = host = null;
+            this.renderer.show(this, node || document.body);
 
         }, control);
     };
 
 
-    //隐藏控件
-    flyingon.hideControl = function (control, dispose) {
+    //取消控件挂载
+    flyingon.unmount = function (control, dispose) {
 
         var dom, parent;
         
@@ -192,11 +147,6 @@ flyingon.dom_test(function (div) {
                 parent.removeChild(dom);
             }
  
-            if (parent = control.parent)
-            {
-                parent.remove(control);
-            }
-            
             if (dispose !== false)
             {
                 control.dispose();
@@ -251,8 +201,7 @@ flyingon.dom_test(function (div) {
     //检查调整尺寸方向
     function check_resize(value, e) {
         
-        var box = this.boxModel,
-            dom = this.view,
+        var dom = this.view,
             rect = dom.getBoundingClientRect(),
             side = 0,
             cursor = '',
@@ -270,7 +219,7 @@ flyingon.dom_test(function (div) {
             }
             else
             {
-                y = box.offsetHeight;
+                y = this.offsetHeight;
                 
                 if (x >= y - 4 && x <= y)
                 {
@@ -291,7 +240,7 @@ flyingon.dom_test(function (div) {
             }
             else
             {
-                y = box.offsetWidth;
+                y = this.offsetWidth;
                 
                 if (x >= y - 4 && x <= y)
                 {
@@ -432,8 +381,8 @@ flyingon.dom_test(function (div) {
                 resizable = {
                  
                     side: any,
-                    width: (any = control.boxModel).offsetWidth,
-                    height: any.offsetHeight
+                    width: control.offsetWidth,
+                    height: control.offsetHeight
                 }
             }
             else if ((parent = control.parent) && control.movable())
@@ -691,7 +640,7 @@ flyingon.dom_test(function (div) {
             control.trigger('change', 'original_event', e);
         }
     });
-    
+
 
     
 })(flyingon, document);

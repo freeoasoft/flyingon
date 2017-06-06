@@ -31,13 +31,13 @@
             //template: '#template',
 
             template: {
+                ':for': 'data(item, index)',
                 type: 'panel', 
                 layout: 'line', 
-                model: { 'for': 'data(item, index)' },
                 children: [
-                    { type: 'label', model: { text: 'item:label' } },
-                    { type: 'textbox', model: { text: 'item:text' } },
-                    { type: 'button', model: { text: 'item:operate' }, event: { click: 'operate_click' } }
+                    { type: 'label', ':text': 'item:label' },
+                    { type: 'textbox', ':text': 'item:text' },
+                    { type: 'button', ':text': 'item:operate', '@click': 'operate_click' }
                 ]
             },
 

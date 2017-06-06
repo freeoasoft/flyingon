@@ -433,100 +433,79 @@ flyingon.style = function (cssText) {
     //测试样式
     style = dom.style;
 
-    //转驼峰命名
-    regex = /\-(\w)/g;
-
-    //转换css名为驼峰写法
-    function fn(_, x) {
-
-        return x.toUpperCase();
-    };
-
 
     //自动处理样式
     function css_name(name) {
 
-        var key = name.replace(regex, fn),
-            css = name;
+        var css = name.replace(/([A-Z])/g, '-$1').toLowerCase(),
+            any;
 
-        if (!(key in style))
+        if (!(name in style))
         {
-            key = prefix + key.charAt(0).toUpperCase() + key.substring(1);
-            
-            if (key in style)
+            any = prefix + name.charAt(0).toUpperCase() + name.substring(1);
+
+            if (any in style)
             {
-                css = '-' + prefix + '-' + name;
+                name = any;
+                css = '-' + prefix + '-' + css;
             }
             else
             {
-                key = css = '';
+                name = css= '';
             }
         }
 
         return fixed[name] = {
 
-            name: key,
+            name: name,
             css: css
         };
     };
 
 
     //获取可用样式名
-    //name: 要获取的样式名(css样式名, 以'-'分隔的样式名)
-    flyingon.css_name = function (name) {
+    //name: 要获取的样式名
+    flyingon.css_name = function (name, css) {
 
-        return (fixed[name] || css_name(name)).name;
+        var value = fixed[name] || css_name(name);
+        return css ? value.css : (css === false ? value : value);
     };
     
     
     //设置css样式值
     //dom:      目标dom
-    //name:     要获取的样式名(css样式名, 以'-'分隔的样式名)
+    //name:     要获取的样式名
     //value:    样式值
     flyingon.css_value = function (dom, name, value) {
 
-        var items = fixed[name] || css_name(name),
+        var value = fixed[name] || css_name(name),
             any;
 
-        if (any = items.set)
+        if (any = value.set)
         {
             any(value, dom);
         }
-        else if (any = items.name)
+        else if (any = value.name)
         {
             dom.style[any] = value;
         }
     };
     
     
-    //获取css样式文本
-    flyingon.css_text = function (name, value) {
-        
-        name = (fixed[name] || css_name(name)).css;
-        return name ? name + ':' + value + ';' : '';
-    };
-
-
-    
     //注册样式兼容处理
-    //name:     要处理的样式名(css样式名, 以'-'分隔的样式名)
+    //name:     要处理的样式名
     //set:      转换样式值的方法
-    flyingon.css_fixed = function (name, set, style_name) {
+    flyingon.css_fixed = function (name, set) {
 
-        if (name && set && !css_name(name).name)
+        if (name && set && !(set = css_name(name)).name)
         {
-            fixed[name] = {
-
-                name: style_name || name.replace(regex, fn),
-                css: name,
-                set: set
-            };
+            set.set = set;
         }
     };
 
 
     //处理ie允许选中
-    flyingon.css_fixed('user-select', (function () {
+    flyingon.css_fixed('userSelect', (function () {
 
         function event_false() {
 
@@ -542,6 +521,7 @@ flyingon.style = function (cssText) {
         };
 
     })());
+    
     
     
 })(document, flyingon);
@@ -757,7 +737,7 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
         }
         
         flyingon.dom_suspend(dom, 'click', true);
-        flyingon.css_value(document.body, 'user-select', 'none');
+        flyingon.css_value(document.body, 'userSelect', 'none');
         
         if (dom.setCapture)
         {
@@ -813,7 +793,7 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
 
         if (!start)
         {
-            flyingon.css_value(document.body, 'user-select', '');
+            flyingon.css_value(document.body, 'userSelect', '');
             
             if (dom.setCapture)
             {
@@ -1040,3 +1020,192 @@ flyingon.html_encode = (function () {
     };
 
 })();
+
+
+
+//单位换算
+(function (flyingon) {
+
+
+    var unit = flyingon.create(null), //单位换算列表
+
+        pixel_cache = flyingon.create(null), //缓存的单位转换值
+
+        regex_unit = /[a-zA-z]+|%/, //计算尺寸正则表达式
+
+        regex_sides = /[+-]?[\w%.]+/g, //4边解析正则表达式
+        
+        sides_cache = flyingon.create(null), //4边缓存列表
+        
+        parse = parseFloat;
+    
+    
+    //初始化默认值
+    unit.em = unit.rem = 12;
+    unit.ex = 6;
+    unit.pc = 16;
+    unit.px = 1;
+    unit.pt = 4 / 3;
+    
+    unit.mm = (unit.cm = 96 / 2.54) / 10;
+    unit['in'] = 96;
+    
+
+    //或者或设置象素转换单位
+    (flyingon.pixel_unit = function (name, value) {
+
+        if (value === void 0)
+        {
+            return unit[name];
+        }
+
+        if (unit[name] !== value)
+        {
+            unit[name] = value;
+
+            var list = pixel_cache;
+
+            for (var key in list)
+            {
+                if (key.indexOf(name) > 0)
+                {
+                    list[key] = void 0;
+                }
+            }
+        }
+                
+    }).unit = unit;
+
+
+    //转换css尺寸为像素值
+    //注: em与rem相同, 且在初始化时有效
+    (flyingon.pixel = function (value, size) {
+
+        var any = pixel_cache[value];
+
+        if (any !== void 0)
+        {
+            return any;
+        }
+
+        if (any = value.match(regex_unit))
+        {
+            if ((any = any[0]) === '%')
+            {
+                return parse(value) * size / 100 + 0.5 | 0;
+            }
+            
+            any = any.toLowerCase();
+        }
+
+        return pixel_cache[value] = parse(value) * (unit[any] || 1) + 0.5 | 0;
+
+    }).cache = pixel_cache;
+    
+    
+    //转换4边尺寸为像素值(margin, padding的百分比是以父容器的宽度为参照, border-width不支持百分比)
+    (flyingon.pixel_sides = function (value, width) {
+        
+        var values = sides_cache[value];
+        
+        if (values)
+        {
+            return values;
+        }
+        else if (!value || value >= 0)
+        {
+            return sides_values(value);
+        }
+        
+        return values ? pixel_sides(value, values, width) : sides_values('');
+
+    }).cache = sides_cache;
+    
+    
+    function sides_values(value) {
+    
+        return sides_cache[value] = {
+
+            text: '' + (value |= 0),
+            left: value, 
+            top: value, 
+            right: value, 
+            bottom: value, 
+            width: value = value << 1, 
+            height: value
+        };
+    };
+    
+    
+    function pixel_sides(text, sides, width) {
+        
+        var value = { text: text },
+            fn = flyingon.pixel;
+
+        if (text.indexOf('%') < 0)
+        {
+            sides_cache[text] = value;
+        }
+        
+        switch (sides.length)
+        {
+            case 1:
+                value.left = value.top = value.right = value.bottom = fn(sides[0], width);
+                break;
+
+            case 2:
+                value.left = value.right = fn(sides[1], width);
+                value.top = value.bottom = fn(sides[0], width);
+                break;
+
+            case 3:
+                value.left = value.right = fn(sides[1], width);
+                value.top = fn(sides[0], width);
+                value.bottom = fn(sides[2], width);
+                break;
+
+            default:
+                value.left = fn(sides[3], width);
+                value.top = fn(sides[0], width);
+                value.right = fn(sides[1], width);
+                value.bottom = fn(sides[2], width);
+                break;
+        }
+
+        value.width = value.left + value.right;
+        value.height = value.top + value.bottom;
+
+        return value;
+    };
+    
+
+})(flyingon);
+
+
+
+
+//计算单位换算关系
+flyingon.dom_test(function (div) {
+
+    var unit = flyingon.pixel_unit.unit;
+
+    //计算单位换算列表
+    div.innerHTML = '<div style="position:absolute;left:-10000in;"></div>' +
+        '<div style="position:absolute;overflow:scroll;left:-10000em;top:-10000ex;width:100px;height:100px;">' +
+            '<div style="width:200px;height:200px;"></div>' + 
+        '</div>';
+
+    unit.px = 1;
+    unit.pt = (unit.pc = (unit['in'] = -div.children[0].offsetLeft / 10000) / 6) / 12;
+    unit.mm = (unit.cm = unit['in'] / 2.54) / 10;
+
+    div = div.children[1];
+    unit.em = unit.rem = -div.offsetLeft / 10000;
+    unit.ex = -div.offsetTop / 10000;
+
+    //竖直滚动条宽度
+    flyingon.vscroll_width = div.offsetWidth - div.clientWidth;
+
+    //水平滚动条高度
+    flyingon.hscroll_height = div.offsetHeight - div.clientHeight;
+});

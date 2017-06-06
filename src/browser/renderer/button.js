@@ -6,10 +6,10 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
     
 
-    this.render = function (control, writer) {
+    this.render = function (writer, control, cssLayout) {
 
-        writer.push('<button class="', control.defaultClassName, '" style="', this.cssText(control), ';">',
-                flyingon.html_encode(control.text()),
+        writer.push('<button type="button"', this.renderDefault(control, cssLayout), '>',
+                flyingon.html_encode(control.text()), 
             '</button>');
     };
 

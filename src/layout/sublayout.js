@@ -28,19 +28,20 @@ flyingon.Sublayout = flyingon.defineClass(flyingon.Control, function (base) {
     
         
     
-    this.onmeasure = function (box, auto) {
+    this.onmeasure = function (auto) {
 
         flyingon.arrange(this, this.__children, false, false, true);
         
         if (auto)
         {
-            if (auto === 1)
+            if (auto & 1)
             {
-                box.offsetWidth = box.arrangeRight + box.border.width;
+                this.offsetWidth = this.arrangeRight + this.layout_border.width;
             }
-            else
+            
+            if (auto & 2)
             {
-                box.offsetHeight = box.arrangeBottom + box.border.height;
+                this.offsetHeight = this.arrangeBottom + this.layout_border.height;
             }
         }
         else
@@ -50,26 +51,41 @@ flyingon.Sublayout = flyingon.defineClass(flyingon.Control, function (base) {
     };
     
         
-    this.onlocate = function (box) {
+    this.onlocate = function () {
         
         var items = this.__children,
-            x = box.offsetLeft,
-            y = box.offsetTop;
+            x = this.offsetLeft,
+            y = this.offsetTop,
+            item;
         
         //处理定位偏移
         if (items && (x || y))
         {
             for (var i = items.length - 1; i >= 0; i--)
             {
-                if (box = items[i].boxModel)
+                if (item = items[i])
                 {
-                    box.offsetLeft += x;
-                    box.offsetTop += y;
+                    item.offsetLeft += x;
+                    item.offsetTop += y;
                 }
             }
         }
         
         return false;
+    };
+
+
+    //计算排列区域
+    this.arrangeArea = function (border, padding) {
+
+        var any;
+
+        //计算排列区域
+        this.arrangeLeft = padding.left;
+        this.arrangeTop = padding.top;
+
+        this.arrangeWidth = (any = this.offsetWidth - border.width - padding.width) > 0 ? any : 0;
+        this.arrangeHeight = (any = this.offsetHeight - border.height - padding.height) > 0 ? any : 0;
     };
 
 

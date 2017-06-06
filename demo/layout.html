@@ -5,6 +5,8 @@
     <title>flyingon布局演示</title>
 </head>
 <body style="padding:10px;">
+
+    <div id="host"></div>
     
     <script type="text/javascript" src="../js/flyingon.js"></script>
     
@@ -53,20 +55,18 @@
                             type: 'uniform',
                             size: 10,
 
-                            location: function (item, index, width, height) {
+                            location: function (container, item, index) {
 
-                                var value = Math.sin(60 * (index + 1) / Math.PI);
+                                var height = container.arrangeHeight,
+                                    value = Math.sin(60 * (index + 1) / Math.PI);
 
                                 if (value < 0)
                                 {
                                     value = -value;
                                 }
 
-                                return {
-
-                                    alignY: 'bottom',
-                                    height: value * height / 2 | 0
-                                };
+                                this.alignY = 'middle';
+                                this.height = value * height / 2 | 0;
                             }
                         }
                     }
@@ -102,23 +102,20 @@
 
         var panel = new flyingon.Panel().sets({
 
-            width: 1000,
             height: 400,
             border: 1,
-            borderStyle: 'solid',
             padding: 8,
             resizable: 'all',
             layout: 'panel'
         });
 
 
-        for (var i = 0; i < 101; i++)
+        for (var i = 0; i < 100; i++)
         {
             panel.appendChild(new flyingon.Control().sets({
 
                 id: i,
                 border: 1,
-                borderStyle: 'solid',
                 movable: true
             }));
         }
@@ -130,7 +127,7 @@
         });
 
 
-        flyingon.showControl(panel, document.body);
+        flyingon.mount(panel, 'host');
 
 
     </script>

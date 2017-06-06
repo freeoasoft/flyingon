@@ -1,186 +1,3 @@
-//单位换算
-(function (flyingon) {
-
-
-    var unit = flyingon.create(null), //单位换算列表
-
-        pixel_cache = flyingon.create(null), //缓存的单位转换值
-
-        regex_unit = /[a-zA-z]+|%/, //计算尺寸正则表达式
-
-        regex_sides = /[+-]?[\w%.]+/g, //4边解析正则表达式
-        
-        sides_cache = flyingon.create(null), //4边缓存列表
-        
-        parse = parseFloat;
-    
-    
-    //初始化默认值
-    unit.em = unit.rem = 12;
-    unit.ex = 6;
-    unit.pc = 16;
-    unit.px = 1;
-    unit.pt = 4 / 3;
-    
-    unit.mm = (unit.cm = 96 / 2.54) / 10;
-    unit['in'] = 96;
-    
-
-    //或者或设置象素转换单位
-    (flyingon.pixel_unit = function (name, value) {
-
-        if (value === void 0)
-        {
-            return unit[name];
-        }
-
-        if (unit[name] !== value)
-        {
-            unit[name] = value;
-
-            var list = pixel_cache;
-
-            for (var key in list)
-            {
-                if (key.indexOf(name) > 0)
-                {
-                    list[key] = void 0;
-                }
-            }
-        }
-                
-    }).unit = unit;
-
-
-    //转换css尺寸为像素值
-    //注: em与rem相同, 且在初始化时有效
-    (flyingon.pixel = function (value, size) {
-
-        if (value >= 0)
-        {
-            return value >> 0;
-        }
-
-        var any = pixel_cache[value];
-
-        if (any !== void 0)
-        {
-            return any !== true ? any : parse(value) * size / 100 + 0.5 | 0;
-        }
-
-        if (any = value.match(regex_unit)) 
-        {
-            if ((any = any[0]) === '%')
-            {
-                pixel_cache[value] = true;
-                return parse(value) * size / 100 + 0.5 | 0;
-            }
-            
-            any = any.toLowerCase();
-        }
-
-        return pixel_cache[value] = parse(value) * (unit[any] || 1) + 0.5 | 0;
-
-    }).cache = pixel_cache;
-    
-    
-    //转换4边尺寸为像素值(margin, padding的百分比是以父容器的宽度为参照, border-width不支持百分比)
-    (flyingon.pixel_sides = function (value, width) {
-        
-        var values = sides_cache[value];
-        
-        if (values)
-        {
-            //直接取缓存
-            if (values.cache)
-            {
-                return values;
-            }
-        }
-        else if (value >= 0)
-        {
-            return sides_values(value);
-        }
-        
-        if (value && (values = value.match(regex_sides)))
-        {
-            sides_cache[value] = values;
-
-            if (value.indexOf('%') < 0)
-            {
-                values = pixel_sides(value, values);
-                values.cache = true;
-                
-                return values;
-            }
-        }
-        else
-        {
-            return sides_values('');
-        }
-
-        return pixel_sides(value, values, width);
-
-    }).cache = sides_cache;
-    
-    
-    function sides_values(value) {
-    
-        return sides_cache[value] = { 
-
-            cache: true,
-            text: value,
-            left: value |= 0, 
-            top: value, 
-            right: value, 
-            bottom: value, 
-            width: value = value << 1, 
-            height: value
-        };
-    };
-    
-    
-    function pixel_sides(text, sides, width) {
-        
-        var target = { text: text },
-            fn = flyingon.pixel;
-        
-        switch (sides.length)
-        {
-            case 1:
-                target.left = target.top = target.right = target.bottom = fn(sides[0], width);
-                break;
-
-            case 2:
-                target.left = target.right = fn(sides[1], width);
-                target.top = target.bottom = fn(sides[0], width);
-                break;
-
-            case 3:
-                target.left = target.right = fn(sides[1], width);
-                target.top = fn(sides[0], width);
-                target.bottom = fn(sides[2], width);
-                break;
-
-            default:
-                target.left = fn(sides[3], width);
-                target.top = fn(sides[0], width);
-                target.right = fn(sides[1], width);
-                target.bottom = fn(sides[2], width);
-                break;
-        }
-
-        target.width = target.left + target.right;
-        target.height = target.top + target.bottom;
-
-        return target;
-    };
-    
-
-})(flyingon);
-
-
-
 
 //控件类
 //IE7点击滚动条时修改className会造成滚动条无法拖动,需在改变className后设置focus获取焦点解决此问题
@@ -188,21 +5,26 @@ flyingon.defineClass('Control', function () {
 
     
 
+    var id = 1;
+    
     var self = this;
+
         
     //根据uniqueId组织的控件集合
     var controls = flyingon.__uniqueId_controls = flyingon.create(null);
+
+
+    var create = Object.create;
+  
 
     var pixel = flyingon.pixel;
 
     var pixel_sides = flyingon.pixel_sides;
 
-    var id = 1;
-    
-    
 
-    //默认class名
-    this.defaultClassName = 'fn-control';
+    //设置默认渲染器
+    var renderer = this.renderer = flyingon.Renderer.prototype;
+
 
     
     //扩展至选择器
@@ -220,19 +42,14 @@ flyingon.defineClass('Control', function () {
     //控件默认高度(height === 'default'时的高度)
     this.defaultHeight = 25;
     
-        
-    //水平滚动条位置
-    this.scrollLeft = 0;
-    
-    //竖直滚动条位置
-    this.scrollTop = 0;
-    
 
-    
-    //当前绘制器
-    this.renderer = null;
+    //渲染坐标
+    this.offsetLeft = this.offsetTop = this.offsetWidth = this.offsetHeight = 0;
+
+    //滚动条位置
+    this.scrollLeft = this.scrollTop = 0;
+
         
-    
     
     this.__uniqueId = 0;
     
@@ -325,7 +142,8 @@ flyingon.defineClass('Control', function () {
 
         set: function (value) {
 
-            this.renderer.set(this, 'className', value);
+            this.view && this.renderer.set(this, 'className', value);
+            this.fullClassName = value ? this.defaultClassName + ' ' + value : this.defaultClassName;
         }
     });
     
@@ -484,36 +302,24 @@ flyingon.defineClass('Control', function () {
 
 
 
-    
-    //定义定位属性
-    function location(name, defaultValue, attributes) {
-        
-        attributes = attributes || {};
-        attributes.group = 'location';
-        attributes.query = true;
-
-        attributes.set = function () {
-
-            if (this.__update_dirty < 2)
-            {
-                this.invalidate();
-            }
-        };
-
-        self.defineProperty(name, defaultValue, attributes);
-    };
-    
-    
-    //定义定位属性
-    flyingon.locationProperty = location;
-    
-        
+                
     //是否可见
-    location('visible', true, {
-     
+    this.defineProperty('visible', true, {
+        
+        group: 'layout',
+
         set: function (value) {
 
-            this.renderer.set(this, 'visible', value);
+            var patch = this.__view_patch;
+
+            if (patch)
+            {
+                patch.visible = value;
+            }
+            else
+            {
+                this.renderer.set(this, 'visible', value);
+            }
 
             if (this.__update_dirty < 2)
             {
@@ -523,208 +329,468 @@ flyingon.defineClass('Control', function () {
     });
         
 
+
+    //定义定位属性
+    var define = function (name, defaultValue) {
+        
+        self.defineProperty(name, defaultValue, {
+            
+            group: 'layout',
+
+            set: function (value) {
+
+                var any = this.__view_location;
+
+                if (any)
+                {
+                    any[name] = value;
+                }
+                else
+                {
+                    any = {};
+                    any[name] = value;
+
+                    this.renderer.set(this, '__style_location', this.__view_location = any);
+                }
+
+                if (this.__update_dirty < 2)
+                {
+                    this.invalidate();
+                }
+
+            }
+        });
+    };
+    
+
+    //左边距
+    define('left', '');
+
+    //顶边距
+    define('top', '');
+
+    //宽度
+    define('width', 'default');
+
+    //高度
+    define('height', 'default');
+
+
+    //最小宽度
+    define('minWidth', '');
+
+    //最大宽度
+    define('maxWidth', '');
+
+    //最小高度
+    define('minHeight', '');
+
+    //最大高度
+    define('maxHeight', '');
+
+
+    //最小宽度
+    define('margin', '');
+
+
+
+    //定义样式无关的定位属性
+    define = function (name, defaultValue) {
+        
+        self.defineProperty(name, defaultValue, {
+            
+            group: 'layout',
+
+            set: function (value) {
+
+                if (this.__update_dirty < 2)
+                {
+                    this.invalidate();
+                }
+            }
+        });
+    };
+    
+       
     //控件横向对齐方式
     //left      左边对齐
     //center    横向居中对齐
     //right     右边对齐
-    location('alignX', 'left');
+    define('alignX', 'left');
 
     //控件纵向对齐方式
     //top       顶部对齐
     //middle    纵向居中对齐
     //bottom    底部对齐
-    location('alignY', 'top');
+    define('alignY', 'top');
 
 
-    location('left', '');
-
-    location('top', '');
-
-    location('width', 'default');
-
-    location('height', 'default');
-
-
-    location('minWidth', '');
-
-    location('maxWidth', '');
-
-    location('minHeight', '');
-
-    location('maxHeight', '');
+    //控件停靠方式(此值仅在当前布局类型为停靠布局(dock)时有效)
+    //left:     左停靠
+    //top:      顶部停靠
+    //right:    右停靠
+    //bottom:   底部停靠
+    //fill:     充满
+    define('dock', 'left');
 
 
-    location('margin', '');
 
-    
+
+    //定义排列布局属性
+    define = function (name, defaultValue) {
         
-    //边框宽度
-    this.defineProperty('border', '', {
+        self.defineProperty(name, defaultValue, {
+            
+            group: 'layout',
 
-        group: 'layout',
-        set: function (value) {
+            set: function (value) {
 
-            this.boxModel && (this.boxModel.border = pixel_sides(value));
-            this.renderer.set(this, 'border', value);
+                var patch = this.__view_patch;
 
-            if (this.__update_dirty < 2)
-            {
-                this.invalidate(true);
+                if (patch)
+                {
+                    patch[name] = value;
+                }
+                else
+                {
+                    this.renderer.set(this, name, value);
+                }
+
+                if (this.__update_dirty < 2)
+                {
+                    this.invalidate(true);
+                }
             }
-        }
-    });
+        });
+    };
 
+
+    //边框宽度
+    define('border', '');
     
     //内边距
-    this.defineProperty('padding', '', {
+    define('padding', '');
 
-        group: 'layout',
-        dom: 1,
-        set: function (value) {
 
-            this.boxModel && (this.boxModel.padding = pixel_sides(value));
-            this.renderer.set(this, 'padding', value);
-
-            if (this.__update_dirty < 2)
-            {
-                this.invalidate(true);
-            }
-        }
-    });
-    
-    
     //水平方向超出内容时显示方式
-    this.defineProperty('overflowX', 'auto', {
-
-        group: 'layout',
-        dom: 1,
-        set: function (value) {
-
-            this.renderer.set(this, 'overflowX', value);
-
-            if (this.__update_dirty < 2)
-            {
-                this.invalidate(true);
-            }
-        }
-    });
-      
+    define('overflowX', '');
     
     //竖直方向超出内容时显示方式
-    this.defineProperty('overflowY', 'auto', {
-
-        group: 'layout',
-        dom: 1,
-        set: function (value) {
-
-            this.renderer.set(this, 'overflowY', value);
-
-            if (this.__update_dirty < 2)
-            {
-                this.invalidate(true);
-            }
-        }
-    });
+    define('overflowY', '');
     
-    
-    
-    //获取定位属性值
-    this.locationValue = function (name) {
-      
-        var values = this.__location_values,
-            value;
-        
-        if (values && (value = values[name]) !== void 0)
+
+
+
+    //创建样式
+    define = function (name, defaultValue, attributes, check) {
+
+        if (attributes === false)
         {
-            return value;
+            attributes = {};
+            check = false;
         }
-        
-        if ((values = this.__storage) && (value = values[name]) !== void 0)
+        else if (!attributes)
         {
-            return value;
+            attributes = {};
         }
-        
-        return this.__defaults[name];
-    };
-    
-    
 
+        attributes.group = 'appearance';
 
-    var box_keys = ['margin', 0, 'border', 0, 'padding', 0, 
-                    'minWidth', 1, 'maxWidth', 1, 
-                    'minHeight', 2, 'maxHeight', 2,
-                    'width', 3, 'height', 3];
-    
-    var sides_empty = pixel_sides(0);
+        attributes.set = function (value) {
 
-    var pixel_cache = pixel.cache;
+            var patch = this.__view_patch;
 
-    var sides_cache = pixel_sides.cache;
-
-    //初始化盒子模型
-    this.__init_boxModel = function (width, height) {
-
-        var box = this.boxModel || (this.boxModel = {}),
-            defaults = this.__defaults,
-            storage = this.__storage,
-            location = box.location = this.__location_values,
-            index = 0,
-            keys = box_keys,
-            key,
-            tag,
-            any;
-
-        while (key = keys[index++])
-        {
-            tag = keys[index++];
-
-            if ((!location || (any = location[key]) === void 0) && (!storage || (any = storage[key]) === void 0))
+            if (patch)
             {
-                any = defaults[key];
-            }
-
-            if (any && any !== '0')
-            {
-                if (any <= 0)
-                {
-                    any = tag ? 0 : sides_empty;
-                }
-                else if (any > 0)
-                {
-                    any |= 0;
-
-                    if (!tag)
-                    {
-                        any = sides_cache[any] || pixel_sides(any, width);
-                    }
-                }
-                else if (tag < 3)
-                {
-                    any = tag 
-                        ? pixel_cache[any] || pixel(any, tag === 1 ? width : height) 
-                        : sides_cache[any] || pixel_sides(any, width);
-                }
-            }
-            else if (tag)
-            {
-                any = 0;
+                patch[name] = value;
             }
             else
             {
-                any = sides_empty;
+                this.renderer.set(this, name, value);
             }
+        };
 
-            box[key] = any;
-        }
+        //定义属性
+        self.defineProperty(name, defaultValue, attributes);
         
-        box.alignX = location && location.alignX || storage && storage.alignX || defaults.alignX;
-        box.alignY = location && location.alignY || storage && storage.alignY || defaults.alignY;
-        
-        return box;
+        //注册渲染器style
+        renderer.__registry_style(name, check);
+    };
+
+
+    //定义样式属性方法
+    flyingon.styleProperty = define;
+    
+    
+
+    //控件层叠顺序
+    define('zIndex', 0, false);
+
+    
+    //控件上右下左边框样式
+    define('borderStyle', '', false);
+
+
+    //控件上右下左边框颜色
+    define('borderColor', '', false);
+
+
+    //控件上右下左边框圆角
+    define('borderRadius', '');
+
+
+    //阅读方向
+    //ltr	    从左到右 
+    //rtl	    从右到左 
+    define('direction', '', false);
+
+
+    //控件内容横向对齐样式
+    //left      左边对齐
+    //center    横向居中对齐
+    //right     右边对齐
+    define('textAlign', '', false);
+
+    //控件内容纵向对齐样式
+    //top       顶部对齐
+    //middle    纵向居中对齐
+    //bottom    底部对齐
+    define('verticalAlign', '', false);
+
+
+
+    //控件透明度
+    //number	0(完全透明)到1(完全不透明)之间数值
+    define('opacity', 1);
+
+    //控件光标样式
+    //url	    需使用的自定义光标的 URL     注释：请在此列表的末端始终定义一种普通的光标, 以防没有由 URL 定义的可用光标 
+    //default	默认光标(通常是一个箭头)
+    //auto	    默认 浏览器设置的光标 
+    //crosshair	光标呈现为十字线 
+    //pointer	光标呈现为指示链接的指针(一只手)
+    //move	    此光标指示某对象可被移动 
+    //e-resize	此光标指示矩形框的边缘可被向右(东)移动 
+    //ne-resize	此光标指示矩形框的边缘可被向上及向右移动(北/东) 
+    //nw-resize	此光标指示矩形框的边缘可被向上及向左移动(北/西) 
+    //n-resize	此光标指示矩形框的边缘可被向上(北)移动 
+    //se-resize	此光标指示矩形框的边缘可被向下及向右移动(南/东) 
+    //sw-resize	此光标指示矩形框的边缘可被向下及向左移动(南/西) 
+    //s-resize	此光标指示矩形框的边缘可被向下移动(南) 
+    //w-resize	此光标指示矩形框的边缘可被向左移动(西) 
+    //text	    此光标指示文本 
+    //wait	    此光标指示程序正忙(通常是一只表或沙漏) 
+    //help	    此光标指示可用的帮助(通常是一个问号或一个气球) 
+    define('cursor', '', false);
+
+
+    //控件背景颜色
+    //color_name	规定颜色值为颜色名称的背景颜色(比如 red)  transparent:透明 
+    //hex_number	规定颜色值为十六进制值的背景颜色(比如 #ff0000) 
+    //rgb_number	规定颜色值为 rgb 代码的背景颜色(比如 rgb(255,0,0)) 
+    define('backgroundColor', '', false);
+
+    //控件背景图片
+    //string        图像名(空字符串则表示无背景)
+    //url('URL')	指向图像的路径
+    define('backgroundImage', '', false);
+
+    //控件背景重复方式
+    //repeat	背景图像将在垂直方向和水平方向重复 
+    //repeat-x	背景图像将在水平方向重复 
+    //repeat-y	背景图像将在垂直方向重复 
+    //no-repeat	背景图像将仅显示一次 
+    define('backgroundRepeat', '', false);
+
+    //控件背景颜色对齐方式
+    //top left
+    //top center
+    //top right
+    //center left
+    //center center
+    //center right
+    //bottom left
+    //bottom center
+    //bottom right  如果您仅规定了一个关键词, 那么第二个值将是'center'     默认值：0% 0% 
+    //x% y%	        第一个值是水平位置, 第二个值是垂直位置     左上角是 0% 0% 右下角是 100% 100%     如果您仅规定了一个值, 另一个值将是 50% 
+    //xpos ypos	    第一个值是水平位置, 第二个值是垂直位置     左上角是 0 0 单位是像素 (0px 0px) 或任何其他的 CSS 单位     如果您仅规定了一个值, 另一个值将是50%     您可以混合使用 % 和 position 值 
+    define('backgroundPosition', '', false);
+
+
+    //控件颜色
+    //color_name	规定颜色值为颜色名称的颜色(比如 red) 
+    //hex_number	规定颜色值为十六进制值的颜色(比如 #ff0000) 
+    //rgb_number	规定颜色值为 rgb 代码的颜色(比如 rgb(255,0,0)) 
+    define('color', '', false);
+
+
+    //控件字体样式
+    //normal	浏览器显示一个标准的字体样式 
+    //italic	浏览器会显示一个斜体的字体样式 
+    //oblique	浏览器会显示一个倾斜的字体样式 
+    define('fontStyle', '', false);
+
+    //控件字体变体
+    //normal	    浏览器会显示一个标准的字体 
+    //small-caps	浏览器会显示小型大写字母的字体 
+    define('fontVariant', '', false);
+
+    //控件字体粗细
+    //normal	定义标准的字符 
+    //bold	    定义粗体字符 
+    //bolder	定义更粗的字符 
+    //lighter	定义更细的字符 
+    //100-900   定义由粗到细的字符 400 等同于 normal, 而 700 等同于 bold 
+    define('fontWeight', '', false);
+
+    //控件字体大小
+    define('fontSize', '', false);
+
+    //控件文字行高
+    define('lineHeight', '', false);
+
+    //控件字体族 family-name generic-family  用于某个元素的字体族名称或/及类族名称的一个优先表
+    define('fontFamily', '', false);
+
+
+
+    //控件文字词间距(以空格为准)
+    define('wordSpacing', '', false);
+
+    //控件文字字间距
+    define('letterSpacing', '', false);
+
+    //控件文字缩进
+    define('textIndent', '', false);
+
+    //控件文字装饰
+    //none	        默认 定义标准的文本 
+    //underline	    定义文本下的一条线 
+    //overline	    定义文本上的一条线 
+    //line-through	定义穿过文本下的一条线 
+    //blink	        定义闪烁的文本 
+    define('textDecoration', '', false);
+
+    //控件文字溢出处理方式
+    //clip	    修剪文本
+    //ellipsis	显示省略符号来代表被修剪的文本 	
+    //string	使用给定的字符串来代表被修剪的文本 
+    define('textOverflow', '', false);
+
+
+
+    //转换
+    define('transform', '');
+
+    //过渡
+    define('transition', '');
+
+    //动画
+    define('animation', '');
+
+
+    //定位
+    define('position', '', false);
+
+    //显示
+    define('display', '', false);
+
+    //浮动
+    define('float', '', false);
+
+    //清除浮动
+    define('clear', '', false);
+    
+
+
+    //定义attribute属性
+    define = function (name, defaultValue, attributes) {
+
+        attributes = attributes || {};
+
+        attributes.set = function (value) {
+
+            var patch = this.__view_patch;
+
+            if (patch)
+            {
+                patch[name] = value;
+            }
+            else
+            {
+                this.renderer.set(this, name, value);
+            }
+        };
+
+        self.defineProperty(name, defaultValue, attributes);
+
+        //注册渲染器attribute
+        renderer.__registry_attribute(name, defaultValue);
+    };
+
+
+    flyingon.attributeProperty = define;
+    
+    
+    //tab顺序
+    define('tabIndex', -1);
+    
+    
+    //是否禁用
+    define('disabled', false);
+    
+
+    //是否只读
+    define('readonly', false);
+
+
+    //提示信息
+    define('title', '');
+
+
+    //快捷键
+    define('accessKey', '');
+    
+    
+    
+    //是否可调整大小或调整大小的方式
+    //none  不可调整
+    //x     只能调整宽度
+    //y     只能调整高度
+    //all   宽度高度都可调整
+    this.defineProperty('resizable', 'none');
+    
+    
+    //是否可移动
+    this.defineProperty('movable', false);
+    
+    
+    //是否要放置移动或拖动
+    this.defineProperty('droppable', false);
+
+
+    //自定义标记
+    this.defineProperty('tag', null);
+
+
+
+    
+    //初始化布局定位属性
+    this.__init_location = function (width) {
+
+        var location = this.layout_location || (this.layout_location = this.__storage || this.__defaults),
+            fn = pixel_sides,
+            cache = fn.cache,
+            any;
+
+        this.layout_margin = cache[any = location.margin] || fn(any, width);
+        this.layout_border = cache[any = location.border] || fn(any, 0); //border不支持百分比
+        this.layout_padding = cache[any = location.padding] || fn(any, width);
+
+        return location;
     };
     
-    
-         
+
     //测量控件大小
     //containerWidth    容器宽度
     //containerHeight   容器高度
@@ -733,14 +799,23 @@ flyingon.defineClass('Control', function () {
     //defaultToFill     默认宽度或高度是否转成充满 0:不转 1:宽度转 2:高度转 3:宽高都转
     this.measure = function (containerWidth, containerHeight, availableWidth, availableHeight, defaultToFill) {
         
-        var box = this.__init_boxModel(containerWidth, containerHeight),
-            minWidth = box.minWidth,
-            maxWidth = box.maxWidth,
-            minHeight = box.minHeight,
-            maxHeight = box.maxHeight,
-            width = box.width,
-            height = box.height,
-            auto = 0;
+        var location = this.__init_location(containerWidth),
+            minWidth = location.minWidth,
+            maxWidth = location.maxWidth,
+            minHeight = location.minHeight,
+            maxHeight = location.maxHeight,
+            width = location.width,
+            height = location.height,
+            auto = 0,
+            fn = pixel,
+            cache = fn.cache,
+            any;
+        
+        minWidth = (any = +minWidth) === any ? any | 0 : cache[minWidth] || fn(minWidth, containerWidth);
+        maxWidth = (any = +maxWidth) === any ? any | 0 : cache[minWidth] || fn(minWidth, containerWidth);
+
+        minHeight = (any = +minHeight) === any ? any | 0 : cache[minWidth] || fn(minWidth, containerHeight);
+        maxHeight = (any = +maxHeight) === any ? any | 0 : cache[minWidth] || fn(minWidth, containerHeight);
 
         //处理宽度
         switch (width)
@@ -766,13 +841,13 @@ flyingon.defineClass('Control', function () {
                 break;
 
             default:
-                width = width >= 0 ? width : pixel(width, containerWidth);
+                width = (any = +width) === any ? any | 0 : cache[width] || fn(width, containerWidth);
                 break;
         }
 
         //充满可用宽度
         if (width === true && 
-            (width = (availableWidth >= 0 ? availableWidth : containerWidth) - box.margin.width) < 0)
+            (width = (availableWidth >= 0 ? availableWidth : containerWidth) - this.layout_margin.width) < 0)
         {
             width = 0;
         }
@@ -789,20 +864,20 @@ flyingon.defineClass('Control', function () {
                 break;
 
             case 'auto':
-                auto = 2;
+                auto |= 2;
                 height = availableHeight || this.defaultHeight;
                 break;
 
             default:
-                height = height >= 0 ? height : pixel(height, containerHeight);
+                height = (any = +height) === any ? any | 0 : cache[height] || fn(height, containerHeight);
                 break;
         }
 
-        this.__auto_size = auto; 
+        this.layout_auto = auto; 
         
         //充满可用高度
         if (height === true && 
-            (height = (availableHeight >= 0 ? availableHeight : containerHeight) - box.margin.height) < 0)
+            (height = (availableHeight >= 0 ? availableHeight : containerHeight) - this.layout_margin.height) < 0)
         {
             height = 0;
         }
@@ -828,35 +903,35 @@ flyingon.defineClass('Control', function () {
         }
         
         //设置大小
-        box.offsetWidth = width;
-        box.offsetHeight = height;
+        this.offsetWidth = width;
+        this.offsetHeight = height;
         
         //测量后处理
-        if (this.onmeasure(box, auto) !== false)
+        if ((fn = this.onmeasure) && fn.call(this, auto) !== false)
         {
             //处理最小及最大宽度
-            if (box.offsetWidth !== width)
+            if (this.offsetWidth !== width)
             {
-                if ((width = box.offsetWidth) < minWidth)
+                if ((width = this.offsetWidth) < minWidth)
                 {
-                    box.offsetWidth = width = minWidth;
+                    this.offsetWidth = width = minWidth;
                 }
                 else if (maxWidth > 0 && width > maxWidth)
                 {
-                    box.offsetWidth = width = maxWidth;
+                    this.offsetWidth = width = maxWidth;
                 }
             }
 
             //处理最小及最大高度
-            if (box.offsetHeight !== height)
+            if (this.offsetHeight !== height)
             {
-                if ((height = box.offsetHeight) < minHeight)
+                if ((height = this.offsetHeight) < minHeight)
                 {
-                    box.offsetHeight = height = minHeight;
+                    this.offsetHeight = height = minHeight;
                 }
                 else if (maxHeight > 0 && height > maxHeight)
                 {
-                    box.offsetHeight = height = maxHeight;
+                    this.offsetHeight = height = maxHeight;
                 }
             }
         }
@@ -866,37 +941,27 @@ flyingon.defineClass('Control', function () {
         {
             this.__update_dirty = 2;
         }
-        
-        return box;
     };
     
         
-    //自定义测量处理
-    this.onmeasure = function (box, auto) {
-        
-        return false;
-    };
-    
-
     //定位控件
     this.locate = function (x, y, alignWidth, alignHeight, container) {
         
-        var box = this.boxModel,
-            margin = box.margin,
-            width = box.offsetWidth,
-            height = box.offsetHeight,
-            value;
+        var margin = this.layout_margin,
+            width = this.offsetWidth,
+            height = this.offsetHeight,
+            any;
 
-        if (alignWidth > 0 && (value = alignWidth - width))
+        if (alignWidth > 0 && (any = alignWidth - width))
         {
-            switch (box.alignX)
+            switch (this.layout_location.alignX)
             {
                 case 'center':
-                    x += value >> 1;
+                    x += any >> 1;
                     break;
 
                 case 'right':
-                    x += value;
+                    x += any;
                     break;
                     
                 default:
@@ -909,16 +974,16 @@ flyingon.defineClass('Control', function () {
             x += margin.left;
         }
 
-        if (alignHeight > 0 && (value = alignHeight - height))
+        if (alignHeight > 0 && (any = alignHeight - height))
         {
-            switch (box.alignY)
+            switch (this.layout_location.alignY)
             {
                 case 'middle':
-                    y += value >> 1;
+                    y += any >> 1;
                     break;
 
                 case 'bottom':
-                    y += value;
+                    y += any;
                     break;
                     
                 default:
@@ -931,17 +996,17 @@ flyingon.defineClass('Control', function () {
             y += margin.top;
         }
         
-        box.offsetLeft = x;
-        box.offsetTop = y;
+        this.offsetLeft = x;
+        this.offsetTop = y;
         
-        if (this.onlocate(box) !== false)
+        if ((any = this.onlocate) && any.call(this) !== false)
         {
-            x = box.offsetLeft;
-            y = box.offsetTop;
+            x = this.offsetLeft;
+            y = this.offsetTop;
         }
 
         //检测位置从上次渲染后是否发生变更
-        this.__location_dirty = (value = this.__location_tag) && value !== (y << 16) + x;
+        this.__location_dirty = (any = this.__location_tag) && any !== (y << 16) + x;
 
         if (container)
         {
@@ -960,247 +1025,8 @@ flyingon.defineClass('Control', function () {
         }
     };
     
-    
-    //自定义定位处理
-    this.onlocate = function (box) {
-      
-        return false;
-    };
-    
-        
-    
-    //创建样式
-    function style(name, check) {
-
-        var key = name.replace(/-(\w)/g, function (_, x) {
-        
-            return x.toUpperCase();
-        });
-        
-        //定义属性
-        self.defineProperty(key, '', {
-
-            group: 'appearance',
-            dom: check === false ? 1 : 2,
-
-            set: function (value) {
-
-                this.renderer.set(this, key, value);
-            }
-        });
-    };
-    
-    
-    //控件层叠顺序
-    style('z-index', false);
 
     
-    //控件上右下左边框样式
-    style('border-style', false);
-
-
-    //控件上右下左边框颜色
-    style('border-color', false);
-
-
-    //控件上右下左边框圆角
-    style('border-radius');
-
-
-    //阅读方向
-    //ltr	    从左到右 
-    //rtl	    从右到左 
-    style('direction', false);
-
-
-    //控件内容横向对齐样式
-    //left      左边对齐
-    //center    横向居中对齐
-    //right     右边对齐
-    style('text-align', false);
-
-    //控件内容纵向对齐样式
-    //top       顶部对齐
-    //middle    纵向居中对齐
-    //bottom    底部对齐
-    style('vertical-align', false);
-
-
-
-    //控件可见性
-    //visible	默认值 元素是可见的 
-    //hidden	元素是不可见的 
-    style('visibility', false);
-
-    //控件透明度
-    //number	0(完全透明)到1(完全不透明)之间数值
-    style('opacity');
-
-    //控件光标样式
-    //url	    需使用的自定义光标的 URL     注释：请在此列表的末端始终定义一种普通的光标, 以防没有由 URL 定义的可用光标 
-    //default	默认光标(通常是一个箭头)
-    //auto	    默认 浏览器设置的光标 
-    //crosshair	光标呈现为十字线 
-    //pointer	光标呈现为指示链接的指针(一只手)
-    //move	    此光标指示某对象可被移动 
-    //e-resize	此光标指示矩形框的边缘可被向右(东)移动 
-    //ne-resize	此光标指示矩形框的边缘可被向上及向右移动(北/东) 
-    //nw-resize	此光标指示矩形框的边缘可被向上及向左移动(北/西) 
-    //n-resize	此光标指示矩形框的边缘可被向上(北)移动 
-    //se-resize	此光标指示矩形框的边缘可被向下及向右移动(南/东) 
-    //sw-resize	此光标指示矩形框的边缘可被向下及向左移动(南/西) 
-    //s-resize	此光标指示矩形框的边缘可被向下移动(南) 
-    //w-resize	此光标指示矩形框的边缘可被向左移动(西) 
-    //text	    此光标指示文本 
-    //wait	    此光标指示程序正忙(通常是一只表或沙漏) 
-    //help	    此光标指示可用的帮助(通常是一个问号或一个气球) 
-    style('cursor', false);
-
-
-    //控件背景颜色
-    //color_name	规定颜色值为颜色名称的背景颜色(比如 red)  transparent:透明 
-    //hex_number	规定颜色值为十六进制值的背景颜色(比如 #ff0000) 
-    //rgb_number	规定颜色值为 rgb 代码的背景颜色(比如 rgb(255,0,0)) 
-    style('background-color', false);
-
-    //控件背景图片
-    //string        图像名(空字符串则表示无背景)
-    //url('URL')	指向图像的路径
-    style('background-image', false);
-
-    //控件背景重复方式
-    //repeat	背景图像将在垂直方向和水平方向重复 
-    //repeat-x	背景图像将在水平方向重复 
-    //repeat-y	背景图像将在垂直方向重复 
-    //no-repeat	背景图像将仅显示一次 
-    style('background-repeat', false);
-
-    //控件背景颜色对齐方式
-    //top left
-    //top center
-    //top right
-    //center left
-    //center center
-    //center right
-    //bottom left
-    //bottom center
-    //bottom right  如果您仅规定了一个关键词, 那么第二个值将是'center'     默认值：0% 0% 
-    //x% y%	        第一个值是水平位置, 第二个值是垂直位置     左上角是 0% 0% 右下角是 100% 100%     如果您仅规定了一个值, 另一个值将是 50% 
-    //xpos ypos	    第一个值是水平位置, 第二个值是垂直位置     左上角是 0 0 单位是像素 (0px 0px) 或任何其他的 CSS 单位     如果您仅规定了一个值, 另一个值将是50%     您可以混合使用 % 和 position 值 
-    style('background-position', false);
-
-
-    //控件颜色
-    //color_name	规定颜色值为颜色名称的颜色(比如 red) 
-    //hex_number	规定颜色值为十六进制值的颜色(比如 #ff0000) 
-    //rgb_number	规定颜色值为 rgb 代码的颜色(比如 rgb(255,0,0)) 
-    style('color', false);
-
-
-    //控件字体样式
-    //normal	浏览器显示一个标准的字体样式 
-    //italic	浏览器会显示一个斜体的字体样式 
-    //oblique	浏览器会显示一个倾斜的字体样式 
-    style('font-style', false);
-
-    //控件字体变体
-    //normal	    浏览器会显示一个标准的字体 
-    //small-caps	浏览器会显示小型大写字母的字体 
-    style('font-variant', false);
-
-    //控件字体粗细
-    //normal	定义标准的字符 
-    //bold	    定义粗体字符 
-    //bolder	定义更粗的字符 
-    //lighter	定义更细的字符 
-    //100-900   定义由粗到细的字符 400 等同于 normal, 而 700 等同于 bold 
-    style('font-weight', false);
-
-    //控件字体大小
-    style('font-size', false);
-
-    //控件文字行高
-    style('line-height', false);
-
-    //控件字体族 family-name generic-family  用于某个元素的字体族名称或/及类族名称的一个优先表
-    style('font-family', false);
-
-
-
-    //控件文字词间距(以空格为准)
-    style('word-spacing', false);
-
-    //控件文字字间距
-    style('letter-spacing', false);
-
-    //控件文字缩进
-    style('text-indent', false);
-
-    //控件文字装饰
-    //none	        默认 定义标准的文本 
-    //underline	    定义文本下的一条线 
-    //overline	    定义文本上的一条线 
-    //line-through	定义穿过文本下的一条线 
-    //blink	        定义闪烁的文本 
-    style('text-decoration', false);
-
-    //控件文字溢出处理方式
-    //clip	    修剪文本
-    //ellipsis	显示省略符号来代表被修剪的文本 	
-    //string	使用给定的字符串来代表被修剪的文本 
-    style('text-overflow', false);
-    
-    
-    
-        
-    this.defineProperty('tabIndex', -1, {
-     
-        set: function (value) {
-
-            this.renderer.set(this, 'tabIndex', value);
-        }
-    });
-    
-    
-    this.defineProperty('disabled', false, {
-     
-        set: function (value) {
-
-            this.renderer.set(this, 'disabled', value);
-        }
-    });
-    
-
-    this.defineProperty('readonly', false, {
-     
-        set: function (value) {
-
-            this.renderer.set(this, 'readonly', value);
-        }
-    });
-    
-    
-    
-    //是否可调整大小或调整大小的方式
-    //none  不可调整
-    //x     只能调整宽度
-    //y     只能调整高度
-    //all   宽度高度都可调整
-    this.defineProperty('resizable', 'none');
-    
-    
-    //是否可移动
-    this.defineProperty('movable', false);
-    
-    
-    //是否要放置移动或拖动
-    this.defineProperty('droppable', false);
-
-
-    //自定义标记
-    this.defineProperty('tag', null);
-
-
 
     //是否可获取焦点
     this.canFocus = function () {
@@ -1258,6 +1084,7 @@ flyingon.defineClass('Control', function () {
         
         if (this.view && this.__update_dirty)
         {
+            flyingon.__update_patch();
             this.renderer.update(this);
         }
         
@@ -1268,7 +1095,11 @@ flyingon.defineClass('Control', function () {
     //刷新控件
     this.refresh = function () {
 
-        this.view && this.renderer.update(this);
+        if (this.view)
+        {
+            flyingon.__update_patch();
+            this.renderer.update(this);
+        }
     };
 
     
@@ -1318,10 +1149,16 @@ flyingon.defineClass('Control', function () {
     
         var storage = this.__storage,
             any;
+
+        //触发销毁过程
+        if (any = this.distroyed)
+        {
+            any.call(this);
+        }
         
         if (this.view)
         {
-            this.renderer.dispose(this);
+            this.renderer.unmount(this);
         }
 
         if (any = this.__dataset)
@@ -1374,7 +1211,7 @@ flyingon.defineClass('Control', function () {
                  name = base + ' ' + name;
             }
             
-            this.defaultClassName = name;
+            this.fullClassName = this.defaultClassName = name;
         }
     };
 

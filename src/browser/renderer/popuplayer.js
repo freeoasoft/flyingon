@@ -68,8 +68,7 @@ flyingon.defineClass(flyingon.PanelRenderer, function (base) {
     //reference: 停靠参考物
     this.show = function (control, reference, offset, direction, align, reverse) {
 
-        var rect = (control.__view_reference = reference.view || reference).getBoundingClientRect(),
-            box;
+        var rect = (control.__view_reference = reference.view || reference).getBoundingClientRect();
             
         if (offset)
         {
@@ -86,9 +85,8 @@ flyingon.defineClass(flyingon.PanelRenderer, function (base) {
 
         rect = flyingon.dom_align(control.view, rect, direction, align, reverse);
 
-        box = control.boxModel;
-        box.offsetLeft = rect.left;
-        box.offsetTop = rect.top;
+        control.offsetLeft = rect.left;
+        control.offsetTop = rect.top;
     };
 
 

@@ -6,11 +6,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
 
 
-    this.render = function (control, writer) {
+    this.render = function (writer, control, cssLayout) {
 
         var any;
-
-        writer.push('<div class="', control.defaultClassName, '" style="', this.cssText(control), '" tag="dialog">',
+        
+        writer.push('<div', this.renderDefault(control, cssLayout), ' tag="dialog">',
             '<div class="flyingon-messagebox-header" tag="header">',
                 '<span class="flyingon-messagebox-icon" ', (any = control.icon()) ? 'class="' + any : 'style="dispaly:none;', '"></span>',
                 '<span class="flyingon-messagebox-title">', control.title(), '</span>',
@@ -43,10 +43,10 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
         flyingon.dom_overlay(view);
 
-        left = control.boxModel.offsetWidth;
+        left = control.offsetWidth;
         left = body.clientWidth - left >> 1;
 
-        top = control.boxModel.offsetHeight;
+        top = control.offsetHeight;
         top = ((window.innerHeight || document.documentElement.clientHeight) - top >> 1) - body.clientLeft;
 
         control.measure(0, 0);
@@ -57,9 +57,9 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
 
     
-    this.initView = function (control, view) {
+    this.mount = function (control, view) {
 
-        base.initView.call(this, control, view);
+        base.mount.call(this, control, view);
         
         control.on('mousedown', mousedown);
         control.on('click', click);

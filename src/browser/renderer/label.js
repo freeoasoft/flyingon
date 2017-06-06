@@ -6,11 +6,33 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
     
 
-    this.render = function (control, writer) {
+    this.render = function (writer, control, cssLayout) {
 
-        writer.push('<div class="', control.defaultClassName, '" style="', this.cssText(control), ';">',
-                flyingon.html_encode(control.text()),
-            '</div>');
+        var text = control.text(),
+            auto,
+            style;
+
+        if (!cssLayout && (auto = control.layout_auto))
+        {
+            style = '';
+
+            if (auto & 1)
+            {
+                style = 'width:auto;';
+            }
+
+            if (auto & 2)
+            {
+                style += 'height:auto;';
+            }
+        }
+
+        if (text && !control.html())
+        {
+            text = flyingon.html_encode(text);
+        }
+
+        writer.push('<div', this.renderDefault(control, cssLayout, '', style), '>', text, '</div>');
     };
 
 
@@ -18,11 +40,27 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
         if (control.html())
         {
-            view.innerHTML = flyingon.html_encode(value);
+            view.innerHTML = value;
         }
         else
         {
             view[this.__text_name] = value;
+        }
+    };
+
+
+    this.auto = function (control, auto) {
+
+        var view = control.view;
+
+        if (auto & 1)
+        {
+            control.offsetWidth = view.offsetWidth;
+        }
+
+        if (auto & 2)
+        {
+            control.offsetHeight = view.offsetWidth;
         }
     };
 

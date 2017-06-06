@@ -282,7 +282,7 @@ var flyingon;
         if (typeof callback === 'function')
         {
             //如果正在动态加载脚本或还有依赖的js没有加载完成则先注册 否则立即执行
-            if (!(fn = flyingon.load) || 
+            if (!(fn = flyingon.require) || 
                 !(fn = fn.callback) || 
                 !fn(load_module, [item, callback]))
             {
@@ -507,9 +507,9 @@ var flyingon;
                 prototype.get = get;
                 prototype.set = set;
                 prototype.sets = sets;
-                prototype.assign = assign;
                 prototype.defaultValue = defaultValue;
                 prototype.properties = properties;
+                prototype.getOwnPropertyNames = getOwnPropertyNames;
                 prototype.watch = watch;
                 prototype.unwatch = unwatch;
             }
@@ -691,12 +691,7 @@ var flyingon;
 
             var storage = this.__storage,
                 name = key,
-                any;
-
-            if (!storage || (any = storage[name]) === void 0)
-            {
-                any = this.__defaults[name];
-            }
+                any = (storage || this.__defaults)[name];
 
             if (value === void 0)
             {
@@ -737,7 +732,7 @@ var flyingon;
                 return this;
             }
 
-            (storage || (this.__storage = create(null)))[name] = value;
+            (storage || (this.__storage = create(this.__defaults)))[name] = value;
 
             if (set)
             {
@@ -791,48 +786,34 @@ var flyingon;
     //获取当前存储对象
     function storage(name) {
         
-        var any = this.__storage;
+        var storage = this.__storage;
         
         if (name)
         {
-            if (any && (any = any[name]) !== void 0)
-            {
-                return any;
-            }
-            
-            return this.__defaults[name];
+            return (storage || this.__defaults)[name];
         }
         
-        return any || (this.__storage = create(null));
+        return storage || (this.__storage = create(this.__defaults));
     };
     
         
     //获取指定名称的属性值
     function get(name) {
-        
-        var value = this.__storage;
-        
-        if (value && (value = value[name]) !== void 0)
-        {
-            return value;
-        }
-        
-        return this.__defaults[name];
+      
+        return (this.__storage || this.__defaults)[name];
     };
     
     
     //设置指定名称的属性值
     function set(name, value, bind) {
         
-        var fn = this[name];
-        
-        if (typeof fn === 'function')
+        if (this.__properties[name])
         {
-            fn.call(this, value, bind);
+            this[name](value, bind);
         }
         else
         {
-            (this.__storage || (this.__storage = create(null)))[name] = value;
+            (this.__storage || (this.__storage = create(this.__defaults)))[name] = value;
         }
         
         return this;
@@ -841,20 +822,20 @@ var flyingon;
 
     //批量设置属性值
     function sets(values, bind) {
-
-        var fn;
         
         if (values)
         {
+            var properties = this.__properties;
+
             for (var name in values)
             {
-                if (typeof (fn = this[name]) === 'function')
+                if (properties[name])
                 {
-                    fn.call(this, values[name], bind);
+                    this[name](values[name], bind);
                 }
                 else
                 {
-                    (this.__storage || (this.__storage = create(null)))[name] = values[name];
+                    (this.__storage || (this.__storage = create(this.__defaults)))[name] = values[name];
                 }
             }
         }
@@ -863,42 +844,20 @@ var flyingon;
     };
     
     
-    //批量赋属性值
-    function assign(values, type) {
-        
-        var storage = this.__storage || (this.__storage = create(null));
-        
-        if (values)
-        {
-            type = type || 'xtype';
-            
-            for (var name in values)
-            {
-                if (name !== type)
-                {
-                    storage[name] = values[name];
-                }
-            }
-        }
-        
-        return this;
-    };
-
-
     //获取或设置属性默认值
     function defaultValue(name, value) {
 
-        var target = this.__defaults;
+        var defaults = this.__defaults;
 
         if (value === void 0)
         {
-            return target[name];
+            return defaults[name];
         }
 
-        target[name] = value;
-        target = this.__properties;
+        defaults[name] = value;
+        defaults = this.__properties;
         
-        (target[name] = flyingon.extend({}, target[name])).defaultValue = value;
+        (defaults[name] = flyingon.extend({}, defaults[name])).defaultValue = value;
                 
         return this;
     };
@@ -1190,20 +1149,54 @@ var flyingon;
     };
 
 
+    //获取自身属性值集合(不包含默认值)
+    function getOwnPropertyNames() {
+        
+        var storage = this.__storage,
+            defaults,
+            any;
+
+        if (storage)
+        {
+            if (any = Object.getOwnPropertyNames)
+            {
+                return any(storage);
+            }
+
+            defaults = this.__defaults;
+            any = [];
+
+            for (var name in storage)
+            {
+                if (storage[name] !== defaults[name])
+                {
+                    any.push(name);
+                }
+            }
+
+            return any;
+        }
+
+        return [];
+    };
+
 
     //以当前对象的参照复制生成新对象
     function clone() {
 
         var target = new this.Class(),
-            storage = this.__storage;
+            storage = this.__storage,
+            names,
+            name;
 
         if (storage)
         {
-            target.__storage = create(null);
+            target.__storage = create(this.__defaults);
+            names = this.getOwnPropertyNames();
 
-            for (var name in storage)
+            for (var i = 0, l = names.length; i < l; i++)
             {
-                target[name](stroage[name], false);
+                target[name = names[i]](stroage[name], false);
             }
         }
 

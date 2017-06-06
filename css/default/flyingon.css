@@ -25,6 +25,11 @@
     background-color: transparent;
 }
 
+.flyingon-label {
+
+    padding: 2px 4px;
+}
+
 
 .flyingon-messagebox {
     border: 1px solid black;

@@ -5,10 +5,17 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
     
 
-    this.render = function (control, writer) {
+    this.render = function (writer, control, cssLayout) {
 
-        writer.push('<div class="', control.defaultClassName, '" style="', this.cssText(control), 'border-width:1px;border-style:solid;">',
-                '<input type="text" class="flyingon-textbox-text" value="', flyingon.html_encode(control.text()), '" />',
+        var text = control.text();
+
+        if (text)
+        {
+            text = flyingon.html_encode(text);
+        }
+
+        writer.push('<div', this.renderDefault(control, cssLayout, '', 'border:1px solid;'), '>',
+                '<input type="text" class="flyingon-textbox-text" value="', text, '" />',
             '</div>');
     };
 
@@ -20,10 +27,9 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
 
 
-    this.initView = function (control, view) {
+    this.mount = function (control, view) {
 
-        base.initView.call(this, control, view);
-        
+        base.mount.call(this, control, view);
         control.on('change', on_change);
     };
 

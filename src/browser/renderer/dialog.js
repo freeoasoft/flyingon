@@ -12,10 +12,26 @@ flyingon.defineClass(flyingon.PanelRenderer, function (base) {
     });
 
 
-    
-    this.initView = function (control, view) {
 
-        base.base.initView.call(this, control, view);
+    this.render = function (writer, control, cssLayout) {
+
+        writer.push('<div', this.renderDefault(control, cssLayout), ' tag="dialog">',
+            '<div class="flyingon-dialog-header" tag="header">',
+                '<span class="flyingon-dialog-icon" style="display:none;"></span>',
+                '<span class="flyingon-dialog-title"></span>',
+                '<span class="flyingon-dialog-close" tag="close"></span>',
+            '</div>',
+            '<div class="flyingon-dialog-body" tag="body">');
+        
+        this.renderBody(writer, control);
+
+        writer.push('</div></div>');
+    };
+    
+    
+    this.mount = function (control, view) {
+
+        base.base.mount.call(this, control, view);
 
         view = view.lastChild;
         this.__init_children(control, view.lastChild, view.firstChild);
@@ -73,28 +89,6 @@ flyingon.defineClass(flyingon.PanelRenderer, function (base) {
 
 
 
-    this.render = function (control, writer, children) {
-
-        if (control.__arrange_dirty)
-        {
-            control.arrange();
-        }
-
-        writer.push('<div class="', control.defaultClassName, '" style="', this.cssText(control), '" tag="dialog">',
-            '<div class="flyingon-Dialog-header" tag="header">',
-                '<span class="flyingon-Dialog-icon" style="display:none;"></span>',
-                '<span class="flyingon-Dialog-title"></span>',
-                '<span class="flyingon-Dialog-close" tag="close"></span>',
-            '</div>',
-            '<div class="flyingon-Dialog-body" tag="body">');
-        
-        this.renderBody(control, writer);
-
-        writer.push('</div></div>');
-    };
-
-
-
     this.headerHeight = function (control, view, value) {
 
         var style = view.children[0].style;
@@ -108,7 +102,7 @@ flyingon.defineClass(flyingon.PanelRenderer, function (base) {
 
         var dom = view.children[0].children[0];
 
-        dom.className = 'flyingon-Dialog-icon ' + value;
+        dom.className = 'flyingon-dialog-icon ' + value;
         dom.style.display = value ? '' : 'none';
     };
 
@@ -136,14 +130,12 @@ flyingon.defineClass(flyingon.PanelRenderer, function (base) {
 
         if (left == null)
         {
-            left = control.boxModel.offsetWidth;
-            left = body.clientWidth - left >> 1;
+            left = body.clientWidth - control.offsetWidth >> 1;
         }
 
         if (top == null)
         {
-            top = control.boxModel.offsetHeight;
-            top = ((window.innerHeight || document.documentElement.clientHeight) - top >> 1) - body.clientLeft;
+            top = ((window.innerHeight || document.documentElement.clientHeight) - control.offsetHeight >> 1) - body.clientLeft;
         }
 
         control.locate(left | 0, top | 0);
