@@ -1,15 +1,16 @@
-flyingon.defineClass('Label', flyingon.Control, function (base) {
-   
+flyingon.defineClass('HtmlText', flyingon.Control, function (base) {
+
+
         
-        
-    this.defineProperty('text', '', {
+    this.defineProperty('html', '', {
         
         set: function (value) {
 
-            this.view && this.renderer.set(this, 'text', value);
+            this.view && this.renderer.set(this, 'html', value);
         }
     });
     
+
     
     //测量自动大小
     this.onmeasure = function (auto, border) {
@@ -26,4 +27,4 @@ flyingon.defineClass('Label', flyingon.Control, function (base) {
     
 
 
-}).alias('label');
+});

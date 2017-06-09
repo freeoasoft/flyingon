@@ -43,8 +43,17 @@ flyingon.defineClass('Control', function () {
     this.defaultHeight = 25;
     
 
-    //渲染坐标
+    //控件坐标
     this.offsetLeft = this.offsetTop = this.offsetWidth = this.offsetHeight = 0;
+
+    //外边距
+    this.marginLeft = this.marginTop = this.marginRight = this.marginBottom = 0;
+
+    //边框宽度
+    this.borderLeft = this.borderTop = this.borderRight = this.borderBottom = 0;
+
+    //内边距
+    this.paddingLeft = this.paddingTop = this.paddingRight = this.paddingBottom = 0;
 
     //滚动条位置
     this.scrollLeft = this.scrollTop = 0;
@@ -161,7 +170,7 @@ flyingon.defineClass('Control', function () {
 
         var list, keys, any;
 
-        if (name && (list = name.match(/\w+/g)))
+        if (name && (list = name.match(/[\w-]+/g)))
         {
             if (keys = this.__class_keys)
             {
@@ -339,20 +348,6 @@ flyingon.defineClass('Control', function () {
 
             set: function (value) {
 
-                var any = this.__view_location;
-
-                if (any)
-                {
-                    any[name] = value;
-                }
-                else
-                {
-                    any = {};
-                    any[name] = value;
-
-                    this.renderer.set(this, '__style_location', this.__view_location = any);
-                }
-
                 if (this.__update_dirty < 2)
                 {
                     this.invalidate();
@@ -370,9 +365,17 @@ flyingon.defineClass('Control', function () {
     define('top', '');
 
     //宽度
+    //default: 默认
+    //auto: 自动
+    //number: 指定象素
+    //number + css单位
     define('width', 'default');
 
     //高度
+    //default: 默认
+    //auto: 自动
+    //number: 指定象素
+    //number + css单位
     define('height', 'default');
 
 
@@ -392,25 +395,6 @@ flyingon.defineClass('Control', function () {
     //最小宽度
     define('margin', '');
 
-
-
-    //定义样式无关的定位属性
-    define = function (name, defaultValue) {
-        
-        self.defineProperty(name, defaultValue, {
-            
-            group: 'layout',
-
-            set: function (value) {
-
-                if (this.__update_dirty < 2)
-                {
-                    this.invalidate();
-                }
-            }
-        });
-    };
-    
        
     //控件横向对齐方式
     //left      左边对齐
@@ -689,18 +673,6 @@ flyingon.defineClass('Control', function () {
     define('animation', '');
 
 
-    //定位
-    define('position', '', false);
-
-    //显示
-    define('display', '', false);
-
-    //浮动
-    define('float', '', false);
-
-    //清除浮动
-    define('clear', '', false);
-    
 
 
     //定义attribute属性
@@ -774,22 +746,23 @@ flyingon.defineClass('Control', function () {
 
 
 
-    
-    //初始化布局定位属性
-    this.__init_location = function (width) {
+    //获取定位属性值
+    this.locationValue = function (name) {
 
-        var location = this.layout_location || (this.layout_location = this.__storage || this.__defaults),
-            fn = pixel_sides,
-            cache = fn.cache,
-            any;
-
-        this.layout_margin = cache[any = location.margin] || fn(any, width);
-        this.layout_border = cache[any = location.border] || fn(any, 0); //border不支持百分比
-        this.layout_padding = cache[any = location.padding] || fn(any, width);
-
-        return location;
+        return (this.__location_values || this.__storage || this.__defaults)[name];
     };
+
+
     
+    //初始化顶级控件布局
+    this.__layout_top = function (width, height) {
+
+        this.__location_values = null;
+        this.left = this.top = 0;
+
+        this.measure(width, height, width, height, height ? 3 : 1);
+    };
+
 
     //测量控件大小
     //containerWidth    容器宽度
@@ -799,7 +772,7 @@ flyingon.defineClass('Control', function () {
     //defaultToFill     默认宽度或高度是否转成充满 0:不转 1:宽度转 2:高度转 3:宽高都转
     this.measure = function (containerWidth, containerHeight, availableWidth, availableHeight, defaultToFill) {
         
-        var location = this.__init_location(containerWidth),
+        var location = this.__location_values || this.__storage || this.__defaults,
             minWidth = location.minWidth,
             maxWidth = location.maxWidth,
             minHeight = location.minHeight,
@@ -807,10 +780,34 @@ flyingon.defineClass('Control', function () {
             width = location.width,
             height = location.height,
             auto = 0,
-            fn = pixel,
+            fn = pixel_sides,
             cache = fn.cache,
             any;
-        
+
+        any = cache[any = location.margin] || fn(any, containerWidth);
+
+        this.marginLeft = any.left;
+        this.marginTop = any.top;
+        this.marginRight = any.right;
+        this.marginBottom = any.bottom;
+
+        any = cache[any = location.border] || fn(any, 0); //border不支持百分比
+
+        this.borderLeft = any.left;
+        this.borderTop = any.top;
+        this.borderRight = any.right;
+        this.borderBottom = any.bottom;
+
+        any = cache[any = location.padding] || fn(any, containerWidth);
+
+        this.paddingLeft = any.left;
+        this.paddingTop = any.top;
+        this.paddingRight = any.right;
+        this.paddingBottom = any.bottom;
+
+        fn = pixel;
+        cache = fn.cache;
+
         minWidth = (any = +minWidth) === any ? any | 0 : cache[minWidth] || fn(minWidth, containerWidth);
         maxWidth = (any = +maxWidth) === any ? any | 0 : cache[minWidth] || fn(minWidth, containerWidth);
 
@@ -821,23 +818,20 @@ flyingon.defineClass('Control', function () {
         switch (width)
         {
             case 'default':
-                width = defaultToFill & 1 ? true : this.defaultWidth;
-                break;
-                
-            case 'fill':
-                width = true;
-                break;
-
-            case 'auto':
-                if (height === 'auto') //width及height同为auto时,width按default处理
+                if (defaultToFill & 1)
                 {
-                    width = defaultToFill & 1 ? true : this.defaultWidth;
+                    any = availableWidth >= 0 ? availableWidth : containerWidth;
+                    width = any - this.marginLeft - this.marginRight;
                 }
                 else
                 {
-                    auto = 1;
-                    width = availableWidth || this.defaultWidth;
+                    width = this.defaultWidth;
                 }
+                break;
+                
+            case 'auto':
+                auto = 1;
+                width = availableWidth || this.defaultWidth;
                 break;
 
             default:
@@ -845,9 +839,7 @@ flyingon.defineClass('Control', function () {
                 break;
         }
 
-        //充满可用宽度
-        if (width === true && 
-            (width = (availableWidth >= 0 ? availableWidth : containerWidth) - this.layout_margin.width) < 0)
+        if (any < 0)
         {
             width = 0;
         }
@@ -856,13 +848,17 @@ flyingon.defineClass('Control', function () {
         switch (height)
         {
             case 'default':
-                height = defaultToFill & 2 ? true : this.defaultHeight;
+                if (defaultToFill & 2)
+                {
+                    any = availableHeight >= 0 ? availableHeight : containerHeight;
+                    height = any - this.marginTop - this.marginBottom;
+                }
+                else
+                {
+                    height = this.defaultHeight;
+                }
                 break;
                 
-            case 'fill':
-                height = true;
-                break;
-
             case 'auto':
                 auto |= 2;
                 height = availableHeight || this.defaultHeight;
@@ -873,15 +869,13 @@ flyingon.defineClass('Control', function () {
                 break;
         }
 
-        this.layout_auto = auto; 
-        
-        //充满可用高度
-        if (height === true && 
-            (height = (availableHeight >= 0 ? availableHeight : containerHeight) - this.layout_margin.height) < 0)
+        if (height < 0)
         {
             height = 0;
         }
 
+        this.__auto_size = auto; 
+        
         //处理最小及最大宽度
         if (width < minWidth)
         {
@@ -947,14 +941,13 @@ flyingon.defineClass('Control', function () {
     //定位控件
     this.locate = function (x, y, alignWidth, alignHeight, container) {
         
-        var margin = this.layout_margin,
-            width = this.offsetWidth,
+        var width = this.offsetWidth,
             height = this.offsetHeight,
             any;
 
         if (alignWidth > 0 && (any = alignWidth - width))
         {
-            switch (this.layout_location.alignX)
+            switch ((this.__location_values || this.__storage || this.__defaults).alignX)
             {
                 case 'center':
                     x += any >> 1;
@@ -965,18 +958,18 @@ flyingon.defineClass('Control', function () {
                     break;
                     
                 default:
-                    x += margin.left;
+                    x += this.marginLeft;
                     break;
             }
         }
         else
         {
-            x += margin.left;
+            x += this.marginLeft;
         }
 
         if (alignHeight > 0 && (any = alignHeight - height))
         {
-            switch (this.layout_location.alignY)
+            switch ((this.__location_values || this.__storage || this.__defaults).alignY)
             {
                 case 'middle':
                     y += any >> 1;
@@ -987,13 +980,13 @@ flyingon.defineClass('Control', function () {
                     break;
                     
                 default:
-                    y += margin.top;
+                    y += this.marginTop;
                     break;
             }
         }
         else
         {
-            y += margin.top;
+            y += this.marginTop;
         }
         
         this.offsetLeft = x;
@@ -1010,8 +1003,8 @@ flyingon.defineClass('Control', function () {
 
         if (container)
         {
-            container.arrangeX = (x += width + margin.right);
-            container.arrangeY = (y += height + margin.bottom);
+            container.arrangeX = (x += width + this.marginRight);
+            container.arrangeY = (y += height + this.marginBottom);
 
             if (x > container.arrangeRight)
             {

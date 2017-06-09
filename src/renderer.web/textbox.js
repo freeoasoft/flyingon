@@ -5,16 +5,16 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
     
 
-    this.render = function (writer, control, cssLayout) {
+    this.render = function (writer, control) {
 
         var text = control.text();
 
         if (text)
         {
-            text = flyingon.html_encode(text);
+            text = flyingon.html_encode(text, false);
         }
 
-        writer.push('<div', this.renderDefault(control, cssLayout, '', 'border:1px solid;'), '>',
+        writer.push('<div', this.renderDefault(control), '>',
                 '<input type="text" class="flyingon-textbox-text" value="', text, '" />',
             '</div>');
     };

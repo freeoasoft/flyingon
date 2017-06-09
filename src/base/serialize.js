@@ -24,7 +24,7 @@ flyingon.__serialize_fragment = flyingon.fragment(function () {
         
         if (any = this.__storage)
         {
-            writer.writeProperties(any, this.__bind_keys);
+            writer.writeProperties(any, this.getOwnPropertyNames(), this.__bind_keys);
         }
     };
     
@@ -354,7 +354,11 @@ flyingon.SerializeWriter = flyingon.defineClass(function () {
             }
             else
             {
-                this.writeProperties(value);
+                for (var name in value)
+                {
+                    data.push('"', name, '":');
+                    this.write(value[name]);
+                }
             }
 
             data.push(data.pop() === ',' ? '}' : '{}', ',');
@@ -366,29 +370,24 @@ flyingon.SerializeWriter = flyingon.defineClass(function () {
     };
 
 
-    this.writeProperties = function (values, bind) {
+    this.writeProperties = function (storage, names, bind) {
 
-        if (values)
+        var data = this.data,
+            name,
+            any;
+        
+        for (var i = 0, l = names.length; i < l; i++)
         {
-            var data = this.data,
-                any;
+            name = names[i];
             
-            for (var name in values)
+            if (bind && (any = bind[name]))
             {
-                if (bind && (any = bind[name]))
-                {
-                    if (typeof any === 'function')
-                    {
-                        any = any.text;
-                    }
-                    
-                    data.push('"', name, '":"{{', any.replace(/"/g, '\\"'),'}}"', ',');
-                }
-                else
-                {
-                    data.push('"', name, '":');
-                    this.write(values[name]);
-                }
+                data.push('"', name, '":"{{', any.replace(/"/g, '\\"'),'}}"', ',');
+            }
+            else
+            {
+                data.push('"', name, '":');
+                this.write(storage[name]);
             }
         }
     };

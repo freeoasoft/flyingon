@@ -6,7 +6,7 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
     
 
-    this.render = function (writer, control, cssLayout) {
+    this.render = function (writer, control) {
 
         var encode = flyingon.html_encode,
             href = control.href(),
@@ -22,16 +22,9 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
             text = encode(text);
         }
 
-        writer.push('<div', this.renderDefault(control, cssLayout), '>',
-                '<a href="', href, '">', text, '</a>',
-            '</div>');
+        writer.push('<div', this.renderDefault(control), '><a href="', href, '">', text, '</a></div>');
     };
 
-
-    this.text = function (control, view, value) {
-
-        view.innerHTML = flyingon.html_encode(value);
-    };
 
 
     this.href = function (control, view, value) {

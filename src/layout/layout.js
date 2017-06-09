@@ -74,11 +74,46 @@ flyingon.Layout = flyingon.defineClass(function () {
     //排列容器控件
     flyingon.arrange = function (container, items, hscroll, vscroll, sublayout) {
         
-        var padding = container.layout_padding,
-            layout,
+        var auto = container.__auto_size & 2, 
             any;
+
+        //计算排列区域
+        container.arrangeLeft = container.paddingLeft;
+        container.arrangeTop = container.paddingTop;
+
+        any = container.borderLeft + container.borderRight + container.paddingLeft + container.paddingRight;
+        any = container.offsetWidth - any;
+
+        container.arrangeWidth = any > 0 ? any : 0;
+
+        //高度为auto时排列高度为0
+        if (auto)
+        {
+            any = 0;
+        }
+        else
+        {
+            any = container.borderTop + container.borderBottom + container.paddingTop + container.paddingBottom;
+            any = container.offsetHeight - any;
+            
+            if (any < 0)
+            {
+                any = 0;
+            }
+        }
         
-        container.arrangeArea(container.layout_border, padding);
+        container.arrangeHeight = any;
+        
+        if (any = container.arrangeArea)
+        {
+            any.call(container);
+
+            //高度为auto时保证排列高度为0
+            if (auto)
+            {
+                container.arrangeHeight = 0;
+            }
+        }
 
         container.arrangeRight = container.arrangeLeft;
         container.arrangeBottom = container.arrangeTop;
@@ -86,30 +121,30 @@ flyingon.Layout = flyingon.defineClass(function () {
         //排列子控件
         if (items && items.length > 0)
         {
-            arrange(layout = flyingon.getLayout(container), container, items, hscroll, vscroll, sublayout);
+            arrange(any = flyingon.getLayout(container), container, items, hscroll, vscroll, sublayout);
                     
             if (hscroll)
             {
-                container.layout_hscroll = container.arrangeRight > container.arrangeLeft + container.arrangeWidth;
+                container.__hscroll = container.arrangeRight > container.arrangeLeft + container.arrangeWidth;
             }
 
             if (vscroll)
             {
-                container.layout_vscroll = container.arrangeBottom > container.arrangeTop + container.arrangeHeight;
+                container.__vscroll = container.arrangeBottom > container.arrangeTop + container.arrangeHeight;
             }
             
-            container.arrangeRight += padding.right;
-            container.arrangeBottom += padding.bottom;
+            container.arrangeRight += container.paddingRight;
+            container.arrangeBottom += container.paddingBottom;
 
             //非子布局 从左向左处理(注:子布局不需处理,由上层布局统一处理)
-            if (!sublayout && (flyingon.rtl || layout.rtl()))
+            if (!sublayout && (flyingon.rtl || any.rtl()))
             {
                 arrange_rtl(container, items);
             }
         }
         else
         {
-            container.layout_hscroll = container.layout_vscroll = false;
+            container.__hscroll = container.__vscroll = false;
         }
     };
     
@@ -241,7 +276,7 @@ flyingon.Layout = flyingon.defineClass(function () {
                 item = items[i];
                 location.prototype = item.__storage || item.__defaults;
 
-                item.layout_location = new location(container, item, i);
+                item.__location_values = new location(container, item, i);
             }
 
             location.prototype = null;
@@ -251,7 +286,7 @@ flyingon.Layout = flyingon.defineClass(function () {
             for (var i = items.length - 1; i >= 0; i--)
             {
                 item = items[i];
-                item.layout_location = item.__storage || item.__defaults;
+                item.__location_values = null;
             }
         }
         
@@ -605,7 +640,7 @@ flyingon.defineClass(flyingon.Layout, function (base) {
 
 
     //行高
-    this.defineProperty('lineHeight', 0, {
+    this.defineProperty('lineHeight', '0', {
      
         dataType: 'integer',
         check: function (value) {
@@ -637,7 +672,7 @@ flyingon.defineClass(flyingon.Layout, function (base) {
             (control = items[i]).measure(width, height, right - x || -1, lineHeight || -1);
 
             //处理换行
-            if (x > left && (x + control.offsetWidth + control.layout_margin.right > right))
+            if (x > left && (x + control.offsetWidth + control.marginRight > right))
             {
                 x = left;
                 y = (lineHeight ? y + lineHeight : container.arrangeBottom) + spacingY;
@@ -668,7 +703,7 @@ flyingon.defineClass(flyingon.Layout, function (base) {
 
 
     //行宽
-    this.defineProperty('lineWidth', 0, {
+    this.defineProperty('lineWidth', '0', {
      
         dataType: 'integer',
         check: function (value) {
@@ -700,7 +735,7 @@ flyingon.defineClass(flyingon.Layout, function (base) {
             (control = items[i]).measure(width, height, lineWidth || -1, bottom - y || -1);
 
             //处理换行
-            if (y > top && (y + control.offsetHeight + control.layout_margin.bottom > bottom))
+            if (y > top && (y + control.offsetHeight + control.marginBottom > bottom))
             {
                 x = (lineWidth ? x + lineWidth : container.arrangeRight) + spacingX;
                 y = top;
@@ -751,7 +786,7 @@ flyingon.defineClass(flyingon.Layout, function (base) {
         {
             control = items[i];
 
-            switch (control.layout_location.dock)
+            switch (control.locationValue('dock'))
             {
                 case 'left':
                     control.measure(arrangeWidth, arrangeHeight, width, height, 2);
@@ -776,7 +811,7 @@ flyingon.defineClass(flyingon.Layout, function (base) {
                 case 'right':
                     control.measure(arrangeWidth, arrangeHeight, width, height, 2);
                     
-                    right -= control.offsetWidth - control.layout_margin.width;
+                    right -= control.offsetWidth - control.marginLeft - control.marginRight;
                     control.locate(right, y, 0, height, container);
 
                     if ((width = (right -= spacingX) - x) < 0)
@@ -788,7 +823,7 @@ flyingon.defineClass(flyingon.Layout, function (base) {
                 case 'bottom':
                     control.measure(arrangeWidth, arrangeHeight, width, height, 1);
                     
-                    bottom -= control.offsetHeight - control.layout_margin.height;
+                    bottom -= control.offsetHeight - control.marginTop - control.marginBottom;
                     control.locate(x, bottom, width, 0, container);
 
                     if ((height = (bottom -= spacingY) - y) < 0)
@@ -892,7 +927,7 @@ flyingon.defineClass(flyingon.Layout, function (base) {
         for (var i = 0, l = items.length; i < l; i++)
         {
             control = items[i];
-            location = control.layout_location;
+            location = control.__location_values || control.__storage || control.__defaults;
 
             left = x + fn(location.left, width);
             top = y + fn(location.top, height);

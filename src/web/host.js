@@ -69,11 +69,18 @@
         
         var list = update_list,
             index = 0,
-            item;
+            item,
+            node;
         
         while (item = list[index++])
         {
             item.__delay_update = false;
+
+            if (item.__update_dirty > 1 && (node = item.view) && (node = node.parentNode))
+            {
+                item.__layout_top(node.clientWidth, node.clientHeight);
+            }
+
             item.update();
         }
         
@@ -105,23 +112,46 @@
     };
 
 
+
     //挂载控件至指定的dom容器
-    flyingon.mount = function (control, host) {
+    flyingon.mount = function (control, host, callback) {
 
         control && !control.__top_control && flyingon.ready(function () {
 
             var node = host,
+                view = this.view,
+                renderer = this.renderer,
                 any;
 
-            host = null;
             this.__top_control = true;
+            this.fullClassName += ' flyingon-host';
 
             if (typeof node === 'string')
             {
                 node = document.getElementById(node);
             }
+            
+            this.__layout_top(node.clientWidth, node.clientHeight);
 
-            this.renderer.show(this, node || document.body);
+            if (view)
+            {
+                node.appendChild(view);
+            }
+            else
+            {
+                renderer.render(any = [], this);
+                
+                flyingon.dom_html(node, any.join(''));
+
+                renderer.mount(this, view = node.lastChild);
+            }
+
+            renderer.update(this);
+
+            if (typeof (any = callback) === 'function')
+            {
+                any.call(this);
+            }
 
         }, control);
     };
@@ -146,10 +176,14 @@
             {
                 parent.removeChild(dom);
             }
- 
+
             if (dispose !== false)
             {
                 control.dispose();
+            }
+            else
+            {
+                control.fullClassName.replace(' flyingon-host', '');
             }
         }
     };

@@ -36,12 +36,12 @@ flyingon.Sublayout = flyingon.defineClass(flyingon.Control, function (base) {
         {
             if (auto & 1)
             {
-                this.offsetWidth = this.arrangeRight + this.layout_border.width;
+                this.offsetWidth = this.arrangeRight + this.borderLeft + this.borderRight;
             }
             
             if (auto & 2)
             {
-                this.offsetHeight = this.arrangeBottom + this.layout_border.height;
+                this.offsetHeight = this.arrangeBottom + this.borderTop + this.borderBottom;
             }
         }
         else
@@ -72,20 +72,6 @@ flyingon.Sublayout = flyingon.defineClass(flyingon.Control, function (base) {
         }
         
         return false;
-    };
-
-
-    //计算排列区域
-    this.arrangeArea = function (border, padding) {
-
-        var any;
-
-        //计算排列区域
-        this.arrangeLeft = padding.left;
-        this.arrangeTop = padding.top;
-
-        this.arrangeWidth = (any = this.offsetWidth - border.width - padding.width) > 0 ? any : 0;
-        this.arrangeHeight = (any = this.offsetHeight - border.height - padding.height) > 0 ? any : 0;
     };
 
 

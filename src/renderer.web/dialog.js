@@ -13,9 +13,9 @@ flyingon.defineClass(flyingon.PanelRenderer, function (base) {
 
 
 
-    this.render = function (writer, control, cssLayout) {
+    this.render = function (writer, control) {
 
-        writer.push('<div', this.renderDefault(control, cssLayout), ' tag="dialog">',
+        writer.push('<div', this.renderDefault(control), ' tag="dialog">',
             '<div class="flyingon-dialog-header" tag="header">',
                 '<span class="flyingon-dialog-icon" style="display:none;"></span>',
                 '<span class="flyingon-dialog-title"></span>',

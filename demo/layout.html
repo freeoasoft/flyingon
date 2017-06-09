@@ -6,7 +6,7 @@
 </head>
 <body style="padding:10px;">
 
-    <div id="host"></div>
+    <div id="host" style="height:400px;"></div>
     
     <script type="text/javascript" src="../js/flyingon.js"></script>
     
@@ -58,14 +58,14 @@
                             location: function (container, item, index) {
 
                                 var height = container.arrangeHeight,
-                                    value = Math.sin(60 * (index + 1) / Math.PI);
+                                    value = Math.sin(58.648 * (index + 1) / Math.PI);
 
                                 if (value < 0)
                                 {
                                     value = -value;
                                 }
 
-                                this.alignY = 'middle';
+                                this.alignY = 'bottom';
                                 this.height = value * height / 2 | 0;
                             }
                         }
@@ -102,7 +102,6 @@
 
         var panel = new flyingon.Panel().sets({
 
-            height: 400,
             border: 1,
             padding: 8,
             resizable: 'all',
@@ -110,7 +109,7 @@
         });
 
 
-        for (var i = 0; i < 100; i++)
+        for (var i = 0; i < 101; i++)
         {
             panel.appendChild(new flyingon.Control().sets({
 

@@ -532,50 +532,33 @@ flyingon.style = function (cssText) {
 //html文档树加载完毕
 flyingon.ready = (function () {
 
-    var list, timer;
+    var list;
 
     function ready() {
 
-        if (list)
+        var any = list;
+
+        if (any)
         {
             flyingon.dom_off(document, 'DOMContentLoaded', ready);
             flyingon.dom_off(window, 'load', ready);
 
-            for (var i = 0; i < list.length; i++) //执行过程中可能会加入函数，故不能缓存length
+            for (var i = 0; i < any.length; i++) //执行过程中可能会加入函数，故不能缓存length
             {
-                list[i++].call(list[i]);
+                any[i++].call(any[i]);
             }
 
             list = null;
-
-            if (timer)
-            {
-                clearTimeout(timer);
-            }
         }
     };
 
-    function check() {
+    if (document.readyState !== 'complete')
+    {
+        list = [];
 
-        if (document.readyState === 'complete')
-        {
-            ready();
-        }
-        else
-        {
-            if (!list)
-            {
-                list = [];
-
-                flyingon.dom_on(document, 'DOMContentLoaded', ready);
-                flyingon.dom_on(window, 'load', ready);
-            }
-
-            timer = setTimeout(check, 0);
-        }
-    };
-
-    check();
+        flyingon.dom_on(document, 'DOMContentLoaded', ready);
+        flyingon.dom_on(window, 'load', ready);
+    }
 
     return function (fn, context) {
 
@@ -646,71 +629,44 @@ flyingon.dom_test = (function () {
 
 
 
+
 //在dom元素内插入html片段
-flyingon.dom_html = document.head.insertAdjacentHTML ? (function () {
+flyingon.dom_html = function (host, html, refChild) {
     
-    var div;
+    if (host && html)
+    {
+        var after, any;
 
-    //注: script等标签可能不支持insertAdjacentHTML
-    function fn(host, dom, type, html) {
-
-        if (dom.insertAdjacentHTML)
+        if (refChild || (refChild = host.lastChild) && (after = 1))
         {
-            dom.insertAdjacentHTML(type, html);
-        }
-        else
-        {
-            dom = div || (div = document.createElement('div'));
-            dom.innerHTML = html;
-
-            if (dom = dom.firstChild)
+            if (any = refChild.insertAdjacentHTML)
             {
-                dom.parentNode.removeChild(dom);
-                host.appendChild(dom);
-            }
-        }
-    };
-
-    return function (dom, html, refChild) {
-        
-        if (dom && html)
-        {
-            if (refChild)
-            {
-                fn(dom, refChild, 'beforebegin', html);
-            }
-            else if (refChild = dom.lastChild)
-            {
-                fn(dom, refChild, 'afterend', html);
+                any.call(refChild, after ? 'afterend' : 'beforebegin', html);
             }
             else
             {
-                dom.innerHTML = html;
+                any = document.createRange();
+                html = any.createContextualFragment(html);
+
+                if (after)
+                {
+                    any.setStartAfter(refChild);
+                    host.appendChild(html);
+                }
+                else
+                {
+                    any.setStartBefore(refChild);
+                    host.insertBefore(html, refChild);
+                }
             }
         }
-    }
-
-})() : function (dom, html, refChild) {
-        
-    var range;
-
-    if (refChild)
-    {
-        range = document.createRange();
-        range.setStartBefore(refChild);
-        dom.insertBefore(range.createContextualFragment(html), refChild);
-    }
-    else if (refChild = dom.lastChild)
-    {
-        range = document.createRange();
-        range.setStartAfter(refChild);
-        dom.appendChild(range.createContextualFragment(html));
-    }
-    else
-    {
-        dom.innerHTML = html;
+        else
+        {
+            host.innerHTML = html;
+        }
     }
 };
+
 
 
 
@@ -831,6 +787,7 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
 
 
 
+
 //对齐到指定的dom
 //dom: 要对齐的dom元素
 //rect: 停靠范围
@@ -936,6 +893,7 @@ flyingon.dom_align = function (dom, rect, direction, align, reverse) {
 
 
 
+
 //显示或隐藏摭罩层
 flyingon.dom_overlay = (function () {
     
@@ -992,53 +950,23 @@ flyingon.dom_overlay = (function () {
 
 
 
-//html编码函数
-flyingon.html_encode = (function () {
-    
-    var values = {
-        
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '\'': '&apos;',
-        '"': '&quot;'
-    };
-
-    return function (text) {
-
-        if (text)
-        {
-            var keys = values;
-
-            return text.replace(/([&<>'"])/g, function (_, key) {
-
-                return keys[key];
-            });
-        }
-
-        return '';
-    };
-
-})();
-
-
 
 //单位换算
 (function (flyingon) {
 
 
-    var unit = flyingon.create(null), //单位换算列表
-
-        pixel_cache = flyingon.create(null), //缓存的单位转换值
-
-        regex_unit = /[a-zA-z]+|%/, //计算尺寸正则表达式
-
-        regex_sides = /[+-]?[\w%.]+/g, //4边解析正则表达式
-        
-        sides_cache = flyingon.create(null), //4边缓存列表
-        
-        parse = parseFloat;
+    var create = flyingon.create,
     
+        unit = (flyingon.pixel_unit = pixel_unit).unit = create(null), //单位换算列表
+
+        pixel_cache = (flyingon.pixel = pixel).cache = create(null),
+
+        pixel_persent = create(null),
+
+        sides_cache = (flyingon.pixel_sides = pixel_sides).cache = create(null),
+
+        sides_persent = create(null); 
+            
     
     //初始化默认值
     unit.em = unit.rem = 12;
@@ -1052,7 +980,7 @@ flyingon.html_encode = (function () {
     
 
     //或者或设置象素转换单位
-    (flyingon.pixel_unit = function (name, value) {
+    function pixel_unit(name, value) {
 
         if (value === void 0)
         {
@@ -1060,92 +988,105 @@ flyingon.html_encode = (function () {
         }
 
         if (unit[name] !== value)
-        {
+        {            
+            var cache = pixel_cache;
+
             unit[name] = value;
 
-            var list = pixel_cache;
-
-            for (var key in list)
+            for (var key in cache)
             {
                 if (key.indexOf(name) > 0)
                 {
-                    list[key] = void 0;
+                    cache[key] = void 0;
                 }
             }
         }
-                
-    }).unit = unit;
+    };
 
 
     //转换css尺寸为像素值
     //注: em与rem相同, 且在初始化时有效
-    (flyingon.pixel = function (value, size) {
+    function pixel(value, size) {
 
-        var any = pixel_cache[value];
+        var any = pixel_cache[value],
+            unit;
 
         if (any !== void 0)
         {
             return any;
         }
 
-        if (any = value.match(regex_unit))
+        if (any = pixel_persent[value])
         {
-            if ((any = any[0]) === '%')
+            return any * size / 100 + 0.5 | 0;
+        }
+
+        if (any = value.match(/[+-]?\d+(.\d+)?|[\w%]+/g))
+        {
+            if (unit = any[1])
             {
-                return parse(value) * size / 100 + 0.5 | 0;
+                if (unit === '%')
+                {
+                    return (pixel_persent[value] = any[0]) * size / 100 + 0.5 | 0;
+                }
+
+                any = any[0] * (unit[unit.toLowerCase()] || 1) + 0.5 | 0;
             }
-            
-            any = any.toLowerCase();
+            else
+            {
+                any = +any[0] + 0.5 | 0;
+            }
         }
-
-        return pixel_cache[value] = parse(value) * (unit[any] || 1) + 0.5 | 0;
-
-    }).cache = pixel_cache;
-    
-    
-    //转换4边尺寸为像素值(margin, padding的百分比是以父容器的宽度为参照, border-width不支持百分比)
-    (flyingon.pixel_sides = function (value, width) {
-        
-        var values = sides_cache[value];
-        
-        if (values)
+        else
         {
-            return values;
+            any = 0;
         }
-        else if (!value || value >= 0)
-        {
-            return sides_values(value);
-        }
-        
-        return values ? pixel_sides(value, values, width) : sides_values('');
 
-    }).cache = sides_cache;
-    
-    
-    function sides_values(value) {
-    
-        return sides_cache[value] = {
-
-            text: '' + (value |= 0),
-            left: value, 
-            top: value, 
-            right: value, 
-            bottom: value, 
-            width: value = value << 1, 
-            height: value
-        };
+        return pixel_cache[value] = any; 
     };
     
     
-    function pixel_sides(text, sides, width) {
+    //转换4边尺寸为像素值(margin, padding的百分比是以父容器的宽度为参照, border-width不支持百分比)
+    function pixel_sides(value, width) {
         
-        var value = { text: text },
-            fn = flyingon.pixel;
-
-        if (text.indexOf('%') < 0)
+        var any = sides_cache[value];
+        
+        if (any)
         {
-            sides_cache[text] = value;
+            return any;
         }
+
+        if (any = sides_persent[value])
+        {
+            return sides(value, any, width);
+        }
+
+        any = +any;
+
+        if (any === any || !(any = value.match(/[+-]?[\w%.]+/g)))
+        {
+            return sides_cache[value] = {
+
+                left: any |= 0, 
+                top: any, 
+                right: any, 
+                bottom: any
+            };
+        }
+
+        if (value.indexOf('%') < 0)
+        {
+            return sides_cache[value] = sides(any, width);
+        }
+
+        return sides(sides_persent[value] = any, width);
+    };
+    
+        
+    function sides(sides, width) {
+        
+        var value = {},
+            fn = pixel;
         
         switch (sides.length)
         {
@@ -1171,9 +1112,6 @@ flyingon.html_encode = (function () {
                 value.bottom = fn(sides[2], width);
                 break;
         }
-
-        value.width = value.left + value.right;
-        value.height = value.top + value.bottom;
 
         return value;
     };

@@ -71,12 +71,12 @@ flyingon.defineClass('Dialog', flyingon.Panel, function (base) {
 
             if (auto & 1)
             {
-                this.offsetWidth = this.arrangeRight + this.layout_border.width;
+                this.offsetWidth = this.arrangeRight + this.borderLeft + this.borderRight;
             }
             
             if (auto & 2)
             {
-                this.offsetHeight = this.headerHeight() + this.arrangeBottom + this.layout_border.height;
+                this.offsetHeight = this.headerHeight() + this.arrangeBottom + this.borderTop + this.borderBottom;
             }
         }
         else

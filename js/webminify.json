@@ -3,7 +3,9 @@
     
     {
         source: [
+
 			'../src/base/oo.js',
+            '../src/base/utils.js',
             '../src/base/async.js',
             '../src/base/extend.js',
             '../src/base/serialize.js',
@@ -12,16 +14,20 @@
             '../src/base/selector.js',
             '../src/base/template.js',
             '../src/base/viewmodel.js',
-            '../src/browser/web.js',
-            '../src/browser/event.js',
-            '../src/browser/renderer/control.js', //需优先加载渲染器
+
+            '../src/web/utils.js',
+            '../src/web/event.js',
+            '../src/renderer.web/control.js', //需优先加载渲染器
+
 			'../src/control/control.js',
             '../src/control/label.js',
+            '../src/control/htmltext.js',
             '../src/control/button.js',
             '../src/control/linkbutton.js',
             '../src/control/textbox.js',
             '../src/control/container.js',
 			'../src/control/panel.js',
+            '../src/control/scrollpanel.js',
             '../src/control/tab.js',
             '../src/control/tabpanel.js',
             '../src/control/tree.js',
@@ -30,24 +36,29 @@
             '../src/control/messagebox.js',
             '../src/control/popuplayer.js',
             '../src/control/dialog.js',
+
             '../src/layout/sublayout.js',
             '../src/layout/layout.js',
             '../src/layout/table.js',
-            '../src/browser/htmlelement.js',
-            '../src/browser/renderer/label.js',
-            '../src/browser/renderer/button.js',
-            '../src/browser/renderer/linkbutton.js',
-            '../src/browser/renderer/textbox.js',
-            '../src/browser/renderer/container.js',
-            '../src/browser/renderer/panel.js',
-            '../src/browser/renderer/htmlelement.js',
-            '../src/browser/renderer/messagebox.js',
-            '../src/browser/renderer/popuplayer.js',
-            '../src/browser/renderer/dialog.js',
-            '../src/browser/host.js',
-            '../src/browser/ajax.js',
+
+            '../src/renderer.web/label.js',
+            '../src/renderer.web/htmltext.js',
+            '../src/renderer.web/button.js',
+            '../src/renderer.web/linkbutton.js',
+            '../src/renderer.web/textbox.js',
+            '../src/renderer.web/container.js',
+            '../src/renderer.web/panel.js',
+            '../src/renderer.web/scrollpanel.js',
+            '../src/renderer.web/messagebox.js',
+            '../src/renderer.web/popuplayer.js',
+            '../src/renderer.web/dialog.js',
+
+            '../src/web/host.js',
+            '../src/web/ajax.js',
+            
             '../src/require/require.js',
-            '../src/require/browser.js'
+            '../src/require/web.js'
+
 		],
 
         output: 'flyingon.js',
