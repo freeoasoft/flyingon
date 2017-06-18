@@ -194,7 +194,7 @@ flyingon.Ajax = flyingon.defineClass(flyingon.Async, function () {
                     case 'json':
                         try
                         {
-                            self.resolve(JSON.parse(xhr.responseText));
+                            self.resolve(flyingon.parseJSON(xhr.responseText));
                         }
                         catch (e)
                         {
@@ -381,7 +381,7 @@ flyingon.Ajax = flyingon.defineClass(flyingon.Async, function () {
 
         try
         {
-            self.resolve(JSON.parse(text));
+            self.resolve(flyingon.parseJSON(text));
             ajax_end(self, url);
         }
         catch (e)

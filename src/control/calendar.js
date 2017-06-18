@@ -3,4 +3,4 @@ flyingon.defineClass('Calendar', flyingon.Control, function (base) {
     
     
     
-}).alias('calendar');
+}).register('calendar');

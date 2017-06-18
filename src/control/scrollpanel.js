@@ -67,4 +67,4 @@ flyingon.defineClass('ScrollPanel', flyingon.Panel, function (base) {
     
         
 
-}).alias('scrollpanel');
+}).register('scrollpanel');

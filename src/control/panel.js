@@ -133,7 +133,7 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
     //插入多个控件
     function insert_array(controls, refChild) {
 
-        var list = this.view ? this.__insert_patch || (this.__insert_patch = [0]) : null,
+        var view = this.view,
             index = 0,
             last = refChild && refChild.previousSibling || null,
             item,
@@ -146,7 +146,7 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
 
         while (item = controls[index++])
         {
-            if (list)
+            if (view)
             {
                 //添加增加视图补丁
                 if (any = this.__insert_patch)
@@ -162,7 +162,8 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
                 }
                 else
                 {
-                    this.renderer.set(this, '__insert_patch', this.__insert_patch = [item.view ? item : 1]);
+                    this.__insert_patch = item.view ? [0, item] : [1];
+                    this.renderer.set(this, '__insert_patch', true);
                 }
             }
 
@@ -298,7 +299,8 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
                 }
                 else
                 {
-                    this.renderer.set(this, '__insert_patch', this.__insert_patch = [control.view ? control : 1]);
+                    this.__insert_patch = control.view ? [0, control] : [1];
+                    this.renderer.set(this, '__insert_patch', true);
                 }
             }
         }
@@ -425,10 +427,7 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
                 }
 
                 //如果之前有插入的视图补丁则清除
-                if (any = this.__insert_patch)
-                {
-                    this.__view_patch.__insert_patch = this.__insert_patch = null;
-                }
+                this.__insert_patch = null;
             }
 
             do
@@ -624,7 +623,7 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
         
         if (auto)
         {
-            this.arrange();
+            this.renderer.update(this);
 
             if (auto & 1)
             {
@@ -716,7 +715,7 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
         {
             if (this.view)
             {
-                this.renderer.removeView(this);
+                this.renderer.unmount(this);
             }
 
             do
@@ -734,4 +733,4 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
 
  
 
-}).alias('panel');
+}).register('panel');

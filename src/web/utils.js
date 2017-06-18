@@ -1061,7 +1061,7 @@ flyingon.dom_overlay = (function () {
             return sides(value, any, width);
         }
 
-        any = +any;
+        any = +value;
 
         if (any === any || !(any = value.match(/[+-]?[\w%.]+/g)))
         {

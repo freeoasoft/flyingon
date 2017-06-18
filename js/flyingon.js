@@ -408,21 +408,22 @@ var flyingon;
     //执行对象属性观测
     flyingon.__do_watch = function (target, name, value, oldValue, bind) {
 
-        var list = target.__watch_list,
+        var keys = target.__watch_keys,
+            e = { target: target, name: name, newValue: value, oldValue: oldValue, bind: bind },
             any;
 
-        for (var i = 0, l = list.length; i < l; i++)
+        for (var i = 0, l = keys.length; i < l; i++)
         {
-            if ((any = list[i++]) != null)
+            if ((any = keys[i++]) != null)
             {
                 if (any === name)
                 {
-                    list[i].call(target, value, oldValue, bind);
+                    keys[i].call(target, e);
                 }
             }
             else
             {
-                list[i].call(target, name, value, oldValue, bind);
+                keys[i].call(target, e);
             }
         }
     };
@@ -507,6 +508,7 @@ var flyingon;
                 prototype.get = get;
                 prototype.set = set;
                 prototype.sets = sets;
+                prototype.__custom_set = custom_set;
                 prototype.defaultValue = defaultValue;
                 prototype.properties = properties;
                 prototype.getOwnPropertyNames = getOwnPropertyNames;
@@ -606,7 +608,7 @@ var flyingon;
         Class.superclass = superclass;
 
         //设置组件别名
-        Class.alias = alias;
+        Class.register = register;
 
 
         //初始化类
@@ -702,7 +704,7 @@ var flyingon;
             switch (dataType)
             {
                 case 'boolean':
-                    value = !!value;
+                    value = !!value && value !== 'false';
                     break;
 
                 case 'integer':
@@ -727,7 +729,7 @@ var flyingon;
                 return this;
             }
 
-            if (this.__watch_list && flyingon.__do_watch(this, name, value, bind) === false)
+            if (this.__watch_keys && flyingon.__do_watch(this, name, value, bind) === false)
             {
                 return this;
             }
@@ -813,12 +815,12 @@ var flyingon;
         }
         else
         {
-            (this.__storage || (this.__storage = create(this.__defaults)))[name] = value;
+            this.__custom_set(name, value, bind);
         }
         
         return this;
     };
-    
+
 
     //批量设置属性值
     function sets(values, bind) {
@@ -835,7 +837,7 @@ var flyingon;
                 }
                 else
                 {
-                    (this.__storage || (this.__storage = create(this.__defaults)))[name] = values[name];
+                    this.__custom_set(name, values[name], bind);
                 }
             }
         }
@@ -844,6 +846,13 @@ var flyingon;
     };
     
     
+    //设置自定义属性值
+    function custom_set(name, value, bind) {
+
+        (this.__storage || (this.__storage = create(this.__defaults)))[name] = value;
+    };
+    
+
     //获取或设置属性默认值
     function defaultValue(name, value) {
 
@@ -904,13 +913,13 @@ var flyingon;
         
         if (typeof fn === 'function')
         {
-            if (any = this.__watch_list)
+            if (any = this.__watch_keys)
             {
                 any.push(name, fn);
             }
             else
             {
-                this.__watch_list = [name, fn];
+                this.__watch_keys = [name, fn];
             }
         }
     };
@@ -927,7 +936,7 @@ var flyingon;
             name = null;
         }
 
-        if (fn && (list = this.__watch_list))
+        if (fn && (list = this.__watch_keys))
         {
             index = list.length - 1;
 
@@ -941,7 +950,7 @@ var flyingon;
 
             if (!list.length)
             {
-                delete this.__watch_list;
+                delete this.__watch_keys;
             }
         }
     };
@@ -1242,9 +1251,19 @@ var flyingon;
         
 
     //设置组件别名
-    function alias(name) {
+    function register(name, force) {
     
-        return name && (components[this.aliasName = name] = this) || this;
+        if (name)
+        {
+            if (!force && components[name])
+            {
+                throw 'component "' + name + '" has exist';
+            }
+
+            return components[this.nickName = name] = this;
+        }
+
+        return this;
     };
      
 
@@ -1376,6 +1395,28 @@ flyingon.html_encode = (function () {
 })();
 
 
+
+flyingon.parseJSON = typeof JSON !== 'undefined' 
+
+    ? function (text) {
+
+        return JSON.parse(text);
+    }
+
+    : function (text) {
+
+        if (typeof text === 'string')
+        {
+            if (/[a-zA-Z_$]/.test(text.replace(/"(?:\\"|[^"])*?"|null|true|false|\d+[Ee][-+]?\d+/g, '')))
+            {
+                flyingon.raise('flyingon', 'error.json_parse');
+            }
+
+            return new Function('return ' + text)();
+        }
+
+        return text;
+    };
 
 
 
@@ -1718,155 +1759,6 @@ Function.prototype.bind || (Function.prototype.bind = function (context) {
 
 
 
-//当不存在JSON对象时扩展json解析器
-//使用危险代码检测的方法(无危险代码则使用eval解析)实现json解析
-typeof JSON !== 'undefined' || (function () {
-
-    
-    function write(writer, value) {
-        
-        if (value)
-        {
-            switch (typeof value)
-            {
-                case 'string':
-                    writer.push('"', value.replace(/"/g, '\\"'), '"');
-                    break;
-                    
-                case 'object':
-                    (value instanceof Array ? write_array : write_object)(writer, value);
-                    break;
-                    
-                case 'function':
-                    writer.push('null');
-                    break;
-                    
-                default:
-                    writer.push(value);
-                    break;
-            }
-        }
-        else
-        {
-            writer.push(value !== '' ? '' + value : '""');
-        }
-    };
-    
-    
-    function write_object(writer, values) {
-        
-        var value, type, flag;
-        
-        writer.push('{');
-        
-        for (var name in values)
-        {
-            if (value = values[name])
-            {
-                switch (type = typeof value)
-                {
-                    case 'string':
-                        value = value.replace(/"/g, '\\"');
-                        break;
-                        
-                    case 'function':
-                        value = void 0;
-                        break;
-                }
-            }
-            else if (value === '')
-            {
-                value = '""';
-            }
-                        
-            //对象值为undefined或function则不序列化
-            if (value === void 0)
-            {
-                continue;
-            }
-            
-            if (flag)
-            {
-                writer.push(',');
-            }
-            else
-            {
-                flag = true;
-            }
-            
-            writer.push('"', name.replace(/"/g, '\\"'), '":');
-            
-            if (type !== 'object')
-            {
-                writer.push(value);
-            }
-            else
-            {
-                (value instanceof Array ? write_array : write_object)(writer, value);
-            }
-        }
-        
-        writer.push('}');
-    };
-    
-    
-    function write_array(writer, values) {
-        
-        writer.push('[');
-        
-        for (var i = 0, l = values.length; i < l; i++)
-        {
-            if (i > 0)
-            {
-                writer.push(',');
-            }
-            
-            write(writer, values[i]);
-        }
-        
-        writer.push(']');
-    };
-    
-    
-    window.JSON = {
-        
-        parse: function (text) {
-
-            if (typeof text === 'string')
-            {
-                if (/[a-zA-Z_$]/.test(text.replace(/"(?:\\"|[^"])*?"|null|true|false|\d+[Ee][-+]?\d+/g, '')))
-                {
-                    flyingon.raise('flyingon', 'error.json_parse');
-                }
-
-                return new Function('return ' + text)();
-            }
-
-            return text;
-        },
-        
-        stringify: function (value) {
-            
-            if (value)
-            {
-                var writer = [];
-                write(writer, value);
-
-                return writer.join('');
-            }
-            
-            if (value !== void 0)
-            {
-                return value !== '' ? '' + value : '""';
-            }
-        }
-    };
-
-
-})();
-
-
-
 
 //序列化组件片段
 flyingon.__serialize_fragment = flyingon.fragment(function () {
@@ -1887,7 +1779,7 @@ flyingon.__serialize_fragment = flyingon.fragment(function () {
 
         var any;
         
-        if ((any = this.Class) && (any = any.aliasName || any.xtype))
+        if ((any = this.Class) && (any = any.nickName || any.xtype))
         {
             writer.writeProperty('type', any);
         }
@@ -3683,2001 +3575,6 @@ flyingon.__bindable_fragment = flyingon.fragment(function () {
 
 
 
-/*
-
-
-本系统选择器从按照左到右的顺序解析, 请注意相关性能
-
-
-本系统支持的基础选择器如下(注:本系统不支持html标签选择器):
-
-*                       通用控件选择器
-.N                      class选择器
-#N                      id选择器
-N                       类型选择器
-
-
-本系统支持的组合选择器如下:
-
-A,B                     或者选择器
-A B                     后代选择器
-A>B                     子选择器
-A+B                     毗邻选择器
-A~B                     后续兄弟选择器
-AB                      并且选择器
-
-
-本系统支持的属性选择器如下:
-
-[name]                  具有name属性的控件
-[name=value]            name属性值等于value的控件
-[name~=value]           name属性值有多个空格分隔,其中一个值等于value的控件
-[name|=value]           name属性值有多个连字号分隔(hyphen-separated)的值,其中一个值以value开头的控件, 主要用于lang属性, 比如en,en-us,en-gb等等
-[name^=value]           name属性值以value开头的控件
-[name$=value]           name属性值以value结尾的控件
-[name*=value]           name属性值包含value的控件
-
-
-本系统支持的伪类控件如下:
-
-:focus                  控件有焦点
-:enabled                控件可用
-:disabled               控件被禁用
-:checked                控件已选中
-
-:has(selector)          控件下属子控件包含选择器selector规定的控件
-:not(selector)          控件下属子控件不包含选择器selector规定的控件
-
-:empty                  控件不包含任何子控件
-
-:only                   控件是父控件中的唯一子控件
-:first                  控件是父控件中的第一个子控件
-:last                   控件是父控件中的最后一个子控件
-:odd                    控件在父控件中的索引号是单数, 索引从0开始
-:even                   控件在父控件中的索引号是双数, 索引从0开始
-:eq(n)                  控件在父控件中的索引号等于n, n<0表示倒序, 索引从0开始
-:gt(n)                  控件在父控件中的索引号大于n, 索引从0开始
-:lt(n)                  控件在父控件中的索引号小于n, 索引从0开始
-
-
-本系统不支持css伪类及伪元素
-
-
-*/
-
-
-
-//解析选择器
-(function () {
-        
-    
-    
-    //解析缓存
-    var parse_cache = flyingon.create(null);
-    
-    
-
-    //解析选择器
-    function parse(tokens, index) {
-
-        var Class = flyingon.Selector_node,
-            relation = ' ',
-            nodes, 
-            node, 
-            token;
-
-        while (token = tokens[index++])
-        {
-            //switch代码在chrome下的效率没有IE9好,不知道什么原因,有可能是其操作非合法变量名的时候性能太差
-            switch (token)
-            {
-                case '#':   //id选择器标记
-                case '.':   //class选择器标记
-                    node = new Class(relation, token, tokens[index++], node);
-                    relation = '';
-                    break;
-
-                case '*':  //全部元素选择器标记
-                    node = new Class(relation, '*', '*', node);
-                    relation = '';
-                    break;
-
-                case ' ':  //后代选择器标记
-                case '\t':
-                    if (!relation) //忽略其它类型后的空格
-                    {
-                        relation = ' ';
-                    }
-                    break;
-
-                case '>':  //子元素选择器标记
-                case '+':  //毗邻元素选择器标记
-                case '~':  //之后同级元素选择器标记
-                    relation = token;
-                    break;
-
-                case ',':  //组合选择器标记
-                    if (node)
-                    {
-                        nodes = nodes || new flyingon.Selector_nodes();
-                        nodes[nodes.length++] = node.top;
-                    }
-
-                    node = null;
-                    relation = ' ';
-                    break;
-
-                case '[': //属性 [name[?="value"]]
-                    if (!node || relation) //未指定节点则默认添加*节点
-                    {
-                        node = new Class(relation, '*', '*', node);
-                        relation = '';
-                    }
-
-                    index = parse_property(node, tokens, index);
-                    break;
-
-                case ':': //伪类
-                    if (!node || relation) //未指定节点则默认添加*节点
-                    {
-                        node = new Class(relation, '*', '*', node);
-                        relation = '';
-                    }
-
-                    token = new flyingon.Selector_pseudo(node, tokens[index++]);
-                    
-                    //处理参数
-                    if (tokens[index] === '(')
-                    {
-                        index = parse_pseudo(token, tokens, ++index);
-                    }
-                    break;
-
-                default: //类名 token = ""
-                    node = new Class(relation, '', token.replace(/-/g, '.'), node);
-                    relation = '';
-                    break;
-            }
-        }
-        
-        if (nodes)
-        {
-            if (node)
-            {
-                nodes[nodes.length++] = node.top;
-            }
-            
-            return nodes;
-        }
-
-        return node && node.top || node;
-    };
-
-
-    //解析属性
-    function parse_property(node, tokens, index) {
-
-        var target, token, any;
-
-        while (token = tokens[index++])
-        {
-            switch (token)
-            {
-                case ']':
-                    return index;
-
-                case '*': // *= 包含属性值XX
-                case '^': // ^= 属性值以XX开头
-                case '$': // $= 属性值以XX结尾
-                case '~': // ~= 匹配以空格分隔的其中一段值 如匹配en US中的en
-                case '|': // |= 匹配以-分隔的其中一段值 如匹配en-US中的en
-                    if (target)
-                    {
-                        target.relation = token;
-                    }
-                    break;
-
-                case '=':
-                    if (target)
-                    {
-                        target.relation += '=';
-                    }
-                    break;
-
-                case ' ':
-                case '\t':
-                    break;
-
-                default:
-                    if (target)
-                    {
-                        switch (token)
-                        {
-                            case 'undefined':
-                                token = undefined;
-                                break;
-                                
-                            case 'null':
-                                token = null;
-                                break;
-                                
-                            case 'true':
-                                token = true;
-                                break;
-                                
-                            case 'false':
-                                token = false;
-                                break;
-                                
-                            default:
-                                if ((any = token.charAt(0)) === '"' || any === "'")
-                                {
-                                    token = token.substring(1, token.length - 1);
-                                }
-                                else
-                                {
-                                    token = +token;
-                                }
-                                break;
-                        }
-                        
-                        target.value = token;
-                    }
-                    else
-                    {
-                        target = new flyingon.Selector_property(node, token);
-                    }
-                    break;
-            }
-        }
-
-        return index;
-    };
-    
-
-    //解析伪类参数
-    function parse_pseudo(target, tokens, index) {
-
-        var start = index,
-            flag = 1,
-            any;
-        
-        while (flag && (any = tokens[index++]))
-        {
-            switch (any)
-            {
-                case '(':
-                    flag++;
-                    break;
-                    
-                case ')':
-                    flag--;
-                    break;
-            }
-        }
-        
-        any = tokens.slice(start, index - 1).join('');
-
-        switch (target.name)
-        {
-            case 'eq':
-            case 'gt':
-            case 'lt':
-                any |= 0;
-                break;
-        }
-        
-        target.value = any;
-        return index;
-    };
-    
-        
-    //创建解析选择器方法
-    flyingon.__parse_selector = function (selector, cache) {
-
-        if (!selector || typeof selector !== 'string')
-        {
-            return null;
-        }
-        
-        if (cache !== false && (cache = parse_cache[selector]))
-        {
-            return cache;
-        }
-        
-        cache = selector.match(/"[^"]*"|'[^']*'|[\w-]+|[*.#\[\]:(), \t>+~=|^$]/g);
-        return parse_cache[selector] = parse(cache, 0);
-    };
-
-    
-})();
-
-
-
-//选择器节点类
-flyingon.Selector_node = flyingon.defineClass(function () {
-    
-    
-
-    //id选择器缓存集合
-    var id_query;
-
-    //class选择器缓存集合
-    var class_query;
-
-    //类型选择器缓存集合
-    var type_query;
-
-
-
-    this.constructor = function (relation, type, name, node) {
-       
-        this.find = this[this.relation = relation];
-        this.filter = this[this.type = type];
-        this.name = name;
-        
-        if (node)
-        {
-            if (relation)
-            {
-                node.next = this;
-            }
-            else
-            {
-                node[node.length++] = this;
-            }
-            
-            this.top = node.top || node;
-        }
-        else
-        {
-            this.top = this;
-        }
-    };
-    
-    
-        
-    //关系符
-    this.relation = '';
-    
-    
-    //节点类型
-    this.type = '';
-    
-    
-    //节点名称
-    this.name = '';
-    
-    
-    //子项数
-    this.length = 0;
-    
-    
-    //下一节点
-    this.next = null;
-    
-    
-    
-    //选择节点
-    this.select = function (controls) {
-        
-        var index, any;
-        
-        controls = this.find(controls);
-
-        if (controls[0])
-        {
-            index = 0;
-
-            while (any = this[index++])
-            {
-                controls = any.filter(controls);
-            }
-
-            if (controls[0] && (any = this.next))
-            {
-                controls = any.select(controls);
-            }
-        }
-
-        return controls;
-    };
-    
-    
-    //检查控件是否符合选择器要求
-    this.check = function (controls) {
-    
-        var index = 0,
-            any;
-        
-        while (any = this[index++])
-        {
-            if (!(controls = any.filter(controls, [])).length)
-            {
-                return controls;
-            }
-        }
-
-        return (any = this.next) ? any.find(controls) : controls;
-    };
-    
-    
-    
-    this[''] = function (controls, cache) {
-
-        var type = this.__type || (this.__type = flyingon.components[this.name]);
-
-        if (type)
-        {
-            var exports = [],
-                index = 0,
-                length = 0,
-                item;
-            
-            while (item = controls[index++])
-            {
-                if (item instanceof type)
-                {
-                    exports[length++] = item;
-                }
-            }
-            
-            return exports;
-        }
-
-        return controls;
-    };
-    
-        
-    this['*'] = function (controls, cache) {
-
-        return controls;
-    };
-    
-    
-    this['.'] = function (controls, cache) {
-
-        var name = this.name;;
-
-        if (name)
-        {
-            var exports = [],
-                index = 0,
-                length = 0,
-                item,
-                any;
-            
-            while (item = controls[index++])
-            {
-                if ((any = item.__class_list) && any[name])
-                {
-                    exports[length++] = item;
-                }
-            }
-            
-            return exports;
-        }
-
-        return controls;
-    };
-    
-
-    this['#'] = function (controls, cache) {
-
-        var name = this.name;;
-
-        if (name)
-        {
-            var exports = [],
-                index = 0,
-                length = 0,
-                item,
-                any;
-            
-            while (item = controls[index++])
-            {
-                if ((any = item.__storage) && any.id === name)
-                {
-                    exports[length++] = item;
-                }
-            }
-            
-            return exports;
-        }
-
-        return controls;
-    };
-    
-    
-    
-    //后代选择器
-    this[' '] = function (controls) {
-        
-        var cache = type_query,
-            index = 0,
-            exports,
-            item,
-            any;
-        
-        if (cache)
-        {
-            cache = (any = cache['*']) || (cache['*'] = {});
-        }
-        else
-        {
-            cache = (type_query = flyingon.__type_query_cache = {})['*'] = {};
-        }
-
-        if (controls.length > 1)
-        {
-            controls = remove_child(controls);
-        }
-
-        while (item = controls[index++])
-        {
-            any = item.__uniqueId || item.uniqueId();
-            any = cache[any] || (cache[any] = (any = item.firstChild) ? all_children(any) : []);
-
-            if (any.length > 0)
-            {
-                if (exports)
-                {
-                    any.push.apply(exports, any);
-                }
-                else
-                {
-                    exports = any;
-                }
-            }
-        }
-
-        if (exports && exports[0])
-        {
-            return this.filter(exports, 1);
-        }
- 
-        return exports || [];
-    };
-
-
-    //获取指定控件的所有子控件
-    function all_children(control) {
-
-        var list = [],
-            stack = [],
-            index = 0,
-            length = 0,
-            next,
-            any;
-
-        do
-        {
-            list[length++] = control;
-            next = control.nextSibling;
-
-            if (any = control.firstChild)
-            {
-                control = any;
-                
-                if (next)
-                {
-                    stack[index++] = next;
-                }
-            }
-            else
-            {
-                control = next || stack[--index];
-            }
-        }
-        while (control);
-
-        return list;
-    };
-
-    
-    //移除子控件关系
-    function remove_children(controls) {
-
-        return controls;
-    };
-
-    
-    //子控件选择器
-    this['>'] = function (controls) {
-
-        var index = 0,
-            exports,
-            item,
-            any;
-
-        while (item = controls[index++])
-        {
-            if (item.firstChild)
-            {
-                any = item.children();
-
-                if (exports)
-                {
-                    any.push.apply(exports, any);
-                }
-                else
-                {
-                    exports = any;
-                }
-            }
-        }
-
-        return exports && exports[0] && this.filter(exports, 2) || [];
-    };
-    
-    
-    //毗邻控件选择器
-    this['+'] = function (controls) {
-
-        var exports = [],
-            index = 0,
-            length = 0,
-            item;
-
-        while (item = controls[index++])
-        {
-            if (item = item.nextSibling)
-            {
-                exports[length++] = item;
-            }
-        }
- 
-        return exports[0] ? this.filter(exports) : exports;
-    };
-    
-    
-    //后续兄弟控件选择器
-    this['~'] = function (controls) {
-
-        var exports = [],
-            index = 0,
-            length = 0,
-            item;
-        
-        if (controls.length > 1)
-        {
-            controls = remove_next(controls);
-        }
-
-        while (item = controls[index++])
-        {
-            while (item = item.nextSibling)
-            {
-                exports[length++] = item;
-            }
-        }
- 
-        return exports[0] ? this.filter(exports) : exports;
-    };
-
-
-    //移除后述控件关系
-    function remove_next(controls) {
-
-        return controls;
-    };
-    
-
-    //清除缓存
-    function clear_cache(cache) {
-
-        for (var type in cache)
-        {
-            var keys = cache[type];
-
-            for (var id in keys)
-            {
-                keys[id] = null;
-            }
-
-            cache[type] = null;
-        }
-    };
-
-
-    //清除id选择器缓存
-    flyingon.__clear_id_query = function (id) {
-
-        var keys = id_query,
-            key,
-            any;
-
-        if (keys && (any = keys[id]))
-        {
-            for (key in any)
-            {
-                any[key] = null;
-            }
-
-            delete keys[key];
-
-            for (key in keys)
-            {
-                return;
-            }
-
-            id_query = flyingon.__id_query_cache = null;
-        }
-    };
-        
-
-    //清除class选择器缓存
-    flyingon.__clear_class_query = function (name) {
-
-        var keys = class_query,
-            key,
-            any,
-            index;
-        
-        if (keys && name)
-        {
-            if (typeof name === 'string')
-            {
-                if (any = keys[name])
-                {
-                    clear_cache(any);
-                    delete keys[name];
-                }
-            }
-            else if (name instanceof Array)
-            {
-                index = 0;
-
-                while (key = name[index++])
-                {
-                    if (any = keys[key])
-                    {
-                        clear_cache(any);
-                        delete keys[key];
-                    }
-                }
-            }
-            else
-            {
-                for (key in name)
-                {
-                    if (any = keys[key])
-                    {
-                        clear_cache(any);
-                        delete keys[key];
-                    }
-                }
-            }
-
-            for (key in keys)
-            {
-                return;
-            }
-
-            class_query = flyingon.__clear_class_query = null;
-        }
-    };
-
-
-    //清除类型选择器缓存
-    flyingon.__clear_type_query = function (control) {
-
-        var cache = type_query;
-
-        for (var type in cache)
-        {
-            clear_cache(cache[type]);
-            cache[type] = null;
-        }
-
-        type_query = flyingon.__type_query_cache = null;
-    };
-
-    
-    
-}, false);
-
-
-
-//复合选择器节点类
-flyingon.Selector_nodes = flyingon.defineClass(function () {
-    
-    
-    
-    this.type = ',';
-    
-    
-    //子节点数量
-    this.length = 0;
-    
-    
-    //选择节点
-    this.select = function (controls, exports) {
-        
-        var index = 1,
-            list,
-            item,
-            id;
-        
-        if (item = this[0])
-        {
-            exports = item.select(controls, exports);
-
-            while (item = this[index++])
-            {
-                list = item.select(controls, []);
-                
-                for (var i = 0, l = list.length; i < l; i++)
-                {
-                    if ((item = list[i]) && (id = -item.__uniqueId) &&!exports[id])
-                    {
-                        exports[id] = true;
-                        exports.push(item);
-                    }
-                }
-            }
-        }
-
-        return exports;
-    };
-    
-    
-    
-}, false);
-
-
-
-//选择器属性类
-flyingon.Selector_property = flyingon.defineClass(function () {
-    
-    
-    
-    this.constructor = function (node, name) {
-       
-        this.name = name;
-        node[node.length++] = this;
-    };
-    
-    
-    
-    //节点类型
-    this.type = '[]';
-    
-    
-    //属性名称
-    this.name = '';
-    
-    
-    //关系符
-    this.relation = '';
-    
-    
-    //属性值
-    this.value = '';
-
-
-
-    this.filter = function (controls) {
-
-        var name = this.name,
-            fn;
-
-        if (name && (fn = this[this.relation]))
-        {
-            var exports = [];
-
-            fn.call(this, controls, name, exports, 0);
-            return exports;
-        }
-
-        return controls;
-    };
-    
-    
-    
-    this[''] = function (controls, name, exports, length) {
-        
-        var index = 0,
-            item;
-
-        while (item = controls[index++])
-        {
-            if (item[name] !== void 0)
-            {
-                exports[length++] = item;
-            }
-        }
-    };
-    
-    
-    this['='] = function (controls, name, exports, length) {
-        
-        var value = this.value,
-            index = 0,
-            item,
-            any;
-
-        while (item = controls[index++])
-        {
-            if ((any = item[name]) !== void 0)
-            {
-                if (typeof any === 'function')
-                {
-                    any = any.call(item);
-                }
-
-                if (any === value)
-                {
-                    exports[length++] = item;
-                }
-            }
-        }
-    };
-    
-    
-    // *= 包含属性值XX (由属性解析)
-    this['*='] = function (controls, name, exports, length) {
-        
-        var value = this.value,
-            index = 0,
-            item,
-            any;
-
-        while (item = controls[index++])
-        {
-            if ((any = item[name]) !== void 0)
-            {
-                if (typeof any === 'function')
-                {
-                    any = any.call(item);
-                }
-
-                any = '' + any;
-
-                if (any.indexOf(value) >= 0)
-                {
-                    exports[length++] = item;
-                }
-            }
-        }
-    };
-    
-    
-    // ^= 属性值以XX开头 (由属性解析)
-    this['^='] = function (controls, name, exports, length) {
-        
-        var value = this.value,
-            index = 0,
-            item,
-            any;
-
-        while (item = controls[index++])
-        {
-            if ((any = item[name]) !== void 0)
-            {
-                if (typeof any === 'function')
-                {
-                    any = any.call(item);
-                }
-
-                any = '' + any;
-
-                if (any.indexOf(value) === 0)
-                {
-                    exports[length++] = item;
-                }
-            }
-        }
-    };
-    
-    
-    // $= 属性值以XX结尾 (由属性解析)
-    this['$='] = function (controls, name, exports, length) {
-        
-        var value = this.value,
-            count = value.length,
-            index = 0,
-            item,
-            any;
-
-        while (item = controls[index++])
-        {
-            if ((any = item[name]) !== void 0)
-            {
-                if (typeof any === 'function')
-                {
-                    any = any.call(item);
-                }
-
-                any = '' + any;
-
-                if (any.lastIndexOf(value) === any.length - count)
-                {
-                    exports[length++] = item;
-                }
-            }
-        }
-    };
-    
-    
-    // ~= 匹配以空格分隔的其中一段值 如匹配en US中的en (由属性解析)
-    this['~='] = function (controls, name, exports, length) {
-        
-        var regex = this.regex || (this.regex = new RegExp('(?:^|\s+)' + this.value + '(?:\s+|$)')),
-            index = 0,
-            item,
-            any;
-
-        while (item = controls[index++])
-        {
-            if ((any = item[name]) !== void 0)
-            {
-                if (typeof any === 'function')
-                {
-                    any = any.call(item);
-                }
-
-                if (regex.text(any))
-                {
-                    exports[length++] = item;
-                }
-            }
-        }
-    };
-
-
-    this['|='] = function (controls, name, exports, length) {
-        
-        var regex = this.regex || (this.regex = new RegExp('\b' + this.value + '\b')),
-            index = 0,
-            item,
-            any;
-
-        while (item = controls[index++])
-        {
-            if ((any = item[name]) !== void 0)
-            {
-                if (typeof any === 'function')
-                {
-                    any = any.call(item);
-                }
-
-                if (regex.text(any))
-                {
-                    exports[length++] = item;
-                }
-            }
-        }
-    };
-        
-    
-}, false);
-
-
-
-//选择器伪类类
-flyingon.Selector_pseudo = flyingon.defineClass(function () {
-    
-    
-    
-    this.constructor = function (node, name) {
-       
-        this.name = name;
-        node[node.length++] = this;
-    };
-    
-    
-    
-    //节点类型
-    this.type = ':';
-    
-    
-    //伪类名称
-    this.name = '';
-    
-    
-    //伪类参数值
-    this.value = 0;
-    
-
-
-    this.filter = function (controls) {
-
-        var name = this.name,
-            fn;
-
-        if (name && (fn = this[name]))
-        {
-            var exports = [];
-
-            fn.call(this, controls, exports, 0);
-            return exports;
-        }
-
-        return controls;
-    };
-    
-
-    this.active = function (controls, exports, length) {
-
-    };
-    
-    
-    this.disabled = function (controls, exports, length) {
-
-        var index = 0,
-            item;
-
-        while (item = controls[index++])
-        {
-            if ((item.__storage || item.__defaults).disabled)
-            {
-                exports[length++] = item;
-            }
-        }
-    };
-    
-
-    this.enabled = function (controls, exports, length) {
-
-        var index = 0,
-            item;
-
-        while (item = controls[index++])
-        {
-            if (!(item.__storage || item.__defaults).disabled)
-            {
-                exports[length++] = item;
-            }
-        }
-    };
-
-    
-    this.checked = function (controls, exports, length) {
-
-        var index = 0,
-            item;
-
-        while (item = controls[index++])
-        {
-            if ((item.__storage || item.__defaults).checked)
-            {
-                exports[length++] = item;
-            }
-        }
-    };
-
-    
-    
-    this.has = function (controls, exports, length) {
-
-        var selector = this.value;
-
-        if (selector)
-        {
-            selector = flyingon.__parse_selector(selector);
-
-            
-        }
-
-        return controls;
-    };
-    
-    
-    this.not = function (controls, exports, length) {
-
-    };
-    
-    
-
-    this.empty = function (controls, exports, length) {
-
-        var index = 0,
-            item;
-
-        while (item = controls[index++])
-        {
-            if (!item.firstChild)
-            {
-                exports[length++] = item;
-            }
-        }
-    };
-    
-    
-    this.only = function (controls, exports, length) {
-        
-        var index = 0,
-            item;
-
-        while (item = controls[index++])
-        {
-            if (!item.previousSibling && !item.nextSibling)
-            {
-                exports[length++] = item;
-            }
-        }
-    };
-
-    
-    this.first = function (controls, exports, length) {
-
-        var index = 0,
-            item;
-
-        while (item = controls[index++])
-        {
-            if (!item.previousSibling)
-            {
-                exports[length++] = item;
-            }
-        }
-    };
-
-        
-    this.last = function (controls, exports, length) {
-
-        var index = 0,
-            item;
-
-        while (item = controls[index++])
-        {
-            if (!item.nextSibling)
-            {
-                exports[length++] = item;
-            }
-        }
-    };
-
-    
-    this.odd = function (controls, exports, length) {
-        
-        var value = this.value,
-            index = 0,
-            item;
-
-        while (item = controls[index++])
-        {
-            if (!(item.index() & 1))
-            {
-                exports[length++] = item;
-            }
-        }
-    };
-    
-    
-    this.even = function (controls, exports, length) {
-        
-        var value = this.value,
-            index = 0,
-            item;
-
-        while (item = controls[index++])
-        {
-            if (item.index() & 1)
-            {
-                exports[length++] = item;
-            }
-        }
-    };
-    
-        
-    this.eq = function (controls, exports, length) {
-        
-        var value = this.value,
-            index = 0,
-            item;
-
-        while (item = controls[index++])
-        {
-            if (item.index() === value)
-            {
-                exports[length++] = item;
-            }
-        }
-    };
-    
-        
-    this.gt = function (controls, exports, length) {
-
-        var value = this.value,
-            index = 0,
-            item;
-
-        while (item = controls[index++])
-        {
-            if (item.index() > value)
-            {
-                exports[length++] = item;
-            }
-        }
-    };
-
-    
-    this.lt = function (controls, exports, length) {
-
-        var value = this.value,
-            index = 0,
-            item;
-
-        while (item = controls[index++])
-        {
-            if (item.index() < value)
-            {
-                exports[length++] = item;
-            }
-        }
-    };
-
-    
-}, false);
-
-
-
-//选择器查询类
-flyingon.Query = flyingon.defineClass(function () {
-    
-    
-    
-    //选择器解析缓存
-    var parse = flyingon.__parse_selector;
-    
-    
-    
-    this.constructor = function (selector, context) {
-       
-        var any;
-        
-        if (context && (any = parse(selector)) && (any = any.select(context)) && any[0])
-        {
-            any.push.apply(this, any);
-        }
-    };
-    
-    
-    
-    this.find = function (selector) {
-        
-        var target = new this.Class(selector, this);
-
-        target.previous = this;
-        return target;
-    };
-
-
-    //
-    this.children = function (step, start, end) {
-
-    };
-    
-    
-    this.end = function () {
-      
-        return this.previous || this;
-    };
-    
-        
-
-    this.on = function (type, fn) {
-
-        if (type && fn)
-        {
-            var index = 0,
-                item;
-
-            while (item = this[index++])
-            {
-                item.on(type, fn);
-            }
-        }
-        
-        return this;
-    };
-    
-    
-    this.once = function (type, fn) {
-
-        if (type && fn)
-        {
-            var index = 0,
-                item;
-
-            while (item = this[index++])
-            {
-                item.once(type, fn);
-            }
-        }
-        
-        return this;
-    };
-
-    
-    this.off = function (type, fn) {
-
-        var index = 0,
-            item;
-
-        while (item = this[index++])
-        {
-            item.off(type, fn);
-        }
-        
-        return this;
-    };
-
-
-    this.trigger = function (e) {
-
-        if (e)
-        {
-            var index = 0,
-                item;
-
-            while (item = this[index++])
-            {
-                item.trigger.apply(item, arguments);
-            }
-        }
-        
-        return this;
-    };
-
-    
-
-    this.hasClass = function (className) {
-
-        var item;
-        return className && (item = this[0]) ? item.hasClass(className) : false;
-    };
-
-    
-    this.addClass = function (className) {
-
-        if (className)
-        {
-            var index = 0,
-                item;
-
-            while (item = this[index++])
-            {
-                item.addClassName(className);
-            }
-        }
-        
-        return this;
-    };
-
-    
-    this.removeClass = function (className) {
-
-        if (className)
-        {
-            var index = 0,
-                item;
-
-            while (item = this[index++])
-            {
-                item.removeClass(className);
-            }
-        }
-        
-        return this;
-    };
-
-    
-    this.toggleClass = function (className) {
-
-        if (className)
-        {
-            var index = 0,
-                item;
-
-            while (item = this[index++])
-            {
-                item.toggleClass(className);
-            }
-        }
-        
-        return this;
-    };
-    
-    
-}, false);
-
-
-
-
-
-//控件模板处理
-(function (flyingon) {
-
-
-
-    //模板类
-    function Class(template) {
-
-        this.template = template;
-    };
-
-
-
-    //初始化模板生成视图模型
-    Class.prototype.init = function () {
-
-        var vm = this.viewModel,
-            any;
-
-        if (!vm)
-        {
-            var stack = [], //for循环堆栈
-                error = []; //错误集合
-
-            any = this.template;
-                
-            if (typeof any === 'string')
-            {
-                any = this.template = parse(any);
-            }
-
-            analyse(vm = this.viewModel = {}, any, stack, error);
-
-            if (error[0])
-            {
-                alert(error.join('\n'));
-            }
-
-            vm.$watch = watch;
-        }
-
-        vm = flyingon.create(vm);
-
-        if (any = vm.__array_keys)
-        {
-            init(vm, any);
-        }
-
-        return vm;
-    };
-
-
-
-    //初始化数组模型,添加数组方法
-    function init(vm, array) {
-
-        for (var name in array)
-        {
-            var fn = vm[name];
-
-            fn.push = function (item) {
-
-            };
-
-            fn.pop = function () {
-
-            };
-
-            fn.unshift = function () {
-
-            };
-
-            fn.shift = function () {
-
-            };
-
-            fn.splice = function () {
-
-            };
-
-            fn.sort = function () {
-
-            };
-
-            fn.reverse = function () {
-
-            };
-        }
-    };
-
-
-    //解析xml模板
-    function parse(template) {
-
-    };
-
-
-    //分析模板生成视图模型原型
-    function analyse(vm, options, stack, error) {
-
-        var any;
-
-        if (options instanceof Array)
-        {
-            for (var i = 0, l = options.length; i < l; i++)
-            {
-                analyse(vm, options[i], stack, error);
-            }
-        }
-        else if ((any = options['for'] || options[':for']) && (any = any.match(/\w+/g)))
-        {
-            analyse_for(vm, options, any, stack, error);
-        }
-        else
-        {
-            analyse_object(vm, options, stack, error);
-        }
-    };
-
-
-    function analyse_object(vm, options, stack, error) {
-
-        var any;
-        
-        for (var name in options)
-        {
-            if (name.charAt(0) === ':' && name !== ':for')
-            {
-                analyse_property(vm, stack, options[name]);
-            }
-        }
-
-        if (any = options.children)
-        {
-            analyse(vm, any, stack, error);
-        }
-    };
-
-
-    //分析for模板
-    function analyse_for(vm, options, values, stack, error) {
-
-        var name = values[0],
-            item = values[1],
-            index = values[2],
-            any;
-
-        if (any = vm[name])
-        {
-            if (any.tag !== 'array')
-            {
-                if (any.tag)
-                {
-                     error.push('for name "' + item + '" has used, please use another name!');
-                }
-                else
-                {
-                    any.array = true;
-                }
-            }
-        }
-        else
-        {
-            vm[name] = define_property(name);
-        }
-
-        if (item)
-        {
-            if (any = vm[item])
-            {
-                error.push('for item name "' + item + '" has used, please use another name!');
-            }
-            else
-            {
-                vm[item] = array_item(name, item);
-            }
-        }
-        else
-        {
-            error.push('for item is required(sample :for="list(item)")!');
-        }
-
-        if (index)
-        {
-            if (any = vm[name])
-            {
-                error.push('for index name "' + index + '" has used, please use another name!');
-            }
-            else
-            {
-                (vm[name] = function (index) {
-
-                    return index;
-
-                }).tag = 'index';
-            }
-        }
-
-        //压入数据项栈,在栈内的数组项才是有项的数组项,否则会抛出异常
-        stack.push(item);
-
-        analyse_object(vm, options, stack, error);
-
-        //结束当前数组项
-        stack.pop();
-    };
-
-
-    //分析属性
-    function analyse_property(vm, stack, name) {
-
-        var data = name.substring(0, index),
-            item = name.substring(index + 1);
-
-        vm[name] = define_member();
-    };
-
- 
-
-    function define_property(name) {
-
-        return function (value, tag) {
-
-            var storage = this.__storage;
-
-            if (value === void 0)
-            {
-                //依赖
-                if (tag)
-                {
-                    (this.__deps || (this.__deps = [])).push(tag);
-                }
-
-                return storage[name];
-            }
-
-            if (storage[name] !== value)
-            {
-                storage[name] = value;
-                notify(this, name, name, value);
-            }
-        };
-    };
-
-
-    function array_item(name, item) {
-
-        function fn(index, value, tag) {
-
-            var fn = this[item],
-                storage;
-
-            if (!fn)
-            {
-                throw '"' + item + '" is not defined!'; 
-            }
-
-            if (!(storage = fn.call(this)))
-            {
-                throw '"' + item + '" is unassigned!'; 
-            }
-
-            if (value === void 0)
-            {
-                //依赖
-                if (tag)
-                {
-                    (this.__deps || (this.__deps = [])).push(tag);
-                }
-
-                return storage[index];
-            }
-
-            if (storage[index] !== value)
-            {
-                storage[index] = value;
-                //notify(this, key + '|index|' + index, item, value, index);
-            }
-        };
-
-        fn.array = name;
-        return fn;
-    };
-
-
-    function watch(name, fn) {
-
-        if (!fn)
-        {
-            fn = name;
-            name = '__all__';
-        }
-
-        if (typeof fn === 'function')
-        {
-            var keys = this.__watch_keys,
-                any;
-
-            if (keys)
-            {
-                if (any = keys[name])
-                {
-                    any.push(fn);
-                }
-                else
-                {
-                    keys[name] = [fn];
-                }
-            }
-            else
-            {
-                (this.__watch_keys = {})[name] = [fn];
-            }
-        }
-    };
-
-
-
-    //根据初始化后的视图模型创建控件
-    Class.prototype.create = function () {
-
-
-    };
-
-
-
-    function registry(vm, key, control, name) {
-
-        var keys = vm.__depend_keys || (vm.__depend_keys = flyingon.create(null));
-
-        (control.__model_keys || (control.__model_keys = {}))[name] = key;
-        (keys[key] || (keys[key] = [])).push(control.uniqueId());
-    };
-
-
-    function notify(vm, key, name, value, index) {
-
-        var list, index, item, any;
-
-        if (list = vm.__watch_keys)
-        {
-            if (any = list[key])
-            {
-                index = 0;
-
-                while (item = any[index++])
-                {
-                    item.call(vm, value, index);
-                }
-            }
-
-            if (any = list.__all__)
-            {
-                index = 0;
-
-                while (item = any[index++])
-                {
-                    item.call(vm, name, value, index);
-                }
-            }
-        }
-
-        if ((list = vm.__depend_keys) && (list = list[index === void 0 ? key : key + '|index|' + index]))
-        {
-            index = 0;
-
-            while (item = list[index++])
-            {
-                if ((item = flyingon.__uniqueId_controls[item]) && (any = item.__model_keys))
-                {
-                    if (any[name])
-                    {
-                        item[name](value);
-                    }
-                }
-                else
-                {
-                    list.splice(--index, 1);
-                }
-            }
-        }
-    };
-
-
-
-})(flyingon);
-
-
-
-
-//创建部件
-flyingon.widget = function (name, options) {
-
-
-    if (!name || !options)
-    {
-        throw 'widget name or options not allow empty!';
-    }
-
-
-    return flyingon.defineClass(flyingon.Widget, function () {
-
-
-        var template = create_template(options.template),
-            controller = options.controller,
-            any;
-
-
-        this.constructor = function () {
-
-            this.vm = template.init();
-        };
-
-
-        //重载默认属性
-        if (any = options.properties)
-        {
-            for (var name in any)
-            {
-                this.defaultValue(name, any[key]);
-            }
-        }
-
-
-        //初始化部件
-        this.init = function () {
-
-            this.appendControls(template.create(this));
-
-            if (controller)
-            {
-                controller.call(this, this.vm);
-            }
-        };
-
-
-        options = any = null;
-
-
-    }).register(name);
-
-};
-
-
-
-
-//创建窗口
-flyingon.window = function (options) {
-
-    var window = new flyingon.Window(),
-        template = create_template(options.template),
-        vm = window.viewModel = template.init(),
-        storage = vm.__storage = flyingon.create(null),
-        any;
-
-    if (any = options.properties)
-    {
-        for (var name in any)
-        {
-            window.set(name, any[key]);
-        }
-    }
-
-    if (any = options.defaults)
-    {
-        for (var name in any)
-        {
-            storage[name] = any[name];
-        }
-    }
-
-    if (any = options.init)
-    {
-        any.call(window, vm);
-    }
-
-    window.appendControls(template.create());
-
-    if (any = options.created)
-    {
-        any.call(window, vm);
-    }
-
-    return window;
-};
-
-
-
-
-
 //全局动态执行js, 防止局部执行增加作用域而带来变量冲突的问题
 flyingon.globalEval = function (text) {
 
@@ -6740,7 +4637,7 @@ flyingon.dom_overlay = (function () {
             return sides(value, any, width);
         }
 
-        any = +any;
+        any = +value;
 
         if (any === any || !(any = value.match(/[+-]?[\w%.]+/g)))
         {
@@ -7036,25 +4933,11 @@ flyingon.Renderer = flyingon.defineClass(function () {
     //检测盒模型
     flyingon.dom_test(function (div) {
         
-        var cssText = flyingon.css_name('boxSizing', true);
+ 
+        div.innerHTML = '<div class="flyingon-control"><div>';
 
-        if (cssText)
-        {
-            cssText += ':border-box;';
-        }
+        this.checkBoxModel(div.children[0]);
 
-        div.innerHTML = '<div style="position:absolute;' + cssText + '"><div>';
-
-        if (!this.checkBoxModel(div.children[0]))
-        {
-            cssText = '';
-        }
-
-        //生成控件默认样式
-        //overflow:hidden解决IE怪异模式无法设置高度小于一定值的问题
-        flyingon.style('.flyingon-control{position:absolute;overflow:hidden;margin:0;border:0 solid;' + cssText + '}\n'
-            + '.flyingon-host{position:relative;}'
-            + '.flyingon-textbox{border-width:1px;}');
 
     }, this);
 
@@ -8630,6 +6513,7 @@ flyingon.defineClass('Control', function () {
         }
     };
 
+
     
     
     //引入序列化片段
@@ -8703,7 +6587,7 @@ flyingon.defineClass('Control', function () {
             delete controls[any];
         }
         
-        this.parent = this.previousSibling = this.nextSibling = null;
+        this.parent = this.previousSibling = this.nextSibling = this.__loop_item = null;
         return this;
     };
     
@@ -8729,7 +6613,31 @@ flyingon.defineClass('Control', function () {
 
     
 
-}).alias('control');
+}).register('control');
+
+
+
+
+//注释节点,主要作为插入标记用
+flyingon.defineClass('Comment', flyingon.Control, function () {
+
+
+
+    this.defaultValue('visible', false);
+
+
+    this.defineProperty('text', '');
+
+
+
+    this.visible = function () {
+
+        return false;
+    };
+
+
+
+}).register('comment');
 
 
 
@@ -8762,7 +6670,7 @@ flyingon.defineClass('Label', flyingon.Control, function (base) {
     
 
 
-}).alias('label');
+}).register('label');
 
 
 
@@ -8796,7 +6704,7 @@ flyingon.defineClass('HtmlText', flyingon.Control, function (base) {
     
 
 
-});
+}).register('htmltext');
 
 
 
@@ -8820,7 +6728,7 @@ flyingon.defineClass('Button', flyingon.Control, function (base) {
     
 
 
-}).alias('button');
+}).register('button');
 
 
 
@@ -8849,7 +6757,7 @@ flyingon.defineClass('LinkButton', flyingon.Control, function (base) {
     
 
 
-}).alias('linkbutton');
+}).register('linkbutton');
 
 
 
@@ -8876,7 +6784,7 @@ flyingon.defineClass('TextBox', flyingon.Control, function (base) {
     
     
 
-}).alias('textbox');
+}).register('textbox');
 
 
 
@@ -9026,7 +6934,7 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
     //插入多个控件
     function insert_array(controls, refChild) {
 
-        var list = this.view ? this.__insert_patch || (this.__insert_patch = [0]) : null,
+        var view = this.view,
             index = 0,
             last = refChild && refChild.previousSibling || null,
             item,
@@ -9039,7 +6947,7 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
 
         while (item = controls[index++])
         {
-            if (list)
+            if (view)
             {
                 //添加增加视图补丁
                 if (any = this.__insert_patch)
@@ -9055,7 +6963,8 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
                 }
                 else
                 {
-                    this.renderer.set(this, '__insert_patch', this.__insert_patch = [item.view ? item : 1]);
+                    this.__insert_patch = item.view ? [0, item] : [1];
+                    this.renderer.set(this, '__insert_patch', true);
                 }
             }
 
@@ -9191,7 +7100,8 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
                 }
                 else
                 {
-                    this.renderer.set(this, '__insert_patch', this.__insert_patch = [control.view ? control : 1]);
+                    this.__insert_patch = control.view ? [0, control] : [1];
+                    this.renderer.set(this, '__insert_patch', true);
                 }
             }
         }
@@ -9318,10 +7228,7 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
                 }
 
                 //如果之前有插入的视图补丁则清除
-                if (any = this.__insert_patch)
-                {
-                    this.__view_patch.__insert_patch = this.__insert_patch = null;
-                }
+                this.__insert_patch = null;
             }
 
             do
@@ -9517,7 +7424,7 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
         
         if (auto)
         {
-            this.arrange();
+            this.renderer.update(this);
 
             if (auto & 1)
             {
@@ -9609,7 +7516,7 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
         {
             if (this.view)
             {
-                this.renderer.removeView(this);
+                this.renderer.unmount(this);
             }
 
             do
@@ -9627,7 +7534,7 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
 
  
 
-}).alias('panel');
+}).register('panel');
 
 
 
@@ -9701,7 +7608,7 @@ flyingon.defineClass('ScrollPanel', flyingon.Panel, function (base) {
     
         
 
-}).alias('scrollpanel');
+}).register('scrollpanel');
 
 
 
@@ -9710,7 +7617,7 @@ flyingon.defineClass('Tab', flyingon.Control, function (base) {
 
 
 
-}).alias('tab');
+}).register('tab');
 
 
 
@@ -9718,7 +7625,7 @@ flyingon.defineClass('Tab', flyingon.Control, function (base) {
 flyingon.defineClass('TabPanel', flyingon.Panel, function (base) {
 
 
-}).alias('tabpanel');
+}).register('tabpanel');
 
 
 
@@ -9727,21 +7634,7 @@ flyingon.defineClass('Tree', flyingon.Control, function (base) {
 
 
 
-}).alias('tree');
-
-
-
-
-flyingon.defineClass('Widget', flyingon.Panel, function (base) {
-
-
-
-
-}).alias('widget');
-
-
-
-
+}).register('tree');
 
 
 
@@ -9749,7 +7642,256 @@ flyingon.defineClass('Widget', flyingon.Panel, function (base) {
 flyingon.defineClass('Window', flyingon.Panel, function (base) {
 
 
-}).alias('window');
+
+    this.show = function (host) {
+
+    };
+
+
+    this.close = function () {
+
+    };
+
+
+
+}).register('window');
+
+
+
+
+/**
+* 弹出层组件
+* 
+* 事件:
+* open: 打开事件
+* autoclosing: 鼠标点击弹出层外区域时自动关闭前事件(可取消)
+* closing: 关闭前事件(可取消)
+* closed: 关闭后事件
+*/
+flyingon.defineClass('PopupLayer', flyingon.Panel, function () {
+
+
+
+    //设置为顶级控件
+    this.__top_control = true;
+
+
+    //弹出层是否已显示
+    this.shown = false;
+
+    
+    this.defaultValue('border', 1);
+
+    this.defaultValue('width', 'auto');
+
+    this.defaultValue('height', 'auto');
+
+
+    //鼠标移出弹出层时是否自动关闭
+    this.defineProperty('closeLeave', false);
+
+
+    //鼠标离弹出层越来越远时是否自动关闭
+    this.defineProperty('closeAway', false);
+    
+    
+    //停靠方向 bottom:下面 top:上面 right:右边 left:左边
+    this.defineProperty('direction', 'bottom');
+    
+    
+    //对齐 left|center|right|top|middle|bottom
+    this.defineProperty('align', 'left');
+    
+    
+    //空间不足时是否反转方向
+    this.defineProperty('reverse', true);
+
+
+    //关闭时是否自动销毁
+    this.defineProperty('autoDispose', true);
+    
+
+
+    //打开弹出层
+    this.show = function (reference, offset) {
+
+        this.renderer.show(this, reference, offset, this.direction(), this.align(), this.reverse());
+        this.shown = true;
+
+        return this;
+    };
+
+
+    //在指定的位置打开弹出层
+    this.showAt = function (left, top) {
+
+        this.renderer.showAt(this, left, top);
+        this.shown = true;
+
+        return this;
+    };
+
+
+
+    //关闭弹出层(弹出多级窗口时只有最后一个可以成功关闭)
+    //closeType: 关闭类型 ok, cancel, auto
+    this.close = function (closeType) {
+
+        closeType = closeType || 'ok';
+
+        if (this.trigger('closing', 'closeType', closeType) === false)
+        {
+            return false;
+        }
+
+        this.view && this.renderer.close(this);
+        this.trigger('closed', 'closeType', closeType);
+        this.shown = false;
+
+        if (this.autoDispose())
+        {
+            this.dispose();
+        }
+
+        return this;
+    };
+    
+
+
+}).register('popuplayer');
+
+
+
+
+flyingon.defineClass('Dialog', flyingon.Panel, function (base) {
+
+
+
+    //设置为顶级控件
+    this.__top_control = true;
+
+
+    //窗口是否已显示
+    this.shown = false;
+
+
+    this.defaultValue('border', 1);
+
+    this.defaultValue('padding', 2);
+
+    this.defaultValue('movable', true);
+
+
+    //头部高度        
+    this.defineProperty('headerHeight', 0, {
+
+        set: function (value) {
+
+            this.renderer.set(this, 'headerHeight', value);
+        }
+    });
+
+
+    //窗口图标        
+    this.defineProperty('icon', '', {
+
+        set: function (value) {
+
+            this.renderer.set(this, 'icon', value);
+        }
+    });
+
+
+    //窗口标题
+    this.defineProperty('title', '', {
+
+        set: function (value) {
+
+            this.renderer.set(this, 'title', value);
+        }
+    });
+
+
+    //是否显示关闭按钮
+    this.defineProperty('closable', true, {
+
+        set: function (value) {
+
+            this.renderer.set(this, 'closable', value);
+        }
+    });
+
+
+    //关闭时是否自动销毁
+    this.defineProperty('autoDispose', true);
+
+
+
+    //测量自动大小
+    this.onmeasure = function (auto) {
+        
+        if (auto)
+        {
+            this.renderer.update(this);
+            
+            if (auto & 1)
+            {
+                this.offsetWidth = this.arrangeRight + this.borderLeft + this.borderRight;
+            }
+            
+            if (auto & 2)
+            {
+                this.offsetHeight = this.headerHeight() + this.arrangeBottom + this.borderTop + this.borderBottom;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    };
+
+
+
+    this.show = function (left, top) {
+        
+        this.renderer.show(this, left, top);
+        return this;
+    };
+
+
+    this.showDialog = function (left, top) {
+        
+        this.renderer.show(this, left, top, true);
+        return this;
+    };
+
+        
+    this.close = function (closeType) {
+
+        if (!closeType)
+        {
+            closeType = 'ok';
+        }
+
+        if (this.trigger('closing', 'closeType', closeType) !== false)
+        {
+            this.view && this.renderer.close(this);
+
+            this.trigger('closed', 'closeType', closeType);
+            this.shown = false;
+
+            if (this.autoDispose())
+            {
+                this.dispose();
+            }
+        }
+
+        return this;
+    };
+
+
+
+}).register('dialog');
 
 
 
@@ -9856,230 +7998,2432 @@ flyingon.showMessage = function (options) {
 
 
 
-/**
-* 弹出层组件
-* 
-* 事件:
-* open: 打开事件
-* autoclosing: 鼠标点击弹出层外区域时自动关闭前事件(可取消)
-* closing: 关闭前事件(可取消)
-* closed: 关闭后事件
+
+/*
+
+
+本系统选择器从按照左到右的顺序解析, 请注意相关性能
+
+
+本系统支持的基础选择器如下(注:本系统不支持html标签选择器):
+
+*                       通用控件选择器
+.N                      class选择器
+#N                      id选择器
+N                       类型选择器
+
+
+本系统支持的组合选择器如下:
+
+A,B                     或者选择器
+A B                     后代选择器
+A>B                     子选择器
+A+B                     毗邻选择器
+A~B                     后续兄弟选择器
+AB                      并且选择器
+
+
+本系统支持的属性选择器如下:
+
+[name]                  具有name属性的控件
+[name=value]            name属性值等于value的控件
+[name~=value]           name属性值有多个空格分隔,其中一个值等于value的控件
+[name|=value]           name属性值有多个连字号分隔(hyphen-separated)的值,其中一个值以value开头的控件, 主要用于lang属性, 比如en,en-us,en-gb等等
+[name^=value]           name属性值以value开头的控件
+[name$=value]           name属性值以value结尾的控件
+[name*=value]           name属性值包含value的控件
+
+
+本系统支持的伪类控件如下:
+
+:focus                  控件有焦点
+:enabled                控件可用
+:disabled               控件被禁用
+:checked                控件已选中
+
+:has(selector)          控件下属子控件包含选择器selector规定的控件
+:not(selector)          控件下属子控件不包含选择器selector规定的控件
+
+:empty                  控件不包含任何子控件
+
+:only                   控件是父控件中的唯一子控件
+:first                  控件是父控件中的第一个子控件
+:last                   控件是父控件中的最后一个子控件
+:odd                    控件在父控件中的索引号是单数, 索引从0开始
+:even                   控件在父控件中的索引号是双数, 索引从0开始
+:eq(n)                  控件在父控件中的索引号等于n, n<0表示倒序, 索引从0开始
+:gt(n)                  控件在父控件中的索引号大于n, 索引从0开始
+:lt(n)                  控件在父控件中的索引号小于n, 索引从0开始
+
+
+本系统不支持css伪类及伪元素
+
+
 */
-flyingon.defineClass('PopupLayer', flyingon.Panel, function () {
 
 
 
-    //设置为顶级控件
-    this.__top_control = true;
-
-
-    //弹出层是否已显示
-    this.shown = false;
-
-    
-    this.defaultValue('border', 1);
-
-    this.defaultValue('width', 'auto');
-
-    this.defaultValue('height', 'auto');
-
-
-    //鼠标移出弹出层时是否自动关闭
-    this.defineProperty('closeLeave', false);
-
-
-    //鼠标离弹出层越来越远时是否自动关闭
-    this.defineProperty('closeAway', false);
-    
-    
-    //停靠方向 bottom:下面 top:上面 right:右边 left:左边
-    this.defineProperty('direction', 'bottom');
-    
-    
-    //对齐 left|center|right|top|middle|bottom
-    this.defineProperty('align', 'left');
-    
-    
-    //空间不足时是否反转方向
-    this.defineProperty('reverse', true);
-
-
-    //关闭时是否自动销毁
-    this.defineProperty('autoDispose', true);
-    
-
-
-    //打开弹出层
-    this.show = function (reference, offset) {
-
-        this.renderer.show(this, reference, offset, this.direction(), this.align(), this.reverse());
-        this.shown = true;
-
-        return this;
-    };
-
-
-    //在指定的位置打开弹出层
-    this.showAt = function (left, top) {
-
-        this.renderer.showAt(this, left, top);
-        this.shown = true;
-
-        return this;
-    };
-
-
-
-    //关闭弹出层(弹出多级窗口时只有最后一个可以成功关闭)
-    //closeType: 关闭类型 ok, cancel, auto
-    this.close = function (closeType) {
-
-        closeType = closeType || 'ok';
-
-        if (this.trigger('closing', 'closeType', closeType) === false)
-        {
-            return false;
-        }
-
-        this.view && this.renderer.close(this);
-        this.trigger('closed', 'closeType', closeType);
-        this.shown = false;
-
-        if (this.autoDispose())
-        {
-            this.dispose();
-        }
-
-        return this;
-    };
-    
-
-
-}).alias('popuplayer');
-
-
-
-
-flyingon.defineClass('Dialog', flyingon.Panel, function (base) {
-
-
-
-    //设置为顶级控件
-    this.__top_control = true;
-
-
-    //窗口是否已显示
-    this.shown = false;
-
-
-    this.defaultValue('border', 1);
-
-    this.defaultValue('padding', 2);
-
-    this.defaultValue('movable', true);
-
-
-    //头部高度        
-    this.defineProperty('headerHeight', 0, {
-
-        set: function (value) {
-
-            this.renderer.set(this, 'headerHeight', value);
-        }
-    });
-
-
-    //窗口图标        
-    this.defineProperty('icon', '', {
-
-        set: function (value) {
-
-            this.renderer.set(this, 'icon', value);
-        }
-    });
-
-
-    //窗口标题
-    this.defineProperty('title', '', {
-
-        set: function (value) {
-
-            this.renderer.set(this, 'title', value);
-        }
-    });
-
-
-    //是否显示关闭按钮
-    this.defineProperty('closable', true, {
-
-        set: function (value) {
-
-            this.renderer.set(this, 'closable', value);
-        }
-    });
-
-
-    //关闭时是否自动销毁
-    this.defineProperty('autoDispose', true);
-
-
-
-    //测量自动大小
-    this.onmeasure = function (auto) {
+//解析选择器
+(function () {
         
-        if (auto)
-        {
-            this.arrange();
+    
+    
+    //解析缓存
+    var parse_cache = flyingon.create(null);
+    
+    
 
-            if (auto & 1)
+    //解析选择器
+    function parse(tokens, index) {
+
+        var Class = flyingon.Selector_node,
+            relation = ' ',
+            nodes, 
+            node, 
+            token;
+
+        while (token = tokens[index++])
+        {
+            //switch代码在chrome下的效率没有IE9好,不知道什么原因,有可能是其操作非合法变量名的时候性能太差
+            switch (token)
             {
-                this.offsetWidth = this.arrangeRight + this.borderLeft + this.borderRight;
+                case '#':   //id选择器标记
+                case '.':   //class选择器标记
+                    node = new Class(relation, token, tokens[index++], node);
+                    relation = '';
+                    break;
+
+                case '*':  //全部元素选择器标记
+                    node = new Class(relation, '*', '*', node);
+                    relation = '';
+                    break;
+
+                case ' ':  //后代选择器标记
+                case '\t':
+                    if (!relation) //忽略其它类型后的空格
+                    {
+                        relation = ' ';
+                    }
+                    break;
+
+                case '>':  //子元素选择器标记
+                case '+':  //毗邻元素选择器标记
+                case '~':  //之后同级元素选择器标记
+                    relation = token;
+                    break;
+
+                case ',':  //组合选择器标记
+                    if (node)
+                    {
+                        nodes = nodes || new flyingon.Selector_nodes();
+                        nodes[nodes.length++] = node.top;
+                    }
+
+                    node = null;
+                    relation = ' ';
+                    break;
+
+                case '[': //属性 [name[?="value"]]
+                    if (!node || relation) //未指定节点则默认添加*节点
+                    {
+                        node = new Class(relation, '*', '*', node);
+                        relation = '';
+                    }
+
+                    index = parse_property(node, tokens, index);
+                    break;
+
+                case ':': //伪类
+                    if (!node || relation) //未指定节点则默认添加*节点
+                    {
+                        node = new Class(relation, '*', '*', node);
+                        relation = '';
+                    }
+
+                    token = new flyingon.Selector_pseudo(node, tokens[index++]);
+                    
+                    //处理参数
+                    if (tokens[index] === '(')
+                    {
+                        index = parse_pseudo(token, tokens, ++index);
+                    }
+                    break;
+
+                default: //类名 token = ""
+                    node = new Class(relation, '', token.replace(/-/g, '.'), node);
+                    relation = '';
+                    break;
+            }
+        }
+        
+        if (nodes)
+        {
+            if (node)
+            {
+                nodes[nodes.length++] = node.top;
             }
             
-            if (auto & 2)
+            return nodes;
+        }
+
+        return node && node.top || node;
+    };
+
+
+    //解析属性
+    function parse_property(node, tokens, index) {
+
+        var target, token, any;
+
+        while (token = tokens[index++])
+        {
+            switch (token)
             {
-                this.offsetHeight = this.headerHeight() + this.arrangeBottom + this.borderTop + this.borderBottom;
+                case ']':
+                    return index;
+
+                case '*': // *= 包含属性值XX
+                case '^': // ^= 属性值以XX开头
+                case '$': // $= 属性值以XX结尾
+                case '~': // ~= 匹配以空格分隔的其中一段值 如匹配en US中的en
+                case '|': // |= 匹配以-分隔的其中一段值 如匹配en-US中的en
+                    if (target)
+                    {
+                        target.relation = token;
+                    }
+                    break;
+
+                case '=':
+                    if (target)
+                    {
+                        target.relation += '=';
+                    }
+                    break;
+
+                case ' ':
+                case '\t':
+                    break;
+
+                default:
+                    if (target)
+                    {
+                        switch (token)
+                        {
+                            case 'undefined':
+                                token = undefined;
+                                break;
+                                
+                            case 'null':
+                                token = null;
+                                break;
+                                
+                            case 'true':
+                                token = true;
+                                break;
+                                
+                            case 'false':
+                                token = false;
+                                break;
+                                
+                            default:
+                                if ((any = token.charAt(0)) === '"' || any === "'")
+                                {
+                                    token = token.substring(1, token.length - 1);
+                                }
+                                else
+                                {
+                                    token = +token;
+                                }
+                                break;
+                        }
+                        
+                        target.value = token;
+                    }
+                    else
+                    {
+                        target = new flyingon.Selector_property(node, token);
+                    }
+                    break;
+            }
+        }
+
+        return index;
+    };
+    
+
+    //解析伪类参数
+    function parse_pseudo(target, tokens, index) {
+
+        var start = index,
+            flag = 1,
+            any;
+        
+        while (flag && (any = tokens[index++]))
+        {
+            switch (any)
+            {
+                case '(':
+                    flag++;
+                    break;
+                    
+                case ')':
+                    flag--;
+                    break;
+            }
+        }
+        
+        any = tokens.slice(start, index - 1).join('');
+
+        switch (target.name)
+        {
+            case 'eq':
+            case 'gt':
+            case 'lt':
+                any |= 0;
+                break;
+        }
+        
+        target.value = any;
+        return index;
+    };
+    
+        
+    //创建解析选择器方法
+    flyingon.__parse_selector = function (selector, cache) {
+
+        if (!selector || typeof selector !== 'string')
+        {
+            return null;
+        }
+        
+        if (cache !== false && (cache = parse_cache[selector]))
+        {
+            return cache;
+        }
+        
+        cache = selector.match(/"[^"]*"|'[^']*'|[\w-]+|[*.#\[\]:(), \t>+~=|^$]/g);
+        return parse_cache[selector] = parse(cache, 0);
+    };
+
+    
+})();
+
+
+
+//选择器节点类
+flyingon.Selector_node = flyingon.defineClass(function () {
+    
+    
+
+    //id选择器缓存集合
+    var id_query;
+
+    //class选择器缓存集合
+    var class_query;
+
+    //类型选择器缓存集合
+    var type_query;
+
+
+
+    this.constructor = function (relation, type, name, node) {
+       
+        this.find = this[this.relation = relation];
+        this.filter = this[this.type = type];
+        this.name = name;
+        
+        if (node)
+        {
+            if (relation)
+            {
+                node.next = this;
+            }
+            else
+            {
+                node[node.length++] = this;
+            }
+            
+            this.top = node.top || node;
+        }
+        else
+        {
+            this.top = this;
+        }
+    };
+    
+    
+        
+    //关系符
+    this.relation = '';
+    
+    
+    //节点类型
+    this.type = '';
+    
+    
+    //节点名称
+    this.name = '';
+    
+    
+    //子项数
+    this.length = 0;
+    
+    
+    //下一节点
+    this.next = null;
+    
+    
+    
+    //选择节点
+    this.select = function (controls) {
+        
+        var index, any;
+        
+        controls = this.find(controls);
+
+        if (controls[0])
+        {
+            index = 0;
+
+            while (any = this[index++])
+            {
+                controls = any.filter(controls);
+            }
+
+            if (controls[0] && (any = this.next))
+            {
+                controls = any.select(controls);
+            }
+        }
+
+        return controls;
+    };
+    
+    
+    //检查控件是否符合选择器要求
+    this.check = function (controls) {
+    
+        var index = 0,
+            any;
+        
+        while (any = this[index++])
+        {
+            if (!(controls = any.filter(controls, [])).length)
+            {
+                return controls;
+            }
+        }
+
+        return (any = this.next) ? any.find(controls) : controls;
+    };
+    
+    
+    
+    this[''] = function (controls, cache) {
+
+        var type = this.__type || (this.__type = flyingon.components[this.name]);
+
+        if (type)
+        {
+            var exports = [],
+                index = 0,
+                length = 0,
+                item;
+            
+            while (item = controls[index++])
+            {
+                if (item instanceof type)
+                {
+                    exports[length++] = item;
+                }
+            }
+            
+            return exports;
+        }
+
+        return controls;
+    };
+    
+        
+    this['*'] = function (controls, cache) {
+
+        return controls;
+    };
+    
+    
+    this['.'] = function (controls, cache) {
+
+        var name = this.name;;
+
+        if (name)
+        {
+            var exports = [],
+                index = 0,
+                length = 0,
+                item,
+                any;
+            
+            while (item = controls[index++])
+            {
+                if ((any = item.__class_list) && any[name])
+                {
+                    exports[length++] = item;
+                }
+            }
+            
+            return exports;
+        }
+
+        return controls;
+    };
+    
+
+    this['#'] = function (controls, cache) {
+
+        var name = this.name;;
+
+        if (name)
+        {
+            var exports = [],
+                index = 0,
+                length = 0,
+                item,
+                any;
+            
+            while (item = controls[index++])
+            {
+                if ((any = item.__storage) && any.id === name)
+                {
+                    exports[length++] = item;
+                }
+            }
+            
+            return exports;
+        }
+
+        return controls;
+    };
+    
+    
+    
+    //后代选择器
+    this[' '] = function (controls) {
+        
+        var cache = type_query,
+            index = 0,
+            exports,
+            item,
+            any;
+        
+        if (cache)
+        {
+            cache = (any = cache['*']) || (cache['*'] = {});
+        }
+        else
+        {
+            cache = (type_query = flyingon.__type_query_cache = {})['*'] = {};
+        }
+
+        if (controls.length > 1)
+        {
+            controls = remove_child(controls);
+        }
+
+        while (item = controls[index++])
+        {
+            any = item.__uniqueId || item.uniqueId();
+            any = cache[any] || (cache[any] = (any = item.firstChild) ? all_children(any) : []);
+
+            if (any.length > 0)
+            {
+                if (exports)
+                {
+                    any.push.apply(exports, any);
+                }
+                else
+                {
+                    exports = any;
+                }
+            }
+        }
+
+        if (exports && exports[0])
+        {
+            return this.filter(exports, 1);
+        }
+ 
+        return exports || [];
+    };
+
+
+    //获取指定控件的所有子控件
+    function all_children(control) {
+
+        var list = [],
+            stack = [],
+            index = 0,
+            length = 0,
+            next,
+            any;
+
+        do
+        {
+            list[length++] = control;
+            next = control.nextSibling;
+
+            if (any = control.firstChild)
+            {
+                control = any;
+                
+                if (next)
+                {
+                    stack[index++] = next;
+                }
+            }
+            else
+            {
+                control = next || stack[--index];
+            }
+        }
+        while (control);
+
+        return list;
+    };
+
+    
+    //移除子控件关系
+    function remove_children(controls) {
+
+        return controls;
+    };
+
+    
+    //子控件选择器
+    this['>'] = function (controls) {
+
+        var index = 0,
+            exports,
+            item,
+            any;
+
+        while (item = controls[index++])
+        {
+            if (item.firstChild)
+            {
+                any = item.children();
+
+                if (exports)
+                {
+                    any.push.apply(exports, any);
+                }
+                else
+                {
+                    exports = any;
+                }
+            }
+        }
+
+        return exports && exports[0] && this.filter(exports, 2) || [];
+    };
+    
+    
+    //毗邻控件选择器
+    this['+'] = function (controls) {
+
+        var exports = [],
+            index = 0,
+            length = 0,
+            item;
+
+        while (item = controls[index++])
+        {
+            if (item = item.nextSibling)
+            {
+                exports[length++] = item;
+            }
+        }
+ 
+        return exports[0] ? this.filter(exports) : exports;
+    };
+    
+    
+    //后续兄弟控件选择器
+    this['~'] = function (controls) {
+
+        var exports = [],
+            index = 0,
+            length = 0,
+            item;
+        
+        if (controls.length > 1)
+        {
+            controls = remove_next(controls);
+        }
+
+        while (item = controls[index++])
+        {
+            while (item = item.nextSibling)
+            {
+                exports[length++] = item;
+            }
+        }
+ 
+        return exports[0] ? this.filter(exports) : exports;
+    };
+
+
+    //移除后述控件关系
+    function remove_next(controls) {
+
+        return controls;
+    };
+    
+
+    //清除缓存
+    function clear_cache(cache) {
+
+        for (var type in cache)
+        {
+            var keys = cache[type];
+
+            for (var id in keys)
+            {
+                keys[id] = null;
+            }
+
+            cache[type] = null;
+        }
+    };
+
+
+    //清除id选择器缓存
+    flyingon.__clear_id_query = function (id) {
+
+        var keys = id_query,
+            key,
+            any;
+
+        if (keys && (any = keys[id]))
+        {
+            for (key in any)
+            {
+                any[key] = null;
+            }
+
+            delete keys[key];
+
+            for (key in keys)
+            {
+                return;
+            }
+
+            id_query = flyingon.__id_query_cache = null;
+        }
+    };
+        
+
+    //清除class选择器缓存
+    flyingon.__clear_class_query = function (name) {
+
+        var keys = class_query,
+            key,
+            any,
+            index;
+        
+        if (keys && name)
+        {
+            if (typeof name === 'string')
+            {
+                if (any = keys[name])
+                {
+                    clear_cache(any);
+                    delete keys[name];
+                }
+            }
+            else if (name instanceof Array)
+            {
+                index = 0;
+
+                while (key = name[index++])
+                {
+                    if (any = keys[key])
+                    {
+                        clear_cache(any);
+                        delete keys[key];
+                    }
+                }
+            }
+            else
+            {
+                for (key in name)
+                {
+                    if (any = keys[key])
+                    {
+                        clear_cache(any);
+                        delete keys[key];
+                    }
+                }
+            }
+
+            for (key in keys)
+            {
+                return;
+            }
+
+            class_query = flyingon.__clear_class_query = null;
+        }
+    };
+
+
+    //清除类型选择器缓存
+    flyingon.__clear_type_query = function (control) {
+
+        var cache = type_query;
+
+        for (var type in cache)
+        {
+            clear_cache(cache[type]);
+            cache[type] = null;
+        }
+
+        type_query = flyingon.__type_query_cache = null;
+    };
+
+    
+    
+}, false);
+
+
+
+//复合选择器节点类
+flyingon.Selector_nodes = flyingon.defineClass(function () {
+    
+    
+    
+    this.type = ',';
+    
+    
+    //子节点数量
+    this.length = 0;
+    
+    
+    //选择节点
+    this.select = function (controls, exports) {
+        
+        var index = 1,
+            list,
+            item,
+            id;
+        
+        if (item = this[0])
+        {
+            exports = item.select(controls, exports);
+
+            while (item = this[index++])
+            {
+                list = item.select(controls, []);
+                
+                for (var i = 0, l = list.length; i < l; i++)
+                {
+                    if ((item = list[i]) && (id = -item.__uniqueId) &&!exports[id])
+                    {
+                        exports[id] = true;
+                        exports.push(item);
+                    }
+                }
+            }
+        }
+
+        return exports;
+    };
+    
+    
+    
+}, false);
+
+
+
+//选择器属性类
+flyingon.Selector_property = flyingon.defineClass(function () {
+    
+    
+    
+    this.constructor = function (node, name) {
+       
+        this.name = name;
+        node[node.length++] = this;
+    };
+    
+    
+    
+    //节点类型
+    this.type = '[]';
+    
+    
+    //属性名称
+    this.name = '';
+    
+    
+    //关系符
+    this.relation = '';
+    
+    
+    //属性值
+    this.value = '';
+
+
+
+    this.filter = function (controls) {
+
+        var name = this.name,
+            fn;
+
+        if (name && (fn = this[this.relation]))
+        {
+            var exports = [];
+
+            fn.call(this, controls, name, exports, 0);
+            return exports;
+        }
+
+        return controls;
+    };
+    
+    
+    
+    this[''] = function (controls, name, exports, length) {
+        
+        var index = 0,
+            item;
+
+        while (item = controls[index++])
+        {
+            if (item[name] !== void 0)
+            {
+                exports[length++] = item;
+            }
+        }
+    };
+    
+    
+    this['='] = function (controls, name, exports, length) {
+        
+        var value = this.value,
+            index = 0,
+            item,
+            any;
+
+        while (item = controls[index++])
+        {
+            if ((any = item[name]) !== void 0)
+            {
+                if (typeof any === 'function')
+                {
+                    any = any.call(item);
+                }
+
+                if (any === value)
+                {
+                    exports[length++] = item;
+                }
+            }
+        }
+    };
+    
+    
+    // *= 包含属性值XX (由属性解析)
+    this['*='] = function (controls, name, exports, length) {
+        
+        var value = this.value,
+            index = 0,
+            item,
+            any;
+
+        while (item = controls[index++])
+        {
+            if ((any = item[name]) !== void 0)
+            {
+                if (typeof any === 'function')
+                {
+                    any = any.call(item);
+                }
+
+                any = '' + any;
+
+                if (any.indexOf(value) >= 0)
+                {
+                    exports[length++] = item;
+                }
+            }
+        }
+    };
+    
+    
+    // ^= 属性值以XX开头 (由属性解析)
+    this['^='] = function (controls, name, exports, length) {
+        
+        var value = this.value,
+            index = 0,
+            item,
+            any;
+
+        while (item = controls[index++])
+        {
+            if ((any = item[name]) !== void 0)
+            {
+                if (typeof any === 'function')
+                {
+                    any = any.call(item);
+                }
+
+                any = '' + any;
+
+                if (any.indexOf(value) === 0)
+                {
+                    exports[length++] = item;
+                }
+            }
+        }
+    };
+    
+    
+    // $= 属性值以XX结尾 (由属性解析)
+    this['$='] = function (controls, name, exports, length) {
+        
+        var value = this.value,
+            count = value.length,
+            index = 0,
+            item,
+            any;
+
+        while (item = controls[index++])
+        {
+            if ((any = item[name]) !== void 0)
+            {
+                if (typeof any === 'function')
+                {
+                    any = any.call(item);
+                }
+
+                any = '' + any;
+
+                if (any.lastIndexOf(value) === any.length - count)
+                {
+                    exports[length++] = item;
+                }
+            }
+        }
+    };
+    
+    
+    // ~= 匹配以空格分隔的其中一段值 如匹配en US中的en (由属性解析)
+    this['~='] = function (controls, name, exports, length) {
+        
+        var regex = this.regex || (this.regex = new RegExp('(?:^|\s+)' + this.value + '(?:\s+|$)')),
+            index = 0,
+            item,
+            any;
+
+        while (item = controls[index++])
+        {
+            if ((any = item[name]) !== void 0)
+            {
+                if (typeof any === 'function')
+                {
+                    any = any.call(item);
+                }
+
+                if (regex.text(any))
+                {
+                    exports[length++] = item;
+                }
+            }
+        }
+    };
+
+
+    this['|='] = function (controls, name, exports, length) {
+        
+        var regex = this.regex || (this.regex = new RegExp('\b' + this.value + '\b')),
+            index = 0,
+            item,
+            any;
+
+        while (item = controls[index++])
+        {
+            if ((any = item[name]) !== void 0)
+            {
+                if (typeof any === 'function')
+                {
+                    any = any.call(item);
+                }
+
+                if (regex.text(any))
+                {
+                    exports[length++] = item;
+                }
+            }
+        }
+    };
+        
+    
+}, false);
+
+
+
+//选择器伪类类
+flyingon.Selector_pseudo = flyingon.defineClass(function () {
+    
+    
+    
+    this.constructor = function (node, name) {
+       
+        this.name = name;
+        node[node.length++] = this;
+    };
+    
+    
+    
+    //节点类型
+    this.type = ':';
+    
+    
+    //伪类名称
+    this.name = '';
+    
+    
+    //伪类参数值
+    this.value = 0;
+    
+
+
+    this.filter = function (controls) {
+
+        var name = this.name,
+            fn;
+
+        if (name && (fn = this[name]))
+        {
+            var exports = [];
+
+            fn.call(this, controls, exports, 0);
+            return exports;
+        }
+
+        return controls;
+    };
+    
+
+    this.active = function (controls, exports, length) {
+
+    };
+    
+    
+    this.disabled = function (controls, exports, length) {
+
+        var index = 0,
+            item;
+
+        while (item = controls[index++])
+        {
+            if ((item.__storage || item.__defaults).disabled)
+            {
+                exports[length++] = item;
+            }
+        }
+    };
+    
+
+    this.enabled = function (controls, exports, length) {
+
+        var index = 0,
+            item;
+
+        while (item = controls[index++])
+        {
+            if (!(item.__storage || item.__defaults).disabled)
+            {
+                exports[length++] = item;
+            }
+        }
+    };
+
+    
+    this.checked = function (controls, exports, length) {
+
+        var index = 0,
+            item;
+
+        while (item = controls[index++])
+        {
+            if ((item.__storage || item.__defaults).checked)
+            {
+                exports[length++] = item;
+            }
+        }
+    };
+
+    
+    
+    this.has = function (controls, exports, length) {
+
+        var selector = this.value;
+
+        if (selector)
+        {
+            selector = flyingon.__parse_selector(selector);
+
+            
+        }
+
+        return controls;
+    };
+    
+    
+    this.not = function (controls, exports, length) {
+
+    };
+    
+    
+
+    this.empty = function (controls, exports, length) {
+
+        var index = 0,
+            item;
+
+        while (item = controls[index++])
+        {
+            if (!item.firstChild)
+            {
+                exports[length++] = item;
+            }
+        }
+    };
+    
+    
+    this.only = function (controls, exports, length) {
+        
+        var index = 0,
+            item;
+
+        while (item = controls[index++])
+        {
+            if (!item.previousSibling && !item.nextSibling)
+            {
+                exports[length++] = item;
+            }
+        }
+    };
+
+    
+    this.first = function (controls, exports, length) {
+
+        var index = 0,
+            item;
+
+        while (item = controls[index++])
+        {
+            if (!item.previousSibling)
+            {
+                exports[length++] = item;
+            }
+        }
+    };
+
+        
+    this.last = function (controls, exports, length) {
+
+        var index = 0,
+            item;
+
+        while (item = controls[index++])
+        {
+            if (!item.nextSibling)
+            {
+                exports[length++] = item;
+            }
+        }
+    };
+
+    
+    this.odd = function (controls, exports, length) {
+        
+        var value = this.value,
+            index = 0,
+            item;
+
+        while (item = controls[index++])
+        {
+            if (!(item.index() & 1))
+            {
+                exports[length++] = item;
+            }
+        }
+    };
+    
+    
+    this.even = function (controls, exports, length) {
+        
+        var value = this.value,
+            index = 0,
+            item;
+
+        while (item = controls[index++])
+        {
+            if (item.index() & 1)
+            {
+                exports[length++] = item;
+            }
+        }
+    };
+    
+        
+    this.eq = function (controls, exports, length) {
+        
+        var value = this.value,
+            index = 0,
+            item;
+
+        while (item = controls[index++])
+        {
+            if (item.index() === value)
+            {
+                exports[length++] = item;
+            }
+        }
+    };
+    
+        
+    this.gt = function (controls, exports, length) {
+
+        var value = this.value,
+            index = 0,
+            item;
+
+        while (item = controls[index++])
+        {
+            if (item.index() > value)
+            {
+                exports[length++] = item;
+            }
+        }
+    };
+
+    
+    this.lt = function (controls, exports, length) {
+
+        var value = this.value,
+            index = 0,
+            item;
+
+        while (item = controls[index++])
+        {
+            if (item.index() < value)
+            {
+                exports[length++] = item;
+            }
+        }
+    };
+
+    
+}, false);
+
+
+
+//选择器查询类
+flyingon.Query = flyingon.defineClass(function () {
+    
+    
+    
+    //选择器解析缓存
+    var parse = flyingon.__parse_selector;
+    
+    
+    
+    this.constructor = function (selector, context) {
+       
+        var any;
+        
+        if (context && (any = parse(selector)) && (any = any.select(context)) && any[0])
+        {
+            any.push.apply(this, any);
+        }
+    };
+    
+    
+    
+    this.find = function (selector) {
+        
+        var target = new this.Class(selector, this);
+
+        target.previous = this;
+        return target;
+    };
+
+
+    //
+    this.children = function (step, start, end) {
+
+    };
+    
+    
+    this.end = function () {
+      
+        return this.previous || this;
+    };
+    
+        
+
+    this.on = function (type, fn) {
+
+        if (type && fn)
+        {
+            var index = 0,
+                item;
+
+            while (item = this[index++])
+            {
+                item.on(type, fn);
+            }
+        }
+        
+        return this;
+    };
+    
+    
+    this.once = function (type, fn) {
+
+        if (type && fn)
+        {
+            var index = 0,
+                item;
+
+            while (item = this[index++])
+            {
+                item.once(type, fn);
+            }
+        }
+        
+        return this;
+    };
+
+    
+    this.off = function (type, fn) {
+
+        var index = 0,
+            item;
+
+        while (item = this[index++])
+        {
+            item.off(type, fn);
+        }
+        
+        return this;
+    };
+
+
+    this.trigger = function (e) {
+
+        if (e)
+        {
+            var index = 0,
+                item;
+
+            while (item = this[index++])
+            {
+                item.trigger.apply(item, arguments);
+            }
+        }
+        
+        return this;
+    };
+
+    
+
+    this.hasClass = function (className) {
+
+        var item;
+        return className && (item = this[0]) ? item.hasClass(className) : false;
+    };
+
+    
+    this.addClass = function (className) {
+
+        if (className)
+        {
+            var index = 0,
+                item;
+
+            while (item = this[index++])
+            {
+                item.addClassName(className);
+            }
+        }
+        
+        return this;
+    };
+
+    
+    this.removeClass = function (className) {
+
+        if (className)
+        {
+            var index = 0,
+                item;
+
+            while (item = this[index++])
+            {
+                item.removeClass(className);
+            }
+        }
+        
+        return this;
+    };
+
+    
+    this.toggleClass = function (className) {
+
+        if (className)
+        {
+            var index = 0,
+                item;
+
+            while (item = this[index++])
+            {
+                item.toggleClass(className);
+            }
+        }
+        
+        return this;
+    };
+    
+    
+}, false);
+
+
+
+
+//视图模板类
+flyingon.ViewTemplate = flyingon.defineClass(function () {
+
+
+
+    //控件实例集合
+    var controls = flyingon.__uniqueId_controls;
+
+
+    //当前依赖参数
+    //0: 控件id
+    //1: 模板节点
+    //2: 绑定名称
+    var depend_target;
+
+    var push = [].push;
+
+    var splice = [].splice;
+
+
+
+
+    this.constructor = function (template) {
+
+        if (typeof template === 'string' && template.charAt(0) === '#')
+        {
+            var node = document.getElementById(template.substring(1));
+            template = node ? node.innerHTML : template;
+        }
+
+        this.__template = template;
+    };
+
+
+
+
+    //初始化模板生成视图模型
+    this.init = function (defaults) {
+
+        var vm = this.__vm_class,
+            any;
+
+        if (vm === void 0)
+        {
+            if (typeof (any = this.__template) === 'string')
+            {
+                any = any.replace(/<!--[\s\S]*?-->/g, '');
+                any = any.match(/[<>=/]|[\w-:@]+|"[^"]*"|'[^']*'/g);
+                any = parse(any, []);
+            }
+
+            if (any instanceof Array)
+            {
+                if (any[1])
+                {
+                    throw 'template can only one root node!';
+                }
+
+                any = this.__template = any[0];
+            }
+
+            if (any)
+            {
+                if (any['-loop'])
+                {
+                    throw 'template root nood can not use "d:loop"!';
+                }
+            }
+            else
+            {
+                throw 'template can not be empty!';
+            }
+ 
+            if (defaults !== false)
+            {
+                analyse_object(vm = {}, any);
+
+
+                any = null;
+
+                for (any in vm)
+                {
+                    any = define_object(vm, '');
+                    break;
+                }
+            }
+            else
+            {
+                any = null;
+            }
+
+            this.__vm_class = vm = any;
+        }
+
+        return vm && new vm(null, defaults);
+    };
+
+
+
+
+    //解析xml模板
+    function parse(tokens, array) {
+
+        var regex_node = /[^\w-]/,
+            regex_name = /[^\w-:@]/,
+            stack = [],
+            flag, //属性分析阶段标记
+            index = 0,
+            item,
+            name,
+            token,
+            any;
+
+        while (token = tokens[index++])
+        {
+            switch (token)
+            {
+                case '<':
+                    if (flag)
+                    {
+                        throw parse_error(token, item);
+                    }
+
+                    token = tokens[index++];
+
+                    //下一个符号是关闭结点
+                    if (token === '/')
+                    {
+                        if (!item || tokens[index] !== item.type || tokens[index + 1] !== '>')
+                        {
+                            throw '"' + token + tokens[index] + tokens[index + 1] + '" not a valid close tag!';
+                        }
+
+                        index++;
+                        stack.pop();
+                        item = stack[stack.length - 1];
+                        break;
+                    }
+
+                    if (token.match(regex_node))
+                    {
+                        throw '"' + token + '" not a valid node name!';
+                    }
+
+                    any = { type: token };
+
+                    //添加子项
+                    if (item)
+                    {
+                        (item.children || (item.children = [])).push(any);
+                    }
+                    else
+                    {
+                        array.push(any);
+                    }
+
+                    stack.push(item = any);
+                    flag = true; //标记处于属性分析阶段
+                    break;
+
+                case '/':
+                    if (flag && tokens[index++] === '>')
+                    {
+                        flag = false; //标记属性分析阶段结束
+
+                        if (name)
+                        {
+                            item[name] = true;
+                            name = null;
+                        }
+
+                        stack.pop();
+                        item = stack[stack.length - 1];
+                    }
+                    else
+                    {
+                        throw parse_error(token, item);
+                    }
+                    break;
+
+                case '>':
+                    if (flag)
+                    {
+                        flag = false; //标记属性分析阶段结束
+
+                        if (name)
+                        {
+                            item[name] = true;
+                            name = null;
+                        }
+                    }
+                    break;
+
+                case '=':
+                    if (flag && name)
+                    {
+                        switch (token = tokens[index++])
+                        {
+                            case '<':
+                            case '>':
+                            case '/':
+                            case '=':
+                                throw parse_error(token, item);
+                        }
+
+                        any = token.charAt(0);
+                        any = any === '"' || any === '\'' ? token.substring(1, token.length - 1) : token;
+
+                        item[name] = any;
+                        name = null;
+                    }
+                    else
+                    {
+                        throw parse_error(token, item);
+                    }
+                    break;
+
+                default:
+                    if (flag)
+                    {
+                        if (name)
+                        {
+                            item[name] = true;
+                        }
+
+                        if (token.match(regex_name))
+                        {
+                            throw '"<' + item.type + '...' + token + '" not a valid attribute name!';
+                        }
+
+                        if (token === 'class')
+                        {
+                            name = 'className';
+                        }
+                        else if (token.indexOf('-') > 0) //-开头的是指令,不进行驼峰处理
+                        {
+                            name =  token.replace(/-(\w)/g, camelize);
+                        }
+                        else
+                        {
+                            name = token;
+                        }
+                    }
+                    else
+                    {
+                        throw '"' + token + '" has syntax error, text can only be a node property!';
+                    }
+                    break;
+            }
+        }
+
+        return array;
+    };
+
+
+    function camelize(_, key) {
+
+        return key.toUpperCase();
+    };
+
+
+    function parse_error(token, item) {
+
+        return '"' + (item ? '<' + item[0] + '...' : '') + token + '" has syntax error!';
+    };
+
+
+
+    //分析生成的节点格式
+    //[type, subtype, name, path, detail]
+    //[0, 0, name, path, null]    无父级节点
+    //[0, 1, name, path, null]    loop item变量(0可能会升级成1或者2)
+    //[0, 2, name, path, detail]  函数, detail为参数列表
+    //[1, 0, name, path, detail]  对象节点, detail为属性列表
+    //[1, 1, name, path, detail]  升级为对象节点的loop item变量, detail为属性列表
+    //[2, 0, name, path, detail]  数组节点, detail是item变量
+    //[2, 1, name, path, detail]  升级为数组节点的loop item变量, detail是item变量
+    
+
+    function analyse_object(node, template) {
+
+        var item, any;
+
+        for (var name in template)
+        {
+            switch (name)
+            {
+                case 'type':
+                case 'children':
+                case '-loop':
+                    any = null;
+                    break;
+
+                default:
+                    any = template[name];
+                    break;
+            }
+
+            if (any)
+            {
+                switch (name.charAt(0))
+                {
+                    case '-': //指令
+                        break;
+
+                    case ':': //绑定
+                        template[name] = any.indexOf('(') > 0 ? analyse_function(node, any) : analyse_name(node, any, 0, 0);
+                        break;
+
+                    case '@': //事件
+                        template[name] = analyse_function(node, any);
+                        break;
+                }
+            }
+        }
+
+        if (template = template.children)
+        {
+            any = 0;
+
+            while (item = template[any++])
+            {
+                (item['-loop'] ? analyse_loop : analyse_object)(node, item);
+            }
+        }
+    };
+
+
+    function analyse_loop(node, template) {
+
+        var keys = template['-loop'].match(/[\w.-]+/g),
+            loop,
+            item,
+            index,
+            any;
+
+        if (keys && (loop = keys[0]))
+        {
+            loop = analyse_name(node, loop, 2, 0);
+
+            //第一个变量是item, 第二个变量是index
+            //可以省略index, 但是不可以省略item
+            if (item = keys[1])
+            {
+                check_loop(node, item);
+
+                //在loop中记录item信息并添加进作用域
+                any = loop[4] = node[item] = [0, 1, item, null, null];
+
+                if (index = keys[2])
+                {
+                    check_loop(node, index);
+
+                    //添加进作用域
+                    node[index] = [0, 0, index, null];
+                }
+            }
+
+            //在作用域范围内分析模板
+            analyse_object(node, template);
+
+            if (item)
+            {
+                //标记超出作用域
+                node[item] = 0;
+
+                //如果item不是对象或数组,需把关联的参数节点修改为默认数组项对象
+                if (any[0])
+                {
+                    item = any;
+                }
+                else
+                {
+                    //如果直接绑定到数组项的值,需转换成item.$value
+                    //这么做的主要原因是为减少作用域的复杂程度
+                    item = loop[4] = any.slice(0);
+
+                    any[2] = '$value';
+                    any[3] = [item];
+                }
+
+                //index没有单独的作用域,需挂靠成item.$index
+                //这么做的主要原因是为减少作用域的复杂程度
+                if (index)
+                {
+                    any = node[index];
+                    any[2] = '$index';
+                    any[3] = [item];
+
+                    //标记超出作用域
+                    node[index] = 0;
+                }
             }
         }
         else
         {
-            return false;
+            analyse_object(node, template);
+        }
+
+        template['-loop'] = loop;
+    };
+
+
+    function check_loop(node, name) {
+
+        if (name.indexOf('.') >= 0)
+        {
+            throw 'loop "' + name + '" can not include "."!';
+        }
+
+        if (node[name])
+        {
+            throw 'loop "' + name + '" has be used!';
         }
     };
 
 
+    function analyse_name(node, name, type, subtype) {
 
-    this.show = function (left, top) {
-        
-        this.renderer.show(this, left, top);
-        return this;
-    };
+        var keys = name.match(/[\w-]+/g),
+            list = null, //上级列表
+            item;
 
-
-    this.showDialog = function (left, top) {
-        
-        this.renderer.show(this, left, top, true);
-        return this;
-    };
-
-        
-    this.close = function (closeType) {
-
-        if (!closeType)
+        for (var i = 0, l = keys.length - 1; i < l; i++)
         {
-            closeType = 'ok';
-        }
-
-        if (this.trigger('closing', 'closeType', closeType) !== false)
-        {
-            this.view && this.renderer.close(this);
-
-            this.trigger('closed', 'closeType', closeType);
-            this.shown = false;
-
-            if (this.autoDispose())
+            if (item = node[name = keys[i]])
             {
-                this.dispose();
+                switch (item[0])
+                {
+                    case 1: //对象
+                        node = item[4];
+                        break;
+
+                    case 0: //数组item变量升级为对象,否则穿透抛出异常
+                        if (item[1] === 1)
+                        {
+                            item[0] = 1;
+                            node = item[4] || (item[4] = {}); 
+                            break;
+                        }
+
+                    default:
+                        throw '"' + name + '" can not set child name!';
+                }
+            }
+            else
+            {
+                item = node[name] = [1, 0, name, list ? list.slice(0) : null, node = {}]; //创建新对象
+            }
+
+            if (list)
+            {
+                list.push(item);
+            }
+            else
+            {
+                list = [item];
+            }
+        }
+
+        if (item = node[name = keys.pop()])
+        {
+            if (type)
+            {
+                if (item[0])
+                {
+                    throw '"' + name + '" has be used!';
+                }
+
+                item[0] = type;
+            }
+            else if (item[0])
+            {
+                throw '"' + name + '" is a object, can not bind!';
+            }
+
+            return item;
+        }
+        
+        if (item === 0)
+        {
+            throw '"' + name + '" is out of scope range!';
+        }
+
+        return node[name] = [type, subtype, name, list, null];
+    };
+
+
+    function analyse_function(node, name) {
+
+        var list = name.match(/[\w-.]+/g),
+            args,
+            item,
+            index;
+
+        if ((name = list[0]).indexOf('.') >= 0)
+        {
+            throw 'function "' + name + '" can not include "."!';
+        }
+        
+        if ((item = node[name]) && item[1] !== 2)
+        {
+            throw 'function name "' + name + '" has be used!';
+        }
+
+        //函数支持重载,同一函数可传入不同的参数,所以每次分析都重新生成新节点
+        item = node[name] = [0, 2, list[0], null, null, null];
+
+        if (list[1])
+        {
+            args = [];
+            index = 1;
+
+            while (name = list[index++])
+            {
+                args.push(node[name] || analyse_name(node, name, 0, 0));
+            }
+            
+            item[4] = args;
+        }
+
+        return item;
+    };
+
+
+
+
+    //添加依赖追踪
+    function track(vm, name, value) {
+
+        var keys = vm.__depends;
+
+        if (!keys)
+        {
+            keys = vm.__depends = {};
+            keys[name] = [];
+        }
+
+        push.apply(keys[name] || (keys[name] = []), value);
+    };
+    
+
+    //添加自定义观测
+    function watch(name, fn) {
+
+        if (typeof name === 'function')
+        {
+            fn = name;
+            name = '*';
+        }
+        else if (typeof fn !== 'function')
+        {
+            throw 'watch must input a function!';
+        }
+
+        (this.__watches || (this.__watches = [])).push(name || '*', fn);
+    };
+
+
+    //变更通知
+    function notify(vm, name, value, oldValue, type) {
+
+        var keys = vm.__depends;
+
+        if (keys)
+        {
+            if (name === '*')
+            {
+                for (var key in keys)
+                {
+                    sync_bind(vm, key, keys[key]);
+                }
+            }
+            else if (keys = keys[name])
+            {
+                sync_bind(vm, name, keys);
+            }
+        }
+
+        trigger(vm, name, value, oldValue, type);
+    };
+
+
+    //同步绑定
+    function sync_bind(vm, name, depends) {
+
+        var control,
+            node,
+            index = 0,
+            any;
+
+        vm = vm.__top || vm;
+
+        while (any = depends[index++])
+        {
+            control = controls[any];
+            node = depends[index++];
+
+            if (node[1] === 2) //函数
+            {
+                any = bind_function(control, vm, null, node);
+            }
+            else //属性
+            {
+                any = (node[3] ? bind_vm(control, vm, null, node) : vm)[node[2]]();
+            }
+
+            control.set(depends[index++], any);
+        }
+    };
+
+
+    //触发观测通知
+    function trigger(vm, name, value, oldValue, type) {
+
+        var target = vm,
+            list,
+            event,
+            index,
+            key;
+
+        do
+        {
+            if (list = target.__watches)
+            {
+                index = 0;
+
+                while (key = list[index++])
+                {
+                    if (key === '*' || name === '*' || key === name)
+                    {
+                        list[index++].call(target, event || (event = {
+                            
+                            target: vm,
+                            type: type || 1,
+                            name: name,
+                            newValue: value,
+                            oldValue: oldValue
+                        }));
+                    }
+                    else
+                    {
+                        index++;
+                    }
+                }
+            }
+        }
+        while(target = target.__parent); //向上冒泡
+    };
+
+
+
+
+    //定义对象视图模型类
+    function define_object(node, path) {
+
+
+        var self = Class.prototype;
+
+
+        function Class(parent, value) {
+
+            var list = this.__children,
+                index = 0,
+                name,
+                any;
+
+            this.__top = (this.__parent = parent) ? parent.__top : this;
+            this.__data = value || {};
+
+            //如果有子对象则初始化子对象
+            while (name = list[index++])
+            {
+                if (any = value && value[name])
+                {
+                    any = new list[index++](this, any);
+                }
+                else
+                {
+                    any = new list[index++](this, any);
+                    value[name] = any.__data;
+                }
+
+                this[name] = any;
+            }
+        };
+
+
+        self.$name = path;
+        self.$get = object_get;
+        self.$set = object_set;
+        self.$value = object_value;
+        self.$watch = watch;
+
+
+        define_properties(self, node);
+
+
+        return Class;
+    };
+
+
+    function define_properties(self, node) {
+
+        var keys1 = self.__keys = {},
+            keys2 = self.__children = [],
+            item;
+
+        for (var name in node)
+        {
+            item = node[name];
+
+            switch (keys1[name] = item[0])
+            {
+                case 0: //property
+                    self[name] = define_property(name);
+                    break;
+
+                case 1: //object
+                    keys2.push(name, self[name] = define_object(item[4], item[1]));
+                    break;
+
+                case 2: //loop
+                    keys2.push(name, self[name] = define_array(item));
+                    break;
+            }
+        }
+    };
+    
+
+    function define_property(name) {
+
+        function fn(value) {
+
+            var data = this.__data,
+                any;
+
+            if (value === void 0)
+            {
+                if (value = depend_target)
+                {
+                    track(this, name, value);
+                }
+
+                return data[name];
+            }
+            
+            if ((any = data[name]) !== value)
+            {
+                notify(this, name, data[name] = value, any);
+            }
+
+            return this;
+        };
+
+        fn.__vm_ = 1;
+
+        return fn;
+    };
+
+
+    function object_value(value) {
+
+        var data = this.__data;
+
+        if (value === void 0)
+        {
+            return data;
+        }
+
+        if (data !== value)
+        {
+            var keys = this.__keys,
+                any;
+
+            for (var name in keys)
+            {
+                any = value && value[name];
+
+                if (data[name] !== any)
+                {
+                    if (keys[name])
+                    {
+                        this[name].$value(any);
+                    }
+                    else
+                    {
+                        this[name](any);
+                    }
+                }
+            }
+            
+            this.__data = value || {};
+        }
+    };
+
+
+    function object_get(name) {
+
+        var fn = this[name];
+        return fn && fn.property ? fn.call(this) : this.__data[name];
+    };
+
+
+    function object_set(name, value) {
+
+        if (this.__data[name] !== value)
+        {
+            switch (this.__keys[name])
+            {
+                case 0:
+                    return this[name](value);
+
+                case 1:
+                case 2:
+                    return this[name].$value(value);
+            }
+
+            this.__data[name] = value;
+        }
+
+        return this;
+    };
+
+
+
+    //定义数组视图模型类
+    function define_array(node) {
+
+        
+        var self = Class.prototype;
+
+
+        function Class(parent, value) {
+
+            var length = this.length = value && value.length || 0;
+
+            this.__top = parent.__top;
+            this.__parent = parent;
+            this.__data = value || [];
+
+            if (value)
+            {
+                var fn = this.__item_class,
+                    any;
+
+                for (var i = 0; i < length; i++)
+                {
+                    if (any = value[i])
+                    {
+                        any = new fn(this, any);
+                    }
+                    else
+                    {
+                        any = new fn(this, any);
+                        value[i] = any.__data;
+                    }
+
+                    (this[i] = any).__index = i;
+                }
+            }
+        };
+
+
+        self.$name = node[2];
+        self.$get = array_get;
+        self.$set = array_set;
+        self.$value = array_value;
+        self.$watch = watch;
+
+        self.append = array_append;
+        self.insert = array_insert;
+        self.remove = array_remove;
+        self.removeAt = array_removeAt;
+        self.clear = array_clear;
+        self.sort = array_sort;
+        self.reverse = array_reverse;
+
+
+        self.__item_class = define_item(node[4] || []);
+ 
+
+        return Class;
+    };
+
+
+    function array_value(value) {
+
+        var data = this.__data;
+
+        if (value === void 0)
+        {
+            return data;
+        }
+
+        if (data !== value)
+        {
+            var length = this.length,
+                any = value ? value.length : 0;
+
+            this.__data = value || (value = []);
+
+            if (any > length)
+            {
+                for (var i = 0; i < length; i++)
+                {
+                    this[i].$value(value[i]);
+                }
+
+                this.append(value.splice(length));
+                return this;
+            }
+
+            if (length > any)
+            {
+                this.removeAt(length, length - any);
+            }
+            
+            for (var i = 0; i < any; i++)
+            {
+                this[i].$value(value[i]);
             }
         }
 
@@ -10087,8 +10431,697 @@ flyingon.defineClass('Dialog', flyingon.Panel, function (base) {
     };
 
 
+    function array_get(index) {
 
-}).alias('dialog');
+        return this.__data[index];
+    };
+
+    
+    function array_set(index, value) {
+
+        if (this[index])
+        {
+            this[index].$value(value);
+        }
+
+        return this;
+    };
+
+
+    function array_append(item) {
+
+        return this.insert(this.length, item);
+    };
+
+
+    function array_insert(index, item) {
+
+        var data = this.__data,
+            fn = this.__item_class,
+            length = 1,
+            any;
+
+        if (index < 0)
+        {
+            index = 0;
+        }
+        else if (index > this.length)
+        {
+            index = this.length;
+        }
+
+        if (item instanceof Array)
+        {
+            if (!(length = item.length))
+            {
+                return this;
+            }
+
+            data.splice.apply(data, [index, 0].concat(item));
+            
+            for (var i = 0; i < length; i++)
+            {
+                (item[i] = new fn(this, item[i])).__index = index + i;
+            }
+
+            splice.apply(this, [index, 0].concat(item[i]));
+            append_loop(this, index, index += length);
+        }
+        else
+        {
+            data.splice(index, 0, item);
+            (item = new fn(this, item)).__index = index;
+
+            splice.call(this, index, 0, item);
+            append_loop(this, index, ++index);
+        }
+
+        while (item = this[index++])
+        {
+            item.__index = index;
+            bind && notify(item, '$index', index - 1, index);
+        }
+
+        return this;
+    };
+
+
+    function array_remove(item) {
+
+        return item && item.__parent === this ? this.removeAt(item.__index) : this;
+    };
+
+
+    function array_removeAt(index) {
+
+        if (index >= 0 && index < this.length)
+        {
+            var item = this[index],
+                bind = item.__depends.$index;
+
+            this.__data.splice(index, 1);
+            splice.call(this, index, 1);
+
+            dispose_vm(item);
+
+            if (item = loop_tag(this, index))
+            {
+                item.parent.removeChild(item);
+            }
+
+            while (item = this[index++])
+            {
+                item.__index--;
+                bind && notify(item, '$index', index - 1, index);
+            }
+        }
+
+        return this;
+    };
+
+
+    function array_clear() {
+
+        if (this[0])
+        {
+            var parent, item, name, any;
+
+            for (var i = this.length - 1; i >= 0; i--)
+            {
+                dispose_vm(this[i]);
+            }
+
+            this.__data.splice(0);
+            splice.call(this, 0);
+
+            if ((item = this.__start) && (item = item.nextSibling) && (parent = item.parent))
+            {
+                name = this.$name;
+
+                while (any = item)
+                {
+                    item = item.nextSibling;
+
+                    if (any.__loop_name === name)
+                    {
+                        parent.removeChild(any);
+                    }
+                }
+            }
+        }
+
+        return this;
+    };
+
+
+    function array_sort(fn) {
+
+        if (this[0])
+        {
+            
+        }
+
+        return this;
+    };
+
+
+    function array_reverse() {
+
+        var length = this.length,
+            bind,
+            index,
+            a,
+            b;
+
+        if (length > 1)
+        {
+            this.__data.reverse();
+
+            bind = this[0].__depends.$index;
+
+            for (var i = 0, l = length >> 1; i < l; i++)
+            {
+                a = this[i];
+                b = this[index = length - i];
+
+                a.__index = index;
+                b.__index = i;
+
+                this[i] = b;
+                this[index] = a;
+
+                if (bind)
+                {
+                    notify(a, '$index', i, index);
+                    notify(b, '$index', index, i);
+                }
+            }
+        }
+
+        return this;
+    };
+
+
+    function dispose_vm(vm) {
+
+        var any;
+
+        vm.__parent = vm.__top = vm.__depends = vm.__watches = null;
+
+        if (vm.__start)
+        {
+            for (var i = vm.length - 1; i >= 0; i--)
+            {
+                dispose_vm(vm[i]);
+            }
+
+            vm.__start = vm.__end = vm.__template = null;
+        }
+        else if (any = vm.__children)
+        {
+            for (var i = any.length - 2; i >= 0; i--)
+            {
+                dispose_vm(vm[any[i]]);
+            }
+        }
+    };
+
+
+
+    //定义数组项视图模型类
+    function define_item(node) {
+
+        var Class, any;
+
+        switch (node[0])
+        {
+            case 1: //数组项是一个对象
+                Class = define_object(node[4], node[2]);
+                break;
+
+            case 2: //数组项是一个数组
+                Class = define_array(node[4]);
+                break;
+
+            default:
+                Class = define_value(node[2]);
+                break;
+        }
+
+        //开放获取数组项索引方法
+        Class.prototype.$index = item_index;
+
+        return Class;
+    };
+
+
+    function item_index() {
+
+        var value;
+
+        if (value = depend_target)
+        {
+            track(this, '$index', value);
+        }
+
+        return this.__index;
+    };
+
+
+
+    //定义简单值视图模型类
+    function define_value(path) {
+
+        var self = Class.prototype;
+
+
+        function Class(parent, value) {
+
+            this.__top = parent.__top;
+            this.__parent = parent;
+            this.__data = value;
+        };
+
+
+        self.$name = path;
+        self.$value = property_value;
+        self.$watch = watch;
+
+
+        return Class;
+    };
+
+    
+    function property_value(value) {
+
+        var data = this.__data;
+
+        if (value === void 0)
+        {
+            if (value = depend_target)
+            {
+                track(this, '$value', value);
+            }
+
+            return data;
+        }
+
+        if (data !== value)
+        {
+            this.__data = value;
+            notify(this, '*', value, data);
+        }
+
+        return this;
+    };
+
+
+
+
+    //根据初始化后的视图模型创建控件
+    this.create = function (vm) {
+
+        var any = this.__template;
+
+        if (vm)
+        {
+            depend_target = [0, null, ''];
+
+            any = create_control(vm, flyingon.create(null), any, flyingon.components);
+            any.vm = vm;
+
+            depend_target = null;
+        }
+        else
+        {
+            any = flyingon.SerializeReader.deserialize(any);
+        }
+
+        return any;
+    };
+
+
+
+    function create_control(vm, scope, template, components, type) {
+
+        var control = new (type || components[template.type] || flyingon.Unkown)(),
+            depend = depend_target,
+            node,
+            any;
+
+        depend[0] = control.uniqueId();
+
+        for (var name in template)
+        {
+            switch (name)
+            {
+                case 'type':
+                case 'children':
+                case '-loop':
+                    break;
+
+                default:
+                    node = template[name];
+
+                    switch (name.charAt(0))
+                    {
+                        case ':': //绑定
+                            depend[1] = node;
+                            depend[2] = name = name.substring(1);
+                            
+                            if (node[1] === 2)
+                            {
+                                any = bind_function(control, vm, scope, node);
+                            }
+                            else //属性
+                            {
+                                any = (node[3] ? bind_vm(control, vm, scope, node) : vm)[node[2]]();
+                            }
+
+                            control.set(name, any);
+                            break;
+
+                        case '@': //事件
+                            control.on(name.substring(1), bind_event(vm, node));
+                            break;
+
+                        case '-': //指令
+                            //留待以后扩展
+                            break;
+
+                        default:
+                            if (any = node.match(/^\{\{(\w+)\}\}$/))
+                            {
+                                control.addBind.call(this, name, any[1]);
+                            }
+                            else
+                            {
+                                control.set(name, node);
+                            }
+                            break;
+                    }
+            }
+        }
+
+        if (any = template.children)
+        {
+            any = create_children(vm, scope, any, components);
+            any[0] && control.appendChild(any);
+        }
+
+        return control;
+    };
+
+
+    function create_children(vm, scope, template, components) {
+
+        var controls = [],
+            node;
+
+        for (var i = 0, l = template.length; i < l; i++)
+        {
+            if ((node = template[i]) && node['-loop'])
+            {
+                controls.push.apply(controls, create_loop(vm, scope, node, components));
+            }
+            else
+            {
+                controls.push(create_control(vm, scope, node, components));
+            }
+        }
+
+        return controls;
+    };
+
+
+    function create_loop(vm, scope, template, components) {
+
+        var control = new components.comment().text('loop-start'), //开始标记
+            controls = [control], 
+            item = template['-loop'],
+            loop = item[2];
+        
+        vm = item[3] && bind_vm(control, vm, scope, item)[loop] || scope[loop] || vm[loop];
+        vm.__start = control;
+        vm.__template = template;
+
+        loop_controls(controls, vm, 0, vm.length, scope, components);
+
+        controls.push(control = vm.__end = new components.comment().text('loop-end')); //结束标记
+
+        return controls;
+    };
+
+
+    function append_loop(vm, start, end) {
+
+        var controls = [],
+            control = vm.__end,
+            scope = {},
+            any = control;
+
+        while (any = any.parent)
+        {
+            if (any.__loop_item)
+            {
+                scope[any.__loop_scope] = any.__loop_item;
+            }
+        }
+
+        depend_target = [0, null, ''];
+
+        loop_controls(controls, vm, start, end, scope, flyingon.components);
+
+        depend_target = null;
+
+        control.parent.insertBefore(controls, loop_tag(vm, start) || control);
+    };
+
+
+    function loop_controls(controls, vm, start, end, scope, components) {
+
+        var top = vm.__top,
+            template = vm.__template,
+            type = components[template.type] || flyingon.Unkown,
+            item = template['-loop'],
+            loop = item[2],
+            name = item[4],
+            control;
+        
+        if (name)
+        {
+            name = name[2];
+
+            while (start < end)
+            {
+                scope[name] = item = vm[start++];
+
+                controls.push(control = create_control(top, scope, template, components, type));
+
+                //为后述查找缓存数据
+                control.__loop_name = loop;
+                control.__loop_scope = name;
+                control.__loop_item = item;
+            }
+
+            scope[name] = null;
+        }
+        else
+        {
+            while (start++ < end)
+            {
+                controls.push(control = create_control(top, scope, template, components, type));
+            }
+        }
+    };
+
+
+    function loop_tag(vm, offset) {
+
+        var start = vm.__start,
+            end = vm.__end,
+            name = vm.$name;
+
+        while ((start = start.nextSibling) && start !== end)
+        {
+            if (start.__loop_name === name && !offset--)
+            {
+                return start;
+            }
+        }
+    }; 
+
+
+
+    //获取绑定的视图模型
+    function bind_vm(control, vm, scope, node) {
+
+        var list = node[3],
+            item = list[0],
+            index = 1;
+
+        if (item[1] === 1) //loop item
+        {
+            vm = scope ? scope[item[2]] : bind_scope(control, item[2]);
+        }
+        else
+        {
+            vm = vm[item[2]];
+        }
+
+        while (item = list[index++])
+        {
+            vm = vm[item[2]];
+        }
+
+        return vm;
+    };
+
+
+    //获取绑定的函数返回值
+    function bind_function(control, vm, scope, node, event) {
+
+        var list = node[4],
+            args = [],
+            index = 0,
+            item;
+
+        if (list)
+        {
+            while (item = list[index++])
+            {
+                if (item[3])
+                {
+                    item = bind_vm(control, vm, scope, item)[item[2]]();
+                }
+                else if (item[1] === 1)
+                {
+                    item = scope ? scope[item[2]] : bind_scope(control, item[2]);
+                }
+                else
+                {
+                    item = vm[item[2]]();
+                }
+
+                args.push(item);
+            }
+        }
+
+        args.push(control);
+        event && args.push(event);
+
+        return vm[node[2]].apply(vm, args);
+    };
+
+
+    //绑定事件
+    function bind_event(vm, node) {
+
+        return function (e) {
+
+            bind_function(this, vm, null, node, e);
+        };
+    };
+
+
+    //获取控件相关的item变量作用域
+    function bind_scope(control, item) {
+
+        do
+        {
+            if (control.__loop_scope === item)
+            {
+                return control.__loop_item;
+            }
+        }
+        while (control = control.parent);
+    };
+
+
+
+
+    //创建部件
+    flyingon.widget = function (name, options) {
+
+
+        if (!name && typeof name !== 'string')
+        {
+            throw 'widget name must input a string!';
+        }
+
+        check_options('widget', options);
+
+
+        return flyingon.defineClass(function () {
+
+
+            var template = new flyingon.ViewTemplate(options.template),
+                vm;
+
+
+            this.constructor = function () {
+
+                var any;
+
+                this.vm = vm || (vm = template.init(options.defaults));
+
+                if (any = options.controller)
+                {
+                    any.call(item, item);
+                }
+
+                return template.create(vm);
+            };
+
+
+        }).register(name, options.force);
+
+    };
+
+
+
+    //创建视图
+    flyingon.view = function (options) {
+
+        check_options('view', options);
+
+        var template = new flyingon.ViewTemplate(options.template),
+            item = template.init(options.defaults), 
+            any;
+
+        if (any = options.controller)
+        {
+            any.call(item, item);
+        }
+
+        item = template.create(item);
+
+        if (any = options.host)
+        {
+            flyingon.mount(item, any);
+        }
+
+        return item;
+    };
+
+
+
+    function check_options(name, options) {
+
+        if (!options)
+        {
+            throw name + ' options must input a object!';
+        }
+
+        if (!options.template)
+        {
+            throw name + ' options template not allow empty!';
+        }
+    };
+
+
+
+});
 
 
 
@@ -11866,13 +12899,43 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
 
 
+    this.bind(flyingon.Comment);
+
+    
+
+    this.render = function (writer, control) {
+
+        var text = control.text();
+
+        if (text)
+        {
+            text = flyingon.html_encode(text, false);
+        }
+
+        writer.push('<!--', text, '-->');
+    };
+
+
+    this.update = function () {
+    };
+
+
+});
+
+
+
+
+flyingon.defineClass(flyingon.Renderer, function (base) {
+
+
+
     this.bind(flyingon.Label);
 
     
 
     this.render = function (writer, control) {
 
-        var text = flyingon.html_encode(control.text(), false),
+        var text = control.text(),
             auto = control.__auto_size,
             style;
 
@@ -11889,6 +12952,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
             {
                 style += 'height:auto;';
             }
+        }
+
+        if (text)
+        {
+            text = flyingon.html_encode(text, false);
         }
 
         writer.push('<div', this.renderDefault(control, '', style), '>', text, '</div>');
@@ -11985,7 +13053,7 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
         var text = control.text();
 
-        if (!control.html())
+        if (text && !control.html())
         {
             text = flyingon.html_encode(text);
         }
@@ -12002,7 +13070,7 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
         }
         else
         {
-            view[this.__text_name] = flyingon.html_encode(value);
+            view[this.__text_name] = value ? flyingon.html_encode(value) : value;
         }
     };
 
@@ -12189,7 +13257,7 @@ flyingon.__container_renderer = function (scroll) {
         {
             do
             {
-                if (any.__visible = any.visible())
+                if (any.__visible = (any.__location_values || any.__storage || any.__defaults).visible)
                 {
                     list.push(any);
                 }
@@ -12287,38 +13355,47 @@ flyingon.__container_renderer = function (scroll) {
 
 
     //应用插入视图补丁
-    this.__insert_patch = function (control, view, value) {
+    this.__insert_patch = function (control, view) {
 
-        var item, next, node, any;
+        var list = control.__insert_patch,
+            item, 
+            next, 
+            node, 
+            any;
 
-        view = control.view_body || control.view;
-
-        //处理插入带view的节点
-        for (var i = view.length - 1; i > 0; i--)
+        if (list)
         {
-            if ((item = value[i]) && item.parent === control && (node = item.view))
+            control.__insert_patch = null;
+
+            view = control.view_body || control.view;
+
+            //处理插入带view的节点
+            for (var i = list.length - 1; i > 0; i--)
             {
-                if (next = item.nextSibling)
+                if ((item = list[i]) && item.parent === control && (node = item.view))
                 {
-                    do
+                    if (next = item.nextSibling)
                     {
-                        if ((any = next.view) && any.parentNode === view)
+                        do
                         {
-                            next = any;
-                            break;
+                            if ((any = next.view) && any.parentNode === view)
+                            {
+                                next = any;
+                                break;
+                            }
                         }
+                        while (next = next.nextSibling);
                     }
-                    while (next = next.nextSibling);
+                    
+                    view.insertBefore(node, next || null);
                 }
-                
-                view.insertBefore(node, next || null);
             }
-        }
 
-        //处理未渲染的子节点
-        if (value[0] && !scroll)
-        {
-            this.__unmount_patch(control, view);
+            //处理未渲染的子节点
+            if (list[0] && !scroll)
+            {
+                this.__unmount_patch(control, view);
+            }
         }
     };
 
@@ -12696,147 +13773,6 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
         if (cache.y2 !== (any = vscroll ? control.arrangeBottom - 1 : 0))
         {
             style1.top = style2.top = (cache.y2 = any) + 'px'; 
-        }
-    };
-
-
-
-});
-
-
-
-
-flyingon.defineClass(flyingon.Renderer, function (base) {
-
-
-
-    this.bind(flyingon.MessageBox);
-
-
-
-    this.render = function (writer, control) {
-
-        var any;
-        
-        writer.push('<div', this.renderDefault(control), ' tag="dialog">',
-            '<div class="flyingon-messagebox-header" tag="header">',
-                '<span class="flyingon-messagebox-icon" ', (any = control.icon()) ? 'class="' + any : 'style="dispaly:none;', '"></span>',
-                '<span class="flyingon-messagebox-title">', control.title(), '</span>',
-                '<span class="flyingon-messagebox-close"', control.closable() ? '' : ' style="display:none;"', ' tag="close"></span>',
-            '</div>',
-            '<div class="flyingon-messagebox-body">',
-                '<span class="flyingon-messagebox-type" ', (any = control.type()) ? 'class="' + any : 'style="display:none;', '"></span>',
-                '<span class="flyingon-messagebox-text">', control.text(), '</span>',
-            '</div>',
-        '</div>');
-    };
-
-
-
-    this.show = function (control) {
-
-        var body = document.body,
-            view = control.view,
-            left,
-            top;
-
-        if (view)
-        {
-            body.appendChild(view);
-        }
-        else
-        {
-            view = this.createView(control, body);
-        }
-
-        flyingon.dom_overlay(view);
-
-        left = control.offsetWidth;
-        left = body.clientWidth - left >> 1;
-
-        top = control.offsetHeight;
-        top = ((window.innerHeight || document.documentElement.clientHeight) - top >> 1) - body.clientLeft;
-
-        control.measure(0, 0);
-        control.locate(left | 0, top | 0);
-
-        control.update();
-    };
-
-
-    
-    this.mount = function (control, view) {
-
-        base.mount.call(this, control, view);
-        
-        control.on('mousedown', mousedown);
-        control.on('click', click);
-    };
-
-
-    function mousedown(event) {
-
-        if (event.which === 1 && this.movable())
-        {
-            switch (event_tag(event))
-            {
-                case 'header':
-                case 'close':
-                    this.renderer.movable(this, event);
-                    break;
-            }
-        }
-    };
-
-
-    function click(event) {
-
-        if (event_tag(event) === 'close')
-        {
-            this.close('none');
-        }
-    };
-
-
-    function event_tag(event) {
-
-        var dom = event.original_event.target,
-            any;
-
-        do
-        {
-            if (any = dom.getAttribute('tag'))
-            {
-                return any;
-            }
-        }
-        while (dom = dom.parentNode);
-    };
-
-    
-
-    this.movable = function (control, event) {
-
-        event = event.original_event;
-        event.dom = control.view;
-
-        flyingon.dom_drag(control, event);
-
-        event.dom = null;
-    };
-
-
-
-    this.close = function (control) {
-
-        var view = control.view,
-            any;
-
-        flyingon.dom_overlay(view, false);
-
-        if (any = view.parentNode)
-        {
-            any.removeChild(view);
         }
     };
 
@@ -13249,6 +14185,147 @@ flyingon.defineClass(flyingon.PanelRenderer, function (base) {
         if (view.flyingon_overlay)
         {
             flyingon.dom_overlay(view, false);
+        }
+    };
+
+
+
+});
+
+
+
+
+flyingon.defineClass(flyingon.Renderer, function (base) {
+
+
+
+    this.bind(flyingon.MessageBox);
+
+
+
+    this.render = function (writer, control) {
+
+        var any;
+        
+        writer.push('<div', this.renderDefault(control), ' tag="dialog">',
+            '<div class="flyingon-messagebox-header" tag="header">',
+                '<span class="flyingon-messagebox-icon" ', (any = control.icon()) ? 'class="' + any : 'style="dispaly:none;', '"></span>',
+                '<span class="flyingon-messagebox-title">', control.title(), '</span>',
+                '<span class="flyingon-messagebox-close"', control.closable() ? '' : ' style="display:none;"', ' tag="close"></span>',
+            '</div>',
+            '<div class="flyingon-messagebox-body">',
+                '<span class="flyingon-messagebox-type" ', (any = control.type()) ? 'class="' + any : 'style="display:none;', '"></span>',
+                '<span class="flyingon-messagebox-text">', control.text(), '</span>',
+            '</div>',
+        '</div>');
+    };
+
+
+
+    this.show = function (control) {
+
+        var body = document.body,
+            view = control.view,
+            left,
+            top;
+
+        if (view)
+        {
+            body.appendChild(view);
+        }
+        else
+        {
+            view = this.createView(control, body);
+        }
+
+        flyingon.dom_overlay(view);
+
+        left = control.offsetWidth;
+        left = body.clientWidth - left >> 1;
+
+        top = control.offsetHeight;
+        top = ((window.innerHeight || document.documentElement.clientHeight) - top >> 1) - body.clientLeft;
+
+        control.measure(0, 0);
+        control.locate(left | 0, top | 0);
+
+        control.update();
+    };
+
+
+    
+    this.mount = function (control, view) {
+
+        base.mount.call(this, control, view);
+        
+        control.on('mousedown', mousedown);
+        control.on('click', click);
+    };
+
+
+    function mousedown(event) {
+
+        if (event.which === 1 && this.movable())
+        {
+            switch (event_tag(event))
+            {
+                case 'header':
+                case 'close':
+                    this.renderer.movable(this, event);
+                    break;
+            }
+        }
+    };
+
+
+    function click(event) {
+
+        if (event_tag(event) === 'close')
+        {
+            this.close('none');
+        }
+    };
+
+
+    function event_tag(event) {
+
+        var dom = event.original_event.target,
+            any;
+
+        do
+        {
+            if (any = dom.getAttribute('tag'))
+            {
+                return any;
+            }
+        }
+        while (dom = dom.parentNode);
+    };
+
+    
+
+    this.movable = function (control, event) {
+
+        event = event.original_event;
+        event.dom = control.view;
+
+        flyingon.dom_drag(control, event);
+
+        event.dom = null;
+    };
+
+
+
+    this.close = function (control) {
+
+        var view = control.view,
+            any;
+
+        flyingon.dom_overlay(view, false);
+
+        if (any = view.parentNode)
+        {
+            any.removeChild(view);
         }
     };
 
@@ -14139,7 +15216,7 @@ flyingon.Ajax = flyingon.defineClass(flyingon.Async, function () {
                     case 'json':
                         try
                         {
-                            self.resolve(JSON.parse(xhr.responseText));
+                            self.resolve(flyingon.parseJSON(xhr.responseText));
                         }
                         catch (e)
                         {
@@ -14326,7 +15403,7 @@ flyingon.Ajax = flyingon.defineClass(flyingon.Async, function () {
 
         try
         {
-            self.resolve(JSON.parse(text));
+            self.resolve(flyingon.parseJSON(text));
             ajax_end(self, url);
         }
         catch (e)

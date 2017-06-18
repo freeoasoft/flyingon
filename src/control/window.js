@@ -1,4 +1,16 @@
 flyingon.defineClass('Window', flyingon.Panel, function (base) {
 
 
-}).alias('window');
+
+    this.show = function (host) {
+
+    };
+
+
+    this.close = function () {
+
+    };
+
+
+
+}).register('window');

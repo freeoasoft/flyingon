@@ -26,4 +26,4 @@ flyingon.defineClass('Label', flyingon.Control, function (base) {
     
 
 
-}).alias('label');
+}).register('label');

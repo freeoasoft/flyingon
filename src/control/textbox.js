@@ -20,4 +20,4 @@ flyingon.defineClass('TextBox', flyingon.Control, function (base) {
     
     
 
-}).alias('textbox');
+}).register('textbox');

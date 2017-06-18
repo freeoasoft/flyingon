@@ -11,15 +11,13 @@
             '../src/base/serialize.js',
             '../src/base/dataset.js',
             '../src/base/bindable.js',
-            '../src/base/selector.js',
-            '../src/base/template.js',
-            '../src/base/viewmodel.js',
 
             '../src/web/utils.js',
             '../src/web/event.js',
             '../src/renderer.web/control.js', //需优先加载渲染器
 
 			'../src/control/control.js',
+            '../src/control/comment.js',
             '../src/control/label.js',
             '../src/control/htmltext.js',
             '../src/control/button.js',
@@ -31,16 +29,21 @@
             '../src/control/tab.js',
             '../src/control/tabpanel.js',
             '../src/control/tree.js',
-            '../src/control/widget.js',
+
             '../src/control/window.js',
-            '../src/control/messagebox.js',
+
             '../src/control/popuplayer.js',
             '../src/control/dialog.js',
+            '../src/control/messagebox.js',
+
+            '../src/dev/selector.js',
+            '../src/dev/viewmodel.js',
 
             '../src/layout/sublayout.js',
             '../src/layout/layout.js',
             '../src/layout/table.js',
 
+            '../src/renderer.web/comment.js',
             '../src/renderer.web/label.js',
             '../src/renderer.web/htmltext.js',
             '../src/renderer.web/button.js',
@@ -49,9 +52,10 @@
             '../src/renderer.web/container.js',
             '../src/renderer.web/panel.js',
             '../src/renderer.web/scrollpanel.js',
-            '../src/renderer.web/messagebox.js',
+
             '../src/renderer.web/popuplayer.js',
             '../src/renderer.web/dialog.js',
+            '../src/renderer.web/messagebox.js',
 
             '../src/web/host.js',
             '../src/web/ajax.js',

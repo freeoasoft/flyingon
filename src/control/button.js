@@ -17,4 +17,4 @@ flyingon.defineClass('Button', flyingon.Control, function (base) {
     
 
 
-}).alias('button');
+}).register('button');

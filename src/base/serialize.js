@@ -17,7 +17,7 @@ flyingon.__serialize_fragment = flyingon.fragment(function () {
 
         var any;
         
-        if ((any = this.Class) && (any = any.aliasName || any.xtype))
+        if ((any = this.Class) && (any = any.nickName || any.xtype))
         {
             writer.writeProperty('type', any);
         }

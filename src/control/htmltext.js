@@ -27,4 +27,4 @@ flyingon.defineClass('HtmlText', flyingon.Control, function (base) {
     
 
 
-});
+}).register('htmltext');

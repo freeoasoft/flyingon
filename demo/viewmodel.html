@@ -10,91 +10,115 @@
     <div id="host"></div>
 
     <script type="text/x-template" id="template">
-        <panel layout="line" :for="data(item, index)">
-            <label :text="item:label" />
-            <textbox :text="item:text" />
-            <button :text="item:operate" @click="operate_click" />
+        <panel :layout="layout" -class:active="active" background-color="silver">
+            <panel height="auto" -loop="items(item, index)" @click="operate_click(item, index)">
+                <label width="120" :text="item_label(item, index)" />
+                <textbox width="120" :text="item.text" -model="item.text" />
+                <button tag="add" :text="operate.add" />
+                <button tag="edit" :text="operate.edit" />
+                <button tag="remove" :text="operate.remove" />
+                <label -loop="item.items(subitem)" :text="subitem"/>
+            </panel>
+            <label :visible="detail" :text="operate.detail.text" />
         </panel>
     </script>
-
+            
 
     <script type="text/javascript" src="../js/flyingon.js"></script>
     
     <script type="text/javascript">
-        
 
-        flyingon.window({
+
+
+        // vm.items.$get();
+        // vm.items.$set([]);
+
+        // vm.items.push();
+        // vm.items.splice([]);
+
+        // vm.items[2].items[2].$get();
+        // vm.items[2].items[2].$set([]);
+
+        // vm.items[2].text();
+        // vm.items[2].text('dd');
+
+        // vm.operate.$get();
+        // vm.operate.$set({});
+        // vm.operate.detail.text();
+        // vm.operate.detail.text('ddd');
+
+        // vm.layout();
+
+
+
+        var host = flyingon.view({
             
-            properties: {
+            host: 'host',
 
-            },
-            //template: '#template',
-
-            template: {
-                ':for': 'data(item, index)',
-                type: 'panel', 
-                layout: 'line', 
-                children: [
-                    { type: 'label', ':text': 'item:label' },
-                    { type: 'textbox', ':text': 'item:text' },
-                    { type: 'button', ':text': 'item:operate', '@click': 'operate_click' }
-                ]
-            },
+            template: '#template',
 
             defaults: {
 
-                data: [
-                    { text: 'text 1', operate: 'add' },
-                    { text: 'text 2', operate: 'edit' },
-                    { text: 'text 3', operate: 'delete' }
-                ]
+                layout: 'vertical-line',
+
+                detail: true,
+                
+                items: [
+                    { text: 'text 1', items: ['A', 'C'] },
+                    { text: 'text 2', items: ['B', 'C'] },
+                    { text: 'text 3', items: ['A', 'D'] }
+                ],
+
+                operate: {
+                    add: 'add',
+                    edit: 'edit',
+                    remove: 'remove',
+                    detail: {
+                        text: 'text ...'
+                    }
+                }
             },
 
-            init: function (vm) {
+            controller: function () {
 
-                vm['item:label'] = function (index) {
+             
+                this.item_label = function (item, index) {
 
-                    return index + '. ' + this['item:text'](index);
+                    return index + '. ' + item.text();
                 };
 
-                vm.operate_click = function (e) {
 
-                    var index = e.target.viewModelIndex;
+                this.operate_click = function (item, index, control, event) {
 
-                    switch (this['item:operate'](index))
+                    switch (event.target.tag())
                     {
                         case 'add':
-                            this.data.push({ text: 'added', operate: 'delete' });
+                            this.items.append({ text: 'added', items: ['D'] });
                             break;
 
                         case 'edit':
-                            this['item:text'](index, '' + new Date());
+                            item.text(new Date().getTime());
                             break;
 
-                        case 'delete':
-                            this.data.splice(index, 1);
+                        case 'remove':
+                            this.items.removeAt(index);
                             break;
                     }
                 };
 
-            },
 
-            created: function (vm) {
+                this.items.$watch('text', function (event) {
+
+                });
+
+
+                this.$watch('operate', function (event) {
+
+                });
+
 
             }
 
-        }).show('host');
-
-
-
-        flyingon.widget('demo-widget', {
-
-            template: 'xxx',
-
-            init: function (vm) {
-
-                
-            }
 
         });
 

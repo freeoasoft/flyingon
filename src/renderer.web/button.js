@@ -10,7 +10,7 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
         var text = control.text();
 
-        if (!control.html())
+        if (text && !control.html())
         {
             text = flyingon.html_encode(text);
         }
@@ -27,7 +27,7 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
         }
         else
         {
-            view[this.__text_name] = flyingon.html_encode(value);
+            view[this.__text_name] = value ? flyingon.html_encode(value) : value;
         }
     };
 

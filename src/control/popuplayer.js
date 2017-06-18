@@ -97,4 +97,4 @@ flyingon.defineClass('PopupLayer', flyingon.Panel, function () {
     
 
 
-}).alias('popuplayer');
+}).register('popuplayer');

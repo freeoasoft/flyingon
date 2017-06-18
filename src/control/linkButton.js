@@ -22,4 +22,4 @@ flyingon.defineClass('LinkButton', flyingon.Control, function (base) {
     
 
 
-}).alias('linkbutton');
+}).register('linkbutton');

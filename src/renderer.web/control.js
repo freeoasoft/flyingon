@@ -110,25 +110,11 @@ flyingon.Renderer = flyingon.defineClass(function () {
     //检测盒模型
     flyingon.dom_test(function (div) {
         
-        var cssText = flyingon.css_name('boxSizing', true);
+ 
+        div.innerHTML = '<div class="flyingon-control"><div>';
 
-        if (cssText)
-        {
-            cssText += ':border-box;';
-        }
+        this.checkBoxModel(div.children[0]);
 
-        div.innerHTML = '<div style="position:absolute;' + cssText + '"><div>';
-
-        if (!this.checkBoxModel(div.children[0]))
-        {
-            cssText = '';
-        }
-
-        //生成控件默认样式
-        //overflow:hidden解决IE怪异模式无法设置高度小于一定值的问题
-        flyingon.style('.flyingon-control{position:absolute;overflow:hidden;margin:0;border:0 solid;' + cssText + '}\n'
-            + '.flyingon-host{position:relative;}'
-            + '.flyingon-textbox{border-width:1px;}');
 
     }, this);
 

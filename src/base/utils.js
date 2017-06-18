@@ -40,3 +40,26 @@ flyingon.html_encode = (function () {
 
 })();
 
+
+
+flyingon.parseJSON = typeof JSON !== 'undefined' 
+
+    ? function (text) {
+
+        return JSON.parse(text);
+    }
+
+    : function (text) {
+
+        if (typeof text === 'string')
+        {
+            if (/[a-zA-Z_$]/.test(text.replace(/"(?:\\"|[^"])*?"|null|true|false|\d+[Ee][-+]?\d+/g, '')))
+            {
+                flyingon.raise('flyingon', 'error.json_parse');
+            }
+
+            return new Function('return ' + text)();
+        }
+
+        return text;
+    };

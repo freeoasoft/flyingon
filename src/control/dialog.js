@@ -67,8 +67,8 @@ flyingon.defineClass('Dialog', flyingon.Panel, function (base) {
         
         if (auto)
         {
-            this.arrange();
-
+            this.renderer.update(this);
+            
             if (auto & 1)
             {
                 this.offsetWidth = this.arrangeRight + this.borderLeft + this.borderRight;
@@ -126,4 +126,4 @@ flyingon.defineClass('Dialog', flyingon.Panel, function (base) {
 
 
 
-}).alias('dialog');
+}).register('dialog');

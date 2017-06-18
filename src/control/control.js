@@ -1111,6 +1111,7 @@ flyingon.defineClass('Control', function () {
         }
     };
 
+
     
     
     //引入序列化片段
@@ -1184,7 +1185,7 @@ flyingon.defineClass('Control', function () {
             delete controls[any];
         }
         
-        this.parent = this.previousSibling = this.nextSibling = null;
+        this.parent = this.previousSibling = this.nextSibling = this.__loop_item = null;
         return this;
     };
     
@@ -1210,4 +1211,4 @@ flyingon.defineClass('Control', function () {
 
     
 
-}).alias('control');
+}).register('control');

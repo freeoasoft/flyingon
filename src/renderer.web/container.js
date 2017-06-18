@@ -82,7 +82,7 @@ flyingon.__container_renderer = function (scroll) {
         {
             do
             {
-                if (any.__visible = any.visible())
+                if (any.__visible = (any.__location_values || any.__storage || any.__defaults).visible)
                 {
                     list.push(any);
                 }
@@ -180,38 +180,47 @@ flyingon.__container_renderer = function (scroll) {
 
 
     //应用插入视图补丁
-    this.__insert_patch = function (control, view, value) {
+    this.__insert_patch = function (control, view) {
 
-        var item, next, node, any;
+        var list = control.__insert_patch,
+            item, 
+            next, 
+            node, 
+            any;
 
-        view = control.view_body || control.view;
-
-        //处理插入带view的节点
-        for (var i = view.length - 1; i > 0; i--)
+        if (list)
         {
-            if ((item = value[i]) && item.parent === control && (node = item.view))
+            control.__insert_patch = null;
+
+            view = control.view_body || control.view;
+
+            //处理插入带view的节点
+            for (var i = list.length - 1; i > 0; i--)
             {
-                if (next = item.nextSibling)
+                if ((item = list[i]) && item.parent === control && (node = item.view))
                 {
-                    do
+                    if (next = item.nextSibling)
                     {
-                        if ((any = next.view) && any.parentNode === view)
+                        do
                         {
-                            next = any;
-                            break;
+                            if ((any = next.view) && any.parentNode === view)
+                            {
+                                next = any;
+                                break;
+                            }
                         }
+                        while (next = next.nextSibling);
                     }
-                    while (next = next.nextSibling);
+                    
+                    view.insertBefore(node, next || null);
                 }
-                
-                view.insertBefore(node, next || null);
             }
-        }
 
-        //处理未渲染的子节点
-        if (value[0] && !scroll)
-        {
-            this.__unmount_patch(control, view);
+            //处理未渲染的子节点
+            if (list[0] && !scroll)
+            {
+                this.__unmount_patch(control, view);
+            }
         }
     };
 

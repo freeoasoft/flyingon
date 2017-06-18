@@ -8,7 +8,7 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
     this.render = function (writer, control) {
 
-        var text = flyingon.html_encode(control.text(), false),
+        var text = control.text(),
             auto = control.__auto_size,
             style;
 
@@ -25,6 +25,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
             {
                 style += 'height:auto;';
             }
+        }
+
+        if (text)
+        {
+            text = flyingon.html_encode(text, false);
         }
 
         writer.push('<div', this.renderDefault(control, '', style), '>', text, '</div>');

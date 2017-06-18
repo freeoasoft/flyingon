@@ -408,21 +408,22 @@ var flyingon;
     //执行对象属性观测
     flyingon.__do_watch = function (target, name, value, oldValue, bind) {
 
-        var list = target.__watch_list,
+        var keys = target.__watch_keys,
+            e = { target: target, name: name, newValue: value, oldValue: oldValue, bind: bind },
             any;
 
-        for (var i = 0, l = list.length; i < l; i++)
+        for (var i = 0, l = keys.length; i < l; i++)
         {
-            if ((any = list[i++]) != null)
+            if ((any = keys[i++]) != null)
             {
                 if (any === name)
                 {
-                    list[i].call(target, value, oldValue, bind);
+                    keys[i].call(target, e);
                 }
             }
             else
             {
-                list[i].call(target, name, value, oldValue, bind);
+                keys[i].call(target, e);
             }
         }
     };
@@ -507,6 +508,7 @@ var flyingon;
                 prototype.get = get;
                 prototype.set = set;
                 prototype.sets = sets;
+                prototype.__custom_set = custom_set;
                 prototype.defaultValue = defaultValue;
                 prototype.properties = properties;
                 prototype.getOwnPropertyNames = getOwnPropertyNames;
@@ -606,7 +608,7 @@ var flyingon;
         Class.superclass = superclass;
 
         //设置组件别名
-        Class.alias = alias;
+        Class.register = register;
 
 
         //初始化类
@@ -702,7 +704,7 @@ var flyingon;
             switch (dataType)
             {
                 case 'boolean':
-                    value = !!value;
+                    value = !!value && value !== 'false';
                     break;
 
                 case 'integer':
@@ -727,7 +729,7 @@ var flyingon;
                 return this;
             }
 
-            if (this.__watch_list && flyingon.__do_watch(this, name, value, bind) === false)
+            if (this.__watch_keys && flyingon.__do_watch(this, name, value, bind) === false)
             {
                 return this;
             }
@@ -813,12 +815,12 @@ var flyingon;
         }
         else
         {
-            (this.__storage || (this.__storage = create(this.__defaults)))[name] = value;
+            this.__custom_set(name, value, bind);
         }
         
         return this;
     };
-    
+
 
     //批量设置属性值
     function sets(values, bind) {
@@ -835,7 +837,7 @@ var flyingon;
                 }
                 else
                 {
-                    (this.__storage || (this.__storage = create(this.__defaults)))[name] = values[name];
+                    this.__custom_set(name, values[name], bind);
                 }
             }
         }
@@ -844,6 +846,13 @@ var flyingon;
     };
     
     
+    //设置自定义属性值
+    function custom_set(name, value, bind) {
+
+        (this.__storage || (this.__storage = create(this.__defaults)))[name] = value;
+    };
+    
+
     //获取或设置属性默认值
     function defaultValue(name, value) {
 
@@ -904,13 +913,13 @@ var flyingon;
         
         if (typeof fn === 'function')
         {
-            if (any = this.__watch_list)
+            if (any = this.__watch_keys)
             {
                 any.push(name, fn);
             }
             else
             {
-                this.__watch_list = [name, fn];
+                this.__watch_keys = [name, fn];
             }
         }
     };
@@ -927,7 +936,7 @@ var flyingon;
             name = null;
         }
 
-        if (fn && (list = this.__watch_list))
+        if (fn && (list = this.__watch_keys))
         {
             index = list.length - 1;
 
@@ -941,7 +950,7 @@ var flyingon;
 
             if (!list.length)
             {
-                delete this.__watch_list;
+                delete this.__watch_keys;
             }
         }
     };
@@ -1242,9 +1251,19 @@ var flyingon;
         
 
     //设置组件别名
-    function alias(name) {
+    function register(name, force) {
     
-        return name && (components[this.aliasName = name] = this) || this;
+        if (name)
+        {
+            if (!force && components[name])
+            {
+                throw 'component "' + name + '" has exist';
+            }
+
+            return components[this.nickName = name] = this;
+        }
+
+        return this;
     };
      
 
