@@ -18,17 +18,17 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
 
     //渲染html
-    this.render = function (writer, control) {
+    this.render = function (writer, control, css) {
 
         //滚动位置控制(解决有右或底边距时拖不到底的问题)
         //使用模拟滚动条解决IE拖动闪烁问题
         //此处只渲染一个空的壳,实现渲染内容在update的时候根据需要渲染
-        writer.push('<div', this.renderDefault(control), '>',
+        writer.push('<div', this.renderDefault(control, css), '>',
                 '<div style="position:absolute;left:0;top:0;right:0;bottom:0;width:auto;height:auto;overflow:auto;">',
-                    '<div style="position:absolute;overflow:hidden;margin:0;border:0;padding:0;width:1px;height:1px;"></div>',
+                    '<div style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;"></div>',
                 '</div>',
                 '<div class="flyingon-body" style="position:relative;overflow:hidden;margin:0;border:0;padding:0;left:0;top:0;width:100%;height:100%;">',
-                '<div style="position:absolute;overflow:hidden;margin:0;border:0;padding:0;width:1px;height:1px;"></div>',
+                '<div style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;"></div>',
                 '</div>',
             '</div>');
     };
@@ -132,32 +132,30 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
     this.__update_scroll = function (control) {
 
         var view = control.view,
-            hscroll = control.__hscroll,
-            vscroll = control.__vscroll,
             style = view.firstChild.style,
             style1 = view.firstChild.firstChild.style, //模拟滚动条控制
             style2 = view.lastChild.lastChild.style, //内容位置控制(解决有右或底边距时拖不到底的问题)
             cache = control.__scroll_cache || (control.__scroll_cache = {}),
             any;
 
-        if (cache.x1 !== (any = hscroll ? 'scroll' : 'hidden'))
+        if (cache.x1 !== (any = control.__hscroll ? 'scroll' : 'hidden'))
         {
             style.overflowX = cache.x1 = any;
         }
 
-        if (cache.y1 !== (any = hscroll ? 'scroll' : 'hidden'))
+        if (cache.y1 !== (any = control.__vscroll ? 'scroll' : 'hidden'))
         {
-            style.overflowX = cache.y1 = any;
+            style.overflowY = cache.y1 = any;
         }
 
-        if (cache.x2 !== (any = hscroll ? control.arrangeRight - 1 : 0))
+        if (cache.x2 !== (any = control.arrangeRight))
         {
-            style1.left = style2.left = (cache.x2 = any) + 'px'; 
+            style1.width = style2.width = (cache.x2 = any) + 'px'; 
         }
 
-        if (cache.y2 !== (any = vscroll ? control.arrangeBottom - 1 : 0))
+        if (cache.y2 !== (any = control.arrangeBottom))
         {
-            style1.top = style2.top = (cache.y2 = any) + 'px'; 
+            style1.height = style2.height = (cache.y2 = any) + 'px'; 
         }
     };
 

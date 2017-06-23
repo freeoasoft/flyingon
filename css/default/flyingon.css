@@ -10,16 +10,8 @@
     z-index: 100;
 }
 
-.flyingon-host{
-    position:relative;
-}
-
 
 .flyingon-control {
-    position: absolute;
-    overflow: hidden; /*解决IE怪异模式无法设置高度小于一定值的问题*/
-    margin: 0;
-    border: 0 solid;
     -moz-box-sizing: border-box;  
     -webkit-box-sizing: border-box; 
     -o-box-sizing: border-box; 
@@ -27,36 +19,28 @@
     box-sizing: border-box; 
 }
 
-
-.flyingon-textbox {
-    padding: 0 2px;
-    border-width:1px;
+.flyingon-absolute {
+    position: absolute;
+    margin: 0;
+    overflow: hidden; /*解决IE怪异模式无法设置高度小于一定值的问题*/
+    display: inline-block; /*解决inline元素无发设置高宽的问题*/
 }
 
-.flyingon-textbox-text {
-    margin: 0;
-    border: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    outline: none;
-    background-color: transparent;
+.flyingon-host, .flyingon-html {
+    position: relative;
 }
 
 
 .flyingon-label {
-
     padding: 2px 4px;
 }
 
 
-.flyingon-button {
-    padding: 2px 6px 3px;
-    border-width: 2px;
-    border-style: outset;
-    border-color: buttonface;
-    border-image: initial;
+.flyingon-panel {
+    border: 0 solid;
 }
+
+
 
 .flyingon-messagebox {
     border: 1px solid black;

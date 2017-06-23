@@ -348,11 +348,15 @@ flyingon.defineClass('Control', function () {
 
             set: function (value) {
 
+                if (this.view && this.__css_patch === true)
+                {
+                    this.renderer.set(this, '__css_patch', this.__css_patch = 1);
+                }
+
                 if (this.__update_dirty < 2)
                 {
                     this.invalidate();
                 }
-
             }
         });
     };
@@ -395,7 +399,8 @@ flyingon.defineClass('Control', function () {
     //最小宽度
     define('margin', '');
 
-       
+
+
     //控件横向对齐方式
     //left      左边对齐
     //center    横向居中对齐
@@ -523,23 +528,23 @@ flyingon.defineClass('Control', function () {
     define('borderRadius', '');
 
 
-    //阅读方向
-    //ltr	    从左到右 
-    //rtl	    从右到左 
-    define('direction', '', false);
+    // //阅读方向
+    // //ltr	    从左到右 
+    // //rtl	    从右到左 
+    // define('direction', '', false);
 
 
-    //控件内容横向对齐样式
-    //left      左边对齐
-    //center    横向居中对齐
-    //right     右边对齐
-    define('textAlign', '', false);
+    // //控件内容横向对齐样式
+    // //left      左边对齐
+    // //center    横向居中对齐
+    // //right     右边对齐
+    // define('textAlign', '', false);
 
-    //控件内容纵向对齐样式
-    //top       顶部对齐
-    //middle    纵向居中对齐
-    //bottom    底部对齐
-    define('verticalAlign', '', false);
+    // //控件内容纵向对齐样式
+    // //top       顶部对齐
+    // //middle    纵向居中对齐
+    // //bottom    底部对齐
+    // define('verticalAlign', '', false);
 
 
 
@@ -579,26 +584,26 @@ flyingon.defineClass('Control', function () {
     //url('URL')	指向图像的路径
     define('backgroundImage', '', false);
 
-    //控件背景重复方式
-    //repeat	背景图像将在垂直方向和水平方向重复 
-    //repeat-x	背景图像将在水平方向重复 
-    //repeat-y	背景图像将在垂直方向重复 
-    //no-repeat	背景图像将仅显示一次 
-    define('backgroundRepeat', '', false);
+    // //控件背景重复方式
+    // //repeat	背景图像将在垂直方向和水平方向重复 
+    // //repeat-x	背景图像将在水平方向重复 
+    // //repeat-y	背景图像将在垂直方向重复 
+    // //no-repeat	背景图像将仅显示一次 
+    // define('backgroundRepeat', '', false);
 
-    //控件背景颜色对齐方式
-    //top left
-    //top center
-    //top right
-    //center left
-    //center center
-    //center right
-    //bottom left
-    //bottom center
-    //bottom right  如果您仅规定了一个关键词, 那么第二个值将是'center'     默认值：0% 0% 
-    //x% y%	        第一个值是水平位置, 第二个值是垂直位置     左上角是 0% 0% 右下角是 100% 100%     如果您仅规定了一个值, 另一个值将是 50% 
-    //xpos ypos	    第一个值是水平位置, 第二个值是垂直位置     左上角是 0 0 单位是像素 (0px 0px) 或任何其他的 CSS 单位     如果您仅规定了一个值, 另一个值将是50%     您可以混合使用 % 和 position 值 
-    define('backgroundPosition', '', false);
+    // //控件背景颜色对齐方式
+    // //top left
+    // //top center
+    // //top right
+    // //center left
+    // //center center
+    // //center right
+    // //bottom left
+    // //bottom center
+    // //bottom right  如果您仅规定了一个关键词, 那么第二个值将是'center'     默认值：0% 0% 
+    // //x% y%	        第一个值是水平位置, 第二个值是垂直位置     左上角是 0% 0% 右下角是 100% 100%     如果您仅规定了一个值, 另一个值将是 50% 
+    // //xpos ypos	    第一个值是水平位置, 第二个值是垂直位置     左上角是 0 0 单位是像素 (0px 0px) 或任何其他的 CSS 单位     如果您仅规定了一个值, 另一个值将是50%     您可以混合使用 % 和 position 值 
+    // define('backgroundPosition', '', false);
 
 
     //控件颜色
@@ -638,39 +643,70 @@ flyingon.defineClass('Control', function () {
 
 
 
-    //控件文字词间距(以空格为准)
-    define('wordSpacing', '', false);
+    // //控件文字词间距(以空格为准)
+    // define('wordSpacing', '', false);
 
-    //控件文字字间距
-    define('letterSpacing', '', false);
+    // //控件文字字间距
+    // define('letterSpacing', '', false);
 
-    //控件文字缩进
-    define('textIndent', '', false);
+    // //控件文字缩进
+    // define('textIndent', '', false);
 
-    //控件文字装饰
-    //none	        默认 定义标准的文本 
-    //underline	    定义文本下的一条线 
-    //overline	    定义文本上的一条线 
-    //line-through	定义穿过文本下的一条线 
-    //blink	        定义闪烁的文本 
-    define('textDecoration', '', false);
+    // //控件文字装饰
+    // //none	        默认 定义标准的文本 
+    // //underline	    定义文本下的一条线 
+    // //overline	    定义文本上的一条线 
+    // //line-through	定义穿过文本下的一条线 
+    // //blink	        定义闪烁的文本 
+    // define('textDecoration', '', false);
 
-    //控件文字溢出处理方式
-    //clip	    修剪文本
-    //ellipsis	显示省略符号来代表被修剪的文本 	
-    //string	使用给定的字符串来代表被修剪的文本 
-    define('textOverflow', '', false);
+    // //控件文字溢出处理方式
+    // //clip	    修剪文本
+    // //ellipsis	显示省略符号来代表被修剪的文本 	
+    // //string	使用给定的字符串来代表被修剪的文本 
+    // define('textOverflow', '', false);
 
 
 
-    //转换
-    define('transform', '');
+    // //转换
+    // define('transform', '');
 
-    //过渡
-    define('transition', '');
+    // //过渡
+    // define('transition', '');
 
-    //动画
-    define('animation', '');
+    // //动画
+    // define('animation', '');
+
+
+
+    // define('display', '');
+
+
+    // define('float', '');
+
+
+    // define('clear', '');
+
+
+    //设置自定义样式
+    this.defineProperty('style', '', {
+        
+        group: 'appearance',
+
+        set: function (value) {
+
+            var patch = this.__view_patch;
+
+            if (patch)
+            {
+                patch[name] = value;
+            }
+            else
+            {
+                this.renderer.set(this, name, value);
+            }
+        }
+    });
 
 
 
@@ -741,8 +777,101 @@ flyingon.defineClass('Control', function () {
     this.defineProperty('droppable', false);
 
 
+    //自定义标记键值
+    this.defineProperty('key', '');
+
+
     //自定义标记
     this.defineProperty('tag', null);
+
+
+
+    
+    this.__custom_get = function (name) {
+
+        //指令
+        if (name && name.charAt(0) !== '-')
+        {
+            var any = this.__view_attributes;
+            return any && any[name] || '';
+        }
+    };
+
+
+    this.__custom_set = function (name, value) {
+
+        var fn, any;
+
+        if (name && name.charAt(0) === '-') //指令
+        {
+            if (any = name.indexOf(':'))
+            {
+                if (fn = this[name.substring(0, ++any)])
+                {
+                    fn.call(this, name.substring(any), value);
+                }
+            }
+            else if (fn = this[name])
+            {
+                fn.call(this, value);
+            }
+        }
+        else if (any = this.__view_attributes)
+        {
+            any[name] = value;
+        }
+        else
+        {
+            any = this.__view_attributes = {};
+            any[name] = value;
+            
+            this.renderer.set(this, '__view_attributes', true);
+        }
+    };
+    
+
+    //class指令
+    this['-class:'] = function (name, value) {
+
+        if (value)
+        {
+            this.addClass(name);
+        }
+        else
+        {
+            this.removeClass(name);
+        }
+    };
+
+
+    //样式指令
+    this['-style:'] = function (name, value) {
+
+    };
+
+
+    //模型指令
+    this['-model'] = function (vm, name) {
+
+        this.on('change', function (e) {
+
+            vm.$set(name, e.original_event.target.value);
+        });
+    };
+
+
+    //获取焦点指令
+    this['-focused'] = function (value) {
+
+        if (value)
+        {
+            this.focus();
+        }
+        else
+        {
+            this.blur();
+        }
+    };
 
 
 
@@ -1150,9 +1279,14 @@ flyingon.defineClass('Control', function () {
             any.call(this);
         }
         
-        if (this.view)
+        if (any = this.view)
         {
-            this.renderer.unmount(this);
+            if (recursion !== true)
+            {
+                this.renderer.dispose(any);
+            }
+
+            this.view = null;
         }
 
         if (any = this.__dataset)
@@ -1185,7 +1319,8 @@ flyingon.defineClass('Control', function () {
             delete controls[any];
         }
         
-        this.parent = this.previousSibling = this.nextSibling = this.__loop_item = null;
+        this.parent = this.previousSibling = this.nextSibling = this.__loop_vm = null;
+
         return this;
     };
     

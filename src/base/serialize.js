@@ -3,9 +3,6 @@ flyingon.__serialize_fragment = flyingon.fragment(function () {
     
     
     
-    var create = flyingon.create;
-    
-    
        
     //设置不序列化type属性
     this.deserialize_type = true;
@@ -19,7 +16,7 @@ flyingon.__serialize_fragment = flyingon.fragment(function () {
         
         if ((any = this.Class) && (any = any.nickName || any.xtype))
         {
-            writer.writeProperty('type', any);
+            writer.writeProperty('xtype', any);
         }
         
         if (any = this.__storage)
@@ -51,13 +48,9 @@ flyingon.__serialize_fragment = flyingon.fragment(function () {
                     any.call(this, reader, value);
                 }
             }
-            else if ((any = this[name]) && typeof any === 'function')
-            {
-                any.call(this, value, false);
-            }
             else
             {
-                (this.__storage || (this.__storage = create(null)))[name] = value;
+                this.set(name, value, false);
             }
         }
     };
@@ -150,7 +143,7 @@ flyingon.SerializeReader = flyingon.defineClass(function () {
                     this.readProperties(target, data); 
                 }
             }
-            else if ((type = data.type) && (type = components[type]))
+            else if ((type = data.xtype) && (type = components[type]))
             {
                 (target = new type()).deserialize(this, data);
                 

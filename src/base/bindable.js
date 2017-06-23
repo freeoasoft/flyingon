@@ -86,7 +86,7 @@ flyingon.__bindable_fragment = flyingon.fragment(function () {
             {
                 if (!name || keys[key] === name)
                 {
-                    this[key](dataset.getBindingValue(keys[key], action), false);
+                    this.set(key, dataset.getBindingValue(keys[key], action), false);
                 }
             }
         }

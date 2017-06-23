@@ -2,13 +2,21 @@ flyingon.defineClass('TextBox', flyingon.Control, function (base) {
     
 
 
-    this.defaultValue('border', 1);
+    this.defaultHeight = 25;
+    
+    
 
-    this.defaultValue('padding', '0 2');
-    
-    this.defaultValue('borderStyle', 'solid');
-    
-    
+    this.defineProperty('value', '', {
+
+        set: function (value) {
+
+            this.view && this.renderer.set(this, 'text', value);
+        }
+    });
+
+
+    this.defineProperty('format', '');
+
 
     this.defineProperty('text', '', {
 

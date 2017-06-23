@@ -6,7 +6,7 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
     
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, css) {
 
         var text = control.text();
 
@@ -15,7 +15,7 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
             text = flyingon.html_encode(text);
         }
 
-        writer.push('<button type="button"', this.renderDefault(control), '>', text, '</button>');
+        writer.push('<button type="button"', this.renderDefault(control, css), '>', text, '</button>');
     };
 
 

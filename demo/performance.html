@@ -86,7 +86,7 @@
                     control.appendChild(new flyingon.TextBox().sets({
 
                         id: i * 1000 + j,
-                        text: i + ':' + j
+                        value: i + ':' + j
                     }));
                 }
 
@@ -124,7 +124,7 @@
             }
 
             //立即更新
-            flyingon.__update_patch();
+            panel.update();
 
             end_date(this.value);
         };
@@ -156,7 +156,7 @@
             }
 
             //立即更新
-            flyingon.__update_patch();
+            panel.update();
 
             end_date(this.value);
         };

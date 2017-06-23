@@ -13,7 +13,7 @@
 
         require_merge = create(null), //引入资源合并关系
         
-        i18n_map = create(null), //本地化信息集合
+        i18n_cache = create(null), //本地化信息集合
         
         change_files = create(null), //待切换资源文件集合
 
@@ -248,7 +248,7 @@
          
             if (keys = change_files[name])
             {
-                require.__change_require(keys, name, callback);
+                require.__change(keys, name, callback);
             }
         }
     };
@@ -265,36 +265,41 @@
     //获取指定key的本地化信息
     flyingon.i18ntext = function (key) {
 
-        return i18n_map[key] || key;
+        return i18n_cache[key] || key;
     };
 
 
     //获取或设置当前本地化名称
-    flyingon.i18n = function (name) {
+    flyingon.i18n = function (name, values) {
 
-        return require.key('i18n', name, null, function () {
-        
-            //国际化时先清空缓存
-            i18n_map = create(null);
-        });
+        if (values && typeof values === 'object')
+        {
+            i18n(name, values);
+        }
+        else if (typeof name === 'object')
+        {
+            i18n(null, name);
+        }
+        else
+        {
+            return require.key('i18n', name, null, function () {
+            
+                //国际化时先清空缓存
+                i18n_cache = create(null);
+
+                if (typeof values === 'function')
+                {
+                    values();
+                }
+            });
+        }
     };
 
     
     //定义国际化集合
-    flyingon.i18nlist = function (name, values) {
-    
-        if (typeof name === 'object')
-        {
-            values = name;
-            name = null;
-        }
-        
-        if (!values)
-        {
-            return i18n_map;
-        }
-        
-        var keys = i18n_map;
+    function i18n(name, values) {
+
+        var keys = i18n_cache;
         
         if (name)
         {
@@ -314,34 +319,6 @@
         }
     };
     
-    
-    //定义flyingon异常资源路径
-    require.raise = {
-        
-        flyingon: 'flyingon/i18n/{i18n}.js'
-    };
-    
-    
-    //重写抛出异常方法
-    flyingon.raise = function (key, url) {
-
-        var value;
-        
-        if (key)
-        {
-            if ((value = i18n_map[key]) !== void 0 || !url)
-            {
-                throw value || key;
-            }
-
-            url = require.translate[url] || url;
-
-            require.require([require.path(url)], function () {
-
-                throw i18n_map[name] || key;
-            });
-        }
-    };
     
 
     //资源加载函数

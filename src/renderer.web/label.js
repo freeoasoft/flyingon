@@ -6,37 +6,20 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
     
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, css) {
 
-        var text = control.text(),
-            auto = control.__auto_size,
-            style;
-
-        if (auto)
-        {
-            style = '';
-
-            if (auto & 1)
-            {
-                style = 'width:auto;';
-            }
-
-            if (auto & 2)
-            {
-                style += 'height:auto;';
-            }
-        }
+        var text = control.text();
 
         if (text)
         {
             text = flyingon.html_encode(text, false);
         }
 
-        writer.push('<div', this.renderDefault(control, '', style), '>', text, '</div>');
+        writer.push('<span', this.renderDefault(control, css), '>', text, '</span>');
     };
 
 
-    this.auto = function (control, auto) {
+    this.measure_auto = function (control, auto) {
 
         var view = control.view;
 
@@ -47,7 +30,7 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
         if (auto & 2)
         {
-            control.offsetHeight = view.offsetWidth;
+            control.offsetHeight = view.offsetHeight;
         }
     };
 

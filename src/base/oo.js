@@ -196,12 +196,6 @@ var flyingon;
     };
     
     
-    //抛出异常方法
-    flyingon.raise = function (type, key) {
-    
-        throw '[' + type + ']' + key;
-    };
-
 
 });
 
@@ -342,7 +336,7 @@ var flyingon;
             return item;
         }
 
-        flyingon.raise('flyingon', 'error.module_name');
+        throw 'module name can use only letters and numbers!';
     };
 
 
@@ -452,7 +446,7 @@ var flyingon;
         }
         else if (!/^[A-Z]\w*$/.test(name))
         {
-            flyingon.raise('flyingon', 'error.class_name');
+            throw 'class name can use only letters and numbers and begin with a upper letter!';
         }
 
         if (typeof fn !== 'function')
@@ -465,7 +459,7 @@ var flyingon;
             }
             else
             {
-                flyingon.raise('flyingon', 'error.class_fn');
+                throw 'class fn must be a function!';
             }
         }
         else if (!superclass || typeof superclass !== 'function') //处理父类
@@ -508,7 +502,6 @@ var flyingon;
                 prototype.get = get;
                 prototype.set = set;
                 prototype.sets = sets;
-                prototype.__custom_set = custom_set;
                 prototype.defaultValue = defaultValue;
                 prototype.properties = properties;
                 prototype.getOwnPropertyNames = getOwnPropertyNames;
@@ -642,9 +635,9 @@ var flyingon;
 
         var any;
 
-        if (!/^[a-z]\w*$/.test(name))
+        if (!/^[a-z][\w$]*$/.test(name))
         {
-            flyingon.raise('flyingon', 'error.property_name', name);
+            throw 'property name "' + name + '" is not legal!';
         }
 
         if (attributes)
@@ -802,20 +795,36 @@ var flyingon;
     //获取指定名称的属性值
     function get(name) {
       
-        return (this.__storage || this.__defaults)[name];
+        var any;
+
+        if ((any = (this.__storage || this.__defaults)[name]) !== void 0)
+        {
+            return any;
+        }
+
+        if (any = this.__custom_get)
+        {
+            return any.call(this, name);
+        }
     };
     
     
     //设置指定名称的属性值
     function set(name, value, bind) {
         
+        var fn;
+
         if (this.__properties[name])
         {
             this[name](value, bind);
         }
+        else if (fn = this.__custom_set)
+        {
+            fn.call(this, name, value, bind);
+        }
         else
         {
-            this.__custom_set(name, value, bind);
+            (this.__storage || (this.__storage = create(this.__defaults)))[name] = value;
         }
         
         return this;
@@ -827,7 +836,8 @@ var flyingon;
         
         if (values)
         {
-            var properties = this.__properties;
+            var properties = this.__properties,
+                fn;
 
             for (var name in values)
             {
@@ -835,21 +845,18 @@ var flyingon;
                 {
                     this[name](values[name], bind);
                 }
+                else if (fn = this.__custom_set)
+                {
+                    fn.call(this, name, values[name], bind);
+                }
                 else
                 {
-                    this.__custom_set(name, values[name], bind);
+                    (this.__storage || (this.__storage = create(this.__defaults)))[name] = values[name];
                 }
             }
         }
 
         return this;
-    };
-    
-    
-    //设置自定义属性值
-    function custom_set(name, value, bind) {
-
-        (this.__storage || (this.__storage = create(this.__defaults)))[name] = value;
     };
     
 

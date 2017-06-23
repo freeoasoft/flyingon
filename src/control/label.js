@@ -16,7 +16,7 @@ flyingon.defineClass('Label', flyingon.Control, function (base) {
         
         if (auto)
         {
-            this.renderer.auto(this, auto, border);
+            this.renderer.measure_auto(this, auto, border);
         }
         else
         {

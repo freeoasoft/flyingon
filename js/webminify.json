@@ -16,6 +16,10 @@
             '../src/web/event.js',
             '../src/renderer.web/control.js', //需优先加载渲染器
 
+            '../src/dev/selector.js',
+            '../src/dev/viewtemplate.js',
+            '../src/dev/viewmodel.js',
+
 			'../src/control/control.js',
             '../src/control/comment.js',
             '../src/control/label.js',
@@ -26,18 +30,15 @@
             '../src/control/container.js',
 			'../src/control/panel.js',
             '../src/control/scrollpanel.js',
+            '../src/control/unkown.js',
+
             '../src/control/tab.js',
             '../src/control/tabpanel.js',
             '../src/control/tree.js',
 
-            '../src/control/window.js',
-
             '../src/control/popuplayer.js',
             '../src/control/dialog.js',
             '../src/control/messagebox.js',
-
-            '../src/dev/selector.js',
-            '../src/dev/viewmodel.js',
 
             '../src/layout/sublayout.js',
             '../src/layout/layout.js',
@@ -52,6 +53,7 @@
             '../src/renderer.web/container.js',
             '../src/renderer.web/panel.js',
             '../src/renderer.web/scrollpanel.js',
+            '../src/renderer.web/unkown.js',
 
             '../src/renderer.web/popuplayer.js',
             '../src/renderer.web/dialog.js',

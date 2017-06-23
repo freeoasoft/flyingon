@@ -37,7 +37,11 @@
 
 
     //自定义初始化(等待main.js加载完毕才执行)
-    flyingon.require('flyingon/demo/src/module/main.js', function () {
+    flyingon.require([
+        'flyingon/demo/src/module/main.js',
+        'flyingon/demo/i18n/{i18n}.js',
+        'flyingon/demo/css/{skin}.css'
+    ], function () {
 
         new flyingon.use('main').MainPage();
     });

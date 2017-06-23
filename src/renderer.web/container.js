@@ -3,14 +3,16 @@ flyingon.__container_renderer = function (scroll) {
 
 
 
+
     //渲染子项
     this.__render_children = function (writer, control, start, end) {
 
-        var item = start || control.firstChild;
+        var item = start || control.firstChild,
+            css = this.__css_layout;
 
         while (item)
         {
-            item.view || item.renderer.render(writer, item);
+            item.view || item.renderer.render(writer, item, item.__css_patch = css);
             
             if (item === end)
             {
@@ -20,6 +22,57 @@ flyingon.__container_renderer = function (scroll) {
             item = item.nextSibling;
         }
     };
+
+
+
+
+    //挂载子控件
+    this.__mount_children = function (control, view, item, node, end) {
+
+        var any;
+
+        view.onscroll = flyingon.__dom_scroll;
+
+        while (item && node)
+        {
+            //如果子控件已经包含view
+            if (any = item.view)
+            {
+                view.insertBefore(any, node);
+            }
+            else //子控件不包含view则分配新渲染的子视图
+            {
+                item.renderer.mount(item, node);
+                node = node.nextSibling;
+            }
+
+            if (item === end)
+            {
+                break;
+            }
+
+            item = item.nextSibling;
+        }
+    };
+
+
+    this.unmount = function (control) {
+
+        var item = control.firstChild;
+
+        base.unmount.call(this, control);
+
+        while (item)
+        {
+            if (item.view)
+            {
+                item.renderer.unmount(item);
+            }
+
+            item = item.nextSibling;
+        }
+    };
+
 
 
 
@@ -286,6 +339,49 @@ flyingon.__container_renderer = function (scroll) {
 
             item = item.nextSibling;
             node = node.nextSibling;
+        }
+    };
+
+
+
+    //控件顺序发生变化的补丁
+    this.__view_order = function (control, view) {
+
+        // var item = control.firstChild,
+        //     temp = document.createDocumentFragment(),
+        //     node;
+
+        // while (item)
+        // {
+        //     if (node = item.view)
+        //     {
+        //         temp.appendChild(node);
+        //     }
+
+        //     item = item.nextSibling;
+        // }
+
+        // view.appendChild(temp);
+
+
+        var item = control.lastChild,
+            last = view.lastChild,
+            node,
+            tag;
+
+        while (item)
+        {
+            if (node = item.view)
+            {
+                if (node !== last)
+                {
+                    view.insertBefore(node, tag || null);
+                }
+
+                last = (tag = node).previousSibling;
+            }
+
+            item = item.previousSibling;
         }
     };
 

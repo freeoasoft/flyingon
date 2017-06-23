@@ -56,60 +56,10 @@
     //默认拖动事件
     var ondragstart = null;
     
-        
-    //延迟更新队列
-    var update_list = [];
-    
-    var update_delay;
-    
-    
-    
-    //更新
-    function update() {
-        
-        var list = update_list,
-            index = 0,
-            item,
-            node;
-        
-        while (item = list[index++])
-        {
-            item.__delay_update = false;
 
-            if (item.__update_dirty > 1 && (node = item.view) && (node = node.parentNode))
-            {
-                item.__layout_top(node.clientWidth, node.clientHeight);
-            }
+    //顶级控件列表
+    var controls = [];
 
-            item.update();
-        }
-        
-        list.length = 0;
-        
-        if (index = update_delay)
-        {
-            clearTimeout(index);
-            update_delay = 0;
-        }
-    };
-    
-    
-    //延时更新
-    flyingon.__delay_update = function (control) {
-      
-        var list = update_list;
-        
-        if (control && !control.__delay_update)
-        {
-            control.__delay_update = true;
-            list.push(control);
-
-            if (!update_delay)
-            {
-                update_delay = setTimeout(update, 0); //定时刷新
-            }
-        }
-    };
 
 
 
@@ -120,11 +70,14 @@
 
             var node = host,
                 view = this.view,
+                style,
                 renderer = this.renderer,
                 any;
 
             this.__top_control = true;
             this.fullClassName += ' flyingon-host';
+
+            controls.push(this);
 
             if (typeof node === 'string')
             {
@@ -146,6 +99,10 @@
                 renderer.mount(this, view = node.lastChild);
             }
 
+            style = view.style;
+            style.width = style.height = 'auto';
+            style.left = style.top = style.right = style.bottom = 0;
+
             renderer.update(this);
 
             if (typeof (any = callback) === 'function')
@@ -165,6 +122,8 @@
         if (control && control.__top_control)
         {
             control.__top_control = false;
+
+            controls.splice(controls.indexOf(this), 1);
 
             //清除类型选择器缓存
             if (flyingon.__type_query_cache)
@@ -206,6 +165,18 @@
         }
     };
     
+
+
+    //窗口大小变化时自动刷新顶级控件
+    flyingon.dom_on(window, 'resize', function () {
+
+        var list = controls;
+
+        for (var i = 0, l = list.length; i < l; i++)
+        {
+            list[i].invalidate();
+        }
+    });
     
         
     //通用鼠标事件处理

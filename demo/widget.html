@@ -4,13 +4,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>flyingon视图模型演示</title>
     <link rel="stylesheet" type="text/css" href="../css/default/flyingon.css"></link>
-    <style type="text/css">
-
-    .silver {
-        background-color: silver;
-    }
-
-    </style>
 </head>
 <body>
 
@@ -19,17 +12,8 @@
     </div>
 
     <script type="text/x-template" id="template">
-        <panel :layout="layout" -class:silver="silver" padding="10">
-            <div width="100%" height="50" -loop="items(item, index)" @click="operate_click(item, index)">
-                <label :text="item_label(item, index)" widht="60" />
-                <textbox :value="item.text" -model="item.text"  margin='0 10px' width="120" />
-                <button tag="add" :text="operate.add" />
-                <button tag="edit" :text="operate.edit" />
-                <button tag="remove" :text="operate.remove" />
-                <panel layout="line" width="200" height="20" overflowX="hidden" overflowY="hidden" margin="0 0 0 60px">
-                    <label -loop="item.items(subitem)" width="30" height="15" :text="subitem"/>
-                </panel>
-            </div>
+        <panel :layout="layout" padding="10">
+            <item-demo -loop="items(item, index)" :item-text="item.text" :item-index="index" :subitems="item.items" @click="operate_click(item, index)" />
             <label :visible="detail" :text="operate.detail.text" />
         </panel>
     </script>
@@ -40,10 +24,48 @@
     <script type="text/javascript">
 
 
+        flyingon.widget('item-demo', {
+
+            template: {
+                xtype: 'div',
+                height: 50,
+                children: [
+                    { xtype: 'label', ':text': 'itemIndex' },
+                    { xtype: 'textbox', ':value': 'itemText', width: 120, margin: '0 10' },
+                    { xtype: 'button', ':text': 'operate.add', tag: 'add' },
+                    { xtype: 'button', ':text': 'operate.edit', tag: 'edit' },
+                    { xtype: 'button', ':text': 'operate.remove', tag: 'remove' },
+                    { xtype: 'panel', layout: 'line', width: 200, height: 20, overflowX: 'hidden', overflowY: 'hidden', 
+                        children: [
+                            { xtype: 'label', '-loop': 'subitems(subitem)', width: '30', height: '15', ':text': 'subitem' }
+                        ]
+                    }
+                ]
+            },
+
+            defaults: {
+                operate: {
+                    add: 'add',
+                    edit: 'edit',
+                    remove: 'remove',
+                    detail: {
+                        text: 'text ...'
+                    }
+                }
+            },
+
+            init: function () {
+
+                
+
+            }
+
+        });
+
 
         var data = [];
 
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < 100; i++)
         {
             data.push({ text: 'text ' + i, items: ('' + (Math.random() * 100000 | 0)).split('') });
         }
@@ -62,27 +84,12 @@
 
                 detail: true,
                 
-                items: data,
-
-                operate: {
-                    add: 'add',
-                    edit: 'edit',
-                    remove: 'remove',
-                    detail: {
-                        text: 'text ...'
-                    }
-                }
+                items: data
             },
 
             init: function (vm) {
 
              
-                this.item_label = function (item, index) {
-
-                    return index + '. ' + item.$get('text'); //item.text写法不追踪变化
-                };
-
-
                 this.operate_click = function (item, index, control, event) {
                         
                     switch (event.target.tag())

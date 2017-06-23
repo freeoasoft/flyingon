@@ -8,27 +8,9 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
 
     //渲染html
-    this.render = function (writer, control) {
+    this.render = function (writer, control, css) {
 
-        var auto = control.__auto_size, 
-            style;
-
-        if (auto)
-        {
-            style = '';
-
-            if (auto & 1)
-            {
-                style = 'width:auto;';
-            }
-
-            if (auto & 2)
-            {
-                style += 'height:auto;';
-            }
-        }
-
-        writer.push('<div', this.renderDefault(control, '', style), '>', control.html(), '</div>');
+        writer.push('<div', this.renderDefault(control, css), '>', control.html(), '</div>');
     };
 
 
@@ -44,7 +26,7 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
         if (auto & 2)
         {
-            control.offsetHeight = view.offsetWidth;
+            control.offsetHeight = view.offsetHeight;
         }
     };
 

@@ -23,10 +23,9 @@
 
 
     //切换皮肤或多语言资源
-    require.__change_require = function (keys, name, callback) {
+    require.__change = function (keys, name, callback) {
         
         var list = document.getElementsByTagName(name === 'skin' ? 'link' : 'script'),
-            keys = require_keys,
             any;
 
         //删除原dom节点
@@ -42,9 +41,13 @@
 
         for (any in keys)
         {
-            //移除缓存
-            keys[any] = 0;
-            list.push(require.path(keys[any]));
+            if (keys[any])
+            {
+                list.push(require.path(keys[any]));
+
+                //移除缓存
+                require_keys[any] = 0;
+            }
         }
         
         require.require(list, callback || function () {});
@@ -115,7 +118,7 @@
             if (items.length > 0)
             {
                 items.callback = [callback, [flyingon]];
-                require_script(items);
+                load_script(items);
             }
             else //已经加载完成则直接执行回调
             {
@@ -126,7 +129,7 @@
 
        
     //加载引入资源
-    function require_script(list) {
+    function load_script(list) {
 
         //乱序加载测试
         //list.sort(function(a, b) { return Math.random() > 0.5 ? -1 : 1; });
@@ -145,14 +148,14 @@
                 require_wait++;
 
                 //创建加载脚本标签
-                flyingon.script(src, require_done);
+                flyingon.script(src, load_done);
             }
         }
     };
 
     
     //脚本加载完毕后处理
-    function require_done() {
+    function load_done() {
 
         var keys = require_keys,
             back = require_back,
@@ -180,7 +183,7 @@
             list.src = src;
 
             //继续加载资源
-            require_script(list);
+            load_script(list);
         }
         else
         {

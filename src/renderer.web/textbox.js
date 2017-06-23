@@ -3,26 +3,37 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
     this.bind(flyingon.TextBox);
 
+
+
+    //检测盒模型
+    flyingon.dom_test(function (div) {
+        
+ 
+        div.innerHTML = '<input type="text" class="flyingon-control flyingon-textbox"/>';
+
+        this.checkBoxModel(div.children[0]);
+
+
+    }, this);
+
     
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, css) {
 
-        var text = control.text();
+        var text = control.value();
 
         if (text)
         {
             text = flyingon.html_encode(text, false);
         }
 
-        writer.push('<div', this.renderDefault(control), '>',
-                '<input type="text" class="flyingon-textbox-text" value="', text, '" />',
-            '</div>');
+        writer.push('<input type="text"', this.renderDefault(control, css), ' value="', text, '"/>');
     };
 
 
     this.text = function (control, view, value) {
 
-        view.firstChild.value = value;
+        view.value = value;
     };
 
 
@@ -39,7 +50,7 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
         var view = this.view;
 
         this.view = null;
-        this.text(event.original_event.target.value);
+        this.value(event.original_event.target.value);
         this.view = view;
     };
 

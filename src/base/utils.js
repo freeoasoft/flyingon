@@ -55,7 +55,7 @@ flyingon.parseJSON = typeof JSON !== 'undefined'
         {
             if (/[a-zA-Z_$]/.test(text.replace(/"(?:\\"|[^"])*?"|null|true|false|\d+[Ee][-+]?\d+/g, '')))
             {
-                flyingon.raise('flyingon', 'error.json_parse');
+                throw 'json parse error!';
             }
 
             return new Function('return ' + text)();

@@ -3,10 +3,6 @@ flyingon.Renderer = flyingon.defineClass(function () {
     
     
     
-    //需要处理视图补丁的控件集合
-    var controls = null;
-
-
     //margin border padding css样式缓存
     var sides_cache = flyingon.create(null);
 
@@ -122,18 +118,28 @@ flyingon.Renderer = flyingon.defineClass(function () {
 
 
     //渲染html
-    this.render = function (writer, control) {
+    this.render = function (writer, control, css) {
 
-        writer.push('<div', this.renderDefault(control), '></div>');
+        writer.push('<div', this.renderDefault(control, css), '></div>');
     };
 
 
     //渲染控件默认样式及属性
-    this.renderDefault = function (control, className, cssText) {
+    this.renderDefault = function (control, cssLayout, className, cssText) {
 
         var list = [' class="', control.fullClassName],
             css = [],
             any;
+
+        if (cssLayout)
+        {
+            list.push(' flyingon-html'); //标记为html节点
+            this.__render_css(control, css);
+        }
+        else
+        {
+            list.push(' flyingon-absolute'); //标记为绝对定位
+        }
 
         if (className)
         {
@@ -165,6 +171,24 @@ flyingon.Renderer = flyingon.defineClass(function () {
         return list.join(''); 
     };
 
+
+
+    this.__render_css = function (control, css) {
+
+        var style = this.locate_css(control),
+            any;
+
+        // (any = style.left) && css.push('left:', any, ';');
+        // (any = style.top) && css.push('top:', any, ';');
+        (any = style.width) && css.push('width:', any, ';');
+        (any = style.height) && css.push('height:', any, ';');
+        (any = style.margin) && css.push('margin:', any, ';');
+
+        (any = style.minWidth) && css.push('min-width:', any, ';');
+        (any = style.maxWidth) && css.push('max-width:', any, ';');
+        (any = style.minHeight) && css.push('min-height:', any, ';');
+        (any = style.maxHeight) && css.push('max-height:', any, ';');
+    };
 
 
     this.__render_patch = function (control, list, css, keys) {
@@ -235,7 +259,7 @@ flyingon.Renderer = flyingon.defineClass(function () {
         control.view = view;
 
         view.flyingon_id = control.uniqueId();
-        view.onscroll = flyingon.__dom_scroll;
+        //view.onscroll = flyingon.__dom_scroll;
 
         if (any = control.__view_patch)
         {
@@ -277,30 +301,43 @@ flyingon.Renderer = flyingon.defineClass(function () {
 
 
     //更新布局
-    this.update = function (control) {
+    this.update = function (control, css) {
 
-        var style = control.view.style, 
-            style1 = control.__locate_style, 
-            style2 = this.locate(control),
-            any;
+        var view = control.view;
 
-        if (style1)
+        if (css)
         {
-            for (var name in style2)
-            {
-                any = style2[name];
-
-                if (any !== style1[name])
-                {
-                    style[name] = any;
-                }
-            }
+            control.offsetLeft = control.offsetTop = control.offsetWidth = control.offsetHeight = 0;
+            // control.offsetLeft = view.offsetLeft;
+            // control.offsetTop = view.offsetTop;
+            // control.offsetWidth = view.offsetWidth;
+            // control.offsetHeight = view.offsetHeight;
         }
         else
         {
-            for (var name in style2)
+            var style = view.style, 
+                style1 = control.__locate_style, 
+                style2 = this.locate(control),
+                any;
+
+            if (style1)
             {
-                style[name] = style2[name];
+                for (var name in style2)
+                {
+                    any = style2[name];
+
+                    if (any !== style1[name])
+                    {
+                        style[name] = any;
+                    }
+                }
+            }
+            else
+            {
+                for (var name in style2)
+                {
+                    style[name] = style2[name];
+                }
             }
         }
 
@@ -360,6 +397,56 @@ flyingon.Renderer = flyingon.defineClass(function () {
         //记录渲染的位置
         control.__location_tag = (y << 16) + x;
         control.__update_dirty = 0;
+
+        return style;
+    };
+
+
+    //css定位方式
+    this.locate_css = function (control) {
+
+        var style = control.__css_layout = {},
+            values = control.__storage || control.__defaults,
+            auto = 0,
+            any;
+
+        style.margin = (any = values.margin) ? sides_cache[any] || sides_css(any) : '';
+
+        //style.left = (any = values.left) > 0 || any < 0 ? any + 'px' : any;
+        //style.top = (any = values.top) > 0 || any < 0 ? any + 'px' : any;
+
+        style.minWidth = (any = values.minWidth) > 0 ? any + 'px' : any;
+        style.maxWidth = (any = values.maxWidth) > 0 ? any + 'px' : any;
+        style.minHeight = (any = values.minHeight) > 0 ? any + 'px' : any;
+        style.maxHeight = (any = values.maxHeight) > 0 ? any + 'px' : any;
+
+        switch (any = values.width)
+        {
+            case 'default':
+            case 'auto':
+                auto = 1;
+                style.width = 'auto';
+                break;
+
+            default:
+                style.width = any > 0 ? any + 'px' : any;
+                break;
+        }
+
+        switch (any = values.height)
+        {
+            case 'default':
+            case 'auto':
+                auto |= 2;
+                style.height = 'auto';
+                break;
+
+            default:
+                style.height = any > 0 ? any + 'px' : any;
+                break;
+        }
+
+        control.__auto_size = auto;
 
         return style;
     };
@@ -449,6 +536,104 @@ flyingon.Renderer = flyingon.defineClass(function () {
 
 
 
+
+    //需要处理视图补丁的控件集合
+    var controls = [];
+
+    //要销毁的视图集合
+    var views = [];
+
+    //延迟更新队列
+    var update_list = [];
+    
+    //更新定时器
+    var update_delay;
+    
+        
+    //更新
+    function update() {
+        
+        var list = update_list,
+            index = 0,
+            item,
+            node;
+
+        flyingon.__update_patch();
+        
+        while (item = list[index++])
+        {
+            item.__delay_update = false;
+
+            if (item.__update_dirty > 1 && (node = item.view) && (node = node.parentNode))
+            {
+                item.__layout_top(node.clientWidth, node.clientHeight);
+            }
+
+            item.update();
+        }
+        
+        list.length = update_delay = 0;
+    };
+    
+    
+
+    //延时更新
+    flyingon.__delay_update = function (control) {
+      
+        var list = update_list;
+        
+        if (control)
+        {
+            if (!control.__delay_update)
+            {
+                control.__delay_update = true;
+                list.push(control);
+
+                update_delay || (update_delay = setTimeout(update, 0)); //定时刷新
+            }
+        }
+        else
+        {
+            update();
+        }
+    };
+
+
+    //更新所有挂起的dom补丁(在调用控件update前需要先更新补丁)
+    flyingon.__update_patch = function () {
+
+        var list = views,
+            index = 0,
+            item,
+            view,
+            any;
+
+        while (item = list[index++])
+        {
+            if (view = item.parentNode)
+            {
+                view.removeChild(item);
+                item.innerHTML = '';
+            }
+        }
+
+        index = 0;
+        list = controls;
+
+        while (item = list[index++])
+        {
+            if ((any = item.__view_patch) && (view = item.view))
+            {
+                item.__view_patch = null;
+                item.renderer.__apply_patch(item, view, any);
+            }
+        }
+
+        controls.length = 0;
+    };
+
+
+
     //设置属性值
     this.set = function (control, name, value) {
 
@@ -464,15 +649,8 @@ flyingon.Renderer = flyingon.defineClass(function () {
 
             if (control.view)
             {
-                if (any = controls)
-                {
-                    any.push(control);
-                }
-                else
-                {
-                    any = controls = [control];
-                    setTimeout(flyingon.__update_patch, 0);
-                }
+                controls.push(control);
+                update_delay || (update_delay = setTimeout(update, 0)); //定时刷新
             }
         }
     };
@@ -547,28 +725,36 @@ flyingon.Renderer = flyingon.defineClass(function () {
     };
 
 
-    //更新所有挂起的dom补丁(在调用控件update前需要先更新补丁)
-    flyingon.__update_patch = function () {
 
-        var list = controls,
-            item,
-            view,
-            values;
+    //直接渲染css补丁
+    this.__css_patch = function (control, view, value) {
 
-        if (list)
+        var style = control.view.style,
+            style1 = control.__css_layout,
+            style2 = this.locate_css(control),
+            any;
+
+        control.__css_patch = true;
+
+        for (var name in style2)
         {
-            for (var i = 0, l = list.length; i < l; i++)
+            if ((any = style2[name]) !== style1[name])
             {
-                if ((item = list[i]) && (values = item.__view_patch) && (view = item.view))
-                {
-                    item.__view_patch = null;
-                    item.renderer.__apply_patch(item, view, values);
-                }
+                style[name] = any;
             }
-
-            controls = null;
         }
     };
+
+
+
+
+    //销毁视图
+    this.dispose = function (view) {
+
+        views.push(view);
+        update_delay || (update_delay = setTimeout(update, 0)); //定时刷新
+    };
+
 
 
 
