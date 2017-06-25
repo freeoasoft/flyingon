@@ -2,31 +2,18 @@
 flyingon.Renderer = flyingon.defineClass(function () {
     
     
+
+    var self = this;
+
     
     //margin border padding css样式缓存
     var sides_cache = flyingon.create(null);
 
+    //css名称映射
+    var css_map = flyingon.css_map(true);
 
-    //样式前缀
-    var style_prefix = flyingon.create(null);
-
-    //css样式前缀
-    var css_prefix = flyingon.create(null);
-
-
-    css_prefix.minWidth = 'min-width';
-    css_prefix.maxWidth = 'max-width';
-    css_prefix.minHeight = 'min-height';
-    css_prefix.maxHeight = 'max-height';
-    css_prefix.overflowX = 'overflow-x';
-    css_prefix.overflowY = 'overflow-y';
-
-
-
-    function sides_css(value) {
-
-        return sides_cache[value] = value ? value.replace(/(\d+)(\s+|$)/g, '$1px$2') : '';
-    };
+    //style名称映射
+    var style_map = flyingon.css_map();
 
 
 
@@ -117,133 +104,201 @@ flyingon.Renderer = flyingon.defineClass(function () {
 
 
 
+    function css_sides(value) {
+
+        return sides_cache[value] = value ? value.replace(/(\d+)(\s+|$)/g, '$1px$2') : '';
+    };
+
+
+
+
     //渲染html
     this.render = function (writer, control, css) {
 
-        writer.push('<div', this.renderDefault(control, css), '></div>');
+        writer.push('<div'),
+
+        this.renderDefault(writer, control, css);
+
+        writer.push('></div>');
     };
+
 
 
     //渲染控件默认样式及属性
-    this.renderDefault = function (control, cssLayout, className, cssText) {
+    this.renderDefault = function (writer, control, cssLayout, className, cssText) {
 
-        var list = [' class="', control.fullClassName],
-            css = [],
+        var encode = flyingon.html_encode,
+            storage = control.__storage || control.__defaults,
             any;
 
-        if (cssLayout)
+        if (any = storage.id)
         {
-            list.push(' flyingon-html'); //标记为html节点
-            this.__render_css(control, css);
-        }
-        else
-        {
-            list.push(' flyingon-absolute'); //标记为绝对定位
+            writer.push(' id="', encode(any), '"');
         }
 
-        if (className)
-        {
-            list.push(' ', className, '"');
-        }
-        else
-        {
-            list.push('"');
-        }
-
-        if (any = control.__view_patch)
-        {
-            control.__view_patch = null;
-            this.__render_patch(control, list, css, any);
-        }
+        writer.push(' class="', control.fullClassName, 
+            cssLayout ? ' flyingon-html' : ' flyingon-absolute',
+            className ? ' ' + className : '',
+            '" style="');
 
         if (cssText)
         {
-            css.push(cssText);
+            writer.push(cssText);
         }
 
-        if (css[0])
+        if (any = control.__style_list)
         {
-            list.push(' style="');
-            list.push.apply(list, css);
-            list.push('"');
+            this.__render_style(writer, control, any, encode);
         }
 
-        return list.join(''); 
+        if (cssLayout)
+        {
+            this.__render_locate(writer, control);
+        }
+
+        if (!storage.visible)
+        {
+            writer.push('display:none;');
+        }
+
+        writer.push('"');
+
+        if (any = control.__attribute_patch)
+        {
+            control.__attribute_patch = null;
+            this.__render_attribute(writer, control, any, encode);
+        }
     };
 
 
 
-    this.__render_css = function (control, css) {
+    this.__render_style = function (writer, control, values, encode) {
 
-        var style = this.locate_css(control),
+        var map = css_map,
+            name,
+            value, 
             any;
 
-        // (any = style.left) && css.push('left:', any, ';');
-        // (any = style.top) && css.push('top:', any, ';');
-        (any = style.width) && css.push('width:', any, ';');
-        (any = style.height) && css.push('height:', any, ';');
-        (any = style.margin) && css.push('margin:', any, ';');
-
-        (any = style.minWidth) && css.push('min-width:', any, ';');
-        (any = style.maxWidth) && css.push('max-width:', any, ';');
-        (any = style.minHeight) && css.push('min-height:', any, ';');
-        (any = style.maxHeight) && css.push('max-height:', any, ';');
-    };
-
-
-    this.__render_patch = function (control, list, css, keys) {
-
-        var encode = flyingon.html_encode,
-            value,
-            any;
-
-        for (var name in keys)
+        for (var i = 0, l = values.length; i < l; i++)
         {
-            if ((value = keys[name]) === null || !(any = this[name]))
+            name = values[i++];
+            value = values[++i];
+            i++;
+
+            if (value === '')
             {
                 continue;
             }
 
-            switch (any)
+            switch (any = this[name])
             {
                 case 1: //直接设置样式
-                    css.push(name, ':', encode(value), ';');
+                    writer.push(name, ':', encode(value), ';');
                     break;
 
-                case 2: //style直接设置样式, 但css写法需要转换, 如: overflowX overflowY
-                case 3: //设置前缀样式
-                    css.push(css_prefix[name], ':', encode(value), ';');
+                case 2: //需要检测前缀
+                    writer.push(map[name], ':', encode(value), ';');
                     break;
 
-                case 4: //border
-                    css.push('border-width:', sides_cache[value] || sides_css(value), ';');
-                    break;
-
-                case 5: //padding
-                    css.push('padding:', sides_cache[value] || sides_css(value), ';');
-                    break;
-
-                case 6: //visible
-                    value || css.push('display:none;');
-                    break;
-
-                case 8: //定位样式
-                    break;
-
-                // case 9: //特殊样式
-                //     break;
-
-                case 11: //直接设置属性
-                case 12: //布尔型属性
-                    if (value || value === 0)
-                    {
-                        list.push(' ', name, '="', encode(value), '"');
-                    }
+                case 9: //特殊样式
+                    (control.__style_patch || (control.__style_patch = {}))[name] = value;
                     break;
 
                 default:
-                    (control.__view_patch || (control.__view_patch = {}))[name] = value;
+                    if (typeof any !== 'function')
+                    {
+                        if (any = map[name])
+                        {
+                            writer.push(any, ':', encode(value), ';');
+                            self[name] = any === name ? 1 : 2; //直接设置样式标记为1,需要加前缀标记为2
+                            break;
+                        }
+
+                        self[name] = 9; //标记为特殊样式
+                    }
+                    
+                    if (!(any = contro.__style_patch))
+                    {
+                        any = control.__view_patch || (control.__view_patch = {});
+                        any = any.__style_patch = contro.__style_patch = {};
+                    }
+
+                    any[name] = value;
                     break;
+            }
+        }
+    };
+
+
+    var locate_keys = ('left,1,left,top,1,top,'
+        + 'minWidth,1,min-width,maxWidth,1,max-width,minHeight,1,min-height,maxHeight,1,max-height,'
+        + 'margin,2,margin,border,2,border-width,padding,2,padding,'
+        + 'width,3,width,height,3,height').split(',');
+
+    this.__render_locate = function (writer, control) {
+
+        var keys = locate_keys,
+            values = control.__storage || control.__defaults,
+            value,
+            any;
+        
+        for (var i = 0; i < 33; i++)
+        {
+            if (value = values[keys[i++]])
+            {
+                switch (keys[i++])
+                {
+                    case '1':
+                        writer.push(keys[i], ':', (any = +value) === any ? value + 'px' : value, ';');
+                        break;
+
+                    case '2':
+                        writer.push(keys[i], ':', sides_cache[value] || css_sides(value), ';');
+                        break;
+
+                    case '3':
+                        if (value === 'default' || value === 'auto')
+                        {
+                            writer.push(keys[i], ':auto;');
+                        }
+                        else
+                        {
+                            writer.push(keys[i], ':', value >= 0 ? value + 'px' : value, ';');
+                        }
+                        break;
+                }
+            }
+            else
+            {
+                i++;
+            }
+        }
+    };
+
+    
+    this.__render_attribute = function (writer, control, keys, encode) {
+
+        var value, any;
+
+        for (var name in keys)
+        {
+            //没有设置自定义函数则值添加属性值
+            if (typeof this[name] !== 'function')
+            {
+                if (value || value === 0)
+                {
+                    writer.push(' ', name, '="', encode(value), '"');
+                }
+            }
+            else //否则交给自定义函数处理
+            {
+                if (!(any = contro.__attribute_patch))
+                {
+                    any = control.__view_patch || (control.__view_patch = {});
+                    any = any.__attribute_patch = contro.__attribute_patch = {};
+                }
+
+                any[name] = value;
             }
         }
     };
@@ -303,30 +358,42 @@ flyingon.Renderer = flyingon.defineClass(function () {
     //更新布局
     this.update = function (control, css) {
 
-        var view = control.view;
+        var view = control.view,
+            style,
+            item1,
+            item2,
+            any;
 
         if (css)
         {
-            control.offsetLeft = control.offsetTop = control.offsetWidth = control.offsetHeight = 0;
-            // control.offsetLeft = view.offsetLeft;
-            // control.offsetTop = view.offsetTop;
-            // control.offsetWidth = view.offsetWidth;
-            // control.offsetHeight = view.offsetHeight;
+            any = control.parent;
+            
+            if (any)
+            {
+                item1 = any.offsetWidth - any.borderLeft - any.borderRight - any.paddingLeft - any.paddingRight;
+                item2 = any.offsetHeight - any.borderTop - any.borderBottom - any.paddintTop - any.paddingBottom;
+            }
+            else
+            {
+                item1 = item2 = 0;
+            }
+
+            control.offsetLeft = control.offsetTop = 0;
+            control.measure(item1, item2, item1, item2);
         }
         else
         {
-            var style = view.style, 
-                style1 = control.__locate_style, 
-                style2 = this.locate(control),
-                any;
+            style = view.style;
+            item1 = control.__locate_style;
+            item2 = this.locate(control);
 
-            if (style1)
+            if (item1)
             {
-                for (var name in style2)
+                for (var name in item2)
                 {
-                    any = style2[name];
+                    any = item2[name];
 
-                    if (any !== style1[name])
+                    if (any !== item1[name])
                     {
                         style[name] = any;
                     }
@@ -334,9 +401,9 @@ flyingon.Renderer = flyingon.defineClass(function () {
             }
             else
             {
-                for (var name in style2)
+                for (var name in item2)
                 {
-                    style[name] = style2[name];
+                    style[name] = item2[name];
                 }
             }
         }
@@ -402,118 +469,10 @@ flyingon.Renderer = flyingon.defineClass(function () {
     };
 
 
-    //css定位方式
-    this.locate_css = function (control) {
 
-        var style = control.__css_layout = {},
-            values = control.__storage || control.__defaults,
-            auto = 0,
-            any;
+    this.visible = function (control, view, value) {
 
-        style.margin = (any = values.margin) ? sides_cache[any] || sides_css(any) : '';
-
-        //style.left = (any = values.left) > 0 || any < 0 ? any + 'px' : any;
-        //style.top = (any = values.top) > 0 || any < 0 ? any + 'px' : any;
-
-        style.minWidth = (any = values.minWidth) > 0 ? any + 'px' : any;
-        style.maxWidth = (any = values.maxWidth) > 0 ? any + 'px' : any;
-        style.minHeight = (any = values.minHeight) > 0 ? any + 'px' : any;
-        style.maxHeight = (any = values.maxHeight) > 0 ? any + 'px' : any;
-
-        switch (any = values.width)
-        {
-            case 'default':
-            case 'auto':
-                auto = 1;
-                style.width = 'auto';
-                break;
-
-            default:
-                style.width = any > 0 ? any + 'px' : any;
-                break;
-        }
-
-        switch (any = values.height)
-        {
-            case 'default':
-            case 'auto':
-                auto |= 2;
-                style.height = 'auto';
-                break;
-
-            default:
-                style.height = any > 0 ? any + 'px' : any;
-                break;
-        }
-
-        control.__auto_size = auto;
-
-        return style;
-    };
-
-
-
-    //注册style
-    this.__registry_style = function (name, check) {
-
-        var any;
-
-        if (check !== false)
-        {
-            check = flyingon.css_name(name, false);
-
-            if (any = check.name)
-            {
-                if (any !== name)
-                {
-                    this[name] = 2; //设置前缀样式
-
-                    style_prefix[name] = any;
-                    css_prefix[name] = any.css;
-
-                    return;
-                }
-            }
-            else
-            {
-                this[name] = check.set ? 9 : false; //支持自定义set则调用flyingon.css_value,否则不处理
-                return;
-            }
-        }
-
-        any = name.replace(/([A-Z])/g, '-$1').toLowerCase();
-
-        this[name] = any === name ? 1 : 2;
-
-        style_prefix[name] = name;
-        css_prefix[name] = any;
-    };
-
-
-    //注册attribute
-    this.__registry_attribute = function (name, defaultValue) {
-
-        this[name] = typeof defaultValue === 'boolean' ? 12 : 11;
-    };
-
-
-
-    this.id = 11;
-
-
-    this.overflowX = this.overflowY = 2;
-
-    this.border = 4;
-
-    this.padding = 5;
-
-    this.visible = 6;
-
-
-
-    this.className = function (control, view, value) {
-        
-        view.className = value ? control.defaultClassName + ' ' + value : control.defaultClassName;
+        view.style.display = value ? '' : 'none';
     };
 
 
@@ -675,43 +634,19 @@ flyingon.Renderer = flyingon.defineClass(function () {
             switch (fn = this[name])
             {
                 case 1: //直接设置样式
-                case 2: //style直接设置样式, 但css写法需要转换, 如: overflowX overflowY
                     style[name] = value;
                     break;
 
-                case 3: //设置前缀样式
-                    style[style_prefix[name]] = value;
+                case 2: //设置前缀样式
+                    style[style_map[name]] = value;
                     break;
 
-                case 4: //border
-                    style.borderWidth = sides_cache[value] || sides_css(value);
-                    break;
-
-                case 5: //padding
-                    style.padding = sides_cache[value] || sides_css(value);
-                    break;
-                
-                case 6: //visible
+                case 3: //visible
                     style.display = value ? '' : 'none';
                     break;
 
                 case 9: //特殊样式
                     flyingon.css_value(view, name, value);
-                    break;
-
-                case 11: //直接设置属性
-                    view.setAttribute(name, value);
-                    break;
-
-                case 12: //布尔型属性
-                    if (value)
-                    {
-                        view.setAttribute(name, name);
-                    }
-                    else
-                    {
-                        view.removeAttribute(name);
-                    }
                     break;
 
                 default:
@@ -725,22 +660,130 @@ flyingon.Renderer = flyingon.defineClass(function () {
     };
 
 
+    //样式补丁
+    this.__style_patch = function (control, view, value) {
 
-    //直接渲染css补丁
-    this.__css_patch = function (control, view, value) {
-
-        var style = control.view.style,
-            style1 = control.__css_layout,
-            style2 = this.locate_css(control),
+        var map = style_map,
+            style = view.style,
             any;
 
-        control.__css_patch = true;
+        control.__style_patch = null;
 
-        for (var name in style2)
+        for (var name in value)
         {
-            if ((any = style2[name]) !== style1[name])
+            switch (any = this[name])
             {
-                style[name] = any;
+                case 0: //不处理
+                    break;
+
+                case 1: //直接设置样式
+                    style[name] = value[name];
+                    break;
+
+                case 2: //需要检测前缀
+                    style[map[name]] = value[name];
+                    break;
+
+                case 9: //特殊样式
+                    flyingon.css_value(view, name, value[name]);
+                    break;
+
+                default:
+                    if (typeof any !== 'function')
+                    {
+                        if (any = map[name])
+                        {
+                            style[any] = value[name];
+                            self[name] = any === name ? 1 : 2; //直接设置样式标记为1,需要加前缀标记为2
+                        }
+                        else
+                        {
+                            flyingon.css_value(view, name, value[name]);
+                            self[name] = 9; //标记为特殊样式
+                        }
+                    }
+                    else
+                    {
+                        any.call(this, control, view, value[name]);
+                    }
+                    break;
+            }
+        }
+    };
+
+
+    //直接使用css定时时的补丁
+    this.__locate_patch = function (control, view, value) {
+
+        var style = view.style,
+            values = control.__locate_patch,
+            value;
+
+        control.__locate_patch = null;
+
+        for (var name in values)
+        {
+            value = values[name];
+
+            switch (name)
+            {
+                case 'left':
+                case 'top':
+                case 'minWidth':
+                case 'maxWidth':
+                case 'minHeight':
+                case 'maxHeight':
+                    style[name] = value > 0 || value < 0 ? value + 'px' : value;
+                    break;
+
+                case 'margin':
+                case 'padding':
+                    style[name] = sides_cache[value] || css_sides(value);
+                    break;
+
+                case 'border':
+                    style.borderWidth = sides_cache[value] || css_sides(value);
+                    break;
+
+                case 'width':
+                case 'height':
+                    if (value === 'default' || value === 'auto')
+                    {
+                        style[name] = 'auto';
+                    }
+                    else
+                    {
+                        style[name] = value >= 0 ? value + 'px' : value;
+                    }
+                    break;
+            }
+        }
+    };
+
+
+    //属性补丁
+    this.__attribute_patch = function (control, view, value) {
+
+        var fn, any;
+
+        control.__attribute_patch = null;
+
+        for (var name in value)
+        {
+            if (typeof (fn = this[name]) !== 'function')
+            {
+                if ((any = value[name]) !== false)
+                {
+                    view.setAttribute(name, any);
+                }
+                else
+                {
+                    view.removeAttribute(name);
+                }
+            }
+            else
+            {
+                fn.call(this, control, view, value[name]);
             }
         }
     };

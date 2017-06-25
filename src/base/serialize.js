@@ -23,6 +23,11 @@ flyingon.__serialize_fragment = flyingon.fragment(function () {
         {
             writer.writeProperties(any, this.getOwnPropertyNames(), this.__bind_keys);
         }
+
+        if ((any = this.__style_list) && (any = any.text))
+        {
+            writer.writeProperty('style', any);
+        }
     };
     
         

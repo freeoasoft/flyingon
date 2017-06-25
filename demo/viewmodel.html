@@ -19,15 +19,15 @@
     </div>
 
     <script type="text/x-template" id="template">
-        <panel :layout="layout" -class:silver="silver" padding="10">
-            <div width="100%" height="50" -loop="items(item, index)" @click="operate_click(item, index)">
-                <label :text="item_label(item, index)" widht="60" />
-                <textbox :value="item.text" -model="item.text"  margin='0 10px' width="120" />
-                <button tag="add" :text="operate.add" />
+        <panel :layout="layout" -class:silver="silver" -style:background-color="color" padding="10">
+            <div height="65" -loop="items(item, index)" @click="operate_click(item, index)">
+                <label width="90" :text="item_label(item, index)" style="display:inline-block;" />
+                <textbox width="120" :value="item.text" -model="item.text" />
+                <button tag="add" :text="operate.add" margin="0 5" />
                 <button tag="edit" :text="operate.edit" />
-                <button tag="remove" :text="operate.remove" />
-                <panel layout="line" width="200" height="20" overflowX="hidden" overflowY="hidden" margin="0 0 0 60px">
-                    <label -loop="item.items(subitem)" width="30" height="15" :text="subitem"/>
+                <button tag="remove" :text="operate.remove" margin="0 5" />
+                <panel layout="vertical-line" width="auto" height="50" padding="4 0 4 90" style="overflow:hidden;">
+                    <div -loop="item.items(subitem)" :width="subitem_width(subitem)" height="5" style="background-color:silver;" />
                 </panel>
             </div>
             <label :visible="detail" :text="operate.detail.text" />
@@ -43,7 +43,7 @@
 
         var data = [];
 
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < 100; i++)
         {
             data.push({ text: 'text ' + i, items: ('' + (Math.random() * 100000 | 0)).split('') });
         }
@@ -79,7 +79,13 @@
              
                 this.item_label = function (item, index) {
 
-                    return index + '. ' + item.$get('text'); //item.text写法不追踪变化
+                    return ++index + '. ' + item.$get('text'); //item.text写法不追踪变化
+                };
+
+
+                this.subitem_width = function (value) {
+
+                    return value * 10 + 20;
                 };
 
 
@@ -88,15 +94,16 @@
                     switch (event.target.tag())
                     {
                         case 'add':
-                            this.items.push({ text: 'added', items: ('' + (Math.random() * 100000 | 0)).split('') });
+                            this.items.push({ text: Math.random() * 10000000 | 0, items: ('' + (Math.random() * 100000 | 0)).split('') });
                             break;
 
                         case 'edit':
-                            item.$set('text', new Date().getTime());
+                            //item.$set('text', Math.random() * 10000000 | 0);
+                            item.$replace({ 'text': Math.random() * 10000000 | 0, items: ('' + (Math.random() * 100000 | 0)).split('') });
                             break;
 
                         case 'remove':
-                            this.items.splice(index - 1, 1);
+                            this.items.splice(index, 1);
                             break;
                     }
                 };

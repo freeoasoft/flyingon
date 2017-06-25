@@ -15,7 +15,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
         var tagName = control.tagName;
 
-        writer.push('<', tagName, this.renderDefault(control, css), '>');
+        writer.push('<', tagName);
+        
+        this.renderDefault(writer, control, css);
+        
+        writer.push('>');
 
         this.__render_children(writer, control);
 
@@ -97,21 +101,6 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
         control.offsetHeight = view && view.offsetHeight || 0;
     };
 
-
-    this.__view_attributes = function (control, view) {
-
-        var keys = control.__view_attributes;
-
-        if (keys)
-        {
-            control.__view_attributes = null;
-
-            for (var name in keys)
-            {
-                view.setAttribute(name, keys[name]);
-            }
-        }
-    };
 
 
 });

@@ -23,12 +23,16 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
         //滚动位置控制(解决有右或底边距时拖不到底的问题)
         //使用模拟滚动条解决IE拖动闪烁问题
         //此处只渲染一个空的壳,实现渲染内容在update的时候根据需要渲染
-        writer.push('<div', this.renderDefault(control, css), '>',
+        writer.push('<div');
+        
+        this.renderDefault(writer, control, css, '', 'overflow:auto;');
+        
+        writer.push('>',
                 '<div style="position:absolute;left:0;top:0;right:0;bottom:0;width:auto;height:auto;overflow:auto;">',
                     '<div style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;"></div>',
                 '</div>',
                 '<div class="flyingon-body" style="position:relative;overflow:hidden;margin:0;border:0;padding:0;left:0;top:0;width:100%;height:100%;">',
-                '<div style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;"></div>',
+                    '<div style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;"></div>',
                 '</div>',
             '</div>');
     };
@@ -40,6 +44,8 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
         base.mount.call(this, control, view);
 
         view.onscroll = null;
+
+        control.view_body = view.lastChild;
         control.view.firstChild.onscroll = flyingon.__dom_scroll;
 
         control.on('mousewheel', mousewheel);
@@ -55,8 +61,13 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
     function mousewheel(event) {
 
-        this.view.firstChild.scrollTop -= event.wheelDelta * 100 / 120;
-        event.stopPropagation();
+        var view = this.view;
+
+        if (view.style.overflowY !== 'hidden')
+        {
+            view.firstChild.scrollTop -= event.wheelDelta * 100 / 120;
+            event.stopPropagation();
+        }
     };
 
 
@@ -132,21 +143,12 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
     this.__update_scroll = function (control) {
 
         var view = control.view,
-            style = view.firstChild.style,
             style1 = view.firstChild.firstChild.style, //模拟滚动条控制
             style2 = view.lastChild.lastChild.style, //内容位置控制(解决有右或底边距时拖不到底的问题)
             cache = control.__scroll_cache || (control.__scroll_cache = {}),
             any;
 
-        if (cache.x1 !== (any = control.__hscroll ? 'scroll' : 'hidden'))
-        {
-            style.overflowX = cache.x1 = any;
-        }
-
-        if (cache.y1 !== (any = control.__vscroll ? 'scroll' : 'hidden'))
-        {
-            style.overflowY = cache.y1 = any;
-        }
+        style1 = view.firstChild.firstChild.style; //模拟滚动条控制
 
         if (cache.x2 !== (any = control.arrangeRight))
         {

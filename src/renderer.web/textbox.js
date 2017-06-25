@@ -27,7 +27,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
             text = flyingon.html_encode(text, false);
         }
 
-        writer.push('<input type="text"', this.renderDefault(control, css), ' value="', text, '"/>');
+        writer.push('<input type="text"');
+        
+        this.renderDefault(writer, control, css);
+        
+        writer.push(' value="', text, '"/>');
     };
 
 

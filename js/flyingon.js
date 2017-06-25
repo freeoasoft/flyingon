@@ -400,10 +400,10 @@ var flyingon;
            
 
     //执行对象属性观测
-    flyingon.__do_watch = function (target, name, value, oldValue, bind) {
+    flyingon.__do_watch = function (target, name, value, oldValue) {
 
         var keys = target.__watch_keys,
-            e = { target: target, name: name, newValue: value, oldValue: oldValue, bind: bind },
+            e = { target: target, name: name, newValue: value, oldValue: oldValue },
             any;
 
         for (var i = 0, l = keys.length; i < l; i++)
@@ -498,7 +498,6 @@ var flyingon;
             if (any)
             {
                 prototype.defineProperty = defineProperty;
-                prototype.storage = storage;
                 prototype.get = get;
                 prototype.set = set;
                 prototype.sets = sets;
@@ -682,7 +681,7 @@ var flyingon;
 
     function property_fn(key, dataType, check, set) {
 
-        return function (value, bind) {
+        return function (value) {
 
             var storage = this.__storage,
                 name = key,
@@ -717,26 +716,29 @@ var flyingon;
                     break;
             }
 
-            if ((check ? (value = check.call(this, value)) : value) === any)
+            if (check)
             {
-                return this;
+                value = check.call(this, value)
             }
 
-            if (this.__watch_keys && flyingon.__do_watch(this, name, value, bind) === false)
+            if (any !== value)
             {
-                return this;
-            }
+                if (this.__watch_keys && flyingon.__do_watch(this, name, value, any) === false)
+                {
+                    return this;
+                }
 
-            (storage || (this.__storage = create(this.__defaults)))[name] = value;
+                (storage || (this.__storage = create(this.__defaults)))[name] = value;
 
-            if (set)
-            {
-                set.call(this, value, bind);
-            }
+                if (set)
+                {
+                    set.call(this, value);
+                }
 
-            if (bind !== false && (any = this.__bind_keys) && (name = any[name]))
-            {
-                this.pushBack(name, value);
+                if ((any = this.__bind_keys) && (name = any[name]))
+                {
+                    this.pushBack(name, value);
+                }
             }
 
             return this;
@@ -777,21 +779,7 @@ var flyingon;
         };
     };
         
-    
-    //获取当前存储对象
-    function storage(name) {
-        
-        var storage = this.__storage;
-        
-        if (name)
-        {
-            return (storage || this.__defaults)[name];
-        }
-        
-        return storage || (this.__storage = create(this.__defaults));
-    };
-    
-        
+            
     //获取指定名称的属性值
     function get(name) {
       
@@ -810,17 +798,17 @@ var flyingon;
     
     
     //设置指定名称的属性值
-    function set(name, value, bind) {
+    function set(name, value) {
         
         var fn;
 
         if (this.__properties[name])
         {
-            this[name](value, bind);
+            this[name](value);
         }
         else if (fn = this.__custom_set)
         {
-            fn.call(this, name, value, bind);
+            fn.call(this, name, value);
         }
         else
         {
@@ -832,7 +820,7 @@ var flyingon;
 
 
     //批量设置属性值
-    function sets(values, bind) {
+    function sets(values) {
         
         if (values)
         {
@@ -843,11 +831,11 @@ var flyingon;
             {
                 if (properties[name])
                 {
-                    this[name](values[name], bind);
+                    this[name](values[name]);
                 }
                 else if (fn = this.__custom_set)
                 {
-                    fn.call(this, name, values[name], bind);
+                    fn.call(this, name, values[name]);
                 }
                 else
                 {
@@ -1941,6 +1929,11 @@ flyingon.__serialize_fragment = flyingon.fragment(function () {
         if (any = this.__storage)
         {
             writer.writeProperties(any, this.getOwnPropertyNames(), this.__bind_keys);
+        }
+
+        if ((any = this.__style_list) && (any = any.text))
+        {
+            writer.writeProperty('style', any);
         }
     };
     
@@ -3623,7 +3616,7 @@ flyingon.__bindable_fragment = flyingon.fragment(function () {
                 return this;
             }
 
-            if (this.__watch_list && flyingon.__do_watch(this, name, value, bind) === false)
+            if (this.__watch_list && flyingon.__do_watch(this, name, value) === false)
             {
                 return this;
             }
@@ -3679,7 +3672,7 @@ flyingon.__bindable_fragment = flyingon.fragment(function () {
     //接收数据集变更动作处理
     this.ondatareceive = function (dataset, action) {
         
-        var keys, name;
+        var keys, name, any;
         
         if (action && (keys = this.__bind_keys))
         {
@@ -3689,7 +3682,20 @@ flyingon.__bindable_fragment = flyingon.fragment(function () {
             {
                 if (!name || keys[key] === name)
                 {
-                    this.set(key, dataset.getBindingValue(keys[key], action), false);
+                    any = name || keys[key];
+
+                    //禁止自身回推
+                    keys[key] = '';
+
+                    try
+                    {
+                        this.set(key, dataset.getBindingValue(any, action));
+                    }
+                    finally
+                    {
+                        //回退缓存
+                        keys[key] = any;
+                    }
                 }
             }
         }
@@ -4126,94 +4132,104 @@ flyingon.style = function (cssText) {
     
     
 
-    var dom = document.documentElement,
 
-        fixed = flyingon.create(null), //css兼容处理
+    var style1 = flyingon.create(null),
 
-        prefix = 'ms',     //样式前缀
+        style2 = flyingon.create(null),
 
-        regex = /^-(\w+)-/, //样式检测
+        fixed = flyingon.create(null); //自定义css兼容处理
 
-        style,
-
-        any;
+        
 
 
+    (function check_css(style1, style2) {
 
-    //获取浏览器样式前缀
-    if (any = window.getComputedStyle)
-    {
-        style = any(dom);
-
-        for (var i = style.length - 1; i >= 0; i--)
-        {
-            if (any = style[i].match(regex))
-            {
-                prefix = any[1];
-                break;
-            }
-        }
-    }
-
-
-    //测试样式
-    style = dom.style;
-
-
-    //自动处理样式
-    function css_name(name) {
-
-        var css = name.replace(/([A-Z])/g, '-$1').toLowerCase(),
+        var style = document.documentElement.style,
+            list1 = [],
+            list2,
+            list3,
             any;
 
-        if (!(name in style))
+        for (var name in style)
         {
-            any = prefix + name.charAt(0).toUpperCase() + name.substring(1);
+            switch (name)
+            {
+                case 'cssFloat':
+                case 'styleFloat':
+                    list1.push('float');
+                    break;
 
-            if (any in style)
-            {
-                name = any;
-                css = '-' + prefix + '-' + css;
-            }
-            else
-            {
-                name = css= '';
+                case 'cssText':
+                    break;
+
+                default:
+                    list1.push(name);
+                    break;
             }
         }
 
-        return fixed[name] = {
+        any = list1.join(',');
 
-            name: name,
-            css: css
-        };
-    };
+        if (name = any.match(/\b(webkit|ms|moz|o)[A-Z]/))
+        {
+            name = name[1];
+
+            any = any.replace(new RegExp('\\b' + name + '(?=[A-Z])', 'g'), '-' + name);
+
+            any = any.replace(/([A-Z])/g, function (_, name) {
+
+                return '-' + name.toLowerCase();
+            });
+
+            list2 = any.split(',');
+            list3 = any.replace(new RegExp('-' + name + '-', 'g'), '').split(',');
+        }
+        else
+        {
+            list2 = list3 = list1;
+        }
+
+        for (var i = 0, l = list1.length; i < l; i++)
+        {
+            any = list3[i];
+            style1[any] = list1[i];
+            style2[any] = list2[i];
+        }
+
+    })(style1, style2);
+
 
 
     //获取可用样式名
-    //name: 要获取的样式名
+    //name: 要获取的样式名,按css连字符的写法,如:background-color
     flyingon.css_name = function (name, css) {
 
-        var value = fixed[name] || css_name(name);
-        return css ? value.css : (css === false ? value : value);
+        return (css ? style2 : style1)[name] || '';
+    };
+
+
+    //获取css名字映射
+    flyingon.css_map = function (css) {
+
+        return css ? style2 : style1;
     };
     
     
     //设置css样式值
     //dom:      目标dom
-    //name:     要获取的样式名
+    //name:     要设置样式名,按css连字符的写法,如:background-color
     //value:    样式值
     flyingon.css_value = function (dom, name, value) {
 
-        var value = fixed[name] || css_name(name),
-            any;
+        var any;
 
-        if (any = value.set)
-        {
-            any(value, dom);
-        }
-        else if (any = value.name)
+        if (any = style1[name])
         {
             dom.style[any] = value;
+        }
+        else if (any = fixed[name])
+        {
+            any(value, dom);
         }
     };
     
@@ -4223,15 +4239,15 @@ flyingon.style = function (cssText) {
     //set:      转换样式值的方法
     flyingon.css_fixed = function (name, set) {
 
-        if (name && set && !(set = css_name(name)).name)
+        if (name && set && !style1[name])
         {
-            set.set = set;
+            fixed[name] = set;
         }
     };
 
 
     //处理ie允许选中
-    flyingon.css_fixed('userSelect', (function () {
+    flyingon.css_fixed('user-select', (function () {
 
         function event_false() {
 
@@ -4419,7 +4435,7 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
         }
         
         flyingon.dom_suspend(dom, 'click', true);
-        flyingon.css_value(document.body, 'userSelect', 'none');
+        flyingon.css_value(document.body, 'user-select', 'none');
         
         if (dom.setCapture)
         {
@@ -4475,7 +4491,7 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
 
         if (!start)
         {
-            flyingon.css_value(document.body, 'userSelect', '');
+            flyingon.css_value(document.body, 'user-select', '');
             
             if (dom.setCapture)
             {
@@ -4975,31 +4991,18 @@ flyingon.KeyEvent = flyingon.defineClass(flyingon.Event, function () {
 flyingon.Renderer = flyingon.defineClass(function () {
     
     
+
+    var self = this;
+
     
     //margin border padding css样式缓存
     var sides_cache = flyingon.create(null);
 
+    //css名称映射
+    var css_map = flyingon.css_map(true);
 
-    //样式前缀
-    var style_prefix = flyingon.create(null);
-
-    //css样式前缀
-    var css_prefix = flyingon.create(null);
-
-
-    css_prefix.minWidth = 'min-width';
-    css_prefix.maxWidth = 'max-width';
-    css_prefix.minHeight = 'min-height';
-    css_prefix.maxHeight = 'max-height';
-    css_prefix.overflowX = 'overflow-x';
-    css_prefix.overflowY = 'overflow-y';
-
-
-
-    function sides_css(value) {
-
-        return sides_cache[value] = value ? value.replace(/(\d+)(\s+|$)/g, '$1px$2') : '';
-    };
+    //style名称映射
+    var style_map = flyingon.css_map();
 
 
 
@@ -5090,133 +5093,201 @@ flyingon.Renderer = flyingon.defineClass(function () {
 
 
 
+    function css_sides(value) {
+
+        return sides_cache[value] = value ? value.replace(/(\d+)(\s+|$)/g, '$1px$2') : '';
+    };
+
+
+
+
     //渲染html
     this.render = function (writer, control, css) {
 
-        writer.push('<div', this.renderDefault(control, css), '></div>');
+        writer.push('<div'),
+
+        this.renderDefault(writer, control, css);
+
+        writer.push('></div>');
     };
+
 
 
     //渲染控件默认样式及属性
-    this.renderDefault = function (control, cssLayout, className, cssText) {
+    this.renderDefault = function (writer, control, cssLayout, className, cssText) {
 
-        var list = [' class="', control.fullClassName],
-            css = [],
+        var encode = flyingon.html_encode,
+            storage = control.__storage || control.__defaults,
             any;
 
-        if (cssLayout)
+        if (any = storage.id)
         {
-            list.push(' flyingon-html'); //标记为html节点
-            this.__render_css(control, css);
-        }
-        else
-        {
-            list.push(' flyingon-absolute'); //标记为绝对定位
+            writer.push(' id="', encode(any), '"');
         }
 
-        if (className)
-        {
-            list.push(' ', className, '"');
-        }
-        else
-        {
-            list.push('"');
-        }
-
-        if (any = control.__view_patch)
-        {
-            control.__view_patch = null;
-            this.__render_patch(control, list, css, any);
-        }
+        writer.push(' class="', control.fullClassName, 
+            cssLayout ? ' flyingon-html' : ' flyingon-absolute',
+            className ? ' ' + className : '',
+            '" style="');
 
         if (cssText)
         {
-            css.push(cssText);
+            writer.push(cssText);
         }
 
-        if (css[0])
+        if (any = control.__style_list)
         {
-            list.push(' style="');
-            list.push.apply(list, css);
-            list.push('"');
+            this.__render_style(writer, control, any, encode);
         }
 
-        return list.join(''); 
+        if (cssLayout)
+        {
+            this.__render_locate(writer, control);
+        }
+
+        if (!storage.visible)
+        {
+            writer.push('display:none;');
+        }
+
+        writer.push('"');
+
+        if (any = control.__attribute_patch)
+        {
+            control.__attribute_patch = null;
+            this.__render_attribute(writer, control, any, encode);
+        }
     };
 
 
 
-    this.__render_css = function (control, css) {
+    this.__render_style = function (writer, control, values, encode) {
 
-        var style = this.locate_css(control),
+        var map = css_map,
+            name,
+            value, 
             any;
 
-        // (any = style.left) && css.push('left:', any, ';');
-        // (any = style.top) && css.push('top:', any, ';');
-        (any = style.width) && css.push('width:', any, ';');
-        (any = style.height) && css.push('height:', any, ';');
-        (any = style.margin) && css.push('margin:', any, ';');
-
-        (any = style.minWidth) && css.push('min-width:', any, ';');
-        (any = style.maxWidth) && css.push('max-width:', any, ';');
-        (any = style.minHeight) && css.push('min-height:', any, ';');
-        (any = style.maxHeight) && css.push('max-height:', any, ';');
-    };
-
-
-    this.__render_patch = function (control, list, css, keys) {
-
-        var encode = flyingon.html_encode,
-            value,
-            any;
-
-        for (var name in keys)
+        for (var i = 0, l = values.length; i < l; i++)
         {
-            if ((value = keys[name]) === null || !(any = this[name]))
+            name = values[i++];
+            value = values[++i];
+            i++;
+
+            if (value === '')
             {
                 continue;
             }
 
-            switch (any)
+            switch (any = this[name])
             {
                 case 1: //直接设置样式
-                    css.push(name, ':', encode(value), ';');
+                    writer.push(name, ':', encode(value), ';');
                     break;
 
-                case 2: //style直接设置样式, 但css写法需要转换, 如: overflowX overflowY
-                case 3: //设置前缀样式
-                    css.push(css_prefix[name], ':', encode(value), ';');
+                case 2: //需要检测前缀
+                    writer.push(map[name], ':', encode(value), ';');
                     break;
 
-                case 4: //border
-                    css.push('border-width:', sides_cache[value] || sides_css(value), ';');
-                    break;
-
-                case 5: //padding
-                    css.push('padding:', sides_cache[value] || sides_css(value), ';');
-                    break;
-
-                case 6: //visible
-                    value || css.push('display:none;');
-                    break;
-
-                case 8: //定位样式
-                    break;
-
-                // case 9: //特殊样式
-                //     break;
-
-                case 11: //直接设置属性
-                case 12: //布尔型属性
-                    if (value || value === 0)
-                    {
-                        list.push(' ', name, '="', encode(value), '"');
-                    }
+                case 9: //特殊样式
+                    (control.__style_patch || (control.__style_patch = {}))[name] = value;
                     break;
 
                 default:
-                    (control.__view_patch || (control.__view_patch = {}))[name] = value;
+                    if (typeof any !== 'function')
+                    {
+                        if (any = map[name])
+                        {
+                            writer.push(any, ':', encode(value), ';');
+                            self[name] = any === name ? 1 : 2; //直接设置样式标记为1,需要加前缀标记为2
+                            break;
+                        }
+
+                        self[name] = 9; //标记为特殊样式
+                    }
+                    
+                    if (!(any = contro.__style_patch))
+                    {
+                        any = control.__view_patch || (control.__view_patch = {});
+                        any = any.__style_patch = contro.__style_patch = {};
+                    }
+
+                    any[name] = value;
                     break;
+            }
+        }
+    };
+
+
+    var locate_keys = ('left,1,left,top,1,top,'
+        + 'minWidth,1,min-width,maxWidth,1,max-width,minHeight,1,min-height,maxHeight,1,max-height,'
+        + 'margin,2,margin,border,2,border-width,padding,2,padding,'
+        + 'width,3,width,height,3,height').split(',');
+
+    this.__render_locate = function (writer, control) {
+
+        var keys = locate_keys,
+            values = control.__storage || control.__defaults,
+            value,
+            any;
+        
+        for (var i = 0; i < 33; i++)
+        {
+            if (value = values[keys[i++]])
+            {
+                switch (keys[i++])
+                {
+                    case '1':
+                        writer.push(keys[i], ':', (any = +value) === any ? value + 'px' : value, ';');
+                        break;
+
+                    case '2':
+                        writer.push(keys[i], ':', sides_cache[value] || css_sides(value), ';');
+                        break;
+
+                    case '3':
+                        if (value === 'default' || value === 'auto')
+                        {
+                            writer.push(keys[i], ':auto;');
+                        }
+                        else
+                        {
+                            writer.push(keys[i], ':', value >= 0 ? value + 'px' : value, ';');
+                        }
+                        break;
+                }
+            }
+            else
+            {
+                i++;
+            }
+        }
+    };
+
+    
+    this.__render_attribute = function (writer, control, keys, encode) {
+
+        var value, any;
+
+        for (var name in keys)
+        {
+            //没有设置自定义函数则值添加属性值
+            if (typeof this[name] !== 'function')
+            {
+                if (value || value === 0)
+                {
+                    writer.push(' ', name, '="', encode(value), '"');
+                }
+            }
+            else //否则交给自定义函数处理
+            {
+                if (!(any = contro.__attribute_patch))
+                {
+                    any = control.__view_patch || (control.__view_patch = {});
+                    any = any.__attribute_patch = contro.__attribute_patch = {};
+                }
+
+                any[name] = value;
             }
         }
     };
@@ -5276,30 +5347,42 @@ flyingon.Renderer = flyingon.defineClass(function () {
     //更新布局
     this.update = function (control, css) {
 
-        var view = control.view;
+        var view = control.view,
+            style,
+            item1,
+            item2,
+            any;
 
         if (css)
         {
-            control.offsetLeft = control.offsetTop = control.offsetWidth = control.offsetHeight = 0;
-            // control.offsetLeft = view.offsetLeft;
-            // control.offsetTop = view.offsetTop;
-            // control.offsetWidth = view.offsetWidth;
-            // control.offsetHeight = view.offsetHeight;
+            any = control.parent;
+            
+            if (any)
+            {
+                item1 = any.offsetWidth - any.borderLeft - any.borderRight - any.paddingLeft - any.paddingRight;
+                item2 = any.offsetHeight - any.borderTop - any.borderBottom - any.paddintTop - any.paddingBottom;
+            }
+            else
+            {
+                item1 = item2 = 0;
+            }
+
+            control.offsetLeft = control.offsetTop = 0;
+            control.measure(item1, item2, item1, item2);
         }
         else
         {
-            var style = view.style, 
-                style1 = control.__locate_style, 
-                style2 = this.locate(control),
-                any;
+            style = view.style;
+            item1 = control.__locate_style;
+            item2 = this.locate(control);
 
-            if (style1)
+            if (item1)
             {
-                for (var name in style2)
+                for (var name in item2)
                 {
-                    any = style2[name];
+                    any = item2[name];
 
-                    if (any !== style1[name])
+                    if (any !== item1[name])
                     {
                         style[name] = any;
                     }
@@ -5307,9 +5390,9 @@ flyingon.Renderer = flyingon.defineClass(function () {
             }
             else
             {
-                for (var name in style2)
+                for (var name in item2)
                 {
-                    style[name] = style2[name];
+                    style[name] = item2[name];
                 }
             }
         }
@@ -5375,118 +5458,10 @@ flyingon.Renderer = flyingon.defineClass(function () {
     };
 
 
-    //css定位方式
-    this.locate_css = function (control) {
 
-        var style = control.__css_layout = {},
-            values = control.__storage || control.__defaults,
-            auto = 0,
-            any;
+    this.visible = function (control, view, value) {
 
-        style.margin = (any = values.margin) ? sides_cache[any] || sides_css(any) : '';
-
-        //style.left = (any = values.left) > 0 || any < 0 ? any + 'px' : any;
-        //style.top = (any = values.top) > 0 || any < 0 ? any + 'px' : any;
-
-        style.minWidth = (any = values.minWidth) > 0 ? any + 'px' : any;
-        style.maxWidth = (any = values.maxWidth) > 0 ? any + 'px' : any;
-        style.minHeight = (any = values.minHeight) > 0 ? any + 'px' : any;
-        style.maxHeight = (any = values.maxHeight) > 0 ? any + 'px' : any;
-
-        switch (any = values.width)
-        {
-            case 'default':
-            case 'auto':
-                auto = 1;
-                style.width = 'auto';
-                break;
-
-            default:
-                style.width = any > 0 ? any + 'px' : any;
-                break;
-        }
-
-        switch (any = values.height)
-        {
-            case 'default':
-            case 'auto':
-                auto |= 2;
-                style.height = 'auto';
-                break;
-
-            default:
-                style.height = any > 0 ? any + 'px' : any;
-                break;
-        }
-
-        control.__auto_size = auto;
-
-        return style;
-    };
-
-
-
-    //注册style
-    this.__registry_style = function (name, check) {
-
-        var any;
-
-        if (check !== false)
-        {
-            check = flyingon.css_name(name, false);
-
-            if (any = check.name)
-            {
-                if (any !== name)
-                {
-                    this[name] = 2; //设置前缀样式
-
-                    style_prefix[name] = any;
-                    css_prefix[name] = any.css;
-
-                    return;
-                }
-            }
-            else
-            {
-                this[name] = check.set ? 9 : false; //支持自定义set则调用flyingon.css_value,否则不处理
-                return;
-            }
-        }
-
-        any = name.replace(/([A-Z])/g, '-$1').toLowerCase();
-
-        this[name] = any === name ? 1 : 2;
-
-        style_prefix[name] = name;
-        css_prefix[name] = any;
-    };
-
-
-    //注册attribute
-    this.__registry_attribute = function (name, defaultValue) {
-
-        this[name] = typeof defaultValue === 'boolean' ? 12 : 11;
-    };
-
-
-
-    this.id = 11;
-
-
-    this.overflowX = this.overflowY = 2;
-
-    this.border = 4;
-
-    this.padding = 5;
-
-    this.visible = 6;
-
-
-
-    this.className = function (control, view, value) {
-        
-        view.className = value ? control.defaultClassName + ' ' + value : control.defaultClassName;
+        view.style.display = value ? '' : 'none';
     };
 
 
@@ -5648,43 +5623,19 @@ flyingon.Renderer = flyingon.defineClass(function () {
             switch (fn = this[name])
             {
                 case 1: //直接设置样式
-                case 2: //style直接设置样式, 但css写法需要转换, 如: overflowX overflowY
                     style[name] = value;
                     break;
 
-                case 3: //设置前缀样式
-                    style[style_prefix[name]] = value;
+                case 2: //设置前缀样式
+                    style[style_map[name]] = value;
                     break;
 
-                case 4: //border
-                    style.borderWidth = sides_cache[value] || sides_css(value);
-                    break;
-
-                case 5: //padding
-                    style.padding = sides_cache[value] || sides_css(value);
-                    break;
-                
-                case 6: //visible
+                case 3: //visible
                     style.display = value ? '' : 'none';
                     break;
 
                 case 9: //特殊样式
                     flyingon.css_value(view, name, value);
-                    break;
-
-                case 11: //直接设置属性
-                    view.setAttribute(name, value);
-                    break;
-
-                case 12: //布尔型属性
-                    if (value)
-                    {
-                        view.setAttribute(name, name);
-                    }
-                    else
-                    {
-                        view.removeAttribute(name);
-                    }
                     break;
 
                 default:
@@ -5698,22 +5649,130 @@ flyingon.Renderer = flyingon.defineClass(function () {
     };
 
 
+    //样式补丁
+    this.__style_patch = function (control, view, value) {
 
-    //直接渲染css补丁
-    this.__css_patch = function (control, view, value) {
-
-        var style = control.view.style,
-            style1 = control.__css_layout,
-            style2 = this.locate_css(control),
+        var map = style_map,
+            style = view.style,
             any;
 
-        control.__css_patch = true;
+        control.__style_patch = null;
 
-        for (var name in style2)
+        for (var name in value)
         {
-            if ((any = style2[name]) !== style1[name])
+            switch (any = this[name])
             {
-                style[name] = any;
+                case 0: //不处理
+                    break;
+
+                case 1: //直接设置样式
+                    style[name] = value[name];
+                    break;
+
+                case 2: //需要检测前缀
+                    style[map[name]] = value[name];
+                    break;
+
+                case 9: //特殊样式
+                    flyingon.css_value(view, name, value[name]);
+                    break;
+
+                default:
+                    if (typeof any !== 'function')
+                    {
+                        if (any = map[name])
+                        {
+                            style[any] = value[name];
+                            self[name] = any === name ? 1 : 2; //直接设置样式标记为1,需要加前缀标记为2
+                        }
+                        else
+                        {
+                            flyingon.css_value(view, name, value[name]);
+                            self[name] = 9; //标记为特殊样式
+                        }
+                    }
+                    else
+                    {
+                        any.call(this, control, view, value[name]);
+                    }
+                    break;
+            }
+        }
+    };
+
+
+    //直接使用css定时时的补丁
+    this.__locate_patch = function (control, view, value) {
+
+        var style = view.style,
+            values = control.__locate_patch,
+            value;
+
+        control.__locate_patch = null;
+
+        for (var name in values)
+        {
+            value = values[name];
+
+            switch (name)
+            {
+                case 'left':
+                case 'top':
+                case 'minWidth':
+                case 'maxWidth':
+                case 'minHeight':
+                case 'maxHeight':
+                    style[name] = value > 0 || value < 0 ? value + 'px' : value;
+                    break;
+
+                case 'margin':
+                case 'padding':
+                    style[name] = sides_cache[value] || css_sides(value);
+                    break;
+
+                case 'border':
+                    style.borderWidth = sides_cache[value] || css_sides(value);
+                    break;
+
+                case 'width':
+                case 'height':
+                    if (value === 'default' || value === 'auto')
+                    {
+                        style[name] = 'auto';
+                    }
+                    else
+                    {
+                        style[name] = value >= 0 ? value + 'px' : value;
+                    }
+                    break;
+            }
+        }
+    };
+
+
+    //属性补丁
+    this.__attribute_patch = function (control, view, value) {
+
+        var fn, any;
+
+        control.__attribute_patch = null;
+
+        for (var name in value)
+        {
+            if (typeof (fn = this[name]) !== 'function')
+            {
+                if ((any = value[name]) !== false)
+                {
+                    view.setAttribute(name, any);
+                }
+                else
+                {
+                    view.removeAttribute(name);
+                }
+            }
+            else
+            {
+                fn.call(this, control, view, value[name]);
             }
         }
     };
@@ -7234,2007 +7293,11 @@ flyingon.Query = flyingon.defineClass(function () {
         
         return this;
     };
+
+
     
     
 }, false);
-
-
-
-
-//视图模板类
-flyingon.ViewTemplate = flyingon.defineClass(function () {
-
-
-
-
-    this.constructor = function (template) {
-
-        if (typeof template === 'string')
-        {
-            this.template = template;
-        }
-        else
-        {
-            this.ast = template;
-        }
-    };
-
-
-
-
-    //解析html模板生成虚拟树
-    this.parse = function () {
-
-        var ast = this.ast,
-            any;
-
-        if (!ast && (any = this.template))
-        {
-            any = any.replace(/<!--[\s\S]*?-->/g, '');
-            any = any.match(/[<>=/]|[\w-:@]+|"[^"]*"|'[^']*'/g);
-
-            ast = parse(any, []);
-
-            if (ast instanceof Array)
-            {
-                if (ast[1])
-                {
-                    throw 'template can only one root node!';
-                }
-
-                ast = ast[0];
-            }
-
-            if (ast)
-            {
-                if (ast['-loop'])
-                {
-                    throw 'template root nood can not use "-loop"!';
-                }
-            }
-            else
-            {
-                throw 'template can not be empty!';
-            }
-
-            this.ast = ast;
-        }
-
-        return ast;
-    };
-
-
-
-    //分析模板生成模型结构
-    this.analyse = function () {
-
-        var vm = this.vm,
-            any;
-
-        if (vm === void 0 && (any = this.ast || this.parse()))
-        {
-            analyse_object(vm = {}, any);
-
-            for (any in vm)
-            {
-                return this.vm = vm;
-            }
-
-            this.vm = null;
-        }
-
-        return vm;
-    };
-
-
-
-    //解析xml模板
-    function parse(tokens, array) {
-
-        var regex_node = /[^\w-]/,
-            regex_name = /[^\w-:@]/,
-            stack = [],
-            flag, //属性分析阶段标记
-            index = 0,
-            item,
-            name,
-            token,
-            any;
-
-        while (token = tokens[index++])
-        {
-            switch (token)
-            {
-                case '<':
-                    if (flag)
-                    {
-                        throw parse_error(token, item);
-                    }
-
-                    token = tokens[index++];
-
-                    //下一个符号是关闭结点
-                    if (token === '/')
-                    {
-                        if (!item || tokens[index] !== item.xtype || tokens[index + 1] !== '>')
-                        {
-                            throw '"' + token + tokens[index] + tokens[index + 1] + '" not a valid close tag!';
-                        }
-
-                        index++;
-                        stack.pop();
-                        item = stack[stack.length - 1];
-                        break;
-                    }
-
-                    if (token.match(regex_node))
-                    {
-                        throw '"' + token + '" not a valid node name!';
-                    }
-
-                    any = { xtype: token };
-
-                    //添加子项
-                    if (item)
-                    {
-                        (item.children || (item.children = [])).push(any);
-                    }
-                    else
-                    {
-                        array.push(any);
-                    }
-
-                    stack.push(item = any);
-                    flag = true; //标记处于属性分析阶段
-                    break;
-
-                case '/':
-                    if (flag && tokens[index++] === '>')
-                    {
-                        flag = false; //标记属性分析阶段结束
-
-                        if (name)
-                        {
-                            item[name] = true;
-                            name = null;
-                        }
-
-                        stack.pop();
-                        item = stack[stack.length - 1];
-                    }
-                    else
-                    {
-                        throw parse_error(token, item);
-                    }
-                    break;
-
-                case '>':
-                    if (flag)
-                    {
-                        flag = false; //标记属性分析阶段结束
-
-                        if (name)
-                        {
-                            item[name] = true;
-                            name = null;
-                        }
-                    }
-                    break;
-
-                case '=':
-                    if (flag && name)
-                    {
-                        switch (token = tokens[index++])
-                        {
-                            case '<':
-                            case '>':
-                            case '/':
-                            case '=':
-                                throw parse_error(token, item);
-                        }
-
-                        any = token.charAt(0);
-                        any = any === '"' || any === '\'' ? token.substring(1, token.length - 1) : token;
-
-                        item[name] = any;
-                        name = null;
-                    }
-                    else
-                    {
-                        throw parse_error(token, item);
-                    }
-                    break;
-
-                default:
-                    if (flag)
-                    {
-                        if (name)
-                        {
-                            item[name] = true;
-                        }
-
-                        if (token.match(regex_name))
-                        {
-                            throw '"<' + item.xtype + '...' + token + '" not a valid attribute name!';
-                        }
-
-                        if (token === 'class')
-                        {
-                            name = 'className';
-                        }
-                        else if (token.indexOf('-') > 0) //-开头的是指令,不进行驼峰处理
-                        {
-                            name =  token.replace(/-(\w)/g, camelize);
-                        }
-                        else
-                        {
-                            name = token;
-                        }
-                    }
-                    else
-                    {
-                        throw '"' + token + '" has syntax error, text can only be a node property!';
-                    }
-                    break;
-            }
-        }
-
-        return array;
-    };
-
-
-    function camelize(_, key) {
-
-        return key.toUpperCase();
-    };
-
-
-    function parse_error(token, item) {
-
-        return '"' + (item ? '<' + item[0] + '...' : '') + token + '" has syntax error!';
-    };
-
-
-
-
-    //分析生成的节点格式
-    //[type, subtype, name, path, detail]
-    //[0, 0, name, path, null]    无父级节点
-    //[0, 1, name, path, null]    loop item变量(0可能会升级成1或者2)
-    //[0, 2, name, null, null]    loop index变量
-    //[0, 3, name, path, detail]  函数, detail为参数列表
-    //[1, 0, name, path, detail]  对象节点, detail为属性列表
-    //[1, 1, name, path, detail]  升级为对象节点的loop item变量, detail为属性列表
-    //[2, 0, name, path, detail]  数组节点, detail是item变量
-    //[2, 1, name, path, detail]  升级为数组节点的loop item变量, detail是item变量
-    
-
-    function analyse_object(node, ast) {
-
-        var item, any;
-
-        for (var name in ast)
-        {
-            switch (name)
-            {
-                case 'xtype':
-                case 'children':
-                case '-loop':
-                    any = null;
-                    break;
-
-                default:
-                    any = ast[name];
-                    break;
-            }
-
-            if (any)
-            {
-                switch (name.charAt(0))
-                {
-                    case '-': //指令
-                    case ':': //绑定
-                        ast[name] = any.indexOf('(') > 0 ? analyse_function(node, any) : analyse_name(node, any, 0, 0);
-                        break;
-
-                    case '@': //事件
-                        ast[name] = analyse_function(node, any);
-                        break;
-                }
-            }
-        }
-
-        if (ast = ast.children)
-        {
-            any = 0;
-
-            while (item = ast[any++])
-            {
-                (item['-loop'] ? analyse_loop : analyse_object)(node, item);
-            }
-        }
-    };
-
-
-    function analyse_loop(node, ast) {
-
-        var keys = ast['-loop'].match(/[\w.-]+/g),
-            loop,
-            item,
-            index,
-            any;
-
-        if (keys && (loop = keys[0]))
-        {
-            loop = analyse_name(node, loop, 2, 0);
-
-            //第一个变量是item, 第二个变量是index
-            //可以省略index, 但是不可以省略item
-            if (item = keys[1])
-            {
-                check_loop(node, item);
-
-                //在loop中记录item信息并添加进作用域
-                any = loop[4] = node[loop.item = item] = [0, 1, item, null, null, 0];
-                any.loop = loop;
-
-                if (index = keys[2])
-                {
-                    check_loop(node, index);
-
-                    //添加进作用域
-                    node[loop.index = index] = loop[5] = [0, 2, index, null, null, 0];
-                }
-            }
-
-            //在作用域范围内分析模板
-            analyse_object(node, ast);
-
-            if (item)
-            {
-                //标记超出作用域
-                node[item] = 0;
-
-                //如果item变量未使用则移除
-                if (!any[0] && !any[5])
-                {
-                    loop.item = loop[4] = null;
-                }
-
-                if (index)
-                {
-                    //如果index变量未使用则移除
-                    if (!node[index][5])
-                    {
-                        loop[5] = loop.index = null;
-                    }
-
-                    //标记超出作用域
-                    node[index] = 0;
-                }
-            }
-        }
-        else
-        {
-            analyse_object(node, ast);
-        }
-
-        ast['-loop'] = loop;
-    };
-
-
-    function check_loop(node, name) {
-
-        if (name.indexOf('.') >= 0)
-        {
-            throw 'loop "' + name + '" can not include "."!';
-        }
-
-        if (node[name])
-        {
-            throw 'loop "' + name + '" has be used!';
-        }
-    };
-
-
-    function analyse_name(node, name, type, subtype) {
-
-        var keys = name.match(/[\w-]+/g),
-            list = null, //上级列表
-            item;
-
-        for (var i = 0, l = keys.length - 1; i < l; i++)
-        {
-            if (item = node[name = keys[i]])
-            {
-                switch (item[0])
-                {
-                    case 1: //对象
-                        node = item[4];
-                        break;
-
-                    case 0: //数组item变量升级为对象,否则穿透抛出异常
-                        item[0] = 1;
-                        node = item[4] || (item[4] = {}); 
-                        break;
-                }
-            }
-            else if (item === 0)
-            {
-                throw '"' + name + '" is out of scope range!';
-            }
-            else
-            {
-                item = node[name] = [1, 0, name, list ? list.slice(0) : null, node = {}]; //创建新对象
-            }
-
-            if (list)
-            {
-                list.push(item);
-            }
-            else
-            {
-                list = [item];
-            }
-        }
-
-        if (item = node[name = keys.pop()])
-        {
-            if (type)
-            {
-                if (item[0])
-                {
-                    throw '"' + name + '" has be used!';
-                }
-
-                item[0] = type;
-            }
-            else if (item[1])
-            {
-                item[5]++;
-            }
-
-            return item;
-        }
-        
-        if (item === 0)
-        {
-            throw '"' + name + '" is out of scope range!';
-        }
-
-        return node[name] = [type, subtype, name, list, null];
-    };
-
-
-    function analyse_function(node, name) {
-
-        var list = name.match(/[\w-.]+/g),
-            args,
-            item,
-            index,
-            any;
-
-        if ((name = list[0]).indexOf('.') >= 0)
-        {
-            throw 'function "' + name + '" can not include "."!';
-        }
-        
-        if ((item = node[name]) && item[1] !== 2)
-        {
-            throw 'function name "' + name + '" has be used!';
-        }
-
-        //函数支持重载,同一函数可传入不同的参数,所以每次分析都重新生成新节点
-        item = node[name] = [0, 3, list[0], null, null];
-
-        if (list[1])
-        {
-            args = [];
-            index = 1;
-
-            while (name = list[index++])
-            {
-                if (any = node[name])
-                {
-                    any[5]++; //标记变量被引用
-                }
-                else
-                {
-                    any = analyse_name(node, name, 0, 0);
-                }
-
-                args.push(any);
-            }
-            
-            item[4] = args;
-        }
-
-        return item;
-    };
-
-
-
-});
-
-
-
-
-(function (flyingon) {
-
-
-
-    var components = flyingon.components;
-
-    var unkown = flyingon.Unkown;
-
-    var uniqueId_controls = flyingon.__uniqueId_controls;
-
-
-    var array_base = Array.prototype;
-
-    var array_like = flyingon.create(array_base);
-
-    var slice = array_base.slice;
-
-    var push = array_base.push;
-
-    var splice = array_base.splice;
-
-
-    //当前依赖参数
-    //0: 控件id
-    //1: 模板节点
-    //2: 绑定名称
-    var depend_target;
-
-    var depend_cache = [0, null, null];
-
-
-
-
-    //创建部件
-    flyingon.widget = function (name, options) {
-
-        if (!name && typeof name !== 'string')
-        {
-            throw 'widget name must input a string!';
-        }
-
-        var template = view_template('widget', options),
-            defaults = options.defaults,
-            vm,
-            type,
-            prototype;
-
-        if (defaults !== false)
-        {
-            vm = template.analyse();
-        }
-        else
-        {
-            template.parse();
-        }
-        
-        type = flyingon.defineClass(components[template.ast.xtype] || unkown, widget).register(name, options.force);
-
-        (prototype = type.prototype).__options = {
-
-            vm: vm,
-            template: template.ast,
-            defaults: defaults,
-            init: options.init,
-            created: options.created 
-        };
-
-        if (vm)
-        {
-            for (var name in vm)
-            {
-                if (vm[name])
-                {
-                    widget_property(prototype, name, defaults && defaults[name] || null);
-                }
-            }
-        }
-
-        return type;
-    };
-
-
-    function widget() {
-
-        this.constructor = function () {
-
-            var options = this.__options,
-                vm = options.fn,
-                control,
-                any;
-
-            if (vm === void 0)
-            {
-                options.fn = vm = (any = options.vm) && compile_object(any, '') || null;
-            }
-
-            if (vm)
-            {
-                this.vm = vm = new vm(null, options.defaults);
-
-                if (any = options.init)
-                {
-                    any.call(vm, vm);
-                }
-            }
-
-            control = create(vm, options.template, this);
-
-            if (any = options.created)
-            {
-                any.call(control, vm);
-            }
-        };
-
-    };
-
-
-
-    function widget_property(self, name, defaultValue) {
-
-        self.defineProperty(name, defaultValue || null, {
-
-            set: function (value) {
-
-                this.vm.$set(name, value);
-            }
-        });
-    };
-
-
-
-    //创建视图
-    flyingon.view = function (options) {
-
-        var template = view_template('view', options),
-            defaults = options.defaults,
-            vm,
-            control,
-            any;
-
-        template.parse();
-
-        if (defaults !== false && (vm = template.analyse()))
-        {
-            vm = new (compile_object(vm, ''))(null, defaults);
-
-            if (any = options.init)
-            {
-                any.call(vm, vm);
-            }
-        }
-
-        control = create(vm, template.ast);
-        control.vm = vm;
-
-        if (any = options.created)
-        {
-            any.call(control, vm);
-        }
-
-        if (any = options.host)
-        {
-            flyingon.mount(control, any, options.mounted);
-        }
-
-        return control;
-    };
-
-
-    //获取视图模板的方法
-    flyingon.view.template = function (text) {
-
-        var node;
-
-        if (text.charAt(0) === '#' && (node = document.getElementById(text.substring(1))))
-        {
-            return node.innerHTML;
-        }
-
-        return text;
-    };
-
-
-    function view_template(name, options) {
-
-        if (!options)
-        {
-            throw name + ' options must input a object!';
-        }
-
-        var template = options.template;
-
-        if (!template)
-        {
-            throw name + ' options template not allow empty!';
-        }
-
-        if (typeof template === 'string')
-        {
-            template = flyingon.view.template(template);
-        }
-
-        return new flyingon.ViewTemplate(template);
-    };
-
-
-
-
-    //添加自定义观测
-    function watch(name, fn) {
-
-        if (typeof name === 'function')
-        {
-            fn = name;
-            name = '*';
-        }
-        else if (typeof fn !== 'function')
-        {
-            throw 'watch must input a function!';
-        }
-
-        (this.__watches || (this.__watches = [])).push(name || '*', fn);
-        return this;
-    };
-
-
-    //触发观测通知
-    function notify(vm, name, value, oldValue) {
-
-        var target = vm,
-            list,
-            event,
-            index,
-            key;
-
-        do
-        {
-            if (list = target.__watches)
-            {
-                index = 0;
-
-                while (key = list[index++])
-                {
-                    if (key === '*' || name === '*' || key === name)
-                    {
-                        list[index++].call(target, event || (event = {
-                            
-                            target: vm,
-                            name: name,
-                            newValue: value,
-                            oldValue: oldValue
-                        }));
-                    }
-                    else
-                    {
-                        index++;
-                    }
-                }
-            }
-        }
-        while(target = target.__parent); //向上冒泡
-    };
-
-
-
-
-    //获取绑定值
-    function bind_value(control, vm, scope, node) {
-
-        var any;
-
-        switch (node[1])
-        {
-            case 0: //property
-                if (node[3])
-                {
-                    vm = bind_vm(control, vm, scope, node);
-                }
-
-                if (any = depend_target)
-                {
-                    property_track(vm, node[2], any);
-                }
-
-                return vm[node[2]];
-
-            case 1: //loop item
-                if (scope && (scope = scope[node[2]]))
-                {
-                    vm = scope.__loop_vm;
-
-                    if (!node[0] && (any = depend_target))
-                    {
-                        item_track(vm, scope.__uniqueId, any);
-                    }
-
-                    return vm[scope.__loop_index];
-                }
-
-                return find_item(control, node[2]);
-
-            case 2: //loop index
-                if (scope)
-                {
-                    scope = scope[node[2]];
-
-                    if (any = depend_target)
-                    {
-                        item_track(scope.__loop_vm, scope.__uniqueId, any);
-                    }
-
-                    return scope.__loop_index + 1;
-                }
-
-                return find_index(control, node[2]);
-
-            case 3: //function
-                return bind_function(control, vm, scope, node);
-        }
-    };
-
-
-    //获取绑定的视图模型
-    function bind_vm(control, vm, scope, node) {
-
-        var list = node[3],
-            item = list[0],
-            index = 1;
-
-        if (item[1] === 1) //loop item
-        {
-            if (scope && (scope = scope[item[2]]))
-            {
-                vm = scope.__loop_vm[scope.__loop_index];
-            }
-            else
-            {
-                vm = find_item(control, item[2]);
-            }
-        }
-        else
-        {
-            vm = (vm.__top || vm)[item[2]];
-        }
-
-        while (item = list[index++])
-        {
-            vm = vm[item[2]];
-        }
-
-        return vm;
-    };
-
-
-    //获取绑定的函数返回值
-    function bind_function(control, vm, scope, node, event) {
-
-        var list = node[4], 
-            args = [], 
-            index = 0, 
-            item;
-
-        //函数只能在顶级视图模型中
-        vm = vm.__top || vm;
-      
-        if (list = node[4])
-        {
-            while (item = list[index++])
-            {
-                args.push(bind_value(control, vm, scope, item));
-            }
-        }
-
-        args.push(control);
-        event && args.push(event);
-
-        return vm[node[2]].apply(vm, args);
-    };
-
-
-    //绑定事件
-    function bind_event(vm, node) {
-
-        return function (e) {
-
-            bind_function(this, vm, null, node, e);
-        };
-    };
-
-
-    //获取控件相关的item变量作用域
-    function find_item(control, name) {
-
-        var vm;
-
-        do
-        {
-            if ((vm = control.__loop_vm) && vm.__item_name === name)
-            {
-                return vm[control.__loop_index];
-            }
-        }
-        while (control = control.parent);
-    };
-
-
-    //索引绑定的循环索引号
-    function find_index(control, name) {
-
-        var vm;
-
-        do
-        {
-            if ((vm = control.__loop_vm) && vm.__index_name === name)
-            {
-                return control.__loop_index + 1;
-            }
-        }
-        while (control = control.parent);
-
-        return -1; //出错了
-    };
-
-
-
-
-    //添加对象属性变化依赖追踪
-    function property_track(vm, name, depends) {
-
-        var keys = vm.__depends;
-
-        if (keys)
-        {
-            push.apply(keys[name] || (keys[name] = []), depends);
-        }
-    };
-
-
-    //添加数组项值变化依赖追踪
-    function item_track(vm, id, depends) {
-
-        var keys;
-
-        if (id && (keys = vm.__depends || (vm.__depends = {})))
-        {
-            push.apply(keys[id] || (keys[id] = []), depends);
-        }
-    };
-
-
-    //更新指定绑定
-    function update_bind(vm, scope, depends) {
-
-        var controls = uniqueId_controls,
-            index = 0,
-            control,
-            item;
-
-        while (item = depends[index++])
-        {
-            if (control = controls[item])
-            {
-                control.set(depends[index++], bind_value(control, vm, scope, depends[index++]));
-            }
-            else
-            {
-                depends.splice(--index, 3);
-            }
-        }
-    };
-
-
-
-
-    //编译对象视图模型类
-    function compile_object(node, name) {
-
-
-        var self = Class.prototype;
-
-        var keys1 = self.__keys1 = flyingon.create(null);
-        var keys2 = self.__keys2 = flyingon.create(null);
-
-
-        function Class(parent, value) {
-
-            var keys = self.__keys2,
-                fn;
-
-            this.__top = (this.__parent = parent) ? parent.__top : this;
-            this.__depends = flyingon.create(null);
-
-            if (value && typeof value === 'object')
-            {
-                for (var name in value)
-                {
-                    this[name] = (fn = keys[name]) ? new fn(this, value[name]) : value[name];
-                }
-            }
-            else
-            {
-                value = null;
-            }
-
-            for (var name in keys)
-            {
-                if (!value || !(name in value))
-                {
-                    this[name] = new keys[name](this);
-                }
-            }
-        };
-
-
-        self.$name = name;
-        self.$watch = watch;
-        self.$get = object_get;
-        self.$set = object_set;
-        self.$replace = object_replace;
-        self.$update = object_update;
-        self.$dispose = object_dispose;
-
-
-        for (var name in node)
-        {
-            var item = node[name];
-
-            if (item[1] > 0) //function || item || index
-            {
-                continue;
-            }
-
-            switch (keys1[name] = item[0])
-            {
-                case 1: //object
-                    keys2[name] = compile_object(item[4], item[1]);
-                    break;
-
-                case 2: //loop
-                    keys2[name] = compile_array(item);
-                    break;
-            }
-        }
-
-
-        return Class;
-    };
-
-
-    function object_get(name) {
-
-        var value;
-
-        if (value = depend_target)
-        {
-            property_track(this, name, value);
-        }
-
-        return this[name];
-    };
-
-
-    function object_set(name, value) {
-
-        var any;
-
-        switch (this.__keys1[name])
-        {
-            case 0:
-                if ((any = this[name]) !== value)
-                {
-                    this[name] = value;
-                    notify(this, name, value, any);
-
-                    if ((any = this.__depends) && (any = any[name]))
-                    {
-                        update_bind(this, null, any);
-                    }
-                }
-                break;
-
-            case 1:
-            case 2:
-                if (any = this[name])
-                {
-                    any.$replace(value, false);
-                    any.$update();
-                }
-                break;
-
-            default:
-                this[name] = value;
-                break;
-        }
-
-        return this;
-    };
-
-
-    function object_replace(value, update) {
-
-        var keys = this.__keys1,
-            fn;
-
-        //先清空原属性值
-        for (var name in keys)
-        {
-            if (keys[name] === 0)
-            {
-                this[name] = void 0;
-            }
-        }
-
-        keys = this.__keys2;
-
-        if (value && typeof value === 'object')
-        {
-            for (var name in value)
-            {
-                if (keys[name])
-                {
-                    this[name].$replace(value[name], false);
-                }
-                else
-                {
-                    this[name] = value[name];
-                }
-            }
-        }
-        else
-        {
-            value = null;
-        }
-
-        for (var name in keys)
-        {
-            if (!value || !(name in value))
-            {
-                this[name].$replace(null);
-            }
-        }
-
-        if (update !== false)
-        {
-            this.$update();
-        }
-    };
-
-
-    function object_update() {
-
-        var keys = this.__depends;
-
-        if (keys)
-        {
-            for (var key in keys)
-            {
-                update_bind(this, null, keys[key]);
-            }
-        }
-
-        keys = this.__keys2;
-
-        for (var name in keys)
-        {
-            this[name].$update();
-        }
-    };
-
-    
-    function object_dispose() {
-
-        var keys = this.__keys2;
-
-        for (var name in keys)
-        {
-            this[name].$dispose();
-        }
-
-        this.__top = this.__parent = this.__depends = this.__watches = null;
-    };
-
-
-           
-
-    //编译数组视图模型类
-    function compile_array(node) {
-
-        
-        var self = Class.prototype = flyingon.create(array_like);
-
-
-        function Class(parent, value) {
-
-            var fn = this.__item_fn,
-                length = value && value.length;
-
-            this.__top = (this.__parent = parent).__top;
-            
-            if (length > 0)
-            {
-                this.__controls = new Array(length);
-
-                if (fn)
-                {
-                    this.length = length;
-
-                    for (var i = 0; i < length; i++)
-                    {
-                        this[i] = new fn(this, value[i]);
-                    }
-                }
-                else
-                {
-                    push.apply(this, value);
-                }
-            }
-            else
-            {
-                this.__controls = [];
-            }
-        };
-
-
-        self.__item_name = node.item;
-        self.__index_name = node.index;
-
-
-        self.$name = node[2];
-        self.$watch = watch;
-        self.$get = array_get;
-        self.$set = array_set;
-        self.$replace = array_replace;
-        self.$update = array_update;
-        self.$dispose = array_dispose;
-        
-
-        if (node = node[4])
-        {
-            switch (node[0])
-            {
-                case 1: //数组项是一个对象
-                    self.__item_fn = compile_object(node[4], node[2]);
-                    break;
-
-                case 2: //数组项是一个数组
-                    self.__item_fn = compile_array(node[4]);
-                    break;
-            }
-        }
-
-
-        return Class;
-    };
-
-
-    function array_get(index) {
-
-        var value;
-
-        if ((value = depend_target) && this.__depends)
-        {
-            item_track(this, this.__controls[index], value);
-        }
-
-        return this[index];
-    };
-
-
-    function array_set(index, value) {
-
-        var control, id, any;
-
-        if (index >= 0)
-        {
-            if (index < this.length)
-            {
-                any = this[index];
-
-                if (any && any.$replace)
-                {
-                    any.$replace(value, false);
-                    this.$update();
-                }
-                else if (any !== value)
-                {
-                    this[index] = value;
-
-                    if ((id = this.__controls[index]) && (control = uniqueId_controls[id]))
-                    {
-                        notify(this, id, value, any);
-
-                        if ((any = this.__depends) && (any = any[id]))
-                        {
-                            update_bind(this, null, any);
-                        }
-                    }
-                }
-            }
-        }
-        else if (index === 'length')
-        {
-            this.splice(value);
-        }
-
-        return this;
-    };
-
-
-    function array_replace(value, update) {
-
-        var length = (value && value.length) | 0,
-            any;
-
-        if (length <= 0)
-        {
-            this.splice(0);
-            return this;
-        }
-
-        if ((any = this.length) > length)
-        {
-            this.splice(length);
-            any = length;
-        }
-
-        if (any > 0)
-        {
-            if (this.__item_fn)
-            {
-                for (var i = 0; i < any; i++)
-                {
-                    this[i].$replace(value[i]);
-                }
-            }
-            else
-            {
-                for (var i = 0; i < any; i++)
-                {
-                    if (this[i] !== value[i])
-                    {
-                        this[i] = value[i];
-                    }
-                }
-            }
-        }
-
-        if (any < length)
-        {
-            this.push.apply(this, slice.call(value, any));
-        }
-
-        if (update !== false)
-        {
-            this.$update();
-        }
-
-        return this;
-    };
-
-
-    function array_update(deep) {
-
-        var keys = this.__depends;
-
-        if (keys)
-        {
-            for (var key in keys)
-            {
-                update_bind(this, null, keys[key]);
-            }
-        }
-
-        if (deep !== false && this.__item_fn)
-        {
-            for (var i = 0, l = this.length; i < l; i++)
-            {
-                this[i].$update();
-            }
-        }
-    };
-
-
-    function array_dispose() {
-
-        if (this.__item_fn)
-        {
-            for (var i = this.length - 1; i >= 0; i--)
-            {
-                this.$dispose();
-            }
-        }
-
-        this.__top = this.__parent = this.__depends = this.__watches = 
-        this.__controls = this.__template = this.__start = this.__end = null;
-
-        return this;
-    };
-
-
-    //类数组方法扩展
-    array_like.push = function (item) {
-
-        var list = arguments,
-            index = this.length,
-            length = list.length,
-            any;
-
-        if (length > 0)
-        {
-            if (any = this.__item_fn)
-            {
-                list = append_check(this, list, 0, any);
-            }
-
-            this.__controls.push(length > 1 ? new Array(length) : null);
-
-            any = push.apply(this, list);
-
-            //插入节点
-            append_loop(this, index, index + length); 
-
-            return any;
-        }
-
-        return index;
-    };
-
-
-    array_like.pop = function () {
-        
-        var length = this.length;
-
-        if (length > 0)
-        {
-            remove_control(this, length - 1);
-            return array_base.pop.call(this);
-        }
-    };
-
-
-    array_like.unshift = function (item) {
-
-        var list = arguments,
-            length = list.length;
-
-        if (length > 0)
-        {
-            if (this.__item_fn)
-            {
-                list = append_check(this, list, 0, this.__item_fn);
-            }
-
-            this.__controls.unshift(length > 1 ? new Array(length) : null);
-
-            array_base.unshift.apply(this, list);
-
-            //插入节点
-            append_loop(this, 0, length); 
-
-            if (length < this.length)
-            {
-                adjust_index(this, length, length);
-            }
-        }
-
-        return this.length;
-    };
-
-
-    array_like.shift = function () {
-        
-        var item;
-
-        if (this.length > 0)
-        {
-            if (item = array_base.shift.call(this))
-            {
-                remove_control(this, 0);
-            }
-
-            if (this.length > 0)
-            {
-                adjust_index(this, 0, -1);
-            }
-
-            return item;
-        }
-    };
-
-
-    array_like.splice = function (index, length) {
-
-        var list = arguments,
-            count = list.length - 2,
-            any;
-
-        if ((index |= 0) < 0 && (index += this.length) < 0)
-        {
-            index = 0;
-        }
-
-        if (count > 0)
-        {
-            if (any = this.__item_fn)
-            {
-                list = append_check(this, list, 2, any);
-            }
-
-            any = new Array(count + 2);
-            any[0] = index;
-            any[1] = length;
-        }
-
-        any = splice.apply(this.__controls, any || list);
-
-        //移除控件
-        if (any.length > 0)
-        {
-            remove_controls(this, any);
-        }
-
-        any = splice.apply(this, list);
-
-        if (this.__item_fn && any[0])
-        {
-            for (var i = any.length - 1; i >= 0; i--)
-            {
-                any[i].$dispose();
-            }
-        }
-
-        //插入节点
-        if (count > 0)
-        {
-            append_loop(this, index, index += count); 
-        }
-
-        if (index < this.length)
-        {
-            adjust_index(this, index, count - any.length);
-        }
-
-        return any;
-    };
-
-
-    array_like.sort = function (fn) {
-
-        var length = this.length;
-
-        if (this.__depends && length > 1)
-        {
-            //如果有子循环则移动视图(解决嵌套数组更新的问题)
-            if (this.__item_fn)
-            {
-                var controls = this.__controls;
-
-                //先记录原控件id
-                for (var i = length - 1; i >= 0; i--)
-                {
-                    this[i].__id = controls[i];
-                }
-
-                //排序
-                controls.sort.call(this, fn);
-
-                //再按照新的位置重编控件索引
-                for (var i = length - 1; i >= 0; i--)
-                {
-                    controls[i] = this[i].__id;
-                }
-
-                adjust_sort(this, controls);
-            }
-            else //否则直接同步绑定
-            {
-                array_base.sort.call(this, fn);
-                this.$update();
-            }
-        }
-    };
-
-
-    array_like.reverse = function () {
-        
-        if (this.length > 1)
-        {
-            var controls = this.__controls;
-
-            controls.reverse.call(this);
-
-            //如果有子循环则移动视图(解决嵌套数组更新的问题)
-            if (this.__item_fn)
-            {
-                controls.reverse();
-                adjust_sort(this, controls);
-            }
-            else //否则直接同步绑定
-            {
-                this.$update();
-            }
-        }
-    };
-
-
-    function append_check(vm, list, index, fn) {
-
-        list = slice.call(list, 0);
-
-        for (var i = index, l = list.length; i < l; i++)
-        {
-            list[i] = new fn(vm, list[i]);
-        }
-
-        return list;
-    };
-
-
-    function remove_control(vm, index) {
-    
-        var controls = vm.__controls,
-            id = controls[index],
-            control = uniqueId_controls[id],
-            any;
-
-        controls.splice(index, 1);
-
-        if (any = vm.__depends)
-        {
-            delete any[id];
-        }
-
-        if (control && (any = vm.__start.parent))
-        {
-            any.removeChild(control);
-        }
-        
-        if (vm.__item_fn)
-        {
-            vm[index].$dispose();
-        }
-    };
-
-
-    function remove_controls(vm, list) {
-
-        var keys = uniqueId_controls,
-            depends = vm.__depends,
-            parent = vm.__start.parent,
-            control,
-            id;
-
-        for (var i = 0, l = list.length; i < l; i++)
-        {
-            if (depends[id = list[i]])
-            {
-                delete depends[id];
-            }
-            
-            if (control = keys[id])
-            {
-                parent.removeChild(control);
-            }
-        }
-    };
-
-
-    function adjust_index(vm, start, offset) {
-
-        var keys = uniqueId_controls,
-            controls = vm.__controls,
-            control;
-
-        for (var i = start, l = controls.length; i < l; i++)
-        {
-            if (control = keys[controls[i]])
-            {
-                control.__loop_index += offset;
-            }
-        }
-
-        if (vm.__index_name && vm.__depends)
-        {
-            vm.$update(false);
-        }
-    };
-
-
-    function adjust_sort(vm, list) {
-
-        var controls = uniqueId_controls,
-            last = vm.__end,
-            any;
-
-        if (last)
-        {
-            for (var i = list.length - 1; i >= 0; i--)
-            {
-                if (any = controls[list[i]])
-                {
-                    any.__loop_index = i;
-                    any.nextSibling = last;
-
-                    last = last.previousSibling = any;
-                }
-            }
-
-            any = last.previousSibling = vm.__start;
-            any.nextSibling = last;
-
-            if (any = any.parent)
-            {
-                any.renderer.set(any, '__view_order');
-                any.invalidate(true);
-            }
-
-            if (vm.__depends)
-            {
-                vm.$update(false);
-            }
-        }
-    };
-
-
-
-
-    //根据编译后的视图模型创建控件
-    function create(vm, template, control) {
-
-        if (vm)
-        {
-            var scope = flyingon.create(null),
-                any = template.xtype;
-
-            control = control || new (components[any] || unkown)();
-            control.tagName = any;
-
-            bind_control(control, vm, scope, template);
-
-            if (any = template.children)
-            {
-                create_children(control, vm, scope, any, components);
-            }
-        }
-        else if (control)
-        {
-            control.deserialize(flyingon.SerializeReader.instance, template);
-        }
-        else
-        {
-            control = flyingon.SerializeReader.deserialize(template);
-        }
-
-        return control;
-    };
-
-
-    function create_control(vm, scope, template, components, type) {
-
-        var control, any;
-
-        any = template.xtype;
-
-        control = new (type || components[any] || unkown)();
-        control.tagName = any;
-
-        bind_control(control, vm, scope, template);
-
-        if (any = template.children)
-        {
-            create_children(control, vm, scope, any, components);
-        }
-
-        return control;
-    };
-
-    
-    function bind_control(control, vm, scope, template, id) {
-
-        var depend = depend_target = depend_cache,
-            node,
-            any;
-
-        depend[0] = control.uniqueId();
-
-        for (var name in template)
-        {
-            switch (name)
-            {
-                case 'xtype':
-                case 'children':
-                case '-loop':
-                    break;
-
-                case '-model': //模型指令特殊处理
-                    if (any = control[name])
-                    {
-                        any.call(control, node[3] ? bind_vm(control, vm, scope, node) : vm, node[2]); 
-                    }
-                    break;
-
-                default:
-                    node = template[name];
-
-                    switch (name.charAt(0))
-                    {
-                        case ':': //绑定
-                            depend[1] = name = name.substring(1);
-                            depend[2] = node;
-                            control.set(name, bind_value(control, vm, scope, node));
-                            break;
-
-                        case '-': //指令
-                            depend[1] = name;
-                            depend[2] = node;
-                            control.set(name, bind_value(control, vm, scope, node));
-                            break;
-
-                        case '@': //事件
-                            control.on(name.substring(1), bind_event(vm, node));
-                            break;
-
-                        default:
-                            if (any = typeof node === 'string' && node.match(/^\{\{(\w+)\}\}$/))
-                            {
-                                control.addBind(name, any[1]);
-                            }
-                            else
-                            {
-                                control.set(name, node);
-                            }
-                            break;
-                    }
-            }
-        }
-
-        depend_target = null;
-    };
-
-
-    function create_children(parent, vm, scope, template, components) {
-
-        var controls = [],
-            node;
-
-        for (var i = 0, l = template.length; i < l; i++)
-        {
-            if ((node = template[i]) && node['-loop'])
-            {
-                controls.push.apply(controls, create_loop(vm, scope, node, components));
-            }
-            else
-            {
-                controls.push(create_control(vm, scope, node, components));
-            }
-        }
-
-        if (controls[0])
-        {
-            parent.appendChild(controls);
-        }
-    };
-
-
-    function create_loop(vm, scope, template, components) {
-
-        var control = new components.comment().text('loop-start'), //开始标记
-            controls = [control], 
-            item = template['-loop'],
-            loop = item[2];
-        
-        vm = item[3] && bind_vm(control, vm, scope, item)[loop] || scope[loop] || vm[loop];
-        vm.__start = control;
-        vm.__template = template;
-
-        loop_controls(controls, vm, 0, vm.length, scope, components);
-
-        controls.push(control = vm.__end = new components.comment().text('loop-end')); //结束标记
-
-        return controls;
-    };
-
-
-    function loop_controls(list, vm, start, end, scope, components) {
-
-        var top = vm.__top,
-            template = vm.__template,
-            controls = vm.__controls,
-            xtype = template.xtype,
-            type = components[xtype] || unkown,
-            node = template['-loop'],
-            item = node.item,
-            index = node.index,
-            control,
-            any;
-        
-        if (item || index)
-        {
-            while (start < end)
-            {
-                control = new type();
-                control.tagName = xtype;
-
-                //为后述查找缓存数据
-                control.__loop_vm = vm;
-                control.__loop_index = start;
-                
-                if (item)
-                {
-                    scope[item] = control;
-                }
-
-                if (index)
-                {
-                    scope[index] = control;
-                }
-
-                bind_control(control, top, scope, template);
-
-                controls[start++] = control.__uniqueId;
-                list.push(control);
-
-                if (any = template.children)
-                {
-                    create_children(control, top, scope, any, components);
-                }
-            }
-
-            item && (scope[item] = null);
-            index && (scope[index] = null);
-        }
-        else
-        {
-            while (start++ < end)
-            {
-                list.push(control = create_control(top, scope, template, components, type));
-            }
-        }
-    };
-
-
-    function append_loop(vm, start, end) {
-
-        var controls = [],
-            control = vm.__end,
-            scope = {},
-            name,
-            any;
-
-        while (control = control.parent)
-        {
-            if (any = control.__item_vm)
-            {
-                if (name = any.item)
-                {
-                    scope[name] = control;
-                }
-
-                if (name = any.index)
-                {
-                    scope[name] = control;
-                }
-            }
-        }
-
-        loop_controls(controls, vm, start, end, scope, components);
-
-        control = (end = vm.__controls[end]) && uniqueId_controls[end] || vm.__end;
-        control.parent.insertBefore(controls, control);
-    };
-
-
-
-
-})(flyingon);
 
 
 
@@ -9250,13 +7313,12 @@ flyingon.defineClass('Control', function () {
     
     var self = this;
 
-        
-    //根据uniqueId组织的控件集合
-    var controls = flyingon.__uniqueId_controls = flyingon.create(null);
 
-
-    var create = Object.create;
+    var create = flyingon.create;
   
+    //根据uniqueId组织的控件集合
+    var controls = flyingon.__uniqueId_controls = create(null);
+
 
     var pixel = flyingon.pixel;
 
@@ -9321,6 +7383,67 @@ flyingon.defineClass('Control', function () {
     //下一兄弟节点控件
     this.nextSibling = null;
 
+
+
+    
+    //读取自定义值
+    this.__custom_get = function (name) {
+
+        return (this.__storage || this.__defaults)[name];
+    };
+
+
+    //设置自定义值
+    this.__custom_set = function (name, value) {
+
+        var fn, any;
+
+        if (name && name.charAt(0) === '-') //指令
+        {
+            if (any = name.indexOf(':'))
+            {
+                if (fn = this[name.substring(0, ++any)])
+                {
+                    fn.call(this, name.substring(any), value);
+                }
+            }
+            else if (fn = this[name])
+            {
+                fn.call(this, value);
+            }
+        }
+        else
+        {
+            (this.__storage || (this.__storage = create(this.__defaults)))[name] = value;
+            (this.__attribute_patch || this.__new_patch('attribute'))[name] = value;
+        }
+    };
+    
+
+    //模型指令
+    this['-model'] = function (vm, name) {
+
+        this.on('change', function (e) {
+
+            vm.$set(name, e.original_event.target.value);
+        });
+    };
+
+
+    //获取焦点指令
+    this['-focused'] = function (value) {
+
+        if (value)
+        {
+            this.focus();
+        }
+        else
+        {
+            this.blur();
+        }
+    };
+
+
     
     
     //获取控件在父控件中的索引
@@ -9360,7 +7483,27 @@ flyingon.defineClass('Control', function () {
     flyingon.__bindable_fragment(this);
     
     
+    
+    //创建指定类型的补丁
+    this.__new_patch = function (type) {
+
+        var view = this.__view_patch,
+            patch = this[type = '__' + type + '_patch'] = {};
         
+        if (view)
+        {
+            view[type] = patch;
+        }
+        else
+        {
+            this.renderer.set(this, type, patch);
+        }
+
+        return patch;
+    };
+
+    
+
     //id
     this.defineProperty('id', '', {
      
@@ -9381,7 +7524,10 @@ flyingon.defineClass('Control', function () {
                 }
             }
 
-            this.renderer.set(this, 'id', value);
+            if (this.view)
+            {
+                (this.__attribute_patch || this.__new_patch('attribute')).id = value;
+            }
         }
     });
 
@@ -9392,8 +7538,12 @@ flyingon.defineClass('Control', function () {
 
         set: function (value) {
 
-            this.view && this.renderer.set(this, 'className', value);
-            this.fullClassName = value ? this.defaultClassName + ' ' + value : this.defaultClassName;
+            this.fullClassName = value = value ? this.defaultClassName + ' ' + value : this.defaultClassName;
+
+            if (this.view)
+            {
+                (this.__attribute_patch || this.__new_patch('attribute'))['class'] = value;
+            }
         }
     });
     
@@ -9552,7 +7702,22 @@ flyingon.defineClass('Control', function () {
 
 
 
-                
+    //class指令
+    this['-class:'] = function (name, value) {
+
+        if (value)
+        {
+            this.addClass(name);
+        }
+        else
+        {
+            this.removeClass(name);
+        }
+    };
+
+
+
+
     //是否可见
     this.defineProperty('visible', true, {
         
@@ -9560,13 +7725,7 @@ flyingon.defineClass('Control', function () {
 
         set: function (value) {
 
-            var patch = this.__view_patch;
-
-            if (patch)
-            {
-                patch.visible = value;
-            }
-            else
+            if (this.view)
             {
                 this.renderer.set(this, 'visible', value);
             }
@@ -9581,22 +7740,24 @@ flyingon.defineClass('Control', function () {
 
 
     //定义定位属性
-    var define = function (name, defaultValue) {
+    var define = function (name, defaultValue, css) {
         
+        css = css || name;
+
         self.defineProperty(name, defaultValue, {
             
             group: 'layout',
 
             set: function (value) {
 
-                if (this.view && this.__css_patch === true)
+                if (this.__css_layout === true)
                 {
-                    this.renderer.set(this, '__css_patch', this.__css_patch = 1);
+                    (this.__locate_patch || this.__new_patch('locate'))[css] = value;
                 }
 
                 if (this.__update_dirty < 2)
                 {
-                    this.invalidate();
+                    (this.parent || this).invalidate();
                 }
             }
         });
@@ -9625,21 +7786,44 @@ flyingon.defineClass('Control', function () {
 
 
     //最小宽度
-    define('minWidth', '');
+    define('minWidth', '', 'min-width');
 
     //最大宽度
-    define('maxWidth', '');
+    define('maxWidth', '', 'max-width');
 
     //最小高度
-    define('minHeight', '');
+    define('minHeight', '', 'min-height');
 
     //最大高度
-    define('maxHeight', '');
+    define('maxHeight', '', 'max-height');
 
 
-    //最小宽度
+    //外边距
     define('margin', '');
 
+    //边框宽度
+    define('border', '', 'border-width');
+    
+    //内边距
+    define('padding', '');
+
+
+
+    define = function (name, defaultValue) {
+        
+        self.defineProperty(name, defaultValue, {
+            
+            group: 'layout',
+
+            set: function (value) {
+
+                if (this.__update_dirty < 2)
+                {
+                    this.invalidate();
+                }
+            }
+        });
+    };
 
 
     //控件横向对齐方式
@@ -9653,7 +7837,7 @@ flyingon.defineClass('Control', function () {
     //middle    纵向居中对齐
     //bottom    底部对齐
     define('alignY', 'top');
-
+    
 
     //控件停靠方式(此值仅在当前布局类型为停靠布局(dock)时有效)
     //left:     左停靠
@@ -9665,289 +7849,175 @@ flyingon.defineClass('Control', function () {
 
 
 
-
-    //定义排列布局属性
-    define = function (name, defaultValue) {
-        
-        self.defineProperty(name, defaultValue, {
-            
-            group: 'layout',
-
-            set: function (value) {
-
-                var patch = this.__view_patch;
-
-                if (patch)
-                {
-                    patch[name] = value;
-                }
-                else
-                {
-                    this.renderer.set(this, name, value);
-                }
-
-                if (this.__update_dirty < 2)
-                {
-                    this.invalidate(true);
-                }
-            }
-        });
-    };
-
-
-    //边框宽度
-    define('border', '');
-    
-    //内边距
-    define('padding', '');
-
-
-    //水平方向超出内容时显示方式
-    define('overflowX', '');
-    
-    //竖直方向超出内容时显示方式
-    define('overflowY', '');
-    
-
-
-
-    //创建样式
-    define = function (name, defaultValue, attributes, check) {
-
-        if (attributes === false)
-        {
-            attributes = {};
-            check = false;
-        }
-        else if (!attributes)
-        {
-            attributes = {};
-        }
-
-        attributes.group = 'appearance';
-
-        attributes.set = function (value) {
-
-            var patch = this.__view_patch;
-
-            if (patch)
-            {
-                patch[name] = value;
-            }
-            else
-            {
-                this.renderer.set(this, name, value);
-            }
-        };
-
-        //定义属性
-        self.defineProperty(name, defaultValue, attributes);
-        
-        //注册渲染器style
-        renderer.__registry_style(name, check);
-    };
-
-
-    //定义样式属性方法
-    flyingon.styleProperty = define;
-    
-    
-
-    //控件层叠顺序
-    define('zIndex', 0, false);
-
-    
-    //控件上右下左边框样式
-    define('borderStyle', '', false);
-
-
-    //控件上右下左边框颜色
-    define('borderColor', '', false);
-
-
-    //控件上右下左边框圆角
-    define('borderRadius', '');
-
-
-    // //阅读方向
-    // //ltr	    从左到右 
-    // //rtl	    从右到左 
-    // define('direction', '', false);
-
-
-    // //控件内容横向对齐样式
-    // //left      左边对齐
-    // //center    横向居中对齐
-    // //right     右边对齐
-    // define('textAlign', '', false);
-
-    // //控件内容纵向对齐样式
-    // //top       顶部对齐
-    // //middle    纵向居中对齐
-    // //bottom    底部对齐
-    // define('verticalAlign', '', false);
-
-
-
-    //控件透明度
-    //number	0(完全透明)到1(完全不透明)之间数值
-    define('opacity', 1);
-
-    //控件光标样式
-    //url	    需使用的自定义光标的 URL     注释：请在此列表的末端始终定义一种普通的光标, 以防没有由 URL 定义的可用光标 
-    //default	默认光标(通常是一个箭头)
-    //auto	    默认 浏览器设置的光标 
-    //crosshair	光标呈现为十字线 
-    //pointer	光标呈现为指示链接的指针(一只手)
-    //move	    此光标指示某对象可被移动 
-    //e-resize	此光标指示矩形框的边缘可被向右(东)移动 
-    //ne-resize	此光标指示矩形框的边缘可被向上及向右移动(北/东) 
-    //nw-resize	此光标指示矩形框的边缘可被向上及向左移动(北/西) 
-    //n-resize	此光标指示矩形框的边缘可被向上(北)移动 
-    //se-resize	此光标指示矩形框的边缘可被向下及向右移动(南/东) 
-    //sw-resize	此光标指示矩形框的边缘可被向下及向左移动(南/西) 
-    //s-resize	此光标指示矩形框的边缘可被向下移动(南) 
-    //w-resize	此光标指示矩形框的边缘可被向左移动(西) 
-    //text	    此光标指示文本 
-    //wait	    此光标指示程序正忙(通常是一只表或沙漏) 
-    //help	    此光标指示可用的帮助(通常是一个问号或一个气球) 
-    define('cursor', '', false);
-
-
-    //控件背景颜色
-    //color_name	规定颜色值为颜色名称的背景颜色(比如 red)  transparent:透明 
-    //hex_number	规定颜色值为十六进制值的背景颜色(比如 #ff0000) 
-    //rgb_number	规定颜色值为 rgb 代码的背景颜色(比如 rgb(255,0,0)) 
-    define('backgroundColor', '', false);
-
-    //控件背景图片
-    //string        图像名(空字符串则表示无背景)
-    //url('URL')	指向图像的路径
-    define('backgroundImage', '', false);
-
-    // //控件背景重复方式
-    // //repeat	背景图像将在垂直方向和水平方向重复 
-    // //repeat-x	背景图像将在水平方向重复 
-    // //repeat-y	背景图像将在垂直方向重复 
-    // //no-repeat	背景图像将仅显示一次 
-    // define('backgroundRepeat', '', false);
-
-    // //控件背景颜色对齐方式
-    // //top left
-    // //top center
-    // //top right
-    // //center left
-    // //center center
-    // //center right
-    // //bottom left
-    // //bottom center
-    // //bottom right  如果您仅规定了一个关键词, 那么第二个值将是'center'     默认值：0% 0% 
-    // //x% y%	        第一个值是水平位置, 第二个值是垂直位置     左上角是 0% 0% 右下角是 100% 100%     如果您仅规定了一个值, 另一个值将是 50% 
-    // //xpos ypos	    第一个值是水平位置, 第二个值是垂直位置     左上角是 0 0 单位是像素 (0px 0px) 或任何其他的 CSS 单位     如果您仅规定了一个值, 另一个值将是50%     您可以混合使用 % 和 position 值 
-    // define('backgroundPosition', '', false);
-
-
-    //控件颜色
-    //color_name	规定颜色值为颜色名称的颜色(比如 red) 
-    //hex_number	规定颜色值为十六进制值的颜色(比如 #ff0000) 
-    //rgb_number	规定颜色值为 rgb 代码的颜色(比如 rgb(255,0,0)) 
-    define('color', '', false);
-
-
-    //控件字体样式
-    //normal	浏览器显示一个标准的字体样式 
-    //italic	浏览器会显示一个斜体的字体样式 
-    //oblique	浏览器会显示一个倾斜的字体样式 
-    define('fontStyle', '', false);
-
-    //控件字体变体
-    //normal	    浏览器会显示一个标准的字体 
-    //small-caps	浏览器会显示小型大写字母的字体 
-    define('fontVariant', '', false);
-
-    //控件字体粗细
-    //normal	定义标准的字符 
-    //bold	    定义粗体字符 
-    //bolder	定义更粗的字符 
-    //lighter	定义更细的字符 
-    //100-900   定义由粗到细的字符 400 等同于 normal, 而 700 等同于 bold 
-    define('fontWeight', '', false);
-
-    //控件字体大小
-    define('fontSize', '', false);
-
-    //控件文字行高
-    define('lineHeight', '', false);
-
-    //控件字体族 family-name generic-family  用于某个元素的字体族名称或/及类族名称的一个优先表
-    define('fontFamily', '', false);
-
-
-
-    // //控件文字词间距(以空格为准)
-    // define('wordSpacing', '', false);
-
-    // //控件文字字间距
-    // define('letterSpacing', '', false);
-
-    // //控件文字缩进
-    // define('textIndent', '', false);
-
-    // //控件文字装饰
-    // //none	        默认 定义标准的文本 
-    // //underline	    定义文本下的一条线 
-    // //overline	    定义文本上的一条线 
-    // //line-through	定义穿过文本下的一条线 
-    // //blink	        定义闪烁的文本 
-    // define('textDecoration', '', false);
-
-    // //控件文字溢出处理方式
-    // //clip	    修剪文本
-    // //ellipsis	显示省略符号来代表被修剪的文本 	
-    // //string	使用给定的字符串来代表被修剪的文本 
-    // define('textOverflow', '', false);
-
-
-
-    // //转换
-    // define('transform', '');
-
-    // //过渡
-    // define('transition', '');
-
-    // //动画
-    // define('animation', '');
-
-
-
-    // define('display', '');
-
-
-    // define('float', '');
-
-
-    // define('clear', '');
-
-
     //设置自定义样式
     this.defineProperty('style', '', {
         
         group: 'appearance',
 
-        set: function (value) {
+        fn: function (name, value) {
 
-            var patch = this.__view_patch;
+            var style = this.__style_list,
+                any = style && style.text || '';
 
-            if (patch)
+            if (name === void 0)
             {
-                patch[name] = value;
+                return any;
+            }
+
+            name = '' + name;
+
+            //单个设置样式
+            if (value !== void 0)
+            {
+                this['-style:'](name, value);
+            }
+            else if (name.length < 36 && name.indexOf(':') < 0) //读指定名称的样式
+            {
+                return style && style[style.indexOf(name) + 2] || '';
+            }
+            else if (value = name.match(/\:|[^\s:;]+(\s+[^\s:;]+)?/g))
+            {
+                set_style.call(this, style, value);
+            }
+
+            if ((value = (style || this.__style_list).text) !== any)
+            {
+                if (this.__watch_keys && flyingon.__do_watch(this, name, value, any) === false)
+                {
+                    return this;
+                }
+
+                if ((any = this.__bind_keys) && (name = any[name]))
+                {
+                    this.pushBack(name, value);
+                }
+            }
+
+            return this;
+        }
+    });
+
+    
+    //样式指令
+    this['-style:'] = function (name, value) {
+
+        var style = this.__style_list,
+            index,
+            any;
+
+        if (!name || 
+            style && (index = style.indexOf(name)) >= 0 && (any = style[index + 2]) === value ||
+            this.__watch_keys && flyingon.__do_watch(this, name, value, any) === false)
+        {
+            return;
+        }
+
+        if (style)
+        {
+            if (index >= 0)
+            {
+                style[index + 2] = value;
             }
             else
             {
-                this.renderer.set(this, name, value);
+                style.push(name, ':', value, ';');
             }
         }
-    });
+        else
+        {
+            style = this.__style_list = [name, ':', value, ';'];
+        }
+
+        if ((any = this.__bind_keys) && (any = any[name]))
+        {
+            this.pushBack(any, value);
+        }
+
+        if (this.view)
+        {
+            (this.__style_patch || this.__new_patch('style'))[name] = value;
+         }
+        
+        style.text = style.join('');
+    };
+
+
+    //批量设置样式
+    function set_style(style, list) {
+
+        var watch = this.__watch_keys,
+            bind = this.__bind_keys,
+            view = this.view,
+            patch = view && this.__style_patch,
+            index = 0,
+            length = list.length,
+            first = !style,
+            oldValue,
+            name,
+            value,
+            any;
+
+        style = style || (this.__style_list = []);
+
+        while (index < length)
+        {
+            while ((name = list[index++]) === ':')
+            {
+            }
+
+            if (!name)
+            {
+                continue;
+            }
+
+            //值为''表示清除原有样式
+            if (list[index++] === ':')
+            {
+                value = list[index++] || '';
+            }
+            else
+            {
+                index--;
+                value = '';
+            }
+
+            if (first || (any = list.indexOf(name)) < 0 || (oldValue = list[any + 2]) !== value)
+            {
+                if (watch && flyingon.__do_watch(this, name, value, oldValue || '') === false)
+                {
+                    continue;
+                }
+
+                if (first || any < 0)
+                {
+                    style.push(name, ':', value, ';');
+                }
+                else
+                {
+                    style[any + 2] = value;
+                }
+
+                if (bind && (any = bind[name]))
+                {
+                    this.pushBack(any, value);
+                }
+
+                if (view)
+                {
+                    (patch || (patch = this.__new_patch('style')))[name] = value;
+                }
+                else
+                {
+                    patch = true;
+                }
+            }
+        }
+
+        if (patch)
+        {
+            style.text = style.join('');
+        }
+    };
 
 
 
@@ -9959,22 +8029,10 @@ flyingon.defineClass('Control', function () {
 
         attributes.set = function (value) {
 
-            var patch = this.__view_patch;
-
-            if (patch)
-            {
-                patch[name] = value;
-            }
-            else
-            {
-                this.renderer.set(this, name, value);
-            }
+            (this.__attribute_patch || this.__new_patch('attribute'))[name] = value;
         };
 
         self.defineProperty(name, defaultValue, attributes);
-
-        //注册渲染器attribute
-        renderer.__registry_attribute(name, defaultValue);
     };
 
 
@@ -10025,94 +8083,6 @@ flyingon.defineClass('Control', function () {
     //自定义标记
     this.defineProperty('tag', null);
 
-
-
-    
-    this.__custom_get = function (name) {
-
-        //指令
-        if (name && name.charAt(0) !== '-')
-        {
-            var any = this.__view_attributes;
-            return any && any[name] || '';
-        }
-    };
-
-
-    this.__custom_set = function (name, value) {
-
-        var fn, any;
-
-        if (name && name.charAt(0) === '-') //指令
-        {
-            if (any = name.indexOf(':'))
-            {
-                if (fn = this[name.substring(0, ++any)])
-                {
-                    fn.call(this, name.substring(any), value);
-                }
-            }
-            else if (fn = this[name])
-            {
-                fn.call(this, value);
-            }
-        }
-        else if (any = this.__view_attributes)
-        {
-            any[name] = value;
-        }
-        else
-        {
-            any = this.__view_attributes = {};
-            any[name] = value;
-            
-            this.renderer.set(this, '__view_attributes', true);
-        }
-    };
-    
-
-    //class指令
-    this['-class:'] = function (name, value) {
-
-        if (value)
-        {
-            this.addClass(name);
-        }
-        else
-        {
-            this.removeClass(name);
-        }
-    };
-
-
-    //样式指令
-    this['-style:'] = function (name, value) {
-
-    };
-
-
-    //模型指令
-    this['-model'] = function (vm, name) {
-
-        this.on('change', function (e) {
-
-            vm.$set(name, e.original_event.target.value);
-        });
-    };
-
-
-    //获取焦点指令
-    this['-focused'] = function (value) {
-
-        if (value)
-        {
-            this.focus();
-        }
-        else
-        {
-            this.blur();
-        }
-    };
 
 
 
@@ -10527,7 +8497,7 @@ flyingon.defineClass('Control', function () {
                 this.renderer.dispose(any);
             }
 
-            this.view = null;
+            this.view = this.view_body = null;
         }
 
         if (any = this.__dataset)
@@ -10586,6 +8556,7 @@ flyingon.defineClass('Control', function () {
     };
 
     
+
 
 }).register('control');
 
@@ -11403,12 +9374,6 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
 
     //重写默认为可放置移动或拖动对象
     this.defaultValue('droppable', true);
-
-
-    this.defaultValue('overflowX', 'auto');
-
-
-    this.defaultValue('overflowY', 'auto');
 
 
 
@@ -12597,7 +10562,7 @@ flyingon.Layout = flyingon.defineClass(function () {
     
     //重排
     this.rearrange = function (container, items, hscroll, vscroll) {
-      
+ 
         var flag = false;
         
         if (hscroll && (hscroll === 1 || container.arrangeRight > container.arrangeLeft + container.arrangeWidth))
@@ -12642,8 +10607,8 @@ flyingon.Layout = flyingon.defineClass(function () {
         for (var i = 0, l = items.length; i < l; i++)
         {
             if ((item = items[i]) && 
-                x >= (any = this.offsetLeft) && x <= any + this.offsetWidth &&
-                y >= (any = this.offsetTop) && y <= any + this.offsetHeight)
+                x >= (any = item.offsetLeft) && x <= any + item.offsetWidth &&
+                y >= (any = item.offsetTop) && y <= any + item.offsetHeight)
             {
                 return items[i];
             }
@@ -13126,7 +11091,7 @@ flyingon.defineClass(flyingon.Layout, function (base) {
     //查找指定坐标的子控件
     this.controlAt = function (items, x, y) {
         
-        var item;
+        var item, any;
         
         for (var i = 0, l = items.length; i < l; i++)
         {
@@ -13807,6 +11772,2005 @@ flyingon.defineClass(flyingon.Layout, function (base) {
 
 
 
+//视图模板类
+flyingon.ViewTemplate = flyingon.defineClass(function () {
+
+
+
+
+    this.constructor = function (template) {
+
+        if (typeof template === 'string')
+        {
+            this.template = template;
+        }
+        else
+        {
+            this.ast = template;
+        }
+    };
+
+
+
+
+    //解析html模板生成虚拟树
+    this.parse = function () {
+
+        var ast = this.ast,
+            any;
+
+        if (!ast && (any = this.template))
+        {
+            any = any.replace(/<!--[\s\S]*?-->/g, '');
+            any = any.match(/[<>=/]|[\w-:@]+|"[^"]*"|'[^']*'/g);
+
+            ast = parse(any, []);
+
+            if (ast instanceof Array)
+            {
+                if (ast[1])
+                {
+                    throw 'template can only one root node!';
+                }
+
+                ast = ast[0];
+            }
+
+            if (ast)
+            {
+                if (ast['-loop'])
+                {
+                    throw 'template root nood can not use "-loop"!';
+                }
+            }
+            else
+            {
+                throw 'template can not be empty!';
+            }
+
+            this.ast = ast;
+        }
+
+        return ast;
+    };
+
+
+
+    //分析模板生成模型结构
+    this.analyse = function () {
+
+        var vm = this.vm,
+            any;
+
+        if (vm === void 0 && (any = this.ast || this.parse()))
+        {
+            analyse_object(vm = {}, any);
+
+            for (any in vm)
+            {
+                return this.vm = vm;
+            }
+
+            this.vm = null;
+        }
+
+        return vm;
+    };
+
+
+
+    //解析xml模板
+    function parse(tokens, array) {
+
+        var regex_node = /[^\w-]/,
+            regex_name = /[^\w-:@]/,
+            stack = [],
+            flag, //属性分析阶段标记
+            index = 0,
+            item,
+            name,
+            token,
+            any;
+
+        while (token = tokens[index++])
+        {
+            switch (token)
+            {
+                case '<':
+                    if (flag)
+                    {
+                        throw parse_error(token, item);
+                    }
+
+                    token = tokens[index++];
+
+                    //下一个符号是关闭结点
+                    if (token === '/')
+                    {
+                        if (!item || tokens[index] !== item.xtype || tokens[index + 1] !== '>')
+                        {
+                            throw '"' + token + tokens[index] + tokens[index + 1] + '" not a valid close tag!';
+                        }
+
+                        index++;
+                        stack.pop();
+                        item = stack[stack.length - 1];
+                        break;
+                    }
+
+                    if (token.match(regex_node))
+                    {
+                        throw '"' + token + '" not a valid node name!';
+                    }
+
+                    any = { xtype: token };
+
+                    //添加子项
+                    if (item)
+                    {
+                        (item.children || (item.children = [])).push(any);
+                    }
+                    else
+                    {
+                        array.push(any);
+                    }
+
+                    stack.push(item = any);
+                    flag = true; //标记处于属性分析阶段
+                    break;
+
+                case '/':
+                    if (flag && tokens[index++] === '>')
+                    {
+                        flag = false; //标记属性分析阶段结束
+
+                        if (name)
+                        {
+                            item[name] = true;
+                            name = null;
+                        }
+
+                        stack.pop();
+                        item = stack[stack.length - 1];
+                    }
+                    else
+                    {
+                        throw parse_error(token, item);
+                    }
+                    break;
+
+                case '>':
+                    if (flag)
+                    {
+                        flag = false; //标记属性分析阶段结束
+
+                        if (name)
+                        {
+                            item[name] = true;
+                            name = null;
+                        }
+                    }
+                    break;
+
+                case '=':
+                    if (flag && name)
+                    {
+                        switch (token = tokens[index++])
+                        {
+                            case '<':
+                            case '>':
+                            case '/':
+                            case '=':
+                                throw parse_error(token, item);
+                        }
+
+                        any = token.charAt(0);
+                        any = any === '"' || any === '\'' ? token.substring(1, token.length - 1) : token;
+
+                        item[name] = any;
+                        name = null;
+                    }
+                    else
+                    {
+                        throw parse_error(token, item);
+                    }
+                    break;
+
+                default:
+                    if (flag)
+                    {
+                        if (name)
+                        {
+                            item[name] = true;
+                        }
+
+                        if (token.match(regex_name))
+                        {
+                            throw '"<' + item.xtype + '...' + token + '" not a valid attribute name!';
+                        }
+
+                        if (token === 'class')
+                        {
+                            name = 'className';
+                        }
+                        else if (token.indexOf('-') > 0) //-开头的是指令,不进行驼峰处理
+                        {
+                            name =  token.replace(/-(\w)/g, camelize);
+                        }
+                        else
+                        {
+                            name = token;
+                        }
+                    }
+                    else
+                    {
+                        throw '"' + token + '" has syntax error, text can only be a node property!';
+                    }
+                    break;
+            }
+        }
+
+        return array;
+    };
+
+
+    function camelize(_, key) {
+
+        return key.toUpperCase();
+    };
+
+
+    function parse_error(token, item) {
+
+        return '"' + (item ? '<' + item[0] + '...' : '') + token + '" has syntax error!';
+    };
+
+
+
+
+    //分析生成的节点格式
+    //[type, subtype, name, path, detail]
+    //[0, 0, name, path, null]    无父级节点
+    //[0, 1, name, path, null]    loop item变量(0可能会升级成1或者2)
+    //[0, 2, name, null, null]    loop index变量
+    //[0, 3, name, path, detail]  函数, detail为参数列表
+    //[1, 0, name, path, detail]  对象节点, detail为属性列表
+    //[1, 1, name, path, detail]  升级为对象节点的loop item变量, detail为属性列表
+    //[2, 0, name, path, detail]  数组节点, detail是item变量
+    //[2, 1, name, path, detail]  升级为数组节点的loop item变量, detail是item变量
+    
+
+    function analyse_object(node, ast) {
+
+        var item, any;
+
+        for (var name in ast)
+        {
+            switch (name)
+            {
+                case 'xtype':
+                case 'children':
+                case '-loop':
+                    any = null;
+                    break;
+
+                default:
+                    any = ast[name];
+                    break;
+            }
+
+            if (any)
+            {
+                switch (name.charAt(0))
+                {
+                    case '-': //指令
+                    case ':': //绑定
+                        ast[name] = any.indexOf('(') > 0 ? analyse_function(node, any) : analyse_name(node, any, 0, 0);
+                        break;
+
+                    case '@': //事件
+                        ast[name] = analyse_function(node, any);
+                        break;
+                }
+            }
+        }
+
+        if (ast = ast.children)
+        {
+            any = 0;
+
+            while (item = ast[any++])
+            {
+                (item['-loop'] ? analyse_loop : analyse_object)(node, item);
+            }
+        }
+    };
+
+
+    function analyse_loop(node, ast) {
+
+        var keys = ast['-loop'].match(/[\w.-]+/g),
+            loop,
+            item,
+            index,
+            any;
+
+        if (keys && (loop = keys[0]))
+        {
+            loop = analyse_name(node, loop, 2, 0);
+
+            //第一个变量是item, 第二个变量是index
+            //可以省略index, 但是不可以省略item
+            if (item = keys[1])
+            {
+                check_loop(node, item);
+
+                //在loop中记录item信息并添加进作用域
+                any = loop[4] = node[loop.item = item] = [0, 1, item, null, null, 0];
+                any.loop = loop;
+
+                if (index = keys[2])
+                {
+                    check_loop(node, index);
+
+                    //添加进作用域
+                    node[loop.index = index] = loop[5] = [0, 2, index, null, null, 0];
+                }
+            }
+
+            //在作用域范围内分析模板
+            analyse_object(node, ast);
+
+            if (item)
+            {
+                //标记超出作用域
+                node[item] = 0;
+
+                //如果item变量未使用则移除
+                if (!any[0] && !any[5])
+                {
+                    loop.item = loop[4] = null;
+                }
+
+                if (index)
+                {
+                    //如果index变量未使用则移除
+                    if (!node[index][5])
+                    {
+                        loop[5] = loop.index = null;
+                    }
+
+                    //标记超出作用域
+                    node[index] = 0;
+                }
+            }
+        }
+        else
+        {
+            analyse_object(node, ast);
+        }
+
+        ast['-loop'] = loop;
+    };
+
+
+    function check_loop(node, name) {
+
+        if (name.indexOf('.') >= 0)
+        {
+            throw 'loop "' + name + '" can not include "."!';
+        }
+
+        if (node[name])
+        {
+            throw 'loop "' + name + '" has be used!';
+        }
+    };
+
+
+    function analyse_name(node, name, type, subtype) {
+
+        var keys = name.match(/[\w-]+/g),
+            list = null, //上级列表
+            item;
+
+        for (var i = 0, l = keys.length - 1; i < l; i++)
+        {
+            if (item = node[name = keys[i]])
+            {
+                switch (item[0])
+                {
+                    case 1: //对象
+                        node = item[4];
+                        break;
+
+                    case 0: //数组item变量升级为对象,否则穿透抛出异常
+                        item[0] = 1;
+                        node = item[4] || (item[4] = {}); 
+                        break;
+                }
+            }
+            else if (item === 0)
+            {
+                throw '"' + name + '" is out of scope range!';
+            }
+            else
+            {
+                item = node[name] = [1, 0, name, list ? list.slice(0) : null, node = {}]; //创建新对象
+            }
+
+            if (list)
+            {
+                list.push(item);
+            }
+            else
+            {
+                list = [item];
+            }
+        }
+
+        if (item = node[name = keys.pop()])
+        {
+            if (type)
+            {
+                if (item[0])
+                {
+                    throw '"' + name + '" has be used!';
+                }
+
+                item[0] = type;
+            }
+            else if (item[1])
+            {
+                item[5]++;
+            }
+
+            return item;
+        }
+        
+        if (item === 0)
+        {
+            throw '"' + name + '" is out of scope range!';
+        }
+
+        return node[name] = [type, subtype, name, list, null];
+    };
+
+
+    function analyse_function(node, name) {
+
+        var list = name.match(/[\w-.]+/g),
+            args,
+            item,
+            index,
+            any;
+
+        if ((name = list[0]).indexOf('.') >= 0)
+        {
+            throw 'function "' + name + '" can not include "."!';
+        }
+        
+        if ((item = node[name]) && item[1] !== 2)
+        {
+            throw 'function name "' + name + '" has be used!';
+        }
+
+        //函数支持重载,同一函数可传入不同的参数,所以每次分析都重新生成新节点
+        item = node[name] = [0, 3, list[0], null, null];
+
+        if (list[1])
+        {
+            args = [];
+            index = 1;
+
+            while (name = list[index++])
+            {
+                if (any = node[name])
+                {
+                    any[5]++; //标记变量被引用
+                }
+                else
+                {
+                    any = analyse_name(node, name, 0, 0);
+                }
+
+                args.push(any);
+            }
+            
+            item[4] = args;
+        }
+
+        return item;
+    };
+
+
+
+});
+
+
+
+
+(function (flyingon) {
+
+
+
+    var components = flyingon.components;
+
+    var unkown = flyingon.Unkown;
+
+    var uniqueId_controls = flyingon.__uniqueId_controls;
+
+
+    var array_base = Array.prototype;
+
+    var array_like = flyingon.create(array_base);
+
+    var slice = array_base.slice;
+
+    var push = array_base.push;
+
+    var splice = array_base.splice;
+
+
+    //当前依赖参数
+    //0: 控件id
+    //1: 模板节点
+    //2: 绑定名称
+    var depend_target;
+
+    var depend_cache = [0, null, null];
+
+
+
+
+    //创建部件
+    flyingon.widget = function (name, options) {
+
+        if (!name && typeof name !== 'string')
+        {
+            throw 'widget name must input a string!';
+        }
+
+        var template = view_template('widget', options),
+            defaults = options.defaults,
+            vm,
+            type,
+            prototype;
+
+        if (defaults !== false)
+        {
+            vm = template.analyse();
+        }
+        else
+        {
+            template.parse();
+        }
+        
+        type = flyingon.defineClass(components[template.ast.xtype] || unkown, widget).register(name, options.force);
+
+        (prototype = type.prototype).__options = {
+
+            vm: vm,
+            template: template.ast,
+            defaults: defaults,
+            init: options.init,
+            created: options.created 
+        };
+
+        if (vm)
+        {
+            for (var name in vm)
+            {
+                if (vm[name])
+                {
+                    widget_property(prototype, name, defaults && defaults[name] || null);
+                }
+            }
+        }
+
+        return type;
+    };
+
+
+    function widget() {
+
+        this.constructor = function () {
+
+            var options = this.__options,
+                vm = options.fn,
+                control,
+                any;
+
+            if (vm === void 0)
+            {
+                options.fn = vm = (any = options.vm) && compile_object(any, '') || null;
+            }
+
+            if (vm)
+            {
+                this.vm = vm = new vm(null, options.defaults);
+
+                if (any = options.init)
+                {
+                    any.call(vm, vm);
+                }
+            }
+
+            control = create(vm, options.template, this);
+
+            if (any = options.created)
+            {
+                any.call(control, vm);
+            }
+        };
+
+    };
+
+
+
+    function widget_property(self, name, defaultValue) {
+
+        self.defineProperty(name, defaultValue || null, {
+
+            set: function (value) {
+
+                this.vm.$set(name, value);
+            }
+        });
+    };
+
+
+
+    //创建视图
+    flyingon.view = function (options) {
+
+        var template = view_template('view', options),
+            defaults = options.defaults,
+            vm,
+            control,
+            any;
+
+        template.parse();
+
+        if (defaults !== false && (vm = template.analyse()))
+        {
+            vm = new (compile_object(vm, ''))(null, defaults);
+
+            if (any = options.init)
+            {
+                any.call(vm, vm);
+            }
+        }
+
+        control = create(vm, template.ast);
+        control.vm = vm;
+
+        if (any = options.created)
+        {
+            any.call(control, vm);
+        }
+
+        if (any = options.host)
+        {
+            flyingon.mount(control, any, options.mounted);
+        }
+
+        return control;
+    };
+
+
+    //获取视图模板的方法
+    flyingon.view.template = function (text) {
+
+        var node;
+
+        if (text.charAt(0) === '#' && (node = document.getElementById(text.substring(1))))
+        {
+            return node.innerHTML;
+        }
+
+        return text;
+    };
+
+
+    function view_template(name, options) {
+
+        if (!options)
+        {
+            throw name + ' options must input a object!';
+        }
+
+        var template = options.template;
+
+        if (!template)
+        {
+            throw name + ' options template not allow empty!';
+        }
+
+        if (typeof template === 'string')
+        {
+            template = flyingon.view.template(template);
+        }
+
+        return new flyingon.ViewTemplate(template);
+    };
+
+
+
+
+    //添加自定义观测
+    function watch(name, fn) {
+
+        if (typeof name === 'function')
+        {
+            fn = name;
+            name = '*';
+        }
+        else if (typeof fn !== 'function')
+        {
+            throw 'watch must input a function!';
+        }
+
+        (this.__watches || (this.__watches = [])).push(name || '*', fn);
+        return this;
+    };
+
+
+    //触发观测通知
+    function notify(vm, name, value, oldValue) {
+
+        var target = vm,
+            list,
+            event,
+            index,
+            key;
+
+        do
+        {
+            if (list = target.__watches)
+            {
+                index = 0;
+
+                while (key = list[index++])
+                {
+                    if (key === '*' || name === '*' || key === name)
+                    {
+                        list[index++].call(target, event || (event = {
+                            
+                            target: vm,
+                            name: name,
+                            newValue: value,
+                            oldValue: oldValue
+                        }));
+                    }
+                    else
+                    {
+                        index++;
+                    }
+                }
+            }
+        }
+        while(target = target.__parent); //向上冒泡
+    };
+
+
+
+
+    //获取绑定值
+    function bind_value(control, vm, scope, node) {
+
+        var any;
+
+        switch (node[1])
+        {
+            case 0: //property
+                if (node[3])
+                {
+                    vm = bind_vm(control, vm, scope, node);
+                }
+
+                if (any = depend_target)
+                {
+                    property_track(vm, node[2], any);
+                }
+
+                return vm[node[2]];
+
+            case 1: //loop item
+                if (scope && (scope = scope[node[2]]))
+                {
+                    vm = scope.__loop_vm;
+
+                    if (!node[0] && (any = depend_target))
+                    {
+                        item_track(vm, scope.__uniqueId, any);
+                    }
+
+                    return vm[scope.__loop_index];
+                }
+
+                return find_item(control, node[2]);
+
+            case 2: //loop index
+                if (scope)
+                {
+                    scope = scope[node[2]];
+
+                    if (any = depend_target)
+                    {
+                        item_track(scope.__loop_vm, scope.__uniqueId, any);
+                    }
+
+                    return scope.__loop_index;
+                }
+
+                return find_index(control, node[2]);
+
+            case 3: //function
+                return bind_function(control, vm, scope, node);
+        }
+    };
+
+
+    //获取绑定的视图模型
+    function bind_vm(control, vm, scope, node) {
+
+        var list = node[3],
+            item = list[0],
+            index = 1;
+
+        if (item[1] === 1) //loop item
+        {
+            if (scope && (scope = scope[item[2]]))
+            {
+                vm = scope.__loop_vm[scope.__loop_index];
+            }
+            else
+            {
+                vm = find_item(control, item[2]);
+            }
+        }
+        else
+        {
+            vm = (vm.__top || vm)[item[2]];
+        }
+
+        while (item = list[index++])
+        {
+            vm = vm[item[2]];
+        }
+
+        return vm;
+    };
+
+
+    //获取绑定的函数返回值
+    function bind_function(control, vm, scope, node, event) {
+
+        var list = node[4], 
+            args = [], 
+            index = 0, 
+            item;
+
+        //函数只能在顶级视图模型中
+        vm = vm.__top || vm;
+      
+        if (list = node[4])
+        {
+            while (item = list[index++])
+            {
+                args.push(bind_value(control, vm, scope, item));
+            }
+        }
+
+        args.push(control);
+        event && args.push(event);
+
+        return vm[node[2]].apply(vm, args);
+    };
+
+
+    //绑定事件
+    function bind_event(vm, node) {
+
+        return function (e) {
+
+            bind_function(this, vm, null, node, e);
+        };
+    };
+
+
+    //获取控件相关的item变量作用域
+    function find_item(control, name) {
+
+        var vm;
+
+        do
+        {
+            if ((vm = control.__loop_vm) && vm.__item_name === name)
+            {
+                return vm[control.__loop_index];
+            }
+        }
+        while (control = control.parent);
+    };
+
+
+    //索引绑定的循环索引号
+    function find_index(control, name) {
+
+        var vm;
+
+        do
+        {
+            if ((vm = control.__loop_vm) && vm.__index_name === name)
+            {
+                return control.__loop_index;
+            }
+        }
+        while (control = control.parent);
+
+        return -1; //出错了
+    };
+
+
+
+
+    //添加对象属性变化依赖追踪
+    function property_track(vm, name, depends) {
+
+        var keys = vm.__depends;
+
+        if (keys)
+        {
+            push.apply(keys[name] || (keys[name] = []), depends);
+        }
+    };
+
+
+    //添加数组项值变化依赖追踪
+    function item_track(vm, id, depends) {
+
+        var keys;
+
+        if (id && (keys = vm.__depends || (vm.__depends = {})))
+        {
+            push.apply(keys[id] || (keys[id] = []), depends);
+        }
+    };
+
+
+    //更新指定绑定
+    function update_bind(vm, scope, depends) {
+
+        var controls = uniqueId_controls,
+            index = 0,
+            control,
+            item;
+
+        while (item = depends[index++])
+        {
+            if (control = controls[item])
+            {
+                control.set(depends[index++], bind_value(control, vm, scope, depends[index++]));
+            }
+            else
+            {
+                depends.splice(--index, 3);
+            }
+        }
+    };
+
+
+
+
+    //编译对象视图模型类
+    function compile_object(node, name) {
+
+
+        var self = Class.prototype;
+
+        var keys1 = self.__keys1 = flyingon.create(null);
+        var keys2 = self.__keys2 = flyingon.create(null);
+
+
+        function Class(parent, value) {
+
+            var keys = self.__keys2,
+                fn;
+
+            this.__top = (this.__parent = parent) ? parent.__top : this;
+            this.__depends = flyingon.create(null);
+
+            if (value && typeof value === 'object')
+            {
+                for (var name in value)
+                {
+                    this[name] = (fn = keys[name]) ? new fn(this, value[name]) : value[name];
+                }
+            }
+            else
+            {
+                value = null;
+            }
+
+            for (var name in keys)
+            {
+                if (!value || !(name in value))
+                {
+                    this[name] = new keys[name](this);
+                }
+            }
+        };
+
+
+        self.$name = name;
+        self.$watch = watch;
+        self.$get = object_get;
+        self.$set = object_set;
+        self.$replace = object_replace;
+        self.$update = object_update;
+        self.$dispose = object_dispose;
+
+
+        for (var name in node)
+        {
+            var item = node[name];
+
+            if (item[1] > 0) //function || item || index
+            {
+                continue;
+            }
+
+            switch (keys1[name] = item[0])
+            {
+                case 1: //object
+                    keys2[name] = compile_object(item[4], item[1]);
+                    break;
+
+                case 2: //loop
+                    keys2[name] = compile_array(item);
+                    break;
+            }
+        }
+
+
+        return Class;
+    };
+
+
+    function object_get(name) {
+
+        var value;
+
+        if (value = depend_target)
+        {
+            property_track(this, name, value);
+        }
+
+        return this[name];
+    };
+
+
+    function object_set(name, value) {
+
+        var any;
+
+        switch (this.__keys1[name])
+        {
+            case 0:
+                if ((any = this[name]) !== value)
+                {
+                    this[name] = value;
+                    notify(this, name, value, any);
+
+                    if ((any = this.__depends) && (any = any[name]))
+                    {
+                        update_bind(this, null, any);
+                    }
+                }
+                break;
+
+            case 1:
+            case 2:
+                if (any = this[name])
+                {
+                    any.$replace(value, false);
+                    any.$update();
+                }
+                break;
+
+            default:
+                this[name] = value;
+                break;
+        }
+
+        return this;
+    };
+
+
+    function object_replace(value, update) {
+
+        var keys = this.__keys1,
+            fn;
+
+        //先清空原属性值
+        for (var name in keys)
+        {
+            if (keys[name] === 0)
+            {
+                this[name] = void 0;
+            }
+        }
+
+        keys = this.__keys2;
+
+        if (value && typeof value === 'object')
+        {
+            for (var name in value)
+            {
+                if (keys[name])
+                {
+                    this[name].$replace(value[name], false);
+                }
+                else
+                {
+                    this[name] = value[name];
+                }
+            }
+        }
+        else
+        {
+            value = null;
+        }
+
+        for (var name in keys)
+        {
+            if (!value || !(name in value))
+            {
+                this[name].$replace(null);
+            }
+        }
+
+        if (update !== false)
+        {
+            this.$update();
+        }
+    };
+
+
+    function object_update() {
+
+        var keys = this.__depends;
+
+        if (keys)
+        {
+            for (var key in keys)
+            {
+                update_bind(this, null, keys[key]);
+            }
+        }
+
+        keys = this.__keys2;
+
+        for (var name in keys)
+        {
+            this[name].$update();
+        }
+    };
+
+    
+    function object_dispose() {
+
+        var keys = this.__keys2;
+
+        for (var name in keys)
+        {
+            this[name].$dispose();
+        }
+
+        this.__top = this.__parent = this.__depends = this.__watches = null;
+    };
+
+
+           
+
+    //编译数组视图模型类
+    function compile_array(node) {
+
+        
+        var self = Class.prototype = flyingon.create(array_like);
+
+
+        function Class(parent, value) {
+
+            var fn = this.__item_fn,
+                length = value && value.length;
+
+            this.__top = (this.__parent = parent).__top;
+            
+            if (length > 0)
+            {
+                this.__controls = new Array(length);
+
+                if (fn)
+                {
+                    this.length = length;
+
+                    for (var i = 0; i < length; i++)
+                    {
+                        this[i] = new fn(this, value[i]);
+                    }
+                }
+                else
+                {
+                    push.apply(this, value);
+                }
+            }
+            else
+            {
+                this.__controls = [];
+            }
+        };
+
+
+        self.__item_name = node.item;
+        self.__index_name = node.index;
+
+
+        self.$name = node[2];
+        self.$watch = watch;
+        self.$get = array_get;
+        self.$set = array_set;
+        self.$replace = array_replace;
+        self.$update = array_update;
+        self.$dispose = array_dispose;
+        
+
+        if (node = node[4])
+        {
+            switch (node[0])
+            {
+                case 1: //数组项是一个对象
+                    self.__item_fn = compile_object(node[4], node[2]);
+                    break;
+
+                case 2: //数组项是一个数组
+                    self.__item_fn = compile_array(node[4]);
+                    break;
+            }
+        }
+
+
+        return Class;
+    };
+
+
+    function array_get(index) {
+
+        var value;
+
+        if ((value = depend_target) && this.__depends)
+        {
+            item_track(this, this.__controls[index], value);
+        }
+
+        return this[index];
+    };
+
+
+    function array_set(index, value) {
+
+        var control, id, any;
+
+        if (index >= 0)
+        {
+            if (index < this.length)
+            {
+                any = this[index];
+
+                if (any && any.$replace)
+                {
+                    any.$replace(value, false);
+                    this.$update();
+                }
+                else if (any !== value)
+                {
+                    this[index] = value;
+
+                    if ((id = this.__controls[index]) && (control = uniqueId_controls[id]))
+                    {
+                        notify(this, id, value, any);
+
+                        if ((any = this.__depends) && (any = any[id]))
+                        {
+                            update_bind(this, null, any);
+                        }
+                    }
+                }
+            }
+        }
+        else if (index === 'length')
+        {
+            this.splice(value);
+        }
+
+        return this;
+    };
+
+
+    function array_replace(value, update) {
+
+        var length = (value && value.length) | 0,
+            any;
+
+        if (length <= 0)
+        {
+            this.splice(0);
+            return this;
+        }
+
+        if ((any = this.length) > length)
+        {
+            this.splice(length);
+            any = length;
+        }
+
+        if (any > 0)
+        {
+            if (this.__item_fn)
+            {
+                for (var i = 0; i < any; i++)
+                {
+                    this[i].$replace(value[i]);
+                }
+            }
+            else
+            {
+                for (var i = 0; i < any; i++)
+                {
+                    if (this[i] !== value[i])
+                    {
+                        this[i] = value[i];
+                    }
+                }
+            }
+        }
+
+        if (any < length)
+        {
+            this.push.apply(this, slice.call(value, any));
+        }
+
+        if (update !== false)
+        {
+            this.$update();
+        }
+
+        return this;
+    };
+
+
+    function array_update(deep) {
+
+        var keys = this.__depends;
+
+        if (keys)
+        {
+            for (var key in keys)
+            {
+                update_bind(this, null, keys[key]);
+            }
+        }
+
+        if (deep !== false && this.__item_fn)
+        {
+            for (var i = 0, l = this.length; i < l; i++)
+            {
+                this[i].$update();
+            }
+        }
+    };
+
+
+    function array_dispose() {
+
+        if (this.__item_fn)
+        {
+            for (var i = this.length - 1; i >= 0; i--)
+            {
+                this.$dispose();
+            }
+        }
+
+        this.__top = this.__parent = this.__depends = this.__watches = 
+        this.__controls = this.__template = this.__start = this.__end = null;
+
+        return this;
+    };
+
+
+    //类数组方法扩展
+    array_like.push = function (item) {
+
+        var list = arguments,
+            index = this.length,
+            length = list.length,
+            any;
+
+        if (length > 0)
+        {
+            if (any = this.__item_fn)
+            {
+                list = append_check(this, list, 0, any);
+            }
+
+            this.__controls.push(length > 1 ? new Array(length) : null);
+
+            any = push.apply(this, list);
+
+            //插入节点
+            append_loop(this, index, index + length); 
+
+            return any;
+        }
+
+        return index;
+    };
+
+
+    array_like.pop = function () {
+        
+        var length = this.length;
+
+        if (length > 0)
+        {
+            remove_control(this, length - 1);
+            return array_base.pop.call(this);
+        }
+    };
+
+
+    array_like.unshift = function (item) {
+
+        var list = arguments,
+            length = list.length;
+
+        if (length > 0)
+        {
+            if (this.__item_fn)
+            {
+                list = append_check(this, list, 0, this.__item_fn);
+            }
+
+            this.__controls.unshift(length > 1 ? new Array(length) : null);
+
+            array_base.unshift.apply(this, list);
+
+            //插入节点
+            append_loop(this, 0, length); 
+
+            if (length < this.length)
+            {
+                adjust_index(this, length, length);
+            }
+        }
+
+        return this.length;
+    };
+
+
+    array_like.shift = function () {
+        
+        var item;
+
+        if (this.length > 0)
+        {
+            if (item = array_base.shift.call(this))
+            {
+                remove_control(this, 0);
+            }
+
+            if (this.length > 0)
+            {
+                adjust_index(this, 0, -1);
+            }
+
+            return item;
+        }
+    };
+
+
+    array_like.splice = function (index, length) {
+
+        var list = arguments,
+            count = list.length - 2,
+            any;
+
+        if ((index |= 0) < 0 && (index += this.length) < 0)
+        {
+            index = 0;
+        }
+
+        if (count > 0)
+        {
+            if (any = this.__item_fn)
+            {
+                list = append_check(this, list, 2, any);
+            }
+
+            any = new Array(count + 2);
+            any[0] = index;
+            any[1] = length;
+        }
+
+        any = splice.apply(this.__controls, any || list);
+
+        //移除控件
+        if (any.length > 0)
+        {
+            remove_controls(this, any);
+        }
+
+        any = splice.apply(this, list);
+
+        if (this.__item_fn && any[0])
+        {
+            for (var i = any.length - 1; i >= 0; i--)
+            {
+                any[i].$dispose();
+            }
+        }
+
+        //插入节点
+        if (count > 0)
+        {
+            append_loop(this, index, index += count); 
+        }
+
+        if (index < this.length)
+        {
+            adjust_index(this, index, count - any.length);
+        }
+
+        return any;
+    };
+
+
+    array_like.sort = function (fn) {
+
+        var length = this.length;
+
+        if (this.__depends && length > 1)
+        {
+            //如果有子循环则移动视图(解决嵌套数组更新的问题)
+            if (this.__item_fn)
+            {
+                var controls = this.__controls;
+
+                //先记录原控件id
+                for (var i = length - 1; i >= 0; i--)
+                {
+                    this[i].__id = controls[i];
+                }
+
+                //排序
+                controls.sort.call(this, fn);
+
+                //再按照新的位置重编控件索引
+                for (var i = length - 1; i >= 0; i--)
+                {
+                    controls[i] = this[i].__id;
+                }
+
+                adjust_sort(this, controls);
+            }
+            else //否则直接同步绑定
+            {
+                array_base.sort.call(this, fn);
+                this.$update();
+            }
+        }
+    };
+
+
+    array_like.reverse = function () {
+        
+        if (this.length > 1)
+        {
+            var controls = this.__controls;
+
+            controls.reverse.call(this);
+
+            //如果有子循环则移动视图(解决嵌套数组更新的问题)
+            if (this.__item_fn)
+            {
+                controls.reverse();
+                adjust_sort(this, controls);
+            }
+            else //否则直接同步绑定
+            {
+                this.$update();
+            }
+        }
+    };
+
+
+    function append_check(vm, list, index, fn) {
+
+        list = slice.call(list, 0);
+
+        for (var i = index, l = list.length; i < l; i++)
+        {
+            list[i] = new fn(vm, list[i]);
+        }
+
+        return list;
+    };
+
+
+    function remove_control(vm, index) {
+    
+        var controls = vm.__controls,
+            id = controls[index],
+            control = uniqueId_controls[id],
+            any;
+
+        controls.splice(index, 1);
+
+        if (any = vm.__depends)
+        {
+            delete any[id];
+        }
+
+        if (control && (any = vm.__start.parent))
+        {
+            any.removeChild(control);
+        }
+        
+        if (vm.__item_fn)
+        {
+            vm[index].$dispose();
+        }
+    };
+
+
+    function remove_controls(vm, list) {
+
+        var keys = uniqueId_controls,
+            depends = vm.__depends,
+            parent = vm.__start.parent,
+            control,
+            id;
+
+        for (var i = 0, l = list.length; i < l; i++)
+        {
+            if (depends[id = list[i]])
+            {
+                delete depends[id];
+            }
+            
+            if (control = keys[id])
+            {
+                parent.removeChild(control);
+            }
+        }
+    };
+
+
+    function adjust_index(vm, start, offset) {
+
+        var keys = uniqueId_controls,
+            controls = vm.__controls,
+            control;
+
+        for (var i = start, l = controls.length; i < l; i++)
+        {
+            if (control = keys[controls[i]])
+            {
+                control.__loop_index += offset;
+            }
+        }
+
+        if (vm.__index_name && vm.__depends)
+        {
+            vm.$update(false);
+        }
+    };
+
+
+    function adjust_sort(vm, list) {
+
+        var controls = uniqueId_controls,
+            last = vm.__end,
+            any;
+
+        if (last)
+        {
+            for (var i = list.length - 1; i >= 0; i--)
+            {
+                if (any = controls[list[i]])
+                {
+                    any.__loop_index = i;
+                    any.nextSibling = last;
+
+                    last = last.previousSibling = any;
+                }
+            }
+
+            any = last.previousSibling = vm.__start;
+            any.nextSibling = last;
+
+            if (any = any.parent)
+            {
+                any.renderer.set(any, '__view_order');
+                any.invalidate(true);
+            }
+
+            if (vm.__depends)
+            {
+                vm.$update(false);
+            }
+        }
+    };
+
+
+
+
+    //根据编译后的视图模型创建控件
+    function create(vm, template, control) {
+
+        if (vm)
+        {
+            var scope = flyingon.create(null),
+                any = template.xtype;
+
+            control = control || new (components[any] || unkown)();
+            control.tagName = any;
+
+            bind_control(control, vm, scope, template);
+
+            if (any = template.children)
+            {
+                create_children(control, vm, scope, any, components);
+            }
+        }
+        else if (control)
+        {
+            control.deserialize(flyingon.SerializeReader.instance, template);
+        }
+        else
+        {
+            control = flyingon.SerializeReader.deserialize(template);
+        }
+
+        return control;
+    };
+
+
+    function create_control(vm, scope, template, components, type) {
+
+        var control, any;
+
+        any = template.xtype;
+
+        control = new (type || components[any] || unkown)();
+        control.tagName = any;
+
+        bind_control(control, vm, scope, template);
+
+        if (any = template.children)
+        {
+            create_children(control, vm, scope, any, components);
+        }
+
+        return control;
+    };
+
+    
+    function bind_control(control, vm, scope, template, id) {
+
+        var depend = depend_target = depend_cache,
+            node,
+            any;
+
+        depend[0] = control.uniqueId();
+
+        for (var name in template)
+        {
+            switch (name)
+            {
+                case 'xtype':
+                case 'children':
+                case '-loop':
+                    break;
+
+                case '-model': //模型指令特殊处理
+                    if (any = control[name])
+                    {
+                        node = template[name];
+                        any.call(control, node[3] ? bind_vm(control, vm, scope, node) : vm, node[2]); 
+                    }
+                    break;
+
+                default:
+                    node = template[name];
+
+                    switch (name.charAt(0))
+                    {
+                        case ':': //绑定
+                            depend[1] = name = name.substring(1);
+                            depend[2] = node;
+                            control.set(name, bind_value(control, vm, scope, node));
+                            break;
+
+                        case '-': //指令
+                            depend[1] = name;
+                            depend[2] = node;
+                            control.set(name, bind_value(control, vm, scope, node));
+                            break;
+
+                        case '@': //事件
+                            control.on(name.substring(1), bind_event(vm, node));
+                            break;
+
+                        default:
+                            if (any = typeof node === 'string' && node.match(/^\{\{(\w+)\}\}$/))
+                            {
+                                control.addBind(name, any[1]);
+                            }
+                            else
+                            {
+                                control.set(name, node);
+                            }
+                            break;
+                    }
+            }
+        }
+
+        depend_target = null;
+    };
+
+
+    function create_children(parent, vm, scope, template, components) {
+
+        var controls = [],
+            node;
+
+        for (var i = 0, l = template.length; i < l; i++)
+        {
+            if ((node = template[i]) && node['-loop'])
+            {
+                controls.push.apply(controls, create_loop(vm, scope, node, components));
+            }
+            else
+            {
+                controls.push(create_control(vm, scope, node, components));
+            }
+        }
+
+        if (controls[0])
+        {
+            parent.appendChild(controls);
+        }
+    };
+
+
+    function create_loop(vm, scope, template, components) {
+
+        var control = new components.comment().text('loop-start'), //开始标记
+            controls = [control], 
+            item = template['-loop'],
+            loop = item[2];
+        
+        vm = item[3] && bind_vm(control, vm, scope, item)[loop] || scope[loop] || vm[loop];
+        vm.__start = control;
+        vm.__template = template;
+
+        loop_controls(controls, vm, 0, vm.length, scope, components);
+
+        controls.push(control = vm.__end = new components.comment().text('loop-end')); //结束标记
+
+        return controls;
+    };
+
+
+    function loop_controls(list, vm, start, end, scope, components) {
+
+        var top = vm.__top,
+            template = vm.__template,
+            controls = vm.__controls,
+            xtype = template.xtype,
+            type = components[xtype] || unkown,
+            node = template['-loop'],
+            item = node.item,
+            index = node.index,
+            control,
+            any;
+        
+        if (item || index)
+        {
+            while (start < end)
+            {
+                control = new type();
+                control.tagName = xtype;
+
+                //为后述查找缓存数据
+                control.__loop_vm = vm;
+                control.__loop_index = start;
+                
+                if (item)
+                {
+                    scope[item] = control;
+                }
+
+                if (index)
+                {
+                    scope[index] = control;
+                }
+
+                bind_control(control, top, scope, template);
+
+                controls[start++] = control.__uniqueId;
+                list.push(control);
+
+                if (any = template.children)
+                {
+                    create_children(control, top, scope, any, components);
+                }
+            }
+
+            item && (scope[item] = null);
+            index && (scope[index] = null);
+        }
+        else
+        {
+            while (start++ < end)
+            {
+                list.push(control = create_control(top, scope, template, components, type));
+            }
+        }
+    };
+
+
+    function append_loop(vm, start, end) {
+
+        var controls = [],
+            control = vm.__end,
+            scope = {},
+            name,
+            any;
+
+        while (control = control.parent)
+        {
+            if (any = control.__item_vm)
+            {
+                if (name = any.item)
+                {
+                    scope[name] = control;
+                }
+
+                if (name = any.index)
+                {
+                    scope[name] = control;
+                }
+            }
+        }
+
+        loop_controls(controls, vm, start, end, scope, components);
+
+        control = (end = vm.__controls[end]) && uniqueId_controls[end] || vm.__end;
+        control.parent.insertBefore(controls, control);
+    };
+
+
+
+
+})(flyingon);
+
+
+
+
 flyingon.defineClass(flyingon.Renderer, function (base) {
 
 
@@ -13854,7 +13818,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
             text = flyingon.html_encode(text, false);
         }
 
-        writer.push('<span', this.renderDefault(control, css), '>', text, '</span>');
+        writer.push('<span');
+        
+        this.renderDefault(writer, control, css);
+        
+        writer.push('>', text, '</span>');
     };
 
 
@@ -13892,7 +13860,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
     //渲染html
     this.render = function (writer, control, css) {
 
-        writer.push('<div', this.renderDefault(control, css), '>', control.html(), '</div>');
+        writer.push('<div');
+        
+        this.renderDefault(writer, control, css);
+        
+        writer.push('>', control.html(), '</div>');
     };
 
 
@@ -13935,7 +13907,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
             text = flyingon.html_encode(text);
         }
 
-        writer.push('<button type="button"', this.renderDefault(control, css), '>', text, '</button>');
+        writer.push('<button type="button"');
+        
+        this.renderDefault(writer, control, css);
+        
+        writer.push('>', text, '</button>');
     };
 
 
@@ -13982,7 +13958,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
             text = encode(text);
         }
 
-        writer.push('<div', this.renderDefault(control, css), '><a href="', href, '">', text, '</a></div>');
+        writer.push('<div');
+        
+        this.renderDefault(writer, control, css);
+        
+        writer.push('><a href="', href, '">', text, '</a></div>');
     };
 
 
@@ -14028,7 +14008,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
             text = flyingon.html_encode(text, false);
         }
 
-        writer.push('<input type="text"', this.renderDefault(control, css), ' value="', text, '"/>');
+        writer.push('<input type="text"');
+        
+        this.renderDefault(writer, control, css);
+        
+        writer.push(' value="', text, '"/>');
     };
 
 
@@ -14075,7 +14059,7 @@ flyingon.__container_renderer = function (scroll) {
 
         while (item)
         {
-            item.view || item.renderer.render(writer, item, item.__css_patch = css);
+            item.view || item.renderer.render(writer, item, item.__css_layout = css);
             
             if (item === end)
             {
@@ -14142,8 +14126,9 @@ flyingon.__container_renderer = function (scroll) {
     //排列
     this.__arrange = function (control) {
 
-        var auto = control.__auto_size,
-            list = [],
+        var list = [],
+            style = control.view.style,
+            auto = control.__auto_size,
             hscroll, 
             vscroll,
             any;
@@ -14155,18 +14140,18 @@ flyingon.__container_renderer = function (scroll) {
         else
         {
             //处理自动滚动
-            switch (control.overflowX())
+            switch (style.overflowX || style.overflow) //有些浏览器读不到overflowX的值
             {
                 case 'scroll':
                     control.__hscroll = true;
                     break;
 
-                case 'auto':
-                    hscroll = true;
+                case 'hidden':
+                    control.__hscroll = false;
                     break;
                     
                 default:
-                    control.__hscroll = false;
+                    hscroll = true;
                     break;
             }
         }
@@ -14177,18 +14162,18 @@ flyingon.__container_renderer = function (scroll) {
         }
         else
         {
-            switch (control.overflowY())
+            switch (style.overflowY || style.overflow)
             {
                 case 'scroll':
                     control.__vscroll = true;
                     break;
 
-                case 'auto':
-                    vscroll = true;
-                    break;
-                    
-                default:
+                case 'hidden':
                     control.__vscroll = false;
+                    break;
+
+                default:
+                    vscroll = true;
                     break;
             }
         }
@@ -14211,6 +14196,7 @@ flyingon.__container_renderer = function (scroll) {
 
         control.__arrange_dirty = false;
     };
+
 
 
 
@@ -14410,25 +14396,8 @@ flyingon.__container_renderer = function (scroll) {
     //控件顺序发生变化的补丁
     this.__view_order = function (control, view) {
 
-        // var item = control.firstChild,
-        //     temp = document.createDocumentFragment(),
-        //     node;
-
-        // while (item)
-        // {
-        //     if (node = item.view)
-        //     {
-        //         temp.appendChild(node);
-        //     }
-
-        //     item = item.nextSibling;
-        // }
-
-        // view.appendChild(temp);
-
-
         var item = control.lastChild,
-            last = view.lastChild,
+            last = (control.view_body || view).lastChild,
             node,
             tag;
 
@@ -14477,7 +14446,11 @@ flyingon.PanelRenderer = flyingon.defineClass(flyingon.Renderer, function (base)
     //渲染html
     this.render = function (writer, control, css) {
 
-        writer.push('<div', this.renderDefault(control, css), '>');
+        writer.push('<div');
+        
+        this.renderDefault(writer, control, css, '', 'overflow:auto;');
+        
+        writer.push('>');
 
         this.__render_children(writer, control);
 
@@ -14520,22 +14493,10 @@ flyingon.PanelRenderer = flyingon.defineClass(flyingon.Renderer, function (base)
     //更新滚动条
     this.__update_scroll = function (control) {
 
-        var style = control.view.style, //内容位置控制(解决有右或底边距时拖不到底的问题)
+        var style = control.view.lastChild.style, //内容位置控制(解决有右或底边距时拖不到底的问题)
             cache = control.__scroll_cache || (control.__scroll_cache = {}),
             any;
 
-        if (cache.x1 !== (any = control.__hscroll ? 'scroll' : 'hidden'))
-        {
-            style.overflowX = cache.x1 = any;
-        }
-
-        if (cache.y1 !== (any = control.__vscroll ? 'scroll' : 'hidden'))
-        {
-            style.overflowY = cache.y1 = any;
-        }
-
-        style = control.view.lastChild.style; //内容位置控制(解决有右或底边距时拖不到底的问题)
-            
         if (control.__hscroll_length !== (any = control.arrangeRight))
         {
             style.width = (control.__hscroll_length = any) + 'px'; 
@@ -14579,12 +14540,16 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
         //滚动位置控制(解决有右或底边距时拖不到底的问题)
         //使用模拟滚动条解决IE拖动闪烁问题
         //此处只渲染一个空的壳,实现渲染内容在update的时候根据需要渲染
-        writer.push('<div', this.renderDefault(control, css), '>',
+        writer.push('<div');
+        
+        this.renderDefault(writer, control, css, '', 'overflow:auto;');
+        
+        writer.push('>',
                 '<div style="position:absolute;left:0;top:0;right:0;bottom:0;width:auto;height:auto;overflow:auto;">',
                     '<div style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;"></div>',
                 '</div>',
                 '<div class="flyingon-body" style="position:relative;overflow:hidden;margin:0;border:0;padding:0;left:0;top:0;width:100%;height:100%;">',
-                '<div style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;"></div>',
+                    '<div style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;"></div>',
                 '</div>',
             '</div>');
     };
@@ -14596,6 +14561,8 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
         base.mount.call(this, control, view);
 
         view.onscroll = null;
+
+        control.view_body = view.lastChild;
         control.view.firstChild.onscroll = flyingon.__dom_scroll;
 
         control.on('mousewheel', mousewheel);
@@ -14611,8 +14578,13 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
     function mousewheel(event) {
 
-        this.view.firstChild.scrollTop -= event.wheelDelta * 100 / 120;
-        event.stopPropagation();
+        var view = this.view;
+
+        if (view.style.overflowY !== 'hidden')
+        {
+            view.firstChild.scrollTop -= event.wheelDelta * 100 / 120;
+            event.stopPropagation();
+        }
     };
 
 
@@ -14688,21 +14660,12 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
     this.__update_scroll = function (control) {
 
         var view = control.view,
-            style = view.firstChild.style,
             style1 = view.firstChild.firstChild.style, //模拟滚动条控制
             style2 = view.lastChild.lastChild.style, //内容位置控制(解决有右或底边距时拖不到底的问题)
             cache = control.__scroll_cache || (control.__scroll_cache = {}),
             any;
 
-        if (cache.x1 !== (any = control.__hscroll ? 'scroll' : 'hidden'))
-        {
-            style.overflowX = cache.x1 = any;
-        }
-
-        if (cache.y1 !== (any = control.__vscroll ? 'scroll' : 'hidden'))
-        {
-            style.overflowY = cache.y1 = any;
-        }
+        style1 = view.firstChild.firstChild.style; //模拟滚动条控制
 
         if (cache.x2 !== (any = control.arrangeRight))
         {
@@ -14739,7 +14702,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
         var tagName = control.tagName;
 
-        writer.push('<', tagName, this.renderDefault(control, css), '>');
+        writer.push('<', tagName);
+        
+        this.renderDefault(writer, control, css);
+        
+        writer.push('>');
 
         this.__render_children(writer, control);
 
@@ -14821,21 +14788,6 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
         control.offsetHeight = view && view.offsetHeight || 0;
     };
 
-
-    this.__view_attributes = function (control, view) {
-
-        var keys = control.__view_attributes;
-
-        if (keys)
-        {
-            control.__view_attributes = null;
-
-            for (var name in keys)
-            {
-                view.setAttribute(name, keys[name]);
-            }
-        }
-    };
 
 
 });
@@ -15079,7 +15031,11 @@ flyingon.defineClass(flyingon.PanelRenderer, function (base) {
 
     this.render = function (writer, control, css) {
 
-        writer.push('<div', this.renderDefault(control, css), ' tag="dialog">',
+        writer.push('<div');
+        
+        this.renderDefault(writer, control, css);
+        
+        writer.push(' tag="dialog">',
             '<div class="flyingon-dialog-header" tag="header">',
                 '<span class="flyingon-dialog-icon" style="display:none;"></span>',
                 '<span class="flyingon-dialog-title"></span>',
@@ -15267,7 +15223,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
         var any;
         
-        writer.push('<div', this.renderDefault(control, css), ' tag="dialog">',
+        writer.push('<div');
+        
+        this.renderDefault(writer, control, css);
+        
+        writer.push(' tag="dialog">',
             '<div class="flyingon-messagebox-header" tag="header">',
                 '<span class="flyingon-messagebox-icon" ', (any = control.icon()) ? 'class="' + any : 'style="dispaly:none;', '"></span>',
                 '<span class="flyingon-messagebox-title">', control.title(), '</span>',
@@ -15652,8 +15612,17 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
                 }
             }
         }
+
+        if (cursor)
+        {
+            cursor += '-resize';
+        }
+        else if ((value = this.__style_list) && (cursor = value.indexOf('cursor') >= 0))
+        {
+            cursor = value[cursor + 2];
+        }
         
-        dom.style.cursor = cursor ? cursor + '-resize' : this.cursor();
+        dom.style.cursor = cursor || '';
         
         return side;
     };
@@ -16047,461 +16016,6 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
     
 })(flyingon, document);
-
-
-
-
-//Ajax类
-flyingon.Ajax = flyingon.defineClass(flyingon.Async, function () {
-
-    
-    
-    //请求的url
-    this.url = '';
-    
-    //指定版本号
-    this.version = '';
-
-    //method
-    this.method = 'GET';
-
-    //text || json || xml
-    this.dataType = 'text';
-
-    //内容类型
-    this.contentType = 'application/x-www-form-urlencoded';
-
-    //自定义http头
-    this.header = null;
-    
-    //是否异步
-    this.async = true;
-        
-    //是否支持跨域资源共享(CORS)
-    this.CORS = false;
-    
-    //jsonp回调名称
-    this.jsonp = 'jsonp';
-    
-    //超时时间
-    this.timeout = 0;
-    
-
-    
-    this.send = function (url, options) {
-
-        var list = [], //自定义参数列表
-            data, 
-            get,
-            any;
-        
-        if (options)
-        {
-            for (var name in options)
-            {
-                if (name !== 'data')
-                {
-                    this[name] = options[name];
-                }
-                else
-                {
-                    data = options[name];
-                }
-            }
-        }
-        
-        //执行发送前全局start事件
-        if (any = flyingon.Ajax.start)
-        {
-            for (var i = 0, l = any.length; i < l; i++)
-            {
-                if (any[i].call(this, url) === false)
-                {
-                    return false;
-                }
-            }
-            
-            url =  this.url;
-        }
-        
-        if (!(this.url = url))
-        {
-            return false;
-        }
-              
-        if ((get = /get|head|options/i.test(this.method)) && data)
-        {
-            list.push(flyingon.encode(data));
-            data = null;
-        }
-        
-        any = this.dataType === 'jsonp';
-        
-        if (this.version)
-        {
-            list.push('ajax-version=', this.version);
-        }
-                
-        if (any || list.length > 0)
-        {
-            list.start = url.indexOf('?') >= 0 ? '&' : '?';
-        }
-
-        //jsonp
-        if (any)
-        {
-            any = get ? jsonp_get : jsonp_post;
-        }
-        else
-        {
-            any = ajax_send;
-        }
-        
-        any(this, url, list, data);
-
-        return this;
-    };
-
-    
-    
-    //发送ajax请求
-    function ajax_send(self, url, list, data) {
-    
-        var xhr = self.xhr = new XMLHttpRequest(),
-            any;
-        
-        if (list.start)
-        {
-            url = url + list.start + list.join('&');
-        }
-              
-        //CORS
-        if (self.CORS)
-        {
-            //withCredentials是XMLHTTPRequest2中独有的
-            if ('withCredentials' in xhr)
-            {
-                xhr.withCredentials = true;
-            }
-            else if (any = window.XDomainRequest)
-            {
-                xhr = new any();
-            }
-        }
-        
-        if ((any = self.timeout) > 0)
-        {
-            self.__timer = setTimeout(function () {
-
-                xhr.abort();
-                self.fail('timeout');
-
-            }, any);
-        }
-
-        xhr.onreadystatechange = function () {
-
-            ajax_done(self, xhr, url);
-        };
-        
-        xhr.open(self.method, url, self.async);
-          
-        if (any = self.header)
-        {
-            for (var name in any)
-            {
-                xhr.setRequestHeader(name, any[name]);
-            }
-        }
-
-        xhr.setRequestHeader('Content-Type', self.contentType);
-
-        if (data)
-        {
-            data = flyingon.encode(data);
-            xhr.setRequestHeader('Content-Length', data.length);
-        }
-
-        xhr.send(data);
-    };
-    
-
-    //处理响应结果
-    function ajax_done(self, xhr, url) {
-
-        var any = xhr.readyState;
-
-        if (any === 4)
-        {
-            if (any = self.__timer)
-            {
-                clearTimeout(any);
-                self.__timer = 0;
-                any = void 0;
-            }
-
-            if (xhr.status < 300)
-            {
-                switch (self.dataType)
-                {
-                    case 'json':
-                        try
-                        {
-                            self.resolve(flyingon.parseJSON(xhr.responseText));
-                        }
-                        catch (e)
-                        {
-                            self.reject(e);
-                        }
-                        break;
-                        
-                    case 'xml':
-                        self.resolve(xhr.responseXML);
-                        break;
-                        
-                    default:
-                        self.resolve(xhr.responseText);
-                        break;
-                }
-            }
-            else
-            {
-                self.reject(any = xhr.statusText);
-            }
-            
-            //结束处理
-            ajax_end(self, url, any);
-            
-            //清除引用
-            self.xhr = self.onreadystatechange = null;
-        }
-        else
-        {
-            self.notify(any);
-        }
-    };
-    
-    
-    //ajax执行完毕
-    function ajax_end(self, url, error) {
-        
-        var end = flyingon.Ajax.end;
-        
-        //执行全局ajax执行结束事件
-        if (end)
-        {
-            for (var i = 0, l = end.length; i < l; i++)
-            {
-                end[i].call(self, url, error);
-            }
-        }
-    };
-        
-    
-    //jsonp_get
-    function jsonp_get(self, url, list) {
-        
-        var target = jsonp_get,
-            any = target.cache || (target.cache = []),
-            name = any.pop() || 'flyingon_callback' + (++target.id || (target.id = 1));
-        
-        window[name] = function (data) {
-        
-            self.resolve(data);
-            ajax_end(self, url);
-        };
-        
-        list.push(self.jsonp || 'jsonp', '=', name);
-        
-        if (!self.version)
-        {
-            list.push('jsonp-version=' + (++target.version || (target.version = 1)));
-        }
-        
-        flyingon.script(url = url + list.start + list.join('&'), function (src, error) {
-            
-            any.push(name);
-
-            if (error)
-            {
-                self.reject(error);
-                ajax_end(self, url, error);
-            }
-
-            window[name] = void 0;
-            this.parentNode.removeChild(this);
-            
-            self = null;
-        });
-    };
-    
-    
-    //jsonp_post
-    function jsonp_post(self, url, list, data) {
-                
-        var iframe = jsonp_iframe(),
-            flag;
-        
-        //处理url
-        list.push('jsonp=post');
-        url = url + list.start + list.join('&');
-                    
-        function load() {
-          
-            if (flag)
-            {
-                //IE67可能需要设置成同源的url才能取值
-                this.contentWindow.location = 'about:blank';
-
-                jsonp_end(self, url, this.contentWindow.name);
-                jsonp_iframe(this);
-
-                flyingon.dom_off(this, 'load', load);
-                self = iframe = list = data = null;
-            }
-            else
-            {
-                flag = 1;
-                
-                //解决IE6在新窗口打开的BUG
-                this.contentWindow.name = this.name; 
-
-                //动态生成表单提交数据
-                jsonp_form(this, url, data, self.method);
-            }
-        };
-        
-        //IE6不能触发onload事件, 如果要兼容ie6, 需要使用attachEvent绑定事件
-        flyingon.dom_on(iframe, 'load', load);
-        
-        iframe.src = 'about:blank';
-        document.head.appendChild(iframe);
-    };
-    
-    
-    //获取或缓存iframe
-    function jsonp_iframe(iframe) {
-        
-        var any = jsonp_iframe.cache || (jsonp_iframe.cache = []);
-        
-        if (iframe)
-        {
-            any.push(iframe);
-            iframe.parentNode.removeChild(iframe);
-        }
-        else
-        {
-            iframe = any.pop();
-            
-            if (!iframe)
-            {
-                iframe = document.createElement('iframe');
-                iframe.name = 'jsonp-iframe';
-            }
-            
-            return iframe;
-        }
-    };
-    
-
-    //生成jsonp提交表单
-    function jsonp_form(iframe, url, data, method) {
-        
-        var array = ['<form id="form" enctype="application/x-www-form-urlencoded"'];
-        
-        array.push(' action="', url, '" method="', 'GET', '">'); //method || 'POST'
-        
-        for (var name in data)
-        {
-            array.push('<input type="hidden" name="', name, '"');
-            
-            if (typeof (name = data[name]) === 'string')
-            {
-                name = name.replace(/"/g, '\\"');
-            }
-            
-            array.push(' value="', name, '" />');
-        }
-        
-        array.push('</form>', '<script>form.submit();</script>');
-        
-        iframe.contentWindow.document.write(array.join(''));
-    };
-    
-
-    //jsonp返回结果处理
-    function jsonp_end(self, url, text) {
-
-        try
-        {
-            self.resolve(flyingon.parseJSON(text));
-            ajax_end(self, url);
-        }
-        catch (e)
-        {
-            self.reject(e);
-            ajax_end(self, url, e);
-        }
-    };
-
-    
-
-}, false);
-
-
-
-//自定义ajax开始提交方法
-flyingon.ajaxStart = function (fn) {
-
-    (flyingon.Ajax.start || (flyingon.Ajax.start = [])).push(fn);
-};
-
-
-//自定义ajax执行结束方法
-flyingon.ajaxEnd = function (fn) {
-
-    (flyingon.Ajax.end || (flyingon.Ajax.end = [])).push(fn);
-};
-
-
-//ajax提交(默认为GET方式提交)
-flyingon.ajax = function (url, options) {
-
-    return new flyingon.Ajax().send(url, options);
-};
-
-
-//POST提交
-//在IE6时会可能会出错, asp.net服务端可实现IHttpAsyncHandler接口解决些问题 
-flyingon.ajaxPost = function (url, options) {
-
-    options = options || {};
-    options.method = 'POST';
-
-    return new flyingon.Ajax().send(url, options);
-};
-
-
-//jsonp get提交
-flyingon.jsonp = function (url, options) {
-
-    options = options || {};
-    options.dataType = 'jsonp';
-
-    return new flyingon.Ajax().send(url, options);
-};
-
-
-//jsonp post提交
-//服务器需返回 <script>window.name = 'xxx';</script> 形式的内容且不能超过2M大小
-flyingon.jsonpPost = function (url, options) {
-
-    options = options || {};
-    options.dataType = 'jsonp';
-    options.method = 'POST';
-
-    return new flyingon.Ajax().send(url, options);
-};
 
 
 

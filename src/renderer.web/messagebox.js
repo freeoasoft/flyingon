@@ -10,7 +10,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
 
         var any;
         
-        writer.push('<div', this.renderDefault(control, css), ' tag="dialog">',
+        writer.push('<div');
+        
+        this.renderDefault(writer, control, css);
+        
+        writer.push(' tag="dialog">',
             '<div class="flyingon-messagebox-header" tag="header">',
                 '<span class="flyingon-messagebox-icon" ', (any = control.icon()) ? 'class="' + any : 'style="dispaly:none;', '"></span>',
                 '<span class="flyingon-messagebox-title">', control.title(), '</span>',

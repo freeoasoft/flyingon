@@ -254,8 +254,17 @@
                 }
             }
         }
+
+        if (cursor)
+        {
+            cursor += '-resize';
+        }
+        else if ((value = this.__style_list) && (cursor = value.indexOf('cursor') >= 0))
+        {
+            cursor = value[cursor + 2];
+        }
         
-        dom.style.cursor = cursor ? cursor + '-resize' : this.cursor();
+        dom.style.cursor = cursor || '';
         
         return side;
     };

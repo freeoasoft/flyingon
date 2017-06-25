@@ -15,7 +15,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
             text = flyingon.html_encode(text);
         }
 
-        writer.push('<button type="button"', this.renderDefault(control, css), '>', text, '</button>');
+        writer.push('<button type="button"');
+        
+        this.renderDefault(writer, control, css);
+        
+        writer.push('>', text, '</button>');
     };
 
 

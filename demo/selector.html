@@ -9,8 +9,8 @@
 
     <div style="padding:8px;">
         选择器:<input id="selector" type="text" value="textbox:first" />
-        属性名:<input id="property-name" type="text" value="backgroundColor" />
-        属性值:<input id="property-value" type="text" value="silver" />
+        样式名:<input id="style-name" type="text" value="background-color" />
+        样式值:<input id="style-value" type="text" value="silver" />
         <input type="button" value="执行" onclick="execute()" />
     </div>
     <div id="host"></div>
@@ -32,7 +32,8 @@
                 type: 'flow',
                 spacingX: 8,
                 spacingY: 8
-            }
+            },
+            style: 'border: 1px solid'
         });
 
         for (var i = 0; i < 150; i++)
@@ -43,7 +44,8 @@
                 padding: 2,
                 width: 300,
                 height: 200,
-                layout: 'vertical-line'
+                layout: 'vertical-line',
+                style: 'border: 1px solid'
             });
                         
             for (var j = 0; j < 20; j++)
@@ -66,10 +68,10 @@
         function execute() {
 
             var selector = document.getElementById('selector').value,
-                name = document.getElementById('property-name').value,
-                value = document.getElementById('property-value').value;
+                name = document.getElementById('style-name').value,
+                value = document.getElementById('style-value').value;
 
-            panel.find(selector)[name](value);
+            panel.find(selector).style(name, value);
         };
         
         

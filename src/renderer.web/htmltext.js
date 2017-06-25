@@ -10,7 +10,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
     //渲染html
     this.render = function (writer, control, css) {
 
-        writer.push('<div', this.renderDefault(control, css), '>', control.html(), '</div>');
+        writer.push('<div');
+        
+        this.renderDefault(writer, control, css);
+        
+        writer.push('>', control.html(), '</div>');
     };
 
 

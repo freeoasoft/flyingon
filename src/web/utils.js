@@ -400,94 +400,104 @@ flyingon.style = function (cssText) {
     
     
 
-    var dom = document.documentElement,
 
-        fixed = flyingon.create(null), //css兼容处理
+    var style1 = flyingon.create(null),
 
-        prefix = 'ms',     //样式前缀
+        style2 = flyingon.create(null),
 
-        regex = /^-(\w+)-/, //样式检测
+        fixed = flyingon.create(null); //自定义css兼容处理
 
-        style,
-
-        any;
+        
 
 
+    (function check_css(style1, style2) {
 
-    //获取浏览器样式前缀
-    if (any = window.getComputedStyle)
-    {
-        style = any(dom);
-
-        for (var i = style.length - 1; i >= 0; i--)
-        {
-            if (any = style[i].match(regex))
-            {
-                prefix = any[1];
-                break;
-            }
-        }
-    }
-
-
-    //测试样式
-    style = dom.style;
-
-
-    //自动处理样式
-    function css_name(name) {
-
-        var css = name.replace(/([A-Z])/g, '-$1').toLowerCase(),
+        var style = document.documentElement.style,
+            list1 = [],
+            list2,
+            list3,
             any;
 
-        if (!(name in style))
+        for (var name in style)
         {
-            any = prefix + name.charAt(0).toUpperCase() + name.substring(1);
+            switch (name)
+            {
+                case 'cssFloat':
+                case 'styleFloat':
+                    list1.push('float');
+                    break;
 
-            if (any in style)
-            {
-                name = any;
-                css = '-' + prefix + '-' + css;
-            }
-            else
-            {
-                name = css= '';
+                case 'cssText':
+                    break;
+
+                default:
+                    list1.push(name);
+                    break;
             }
         }
 
-        return fixed[name] = {
+        any = list1.join(',');
 
-            name: name,
-            css: css
-        };
-    };
+        if (name = any.match(/\b(webkit|ms|moz|o)[A-Z]/))
+        {
+            name = name[1];
+
+            any = any.replace(new RegExp('\\b' + name + '(?=[A-Z])', 'g'), '-' + name);
+
+            any = any.replace(/([A-Z])/g, function (_, name) {
+
+                return '-' + name.toLowerCase();
+            });
+
+            list2 = any.split(',');
+            list3 = any.replace(new RegExp('-' + name + '-', 'g'), '').split(',');
+        }
+        else
+        {
+            list2 = list3 = list1;
+        }
+
+        for (var i = 0, l = list1.length; i < l; i++)
+        {
+            any = list3[i];
+            style1[any] = list1[i];
+            style2[any] = list2[i];
+        }
+
+    })(style1, style2);
+
 
 
     //获取可用样式名
-    //name: 要获取的样式名
+    //name: 要获取的样式名,按css连字符的写法,如:background-color
     flyingon.css_name = function (name, css) {
 
-        var value = fixed[name] || css_name(name);
-        return css ? value.css : (css === false ? value : value);
+        return (css ? style2 : style1)[name] || '';
+    };
+
+
+    //获取css名字映射
+    flyingon.css_map = function (css) {
+
+        return css ? style2 : style1;
     };
     
     
     //设置css样式值
     //dom:      目标dom
-    //name:     要获取的样式名
+    //name:     要设置样式名,按css连字符的写法,如:background-color
     //value:    样式值
     flyingon.css_value = function (dom, name, value) {
 
-        var value = fixed[name] || css_name(name),
-            any;
+        var any;
 
-        if (any = value.set)
-        {
-            any(value, dom);
-        }
-        else if (any = value.name)
+        if (any = style1[name])
         {
             dom.style[any] = value;
+        }
+        else if (any = fixed[name])
+        {
+            any(value, dom);
         }
     };
     
@@ -497,15 +507,15 @@ flyingon.style = function (cssText) {
     //set:      转换样式值的方法
     flyingon.css_fixed = function (name, set) {
 
-        if (name && set && !(set = css_name(name)).name)
+        if (name && set && !style1[name])
         {
-            set.set = set;
+            fixed[name] = set;
         }
     };
 
 
     //处理ie允许选中
-    flyingon.css_fixed('userSelect', (function () {
+    flyingon.css_fixed('user-select', (function () {
 
         function event_false() {
 
@@ -693,7 +703,7 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
         }
         
         flyingon.dom_suspend(dom, 'click', true);
-        flyingon.css_value(document.body, 'userSelect', 'none');
+        flyingon.css_value(document.body, 'user-select', 'none');
         
         if (dom.setCapture)
         {
@@ -749,7 +759,7 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
 
         if (!start)
         {
-            flyingon.css_value(document.body, 'userSelect', '');
+            flyingon.css_value(document.body, 'user-select', '');
             
             if (dom.setCapture)
             {

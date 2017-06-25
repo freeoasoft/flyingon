@@ -28,16 +28,16 @@
 
             template: {
                 xtype: 'div',
-                height: 50,
+                height: 65,
                 children: [
-                    { xtype: 'label', ':text': 'itemIndex' },
-                    { xtype: 'textbox', ':value': 'itemText', width: 120, margin: '0 10' },
-                    { xtype: 'button', ':text': 'operate.add', tag: 'add' },
+                    { xtype: 'label', width: 90, ':text': 'item_label(itemIndex)', style: 'display:inline-block;' },
+                    { xtype: 'textbox', ':value': 'itemText', width: 120, '-model': 'itemText' },
+                    { xtype: 'button', ':text': 'operate.add', tag: 'add', margin: '0 5' },
                     { xtype: 'button', ':text': 'operate.edit', tag: 'edit' },
-                    { xtype: 'button', ':text': 'operate.remove', tag: 'remove' },
-                    { xtype: 'panel', layout: 'line', width: 200, height: 20, overflowX: 'hidden', overflowY: 'hidden', 
+                    { xtype: 'button', ':text': 'operate.remove', tag: 'remove', margin: '0 5' },
+                    { xtype: 'panel', layout: 'vertical-line', width: 'auto', height: 50, padding: '4 0 4 90', style:'overflow:hidden;', 
                         children: [
-                            { xtype: 'label', '-loop': 'subitems(subitem)', width: '30', height: '15', ':text': 'subitem' }
+                            { xtype: 'div', '-loop': 'subitems(subitem)', ':width': 'subitem_width(subitem)', height: 5, style: 'background-color:silver;' }
                         ]
                     }
                 ]
@@ -56,7 +56,17 @@
 
             init: function () {
 
-                
+
+                this.item_label = function (index) {
+
+                    return ++index + '. ' + this.$get('itemText'); //item.text写法不追踪变化
+                };
+
+
+                this.subitem_width = function (value) {
+
+                    return value * 10 + 20;
+                };
 
             }
 
@@ -89,21 +99,22 @@
 
             init: function (vm) {
 
-             
+
                 this.operate_click = function (item, index, control, event) {
                         
                     switch (event.target.tag())
                     {
                         case 'add':
-                            this.items.push({ text: 'added', items: ('' + (Math.random() * 100000 | 0)).split('') });
+                            this.items.push({ text: Math.random() * 10000000 | 0, items: ('' + (Math.random() * 100000 | 0)).split('') });
                             break;
 
                         case 'edit':
-                            item.$set('text', new Date().getTime());
+                            //item.$set('text', Math.random() * 10000000 | 0);
+                            item.$replace({ 'text': Math.random() * 10000000 | 0, items: ('' + (Math.random() * 100000 | 0)).split('') });
                             break;
 
                         case 'remove':
-                            this.items.splice(index - 1, 1);
+                            this.items.splice(index, 1);
                             break;
                     }
                 };

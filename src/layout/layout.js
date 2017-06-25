@@ -464,7 +464,7 @@ flyingon.Layout = flyingon.defineClass(function () {
     
     //重排
     this.rearrange = function (container, items, hscroll, vscroll) {
-      
+ 
         var flag = false;
         
         if (hscroll && (hscroll === 1 || container.arrangeRight > container.arrangeLeft + container.arrangeWidth))
@@ -509,8 +509,8 @@ flyingon.Layout = flyingon.defineClass(function () {
         for (var i = 0, l = items.length; i < l; i++)
         {
             if ((item = items[i]) && 
-                x >= (any = this.offsetLeft) && x <= any + this.offsetWidth &&
-                y >= (any = this.offsetTop) && y <= any + this.offsetHeight)
+                x >= (any = item.offsetLeft) && x <= any + item.offsetWidth &&
+                y >= (any = item.offsetTop) && y <= any + item.offsetHeight)
             {
                 return items[i];
             }
@@ -993,7 +993,7 @@ flyingon.defineClass(flyingon.Layout, function (base) {
     //查找指定坐标的子控件
     this.controlAt = function (items, x, y) {
         
-        var item;
+        var item, any;
         
         for (var i = 0, l = items.length; i < l; i++)
         {

@@ -12,7 +12,7 @@ flyingon.__container_renderer = function (scroll) {
 
         while (item)
         {
-            item.view || item.renderer.render(writer, item, item.__css_patch = css);
+            item.view || item.renderer.render(writer, item, item.__css_layout = css);
             
             if (item === end)
             {
@@ -79,8 +79,9 @@ flyingon.__container_renderer = function (scroll) {
     //排列
     this.__arrange = function (control) {
 
-        var auto = control.__auto_size,
-            list = [],
+        var list = [],
+            style = control.view.style,
+            auto = control.__auto_size,
             hscroll, 
             vscroll,
             any;
@@ -92,18 +93,18 @@ flyingon.__container_renderer = function (scroll) {
         else
         {
             //处理自动滚动
-            switch (control.overflowX())
+            switch (style.overflowX || style.overflow) //有些浏览器读不到overflowX的值
             {
                 case 'scroll':
                     control.__hscroll = true;
                     break;
 
-                case 'auto':
-                    hscroll = true;
+                case 'hidden':
+                    control.__hscroll = false;
                     break;
                     
                 default:
-                    control.__hscroll = false;
+                    hscroll = true;
                     break;
             }
         }
@@ -114,18 +115,18 @@ flyingon.__container_renderer = function (scroll) {
         }
         else
         {
-            switch (control.overflowY())
+            switch (style.overflowY || style.overflow)
             {
                 case 'scroll':
                     control.__vscroll = true;
                     break;
 
-                case 'auto':
-                    vscroll = true;
-                    break;
-                    
-                default:
+                case 'hidden':
                     control.__vscroll = false;
+                    break;
+
+                default:
+                    vscroll = true;
                     break;
             }
         }
@@ -148,6 +149,7 @@ flyingon.__container_renderer = function (scroll) {
 
         control.__arrange_dirty = false;
     };
+
 
 
 
@@ -347,25 +349,8 @@ flyingon.__container_renderer = function (scroll) {
     //控件顺序发生变化的补丁
     this.__view_order = function (control, view) {
 
-        // var item = control.firstChild,
-        //     temp = document.createDocumentFragment(),
-        //     node;
-
-        // while (item)
-        // {
-        //     if (node = item.view)
-        //     {
-        //         temp.appendChild(node);
-        //     }
-
-        //     item = item.nextSibling;
-        // }
-
-        // view.appendChild(temp);
-
-
         var item = control.lastChild,
-            last = view.lastChild,
+            last = (control.view_body || view).lastChild,
             node,
             tag;
 

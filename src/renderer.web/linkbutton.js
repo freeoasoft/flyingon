@@ -22,7 +22,11 @@ flyingon.defineClass(flyingon.Renderer, function (base) {
             text = encode(text);
         }
 
-        writer.push('<div', this.renderDefault(control, css), '><a href="', href, '">', text, '</a></div>');
+        writer.push('<div');
+        
+        this.renderDefault(writer, control, css);
+        
+        writer.push('><a href="', href, '">', text, '</a></div>');
     };
 
 

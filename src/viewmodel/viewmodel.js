@@ -309,7 +309,7 @@
                         item_track(scope.__loop_vm, scope.__uniqueId, any);
                     }
 
-                    return scope.__loop_index + 1;
+                    return scope.__loop_index;
                 }
 
                 return find_index(control, node[2]);
@@ -413,7 +413,7 @@
         {
             if ((vm = control.__loop_vm) && vm.__index_name === name)
             {
-                return control.__loop_index + 1;
+                return control.__loop_index;
             }
         }
         while (control = control.parent);
@@ -1296,6 +1296,7 @@
                 case '-model': //模型指令特殊处理
                     if (any = control[name])
                     {
+                        node = template[name];
                         any.call(control, node[3] ? bind_vm(control, vm, scope, node) : vm, node[2]); 
                     }
                     break;

@@ -106,7 +106,8 @@
             border: 1,
             padding: 8,
             resizable: 'all',
-            layout: 'panel'
+            layout: 'panel',
+            style: 'border:1px solid',
         });
 
 
@@ -116,7 +117,7 @@
 
                 id: i,
                 border: 1,
-                borderStyle: 'solid',
+                style: 'border:1px solid;',
                 movable: true
             }));
         }
@@ -124,7 +125,7 @@
         
         panel.on('move-end', function (e) {
            
-            e.target.backgroundColor('silver');
+            e.target.style('background-color', 'silver');
         });
 
 

@@ -67,7 +67,8 @@
                 layout: {
                     spacingX: 8,
                     spacingY: 8
-                }
+                },
+                style: 'border: 1px solid;'
             });
 
             for (var i = 0; i < length1; i++)
@@ -78,7 +79,8 @@
                     border: 1,
                     padding: 8,
                     fullRender: true,
-                    layout: 'vertical-line'
+                    layout: 'vertical-line',
+                    style: 'border: 1px solid;'
                 });
                             
                 for (var j = 0; j < length2; j++)
@@ -116,7 +118,7 @@
 
                 while (item)
                 {
-                    item.text(text);
+                    item.value(text);
                     item = item.nextSibling;
                 }
                 
@@ -144,11 +146,11 @@
 
                 while (item)
                 {
-                    item.text('1');
-                    item.text('2');
-                    item.text('3');
-                    item.text('4');
-                    item.text(text);
+                    item.value('1');
+                    item.value('2');
+                    item.value('3');
+                    item.value('4');
+                    item.value(text);
                     item = item.nextSibling;
                 }
                 

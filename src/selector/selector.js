@@ -1496,6 +1496,8 @@ flyingon.Query = flyingon.defineClass(function () {
         
         return this;
     };
+
+
     
     
 }, false);

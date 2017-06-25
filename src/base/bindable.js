@@ -20,7 +20,7 @@ flyingon.__bindable_fragment = flyingon.fragment(function () {
                 return this;
             }
 
-            if (this.__watch_list && flyingon.__do_watch(this, name, value, bind) === false)
+            if (this.__watch_list && flyingon.__do_watch(this, name, value) === false)
             {
                 return this;
             }
@@ -76,7 +76,7 @@ flyingon.__bindable_fragment = flyingon.fragment(function () {
     //接收数据集变更动作处理
     this.ondatareceive = function (dataset, action) {
         
-        var keys, name;
+        var keys, name, any;
         
         if (action && (keys = this.__bind_keys))
         {
@@ -86,7 +86,20 @@ flyingon.__bindable_fragment = flyingon.fragment(function () {
             {
                 if (!name || keys[key] === name)
                 {
-                    this.set(key, dataset.getBindingValue(keys[key], action), false);
+                    any = name || keys[key];
+
+                    //禁止自身回推
+                    keys[key] = '';
+
+                    try
+                    {
+                        this.set(key, dataset.getBindingValue(any, action));
+                    }
+                    finally
+                    {
+                        //回退缓存
+                        keys[key] = any;
+                    }
                 }
             }
         }

@@ -400,10 +400,10 @@ var flyingon;
            
 
     //执行对象属性观测
-    flyingon.__do_watch = function (target, name, value, oldValue, bind) {
+    flyingon.__do_watch = function (target, name, value, oldValue) {
 
         var keys = target.__watch_keys,
-            e = { target: target, name: name, newValue: value, oldValue: oldValue, bind: bind },
+            e = { target: target, name: name, newValue: value, oldValue: oldValue },
             any;
 
         for (var i = 0, l = keys.length; i < l; i++)
@@ -498,7 +498,6 @@ var flyingon;
             if (any)
             {
                 prototype.defineProperty = defineProperty;
-                prototype.storage = storage;
                 prototype.get = get;
                 prototype.set = set;
                 prototype.sets = sets;
@@ -682,7 +681,7 @@ var flyingon;
 
     function property_fn(key, dataType, check, set) {
 
-        return function (value, bind) {
+        return function (value) {
 
             var storage = this.__storage,
                 name = key,
@@ -717,26 +716,29 @@ var flyingon;
                     break;
             }
 
-            if ((check ? (value = check.call(this, value)) : value) === any)
+            if (check)
             {
-                return this;
+                value = check.call(this, value)
             }
 
-            if (this.__watch_keys && flyingon.__do_watch(this, name, value, bind) === false)
+            if (any !== value)
             {
-                return this;
-            }
+                if (this.__watch_keys && flyingon.__do_watch(this, name, value, any) === false)
+                {
+                    return this;
+                }
 
-            (storage || (this.__storage = create(this.__defaults)))[name] = value;
+                (storage || (this.__storage = create(this.__defaults)))[name] = value;
 
-            if (set)
-            {
-                set.call(this, value, bind);
-            }
+                if (set)
+                {
+                    set.call(this, value);
+                }
 
-            if (bind !== false && (any = this.__bind_keys) && (name = any[name]))
-            {
-                this.pushBack(name, value);
+                if ((any = this.__bind_keys) && (name = any[name]))
+                {
+                    this.pushBack(name, value);
+                }
             }
 
             return this;
@@ -777,21 +779,7 @@ var flyingon;
         };
     };
         
-    
-    //获取当前存储对象
-    function storage(name) {
-        
-        var storage = this.__storage;
-        
-        if (name)
-        {
-            return (storage || this.__defaults)[name];
-        }
-        
-        return storage || (this.__storage = create(this.__defaults));
-    };
-    
-        
+            
     //获取指定名称的属性值
     function get(name) {
       
@@ -810,17 +798,17 @@ var flyingon;
     
     
     //设置指定名称的属性值
-    function set(name, value, bind) {
+    function set(name, value) {
         
         var fn;
 
         if (this.__properties[name])
         {
-            this[name](value, bind);
+            this[name](value);
         }
         else if (fn = this.__custom_set)
         {
-            fn.call(this, name, value, bind);
+            fn.call(this, name, value);
         }
         else
         {
@@ -832,7 +820,7 @@ var flyingon;
 
 
     //批量设置属性值
-    function sets(values, bind) {
+    function sets(values) {
         
         if (values)
         {
@@ -843,11 +831,11 @@ var flyingon;
             {
                 if (properties[name])
                 {
-                    this[name](values[name], bind);
+                    this[name](values[name]);
                 }
                 else if (fn = this.__custom_set)
                 {
-                    fn.call(this, name, values[name], bind);
+                    fn.call(this, name, values[name]);
                 }
                 else
                 {

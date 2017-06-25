@@ -20,12 +20,6 @@ flyingon.defineClass('Panel', flyingon.Control, function (base) {
     this.defaultValue('droppable', true);
 
 
-    this.defaultValue('overflowX', 'auto');
-
-
-    this.defaultValue('overflowY', 'auto');
-
-
 
     //当前布局
     this.defineProperty('layout', null, {
