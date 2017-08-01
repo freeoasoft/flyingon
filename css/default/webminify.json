@@ -1,0 +1,17 @@
+
+[
+    
+    {
+        source: [
+            'src/base.css',
+            'src/messagebox.css',
+            'src/popup.css',
+            'src/dialog.css',
+            'src/tab.css',
+            'src/tree.css'
+        ],
+
+        output: 'flyingon.css'
+    }
+
+]

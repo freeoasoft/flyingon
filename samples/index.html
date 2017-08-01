@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>flyingon samples</title>
+    <link rel="stylesheet" type="text/css" href="../css/default/flyingon.css" />
+    <style type="text/css">
+
+    .title {
+        font-size: 20px;
+        line-height: 40px;
+        margin-left: 8px;
+    }
+
+    </style>
+
+    <script type="text/javascript" src="../js/flyingon.js"></script>
+    <script type="text/javascript" src="../i18n/zh-CN.js"></script>
+</head>
+<body style="overflow:hidden;">
+
+    <div id="host" style="position: absolute;left:1px;top:1px;right:1px;bottom:1px;width:auto;height:auto;overflow:hidden;">
+        
+    </div>
+
+    <script type="text/x-template" id="template">
+        <Panel :layout="dock" height="100%">
+            <Panel dock="top" height="50" class="f-back" border="1">
+                <span class="title" width="auto" height="100%">flyingon-samples</span>
+            </Panel>
+            <Panel dock="bottom" height="25" class="f-back" border="1">foot</Panel>
+            <Tree id="menu" dock="left" width="200" max-width="300" />
+            <Splitter dock="left" />
+            <Tab id="host" dock="fill" size="100" selected='0'>
+            </Tab>
+        </Panel>
+    </script>
+
+
+    <script type="text/javascript">
+
+
+        var url_base = 'flyingon/samples/base/';
+
+        var url_layout = 'flyingon/samples/layout/';
+
+        var url_controls = 'flyingon/samples/controls/';
+
+
+        var menuList = [
+
+            {
+                text: 'flyingon基础', 
+                children: [
+                    { text: 'js插件', url: url_base + 'plugin-js.js' },
+                    { text: 'widget插件', url: url_base + 'plugin-widget.js' },
+                    { text: 'html插件', url: url_base + 'plugin.html' },
+                    { text: '模块', url: url_base + 'module.js' },
+                    { text: '类', url: url_base + 'module.js' },
+                    { text: '继承', url: url_base + 'module.js' },
+                    { text: '属性', url: url_base + 'module.js' },
+                    { text: '事件', url: url_base + 'module.js' },
+                    { text: '序列化', url: url_base + 'module.js' },
+                    { text: '数据绑定', url: url_base + 'module.js' },
+                    { text: '选择器', url: url_base + 'module.js' },
+                    { text: 'widget', url: url_base + 'widget.html' },
+                    { text: '多级路由', url: url_base + 'route.js' }
+                ]
+            },
+
+            { 
+                text: '布局', 
+                children: [
+                    { text: '线性布局', url: url_layout + 'test.js' },
+                    { text: '流式布局', url: url_layout + 'test.js' },
+                    { text: '停靠布局', url: url_layout + 'test.js' },
+                    { text: '网格布局', url: url_layout + 'test.js' },
+                    { text: '自适应', url: url_layout + 'test.js' },
+                    { text: '子布局', url: url_layout + 'test.js' },
+                    { text: '综合示例', url: url_layout + 'test.js' }
+                ]
+            },
+
+            {
+                text: '控件', 
+                children: [
+                    { text: '标签', url: url_controls + 'test.js' },
+                    { text: '按钮', url: url_controls + 'test.js' },
+                    { text: '图片', url: url_controls + 'image.js' },
+                    { text: '滑块', url: url_controls + 'slider.js' },
+                    { text: '进度条', url: url_controls + 'progressbar.js' },
+                    { text: '单选框', url: url_controls + 'radiobutton.js' },
+                    { text: '单选列表', url: url_controls + 'radiogroup.js' },
+                    { text: '检查框', url: url_controls + 'checkbox.js' },
+                    { text: '多选列表', url: url_controls + 'checkgroup.js' },
+                    { text: '文本框', url: url_controls + 'textbox.js' },
+                    { text: '文本按钮', url: url_controls + 'textbutton.js' },
+                    { text: '列表框', url: url_controls + 'listbox.js' },
+                    { text: '下拉框', url: url_controls + 'combobox.js' },
+                    { text: '数字编辑框', url: url_controls + 'numberpicker.js' },
+                    { text: '日历控件', url: url_controls + 'calendar.js' },
+                    { text: '日期选择', url: url_controls + 'datepicker.js' },
+                    { text: '时间选择', url: url_controls + 'timepicker.js' },
+                    { text: '年月选择', url: url_controls + 'monthpicker.js' },
+                    { text: 'html控件', url: url_controls + 'htmlbox.js' },
+                    { text: '面板', url: url_controls + 'panel.js' },
+                    { text: '分组框', url: url_controls + 'groupbox.js' },
+                    { text: '页签控件', url: url_controls + 'tab.js' },
+                    { text: '树控件', url: url_controls + 'tree.js' },
+                    { text: '弹出层', url: url_controls + 'popup.js' },
+                    { text: '弹出窗口', url: url_controls + 'dialog.js' },
+                    { text: '消息框', url: url_controls + 'showmessage.js' }
+                ]
+            },
+
+            {
+                text: '表格控件', 
+                children: [
+                ]
+            }
+
+        ];
+
+
+
+        var host = flyingon.view({
+            
+            host: 'host',
+
+            template: '#template',
+
+            defaults: {
+                
+                dock: { type: 'dock', spacingX: 0, spacingY: -2 }
+            },
+
+            created: function (vm) {
+
+
+                var menu = this.findById('menu')[0];
+
+                var host = this.findById('host')[0];
+
+
+                //加载树数据
+                menu.push.apply(menu, menuList);
+
+                menu.theme('line');
+                menu.expand(true);
+
+                menu.on('node-click', function (event) {
+
+                    var node = event.node,
+                        any;
+
+                    node && node.length <= 0 && flyingon.route({
+
+                        text: any = node.text(),
+                        url: node.get('url'),
+                        target: any //text作为打开的key
+                    });
+                });
+
+
+                //初始化路由参数
+                //参数1: 页签容器控件
+                //参数2: 根据url查找页签参数
+                flyingon.route.init(host, function (url) {
+
+                    var item = find_url(url, menuList);
+
+                    if (item)
+                    {
+                        item.target = item.text;
+                        return item;
+                    }
+
+                    alert('url not exist!');
+                });
+
+                
+                //根据url查找页签
+                function find_url(url, items) {
+
+                    var item;
+
+                    for (var i = 0, l = items.length; i < l; i++)
+                    {
+                        if (item = items[i])
+                        {
+                            if (url.indexOf(item.url) >= 0)
+                            {
+                                return item;
+                            }
+
+                            if ((item = item.children) && (item = find_url(url, item)))
+                            {
+                                return item;
+                            }
+                        }
+                    }
+                };
+
+            }
+
+
+        });
+
+
+
+        flyingon.dom_on(window, 'resize', function () {
+
+            host.invalidate();
+        });
+  
+
+    </script>
+
+</body>
+</html>
