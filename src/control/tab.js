@@ -1,4 +1,4 @@
-flyingon.defineClass('TabPage', flyingon.Panel, function (base) {
+flyingon.Panel.extend('TabPage', function (base) {
 
 
 

@@ -14,6 +14,7 @@ body {
     color: darkgray;
 }
 
+.f-listbox-selected,
 .f-calendar-selected {
     color: #3498db;
 }
@@ -27,7 +28,9 @@ body {
 
 .f-input, 
 .f-back, 
+.f-progressbar,
 .f-textbutton,
+.f-listbox,
 .f-tree, 
 .f-tab,
 .f-tab-forward,
@@ -40,11 +43,15 @@ body {
     border: 1px solid #95B8E7;
 }
 
+.f-slider-button div,
+.f-progressbar-back,
 .f-tab-head,
 .f-message-foot {
     background-color: #EFF5FF;
 }
 
+.f-slider-bar,
+.f-slider-button,
 .f-calendar-line,
 .f-tab-line,
 .f-groupbox-line,
@@ -79,6 +86,7 @@ body {
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#EFF5FF,endColorstr=#ffffff,GradientType=0);
 }
 
+.f-slider-bar div,
 .f-input,
 .f-popup,
 .f-dialog,
@@ -92,30 +100,10 @@ body {
 }
 
 .f-overlay {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    filter:alpha(opacity=10);
-    opacity: 0.1;
     background-color: silver;
-    z-index: 100;
 }
 
-.f-dialog {
-    z-index: 99;
-}
-
-.f-popup,
-.f-dialog-active {
-    z-index: 100;
-}
-
-.f-control, 
-.f-tab-item,
-.f-tab-forward, 
-.f-tab-back {
+.f-control {
     -moz-box-sizing: border-box;  
     -webkit-box-sizing: border-box; 
     -o-box-sizing: border-box; 
@@ -130,41 +118,98 @@ body {
     display: inline-block; /*解决inline元素无发设置高宽的问题*/
 }
 
-
-.f-tab-head, 
-.f-tab-line,
-.f-tab-forward,
-.f-tab-back,
-.f-tab-content, 
-.f-tab-item-host,
-.f-tab-item,
-.f-tab-body,
-.f-groupbox-head,
-.f-groupbox-body,
-.f-groupbox-line,
-.f-dialog-head,
-.f-dialog-body,
-.f-dialog-line {
-    position: absolute;
-    display: block;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    margin: 0;
-    padding: 0;
-    width: auto;
-    height: auto;
-}
-
-
 .f-host, .f-html {
     position: relative;
 }
 
+.f-rtl {
+    direction: rtl;
+}
+
+
+.f-button span {
+    display: inline-block;
+    vertical-align: middle;
+}
 
 .f-label {
     padding: 2px 4px;
+}
+
+.f-slider-bar {
+    position: absolute;
+    border: 0;
+    padding: 0;
+    width: auto;
+    height: 4px;
+    left: 0;
+    right: 0;
+    top: 50%;
+    margin-top: -2px;
+}
+
+.f-slider-button {
+    position: absolute;
+    border: 0;
+    padding: 0;
+    height: 16px;
+    top: 50%;
+    margin-top: -8px;
+    cursor: pointer;
+}
+
+.f-slider-bar div,
+.f-slider-button div {
+    position: absolute;
+    left: 1px;
+    top: 1px;
+    right: 1px;
+    bottom: 1px;
+}
+
+.f-progressbar-back {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    height: auto;
+}
+
+.f-progressbar-text {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: auto;
+    height: auto;
+    text-align: center;
+}
+
+
+.f-listbox {
+    overflow: auto;
+}
+
+.f-listbox-item {
+    position: absolute;
+    padding: 0 4px;
+    cursor: default;
+    white-space: nowrap;
+}
+
+.f-listbox-item input {
+    vertical-align: middle;
+    margin: 0 2px;
+}
+
+.f-listbox-item span {
+    vertical-align: middle;
+}
+
+.f-listbox-clear {
+    font-size: 8px;
+    font-style: italic;
 }
 
 
@@ -307,8 +352,230 @@ body {
 }
 
 
+.f-tree-node {
+    white-space: nowrap;
+    cursor: pointer;
+    height: 18px;
+    border: 0;
+    padding: 0;
+}
+
+.f-tree-space, 
+.f-tree-folder, 
+.f-tree-file, 
+.f-tree-check, 
+.f-tree-icon, 
+.f-tree-text {
+    display: inline-block;
+    width: 16px;
+    height: 100%;
+    overflow: hidden;
+}
+
+.f-tree-text {
+    width: auto;
+    padding: 0 2px;
+    line-height: 18px;
+    white-space: nowrap;
+}
+
+.f-tree-no-check .f-tree-check {
+    display: none;
+}
+
+.f-tree-no-icon .f-tree-icon {
+    display: none;
+}
+
+.f-tree-open {
+    background: url(flyingon.png) no-repeat -118px -40px;
+}
+
+.f-tree-close {
+    background: url(flyingon.png) no-repeat -101px -40px;
+}
+
+.f-tree-theme-blue .f-tree-open {
+    background: url(flyingon.png) no-repeat -36px -38px;
+}
+
+.f-tree-theme-blue .f-tree-close {
+    background: url(flyingon.png) no-repeat -16px -38px;
+}
+
+.f-tree-theme-plus .f-tree-open {
+    background: url(flyingon.png) no-repeat -36px -93px;
+}
+
+.f-tree-theme-plus .f-tree-close {
+    background: url(flyingon.png) no-repeat -15px -93px;
+}
+
+.f-tree-theme-line .f-tree-open {
+    background: url(flyingon.png) no-repeat -215px -96px;
+}
+
+.f-tree-theme-line .f-tree-close {
+    background: url(flyingon.png) no-repeat -193px -96px;
+}
+
+.f-tree-theme-line .f-tree-file {
+    background: url(flyingon.png) no-repeat -246px -67px;
+}
+
+.f-tree-theme-line .f-tree-space {
+    background: url(flyingon.png) no-repeat -205px -65px;
+}
+
+.f-tree-theme-line .f-tree-node-last>.f-tree-open {
+    background: url(flyingon.png) no-repeat -79px -94px;
+}
+
+.f-tree-theme-line .f-tree-node-last>.f-tree-close {
+    background: url(flyingon.png) no-repeat -57px -94px;
+}
+
+.f-tree-theme-line .f-tree-node-last>.f-tree-file {
+    background: url(flyingon.png) no-repeat -182px -73px;
+}
+
+.f-rtl .f-tree-theme-line .f-tree-open {
+    background: url(flyingon.png) no-repeat -171px -96px;
+}
+
+.f-rtl .f-tree-theme-line .f-tree-close {
+    background: url(flyingon.png) no-repeat -148px -96px;
+}
+
+.f-rtl .f-tree-theme-line .f-tree-file {
+    background: url(flyingon.png) no-repeat -228px -67px;
+}
+
+.f-rtl .f-tree-theme-line .f-tree-node-last>.f-tree-open {
+    background: url(flyingon.png) no-repeat -126px -94px;
+}
+
+.f-rtl .f-tree-theme-line .f-tree-node-last>.f-tree-close {
+    background: url(flyingon.png) no-repeat -104px -94px;
+}
+
+.f-rtl .f-tree-theme-line .f-tree-node-last>.f-tree-file {
+    background: url(flyingon.png) no-repeat -167px -73px;
+}
+
+.f-tree-checked {
+    background: url(flyingon.png) no-repeat -42px -66px;
+}
+
+.f-tree-checked2 {
+    background: url(flyingon.png) no-repeat -66px -66px;
+}
+
+.f-tree-unchecked {
+    background: url(flyingon.png) no-repeat -18px -66px;
+}
+
+.f-tree-icon-open {
+    background: url(flyingon.png) no-repeat -115px -67px;
+}
+
+.f-tree-icon-close {
+    background: url(flyingon.png) no-repeat -90px -67px;
+}
+
+.f-tree-icon-file {
+    background: url(flyingon.png) no-repeat -141px -66px;
+}
+
+
+.f-groupbox {
+    overflow: hidden;
+}
+
+.f-groupbox-head,
+.f-groupbox-body,
+.f-groupbox-line {
+    position: absolute;
+    display: block;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.f-groupbox-head {
+    padding: 0 4px;
+    cursor: default;
+}
+
+.f-groupbox-line {
+    top: auto;
+    height: 1px;
+}
+
+.f-groupbox-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-top: -4px;
+    vertical-align: middle;
+}
+
+.f-groupbox-flag {
+    position: absolute;
+    display: inline-block;
+    top: 50%;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
+}
+
+.f-groupbox-open {
+    background: url(flyingon.png) no-repeat -87px -16px;
+}
+
+.f-groupbox-close {
+    background: url(flyingon.png) no-repeat -63px -15px;
+}
+
+
 .f-tab {
     overflow: hidden;
+}
+
+.f-tab-head, 
+.f-tab-line,
+.f-tab-forward,
+.f-tab-back,
+.f-tab-content, 
+.f-tab-item-host,
+.f-tab-item,
+.f-tab-body {
+    position: absolute;
+    display: block;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.f-tab-item,
+.f-tab-forward, 
+.f-tab-back {
+    -moz-box-sizing: border-box;  
+    -webkit-box-sizing: border-box; 
+    -o-box-sizing: border-box; 
+    -ms-box-sizing: border-box; 
+    box-sizing: border-box; 
 }
 
 .f-tab-forward,
@@ -393,6 +660,11 @@ body {
 .f-tab-direction-top .f-tab-content, 
 .f-tab-direction-bottom .f-tab-content {
     right: auto;
+}
+
+.f-rtl .f-tab-direction-top .f-tab-content, 
+.f-rtl .f-tab-direction-bottom .f-tab-content {
+    left: auto;
 }
 
 .f-tab-direction-left .f-tab-content, 
@@ -483,147 +755,58 @@ body {
 }
 
 
-.f-tree ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-}
-
-.f-tree-node {
-    white-space: nowrap;
-    cursor: pointer;
-    height: 18px;
-    border: 0;
-    padding: 0;
-}
-
-.f-tree-space, 
-.f-tree-folder, 
-.f-tree-file, 
-.f-tree-check, 
-.f-tree-icon, 
-.f-tree-text {
-    display: inline-block;
-    width: 16px;
+.f-overlay {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
     height: 100%;
+    filter:alpha(opacity=10);
+    opacity: 0.1;
+    z-index: 100;
+}
+
+
+.f-popup {
+    z-index: 100;
+}
+
+
+.f-dialog {
     overflow: hidden;
+    z-index: 99;
 }
 
-.f-tree-text {
-    width: auto;
-    padding: 0 2px;
-    line-height: 18px;
-    white-space: nowrap;
-}
-
-.f-tree-no-check .f-tree-check {
-    display: none;
-}
-
-.f-tree-no-icon .f-tree-icon {
-    display: none;
-}
-
-.f-tree-open {
-    background: url(flyingon.png) no-repeat -118px -40px;
-}
-
-.f-tree-close {
-    background: url(flyingon.png) no-repeat -101px -40px;
-}
-
-.f-tree-theme-blue .f-tree-open {
-    background: url(flyingon.png) no-repeat -36px -38px;
-}
-
-.f-tree-theme-blue .f-tree-close {
-    background: url(flyingon.png) no-repeat -16px -38px;
-}
-
-.f-tree-theme-plus .f-tree-open {
-    background: url(flyingon.png) no-repeat -36px -93px;
-}
-
-.f-tree-theme-plus .f-tree-close {
-    background: url(flyingon.png) no-repeat -15px -93px;
-}
-
-.f-tree-theme-line .f-tree-open {
-    background: url(flyingon.png) no-repeat -215px -96px;
-}
-
-.f-tree-theme-line .f-tree-close {
-    background: url(flyingon.png) no-repeat -193px -96px;
-}
-
-.f-tree-theme-line .f-tree-file {
-    background: url(flyingon.png) no-repeat -246px -67px;
-}
-
-.f-tree-theme-line .f-tree-space {
-    background: url(flyingon.png) no-repeat -205px -65px;
-}
-
-.f-tree-theme-line .f-tree-node-last>.f-tree-open {
-    background: url(flyingon.png) no-repeat -79px -94px;
-}
-
-.f-tree-theme-line .f-tree-node-last>.f-tree-close {
-    background: url(flyingon.png) no-repeat -57px -94px;
-}
-
-.f-tree-theme-line .f-tree-node-last>.f-tree-file {
-    background: url(flyingon.png) no-repeat -182px -73px;
-}
-
-.f-tree-theme-line .f-tree-list-last .f-tree-space:first-child {
-    background: none;
-}
-
-.f-tree-checked {
-    background: url(flyingon.png) no-repeat -42px -66px;
-}
-
-.f-tree-checked2 {
-    background: url(flyingon.png) no-repeat -66px -66px;
-}
-
-.f-tree-unchecked {
-    background: url(flyingon.png) no-repeat -18px -66px;
-}
-
-.f-tree-icon-open {
-    background: url(flyingon.png) no-repeat -115px -67px;
-}
-
-.f-tree-icon-close {
-    background: url(flyingon.png) no-repeat -90px -67px;
-}
-
-.f-tree-icon-file {
-    background: url(flyingon.png) no-repeat -141px -66px;
-}
-
-
-.f-dialog,
-.f-groupbox {
-    overflow: hidden;
+.f-dialog-active {
+    z-index: 100;
 }
 
 .f-dialog-head,
-.f-groupbox-head {
+.f-dialog-body,
+.f-dialog-line {
+    position: absolute;
+    display: block;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.f-dialog-head {
     padding: 0 4px;
     cursor: default;
 }
 
-.f-dialog-line,
-.f-groupbox-line {
+.f-dialog-line {
     top: auto;
     height: 1px;
 }
 
-.f-dialog-icon,
-.f-groupbox-icon {
+.f-dialog-icon {
     display: inline-block;
     width: 16px;
     height: 16px;
@@ -631,8 +814,7 @@ body {
     vertical-align: middle;
 }
 
-.f-dialog-close,
-.f-groupbox-flag {
+.f-dialog-close {
     position: absolute;
     display: inline-block;
     top: 50%;
@@ -640,11 +822,9 @@ body {
     width: 16px;
     height: 16px;
     margin-top: -8px;
-}
-
-.f-dialog-close {
     background: url(flyingon.png) no-repeat -108px -15px;
 }
+
 
 .f-message-foot {
     text-align: center;
@@ -668,12 +848,4 @@ body {
 
 .f-message-error {
     background: url(flyingon.png) no-repeat -3px -183px;
-}
-
-.f-groupbox-open {
-    background: url(flyingon.png) no-repeat -87px -16px;
-}
-
-.f-groupbox-close {
-    background: url(flyingon.png) no-repeat -63px -15px;
 }

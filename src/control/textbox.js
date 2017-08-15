@@ -1,14 +1,35 @@
 flyingon.__extend_text = function () {
 
-    
-    this.defaultHeight = 25;
+
+
+    this.defineProperty('placehodler', '');
+
+
+
+    this.selectionStart = function (value) {
+        
+        return this.renderer.selectionStart(value);
+    };
+
+
+    this.selectionEnd = function (value) {
+
+        return this.renderer.selectionEnd(value);
+    };
+
+
+    this.select = function () {
+
+        return this.renderer.select();
+    };
+
 
 
 };
 
 
 
-flyingon.defineClass('TextBox', flyingon.Control, function (base) {
+flyingon.Control.extend('TextBox', function (base) {
     
 
 
@@ -29,6 +50,9 @@ flyingon.defineClass('TextBox', flyingon.Control, function (base) {
 
     flyingon.__extend_text.call(this);
     
-    
+
+    this['max-length'] = this.defineProperty('maxLength', 0);
+
+
 
 }).register();

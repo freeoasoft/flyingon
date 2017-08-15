@@ -1,28 +1,22 @@
 flyingon.renderer('Label', function (base) {
 
 
-    
 
-    this.render = function (writer, control, css) {
+    this.render = function (writer, control) {
 
-        var text = control.text();
+        var storage = control.__storage || control.__defaults,
+            text = storage.text;
 
-        if (text)
+        if (text && !storage.html)
         {
-            text = flyingon.html_encode(text, false);
+            text = flyingon.html_encode(text);
         }
 
         writer.push('<span');
         
-        this.renderDefault(writer, control, css);
+        this.renderDefault(writer, control);
         
         writer.push('>', text, '</span>');
-    };
-
-
-    this.text = function (control, view, value) {
-
-        view[this.__text_name] = value && flyingon.html_encode(value) || '';
     };
 
 
@@ -39,6 +33,22 @@ flyingon.renderer('Label', function (base) {
         {
             view.style.width = control.offsetWidth + 'px';
             control.offsetHeight = view && view.offsetHeight || 0;
+        }
+    };
+
+
+
+    this.text = function (control, view) {
+
+        var storage = control.__storage || control.__defaults;
+
+        if (storage.html)
+        {
+            view.innerHTML = storage.text;
+        }
+        else
+        {
+            view[this.__text_name] = storage.text;
         }
     };
 

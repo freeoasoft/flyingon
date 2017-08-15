@@ -2,20 +2,20 @@ flyingon.renderer('TextButton', function (base) {
 
     
 
-    this.render = function (writer, control, css) {
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             text = control.text(),
-            size = storage.size;
+            size = storage.buttonSize;
 
         if (text)
         {
-            text = flyingon.html_encode(text, false);
+            text = flyingon.html_encode(text);
         }
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, css);
+        this.renderDefault(writer, control);
 
         writer.push('>',
                 '<div class="f-textbutton-body" style="right:', size, 'px;">',

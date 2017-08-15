@@ -15,18 +15,18 @@ flyingon.renderer('TextBox', function (base) {
 
     
 
-    this.render = function (writer, control, css) {
+    this.render = function (writer, control) {
 
         var text = control.text();
 
         if (text)
         {
-            text = flyingon.html_encode(text, false);
+            text = flyingon.html_encode(text);
         }
 
         writer.push('<input type="text"');
         
-        this.renderDefault(writer, control, css);
+        this.renderDefault(writer, control);
         
         writer.push(' value="', text, '"/>');
     };

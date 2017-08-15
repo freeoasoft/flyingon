@@ -4,7 +4,7 @@
 
     var components = flyingon.components;
 
-    var unkown = flyingon.Unkown;
+    var unkown = flyingon.HtmlElement;
 
     var reader = new flyingon.SerializeReader();
 
@@ -55,7 +55,7 @@
         }
 
         template = template.ast;
-        control = new (components[template.Class] || unkown)();
+        control = options.control || new (components[template.Class] || unkown)();
 
         if (any = options.creating)
         {

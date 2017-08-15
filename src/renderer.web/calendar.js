@@ -2,8 +2,6 @@ flyingon.renderer('Calendar', function (base) {
 
 
 
-    var i18n;
-
     var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     //var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -11,11 +9,11 @@ flyingon.renderer('Calendar', function (base) {
 
 
 
-    this.render = function (writer, control, css) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, css, '', 'padding:8px;');
+        this.renderDefault(writer, control, '', 'padding:8px;');
         
         writer.push('></div>');
     };
@@ -280,11 +278,18 @@ flyingon.renderer('Calendar', function (base) {
     };
 
 
-    this.update = function (control, css) {
+    this.update = function (control) {
 
-        base.update.call(this, control, css);
+        base.update.call(this, control);
 
-        i18n = flyingon.i18ntext;
+        control.__data = null;
+        render(control);
+    };
+
+
+    this.__location_patch = function (control, view) {
+
+        base.__location_patch.call(this, control, view);
 
         control.__data = null;
         render(control);
@@ -348,7 +353,7 @@ flyingon.renderer('Calendar', function (base) {
 
         year = (data[4] / 20 | 0) * 20 + 1;
 
-        any = i18n('calendar.title', 'Y')[0];
+        any = flyingon.i18ntext('calendar.title', 'Y')[0];
         any = any.replace('Y', year) + ' - ' + any.replace('Y', year + 19);
         any = '<span tag="to-' + (control.month() ? 'month">' : 'date">') + any + '</span>';
 
@@ -386,6 +391,7 @@ flyingon.renderer('Calendar', function (base) {
     function render_month(control, data) {
 
         var writer = [],
+            i18n = flyingon.i18ntext,
             storage = control.__storage || control.__defaults,
             min = storage.min,
             max = storage.max,
@@ -452,6 +458,7 @@ flyingon.renderer('Calendar', function (base) {
     function render_date(control, data) {
 
         var writer = [],
+            i18n = flyingon.i18ntext,
             storage = control.__storage || control.__defaults,
             min = storage.min,
             max = storage.max,
@@ -671,11 +678,8 @@ flyingon.renderer('Calendar', function (base) {
 
     this.refresh = function (control) {
 
-        if (!control.__update_dirty)
-        {
-            control.__data = null;
-            render(control);
-        }
+        control.__data = null;
+        render(control);
     };
     
 

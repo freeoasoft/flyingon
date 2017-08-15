@@ -135,7 +135,7 @@ flyingon.SerializeReader = flyingon.defineClass(function () {
                 }
                 else
                 {
-                    target = new flyingon.Unkown();
+                    target = new flyingon.HtmlElement();
                     target.tagName = data.Class;
                 }
 

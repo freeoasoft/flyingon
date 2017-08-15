@@ -3,6 +3,11 @@
     
     
 
+    //是否右向顺序
+    flyingon.rtl = false;
+
+
+
     var self = this;
 
     //注册的渲染器集合
@@ -34,6 +39,7 @@
 
 
 
+
     //滚动条位置控制
     this.__scroll_html = '<div style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;" tag="scroll"></div>';
 
@@ -50,6 +56,10 @@
 
     //盒子模型是否不包含内边距
     this.__no_padding = true;
+
+
+    //是否设置padding
+    this.padding = 1;
     
 
 
@@ -82,6 +92,13 @@
 
 
     function css_sides(value) {
+
+        var any = +value;
+
+        if (any === any)
+        {
+            return sides_cache[value] = (any | 0) + 'px';
+        }
 
         return sides_cache[value] = value ? value.replace(/(\d+)(\s+|$)/g, '$1px$2') : '';
     };
@@ -116,21 +133,22 @@
 
 
     //渲染html
-    this.render = function (writer, control, css) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, control, css);
+        this.renderDefault(writer, control);
 
         writer.push('></div>');
     };
 
 
     //渲染控件默认样式及属性
-    this.renderDefault = function (writer, control, cssLayout, className, cssText) {
+    this.renderDefault = function (writer, control, className, cssText) {
 
         var storage = control.__storage || control.__defaults,
             encode = flyingon.html_encode,
+            html = control.__as_html,
             any;
 
         control.hasRender = true;
@@ -141,9 +159,9 @@
         }
 
         writer.push(' class="', encode(control.fullClassName), 
-            cssLayout ? ' f-html' : ' f-absolute',
+            html ? ' f-html' : ' f-absolute', 
             className ? ' ' + className : '',
-             '" style="');
+            '" style="');
 
         if (cssText)
         {
@@ -159,25 +177,23 @@
         {
             control.__location_dirty = 0;
 
-            if (cssLayout)
+            if (html)
             {
                 this.__render_location(writer, control, any);
             }
-            else 
-            {
-                if (any & 8)
-                {
-                    writer.push('border-width:', sides_cache[storage.border] || css_sides(storage.border));
-                }
-                
-                if ((any & 16) && this.__no_padding)
-                {
-                    writer.push('padding:', sides_cache[storage.padding] || css_sides(storage.padding));
-                }
-            }
         }
 
-        if (!control.__visible)
+        if (any = storage.border)
+        {
+            writer.push('border-width:', sides_cache[any] || css_sides(any), ';');
+        }
+        
+        if ((any = storage.padding) && this.padding)
+        {
+            writer.push('padding:', sides_cache[any] || css_sides(any), ';');
+        }
+
+        if (!storage.visible)
         {
             writer.push('display:none;');
         }
@@ -254,7 +270,7 @@
             {
                 if ((value = values[name]) || value === 0)
                 {
-                    writer.push(' ', name, '="', encode(value), '"');
+                    writer.push(' ', name, '="', encode('' + value), '"');
                 }
 
                 //标记已处理
@@ -303,10 +319,9 @@
                         break;
 
                     case 4:
-                    case 16:
-                        if (value = values[name = flag === 4 ? 'margin' : 'padding'])
+                        if (value = values.margin)
                         {
-                            writer.push(name, ':', sides_cache[value] || css_sides(value), ';');
+                            writer.push('margin:', sides_cache[value] || css_sides(value), ';');
                         }
                         break;
 
@@ -314,6 +329,13 @@
                         if (value = values.border)
                         {
                             writer.push('border-width:', sides_cache[value] || css_sides(value), ';');
+                        }
+                        break;
+
+                    case 16:
+                        if (this.padding && (value = values.padding))
+                        {
+                            writer.push('padding:', sides_cache[value] || css_sides(value), ';');
                         }
                         break;
 
@@ -399,10 +421,25 @@
     //更新顶层控件
     this.__update_top = function (control, width, height) {
 
+        var view = control.view,
+            index = view.className.indexOf(' f-rtl');
+
         control.__location_values = null;
         control.left = control.top = 0;
 
         control.measure(width, height, width, height, height ? 3 : 1);
+
+        if (flyingon.rtl)
+        {
+            if (index < 0)
+            {
+                view.className += ' f-rtl';
+            }
+        }
+        else if (index >= 0)
+        {
+            view.className = view.className.replace(' f-rtl', '');
+        }
         
         if (control.__update_dirty || control.__arrange_dirty)
         {
@@ -412,76 +449,38 @@
 
 
     //更新布局
-    this.update = function (control, css) {
+    this.update = function (control) {
 
-        var dirty = control.__location_dirty,
-            any;
-
-        control.__update_dirty = false;
-
-        if (dirty)
-        {
-            control.__location_dirty = 0;
-
-            if (css)
-            {
-                this.__update_location(control, dirty);
-            }
-            else
-            {
-                if (dirty & 8) //如果边框发生了变化
-                {
-                    any = (control.__storage || control.__defaults).border;
-                    control.view.style.borderWidth = sides_cache[any] || css_sides(any);
-                }
-                
-                if ((dirty & 16) && this.__no_padding) //如果内边距发生了变化
-                {
-                    any = (control.__storage || control.__defaults).padding;
-                    control.view.style.padding = sides_cache[any] || css_sides(any);
-                }
-            }
-        }
-
-        if (!css)
-        {
-            this.__update_layout(control, control.view.style);
-        }
-    };
-
-
-    //布局定位方式
-    this.__update_layout = function (control, style) {
-
-        var cache = control.__style_cache,
-            auto = this.__auto_size && control.__auto_size,
+        var style = control.view.style,
+            cache = control.__style_cache,
+            value = this.__auto_size && control.__auto_size,
             left = control.offsetLeft,
             top = control.offsetTop,
-            width = auto & 1 ? 'auto' : control.offsetWidth,
-            height = auto & 2 ? 'auto' : control.offsetHeight,
-            flag,
+            width = (value & 1) ? 'auto' : control.offsetWidth,
+            height = (value & 2) ? 'auto' : control.offsetHeight,
             any;
 
-        if (flag = !cache)
+        if (any = !cache)
         {
             cache = control.__style_cache = {};
         }
 
-        if (flag || left !== cache.left)
+        if (any || left !== cache.left)
         {
-            style.left = (cache.left = left) + 'px';
+            //右向顺序设置right,否则设置left
+            style[flyingon.rtl ? 'right' : 'left'] = (cache.left = left) + 'px';
         }
 
-        if (flag || top !== cache.top)
+        if (any || top !== cache.top)
         {
             style.top = (cache.top = top) + 'px';
         }
 
-        if (flag || width !== cache.width)
+        if (any || width !== cache.width)
         {
             cache.width = width;
 
-            if (auto & 1)
+            if (value & 1)
             {
                 style.width = width;
             }
@@ -506,11 +505,11 @@
             }
         }
 
-        if (flag || height !== cache.height)
+        if (any || height !== cache.height)
         {
             cache.height = height;
 
-            if (auto & 1)
+            if (value & 2)
             {
                 style.height = height;
             }
@@ -534,6 +533,25 @@
                 style.height = height + 'px';
             }
         }
+
+        if (any = control.__location_dirty)
+        {
+            control.__location_dirty = 0;
+
+            if (any & 8)
+            {
+                value = control.border();
+                style.borderWidth = sides_cache[value] || css_sides(value);
+            }
+
+            if ((any & 16) && this.padding)
+            {
+                value = control.padding();
+                style.padding = sides_cache[value] || css_sides(value);
+            }
+        }
+
+        control.__update_dirty = false;
 
         return cache;
     };
@@ -561,15 +579,20 @@
     };
 
 
-    //更新css布局方式的位置信息
-    this.__update_location = function (control, dirty) {
 
-        var style = control.view.style,
+
+    //css布局方式的位置补丁
+    this.__location_patch = function (control, view) {
+
+        var style = view.style,
             values = control.__storage || control.__defaults,
+            dirty = control.__location_dirty,
             flag = 1,
             name,
             value,
             any;
+
+        control.__location_dirty = 0;
 
         while (dirty >= flag)
         {
@@ -594,17 +617,13 @@
 
                     case 4:
                     case 16:
-                        if (value = values[name = flag === 4 ? 'margin' : 'padding'])
-                        {
-                            style[name] = sides_cache[value] || css_sides(value);
-                        }
+                        value = values[name = flag === 4 ? 'margin' : 'padding'];
+                        style[name] = sides_cache[value] || css_sides(value);
                         break;
 
                     case 8:
-                        if (value = values.border)
-                        {
-                            style.borderWidth = sides_cache[value] || css_sides(value);
-                        }
+                        value = values.border;
+                        style.borderWidth = sides_cache[value] || css_sides(value);
                         break;
 
                     case 32:
@@ -612,19 +631,14 @@
                     case 128:
                     case 256:
                         any = location_map[flag];
-
-                        if (value = values[name = any[0]])
-                        {
-                           style[name] = value > 0 ? value + 'px' : value;
-                        }
+                        value = values[name = any[0]];
+                        style[name] = value > 0 ? value + 'px' : value;
                         break;
 
                     case 512:
                     case 1024:
-                        if (value = values[name = flag < 1000 ? 'left' : 'top'])
-                        {
-                            style[name] = (any = +value) === any ? value + 'px' : value;
-                        }
+                        value = values[name = flag < 1000 ? 'left' : 'top'];
+                        style[name] = (any = +value) === any ? value + 'px' : value;
                         break;
                 }
             }
@@ -899,14 +913,13 @@
     //渲染子项
     this.__render_children = function (writer, control, start, end) {
 
-        var css = this.__css_layout,
-            item;
+        var item;
 
         while (start < end)
         {
             if (item = control[start++])
             {
-                item.view || item.renderer.render(writer, item, item.__css_layout = css);
+                item.view || item.renderer.render(writer, item);
             }
         }
     };
@@ -956,7 +969,7 @@
             auto = control.__auto_size,
             hscroll, 
             vscroll,
-            item;
+            any;
 
         if (auto & 1)
         {
@@ -1006,9 +1019,9 @@
         //筛选出非隐藏控件
         for (var i = 0, l = control.length; i < l; i++)
         {
-            if ((item = control[i]) && (item.__storage || item.__defaults).visible)
+            if ((any = control[i]) && (any.__storage || any.__defaults).visible)
             {
-                list.push(item);
+                list.push(any);
             }
         }
 
@@ -1035,14 +1048,13 @@
     //更新子控件
     this.__update_children = function (control, start, end) {
 
-        var css = this.__css_layout,
-            item;
+        var item;
 
         while (start < end)
         {
             if ((item = control[start++]) && item.view)
             {
-                item.renderer.update(item, css);
+                item.renderer.update(item);
             }
         }
     };

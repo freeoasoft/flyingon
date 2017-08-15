@@ -6,13 +6,13 @@ flyingon.renderer('Tree', function (base) {
 
 
 
-    this.render = function (writer, control, css) {
+    this.render = function (writer, control) {
 
         var any = control.__storage || control.__defaults;
         
         writer.push('<div');
         
-        this.renderDefault(writer, control, css, 
+        this.renderDefault(writer, control, 
             'f-tree-theme-' + any.theme + 
                 (!any.checked ? ' f-tree-no-check' : '') + 
                 (!any.icon ? ' f-tree-no-icon' : ''), 

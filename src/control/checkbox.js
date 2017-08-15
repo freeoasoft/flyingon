@@ -1,4 +1,22 @@
-flyingon.defineClass('CheckBox', flyingon.Control, function (base) {
+flyingon.Control.extend('CheckBox', function (base) {
+
+
+    this.defineProprty('name', false, {
+
+        set: function (value) {
+
+            this.hasRender && this.renderer.set(this, 'name', value);
+        }   
+    });
+
+
+    this.defineProprty('checked', false, {
+
+        set: function (value) {
+
+            this.hasRender && this.renderer.set(this, 'checked', value);
+        }   
+    });
 
 
 }).register();

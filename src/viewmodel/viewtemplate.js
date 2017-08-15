@@ -24,7 +24,7 @@ flyingon.view.Template = flyingon.defineClass(function () {
 
 
     //解析html模板生成虚拟树
-    this.parse = function () {
+    this.parse = function (multi) {
 
         var ast = this.ast,
             any;
@@ -36,7 +36,7 @@ flyingon.view.Template = flyingon.defineClass(function () {
 
             ast = parse(any, []);
 
-            if (ast instanceof Array)
+            if (!multi && ast instanceof Array)
             {
                 if (ast[1])
                 {

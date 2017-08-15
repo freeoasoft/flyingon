@@ -4,21 +4,12 @@ flyingon.__extend_container = function (childrenClass) {
 
 
 
-    //控件检测不通过提醒
-    var check_error = 'control is not type of ';
-
-
     var array = Array.prototype;
 
 
 
-    //允许添加的子控件类型
+
     this.childrenClass = childrenClass || flyingon.Control;
-    
-
-    //标记是容器控件
-    this.__is_container = true;
-
 
 
     //子控件数量
@@ -150,17 +141,27 @@ flyingon.__extend_container = function (childrenClass) {
         }
 
         var Class = this.childrenClass,
+            html = this instanceof flyingon.HtmlElement,
             patch = this.__content_render && !this.__insert_patch,
             item,
             any;
 
         while (index < length)
         {
-            if ((item = items[index]) instanceof Class)
+            item = items[index];
+
+            if (item.__flyingon_class)
             {
-                if (any = item.parent)
+                if (item instanceof Class)
                 {
-                    any.__remove_item(item);
+                    if (any = item.parent)
+                    {
+                        any.__remove_item(item);
+                    }
+                }
+                else
+                {
+                    this.__check_error(Class);
                 }
             }
             else if ((item = flyingon.ui(item, Class)) instanceof Class)
@@ -169,10 +170,16 @@ flyingon.__extend_container = function (childrenClass) {
             }
             else
             {
-                throw check_error + Class.fullName;
+                this.__check_error(Class);
             }
 
             item.parent = this;
+
+            if ((item.__as_html = html) && item.__location_dirty &&
+                (!(any = item.__view_patch) || !any.__location_patch))
+            {
+                item.renderer.set(item, '__location_patch');
+            }
 
             if (any = item.onparentchange)
             {
@@ -197,6 +204,14 @@ flyingon.__extend_container = function (childrenClass) {
 
         return any;
     };
+
+
+
+    this.__check_error = function (Class) {
+
+        throw '"' + this.Class.fullName + '" type can push "' + Class.fullName + '" type only!';
+    };
+
 
 
     //移除多个子项

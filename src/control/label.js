@@ -1,14 +1,27 @@
-flyingon.defineClass('Label', flyingon.Control, function (base) {
+flyingon.Control.extend('Label', function (base) {
    
         
-        
-    this.defineProperty('text', '', {
-        
-        set: function (value) {
+    
+    var define = function (self, name, defaultValue) {
 
-            this.hasRender && this.renderer.set(this, 'text', value);
-        }
-    });
+        self.defineProperty(name, defaultValue, {
+            
+            set: function () {
+
+                this.hasRender && this.renderer.set(this, 'text');
+            }
+        });
+    };
+
+
+    //标签文本
+    define(this, 'text', '');
+
+
+    //文本是否html
+    define(this, 'html', false);
+
+
     
     
     //测量自动大小

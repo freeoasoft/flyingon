@@ -1,10 +1,16 @@
-flyingon.i18n('button', {
+flyingon.i18n('system', {
     
     ok: '确定',
     cancel: '取消',
     yes: '是',
     no: '否',
     close: '关闭'
+});
+
+
+flyingon.i18n({
+
+    'listbox.clear': '--------'
 });
 
 

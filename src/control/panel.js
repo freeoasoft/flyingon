@@ -1,4 +1,4 @@
-flyingon.defineClass('Panel', flyingon.Control, function (base) {
+flyingon.Control.extend('Panel', function (base) {
 
 
 

@@ -19,7 +19,7 @@
     //根据选项创建界面元素
     flyingon.ui = function (options) {
 
-        var control = new (components[options.Class] || arguments[1] || flyingon.Control)();
+        var control = new (components[options.Class] || arguments[1] || flyingon.HtmlElement)();
 
         control.deserialize(reader, options);
 
@@ -85,7 +85,6 @@
 
         return exports;
     };
-
 
 
 })();
@@ -182,16 +181,7 @@ flyingon.__extend_visual = function () {
     };
     
 
-
-    
-    //获取控件在父控件中的索引
-    this.index = function () {
         
-        var parent = this.parent;
-        return parent ? parent.indexOf(this) : -1;
-    };
-    
-    
     //从父控件中移除
     this.remove = function () {
         

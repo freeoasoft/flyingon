@@ -31,15 +31,16 @@
             template: {
                 Class: 'div',
                 height: 65,
+                arrange: false,
                 children: [
                     { Class: 'Label', width: 90, ':text': 'item_label(item-index)', style: 'display:inline-block;' },
                     { Class: 'TextBox', ':value': 'item-text', width: 120, '#model': 'item-text' },
                     { Class: 'Button', ':text': 'operate.add', tag: 'add', margin: '0 5' },
                     { Class: 'Button', ':text': 'operate.edit', tag: 'edit' },
                     { Class: 'Button', ':text': 'operate.remove', tag: 'remove', margin: '0 5' },
-                    { Class: 'Panel', layout: 'vertical-line', width: 'auto', height: 50, padding: '4 0 4 90', style:'overflow:hidden;', 
+                    { Class: 'div', width: 'auto', height: 50, padding: '4 0 4 90', style:'overflow:hidden;', 
                         children: [
-                            { Class: 'div', '#loop': 'subitems(subitem)', ':width': 'subitem_width(subitem)', height: 5, style: 'background-color:silver;' }
+                            { Class: 'div', '#loop': 'subitems(subitem)', ':width': 'subitem_width(subitem)', style: 'margin:2px 0;background-color:silver;height:5px;' }
                         ]
                     }
                 ]

@@ -103,12 +103,6 @@
             
             container.arrangeRight += container.paddingRight;
             container.arrangeBottom += container.paddingBottom;
-
-            //非子布局 从左向左处理(注:子布局不需处理,由上层布局统一处理)
-            if (!sublayout && (flyingon.rtl || any.rtl()))
-            {
-                arrange_rtl(container, items);
-            }
         }
         else
         {
@@ -408,27 +402,6 @@
     };
 
         
-    //从右到左排列
-    function arrange_rtl(container, items) {
-
-        var width = container.arrangeWidth,
-            any = container.arrangeRight;
-        
-        if (width < any)
-        {
-            width = any;
-        }
-        
-        for (var i = 0, l = items.length; i < l; i++)
-        {
-            if (any = items[i])
-            {
-                any.offsetLeft = width - any.offsetLeft - any.offsetWidth;
-            }
-        }
-    };
-
-
 
 })();
 
@@ -458,10 +431,6 @@ flyingon.Layout = flyingon.defineClass(function () {
     //length	规定以具体单位计的值 比如像素 厘米等
     //number%   控件客户区高度的百分比
     this.defineProperty('spacingY', '2');
-
-
-    //是否按照从右到左的顺序排列
-    this.defineProperty('rtl', false);
 
    
     //子项定位属性值

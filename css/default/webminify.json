@@ -3,15 +3,16 @@
     
     {
         source: [
-            'src/base.css',
-            'src/messagebox.css',
-            'src/popup.css',
-            'src/dialog.css',
-            'src/tab.css',
-            'src/tree.css'
+            'flyingon.css'
         ],
 
-        output: 'flyingon.css'
+        output: 'flyingon.min.css',
+        
+        plugins: [
+            {
+                name: './webminify_css'
+            }
+        ]
     }
 
 ]

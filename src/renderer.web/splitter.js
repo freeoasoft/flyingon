@@ -3,21 +3,21 @@ flyingon.renderer('Splitter', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control, css) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, control, css, '', 'cursor:ew-resize;');
+        this.renderDefault(writer, control, '', 'cursor:ew-resize;');
 
         writer.push('><div></div></div>');
     };
     
 
-    this.update = function (control, css) {
+    this.update = function (control) {
 
         var vertical = control.offsetWidth > control.offsetHeight;
 
-        base.update.call(this, control, css);
+        base.update.call(this, control);
 
         if (control.vertical !== vertical)
         {

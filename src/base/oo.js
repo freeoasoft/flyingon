@@ -150,7 +150,11 @@ var flyingon;
 
         module_stack = [], //模块栈
 
-        module_current; //当前模块
+        module_current, //当前模块
+
+        class_name = 'class name can use only letters and numbers and begin with a upper letter!',
+
+        class_fn = 'class fn must be a function!';
     
 
     
@@ -300,10 +304,6 @@ var flyingon;
     //property:         是否支持属性, 默认支持, 可以从非属性类继承生成非属性类, 不能从属性类继承生成非属性类
     flyingon.defineClass = function (name, superclass, fn, property) {
 
-
-        var base, prototype, module, fullName, any;
-
-        
         //处理参数
         if (typeof name !== 'string') //不传name则创建匿名类
         {
@@ -314,7 +314,7 @@ var flyingon;
         }
         else if (!/^[A-Z]\w*$/.test(name))
         {
-            throw 'class name can use only letters and numbers and begin with a upper letter!';
+            throw class_name;
         }
 
         if (typeof fn !== 'function')
@@ -327,14 +327,24 @@ var flyingon;
             }
             else
             {
-                throw 'class fn must be a function!';
+                throw class_fn;
             }
         }
         else if (!superclass || typeof superclass !== 'function') //处理父类
         {
             superclass = Object;
         }
+
+        return defineClass(name, superclass, fn, property);
+    };
         
+
+    //定义类
+    function defineClass(name, superclass, fn, property) {
+
+
+        var Class, base, prototype, module, fullName, any;
+
 
         //定义类
         function Class() {
@@ -372,6 +382,7 @@ var flyingon;
             if (any)
             {
                 prototype.defineProperty = defineProperty;
+                prototype.storage = storage;
                 prototype.get = get;
                 prototype.set = set;
                 prototype.defaultValue = defaultValue;
@@ -391,8 +402,6 @@ var flyingon;
 
             prototype.on = on;
             prototype.once = once;
-            prototype.suspend = suspend;
-            prototype.resume = resume;
             prototype.off = off;
             prototype.trigger = trigger;
             prototype.clone = clone;
@@ -452,9 +461,38 @@ var flyingon;
         //初始化类方法(可调用此方法强制类初始化)
         Class.init = init;
 
+        //派生子类方法
+        Class.extend = class_extend;
 
         //返回当前类型
         return Class;
+    };
+
+
+    //从当前类派生子类
+    //name:             类名称,省略即创建匿名类型(匿名类型不支持自动反序列化)
+    //fn:               类代码, 函数, 参数(base:父类原型, self:当前类原型)
+    //property:         是否支持属性, 默认支持, 可以从非属性类继承生成非属性类, 不能从属性类继承生成非属性类
+    function class_extend(name, fn, property) {
+
+        //处理参数
+        if (typeof name !== 'string') //不传name则创建匿名类
+        {
+            property = fn;
+            fn = superclass;
+            name = null;
+        }
+        else if (!/^[A-Z]\w*$/.test(name))
+        {
+            throw class_name;
+        }
+
+        if (typeof fn !== 'function')
+        {
+            throw class_fn;
+        }
+        
+        return defineClass(name, this, fn, property);
     };
 
 
@@ -672,7 +710,14 @@ var flyingon;
         };
     };
         
-            
+
+    //获取对象存储器
+    function storage() {
+
+        return this.__storage || (this.__storage = create(this.__defaults));
+    };
+
+
     //获取指定名称的属性值
     function get(name) {
       
@@ -858,18 +903,18 @@ var flyingon;
 
     
     //绑定事件处理 注:type不带on
-    function on(type, fn, tag) {
+    function on(type, fn) {
 
         if (type && typeof fn === 'function')
         {
             var events = this.__events || (this.__events = create(null));
 
-            if (tag && tag > 0)
-            {
-                fn.tag = tag;
-            }
-            
             (events[type] || (events[type] = [])).push(fn);
+
+            if (fn = this.__event_on)
+            {
+                fn.apply(this, type);
+            }
         }
 
         return this;
@@ -877,7 +922,7 @@ var flyingon;
 
     
     //只执行一次绑定的事件
-    function once(type, fn, tag) {
+    function once(type, fn) {
 
         var self = this;
 
@@ -887,45 +932,10 @@ var flyingon;
             self.off(type, callback);
         };
 
-        return this.on(type, callback, tag);
+        return this.on(type, callback);
     };
 
-    
-    //暂停事件处理
-    function suspend(type) {
-
-        var events = this.__events;
-
-        if (events = events && events[type])
-        {
-            events.unshift(suspend_fn);
-        }
-
-        return this;
-    };
-
-    
-    //继续事件处理
-    function resume(type) {
-
-        var events = this.__events;
-
-        if ((events = events && events[type]) && events[0] === suspend_fn)
-        {
-            events.shift();
-        }
-
-        return this;
-    };
-
-    
-    //挂起方法
-    function suspend_fn(e) {
-
-        e.cancelBubble = true;
-    };
-
-    
+        
     //移除事件处理
     function off(type, fn) {
 
@@ -934,27 +944,7 @@ var flyingon;
 
         if (events)
         {
-            if (!fn && type > 0) //注销指定tag的事件
-            {
-                for (var type in events)
-                {
-                    items = events[type];
-
-                    for (var i = items.length - 1; i >= 0; i--)
-                    {
-                        if (items[i].tag === type)
-                        {
-                            items.splice(i, 1);
-                        }
-                    }
-
-                    if (!items.length)
-                    {
-                        items[type] = null;
-                    }
-                }
-            }
-            else if (type)
+            if (type)
             {
                 if (fn)
                 {
@@ -987,6 +977,11 @@ var flyingon;
                 }
 
                 this.__events = null;
+            }
+
+            if (fn = this.__event_off)
+            {
+                fn.call(this, type);
             }
         }
 
@@ -1172,8 +1167,6 @@ var flyingon;
     flyingon.on = on;
     flyingon.off = off;
     flyingon.once = once;
-    flyingon.suspend = suspend;
-    flyingon.resume = resume;
     flyingon.trigger = trigger;
     
     

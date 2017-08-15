@@ -70,9 +70,7 @@ flyingon.encode = function encode(data) {
 //html编码函数
 flyingon.html_encode = (function () {
     
-    var create = flyingon.create,
-        storage = create(null),
-        map = create(null);
+    var map = flyingon.create(null);
 
     map['&'] = '&amp;';
     map['<'] = '&lt;';
@@ -80,31 +78,20 @@ flyingon.html_encode = (function () {
     map['\''] = '&apos;';
     map['"'] = '&quot;';
 
-    function encode(text, cache) {
+    return function (text) {
 
-        var any;
-
-        if (text && typeof text !== 'string' && (any = +text) !== any)
+        if (text && typeof text === 'string')
         {
-            if (cache && (any = storage[text]))
-            {
-                return any;
-            }
+            var keys = map;
 
-            any = map;
+            return text.replace(/([&<>'"])/g, function (_, key) {
 
-            any = text.replace(/([&<>'"])/g, function (_, key) {
-
-                return any[key];
+                return keys[key];
             });
-
-            return cache ? (storage[text] = any) : any;
         }
 
         return '' + text;
     };
-
-    return encode;
 
 })();
 
@@ -120,7 +107,7 @@ flyingon.html_decode = (function () {
     map['apos'] = '\'';
     map['quot'] = '"';
 
-    function encode(text) {
+    return function (text) {
 
         var keys = map;
 
@@ -129,8 +116,6 @@ flyingon.html_decode = (function () {
             return keys[key] || key;
         });
     };
-
-    return encode;
 
 })();
 

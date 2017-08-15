@@ -1,4 +1,4 @@
-flyingon.defineClass('Plugin', flyingon.Panel, function (base) {
+flyingon.Panel.extend('Plugin', function (base) {
 
 
 

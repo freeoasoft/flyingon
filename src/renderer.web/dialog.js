@@ -2,7 +2,7 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
 
 
 
-    this.render = function (writer, control, css) {
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             head = storage.header,
@@ -11,11 +11,11 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, css);
+        this.renderDefault(writer, control);
         
         if (text)
         {
-            text = flyingon.html_encode(text, false);
+            text = flyingon.html_encode(text);
         }
 
         if (any = control.format)
@@ -256,7 +256,7 @@ flyingon.showMessage = function (title, text, type, buttons, focus) {
             height: 25,
             style: 'min-width:80px;vertical-align:middle;',
             tag: any[i],
-            text: flyingon.i18ntext('button.' + any[i], any[i])
+            text: flyingon.i18ntext('system.' + any[i], any[i])
         });
     }
 

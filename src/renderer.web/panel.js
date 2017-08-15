@@ -18,11 +18,11 @@ flyingon.renderer('Panel', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control, css) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, css);
+        this.renderDefault(writer, control);
         
         writer.push('>');
 
@@ -38,7 +38,7 @@ flyingon.renderer('Panel', function (base) {
 
 
     //重新渲染内容
-    this.__render_body = function (control, view) {
+    this.__render_content = function (control, view) {
 
         var writer = [];
 
@@ -79,13 +79,13 @@ flyingon.renderer('Panel', function (base) {
 
 
 
-    this.update = function (control, css) {
+    this.update = function (control) {
 
-        base.update.call(this, control, css);
+        base.update.call(this, control);
 
         if (control.length > 0 && !control.__content_render)
         {
-            this.__render_body(control, control.view_content || control.view);
+            this.__render_content(control, control.view_content || control.view);
         }
       
         //需要排列先重排

@@ -1,4 +1,4 @@
-flyingon.defineClass('DatePicker', flyingon.TextButton, function (base) {
+flyingon.TextButton.extend('DatePicker', function (base) {
 
 
     //日历控件

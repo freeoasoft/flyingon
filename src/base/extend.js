@@ -2,6 +2,24 @@
 (function () {
 
 
+    //转换数组项为键值对
+    this.pair = function (value) {
+
+        var map = flyingon.create(null);
+
+        if (value === void 0)
+        {
+            value = true;
+        }
+
+        for (var i = 0, l = this.length; i < l; i++)
+        {
+            map[this[i]] = value;
+        }
+
+        return map;
+    };
+
 
     this.indexOf || (this.indexOf = function (item, index) {
 

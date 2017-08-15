@@ -2,32 +2,88 @@ flyingon.renderer('Button', function (base) {
 
     
 
-    this.render = function (writer, control, css) {
-
-        var text = control.text();
-
-        if (text && !control.html())
-        {
-            text = flyingon.html_encode(text);
-        }
+    this.render = function (writer, control) {
 
         writer.push('<button type="button"');
         
-        this.renderDefault(writer, control, css);
+        this.renderDefault(writer, control);
         
-        writer.push('>', text, '</button>');
+        writer.push('>');
+
+        this.__render_content(writer, control);
+        
+        writer.push('</button>');
     };
 
 
-    this.text = function (control, view, value) {
+    this.__render_content = function (writer, control) {
 
-        if (control.html())
+        var encode = flyingon.html_encode,
+            storage = control.__storage || control.__defaults,
+            any;
+
+        if (any = storage.icon)
         {
-            view.innerHTML = value;
+            writer.push('<span class="', encode(any), '" style="width:', 
+                any = storage.iconSize, 'px;height:', any, 'px;">', '</span>');
+            
+            any = true;
+        }
+
+        if (any = storage.text)
+        {
+            if (any && storage.vertical)
+            {
+                writer.push('<br/>');
+            }
+
+            if (!storage.html)
+            {
+                any = encode(any);
+            }
+
+            writer.push('<span>', any, '</span>');
+        }
+    };
+
+
+    this.__measure_auto = function (control, auto) {
+
+        var view = control.view;
+
+        if (auto & 1)
+        {
+            control.offsetWidth = view && view.offsetWidth || 0;
+        }
+
+        if (auto & 2)
+        {
+            view.style.width = control.offsetWidth + 'px';
+            control.offsetHeight = view && view.offsetHeight || 0;
+        }
+    };
+
+
+    this.icon = this.iconSize = this.vertical = function (control, view, value) {
+
+        var writer = [];
+
+        this.__render_content(writer, control);
+        view.innerHTML = writer.join('');
+    };
+
+
+    this.text = this.html = function (control, view) {
+
+        var storage = control.__storage || control.__defaults;
+
+        if (storage.html)
+        {
+            view.lastChild.innerHTML = storage.text;
         }
         else
         {
-            view[this.__text_name] = value ? flyingon.html_encode(value) : value;
+            view.lastChild[this.__text_name] = storage.text;
         }
     };
 

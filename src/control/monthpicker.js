@@ -1,4 +1,4 @@
-flyingon.defineClass('MonthPicker', flyingon.TextButton, function (base) {
+flyingon.TextButton.extend('MonthPicker', function (base) {
 
 
 
@@ -7,6 +7,7 @@ flyingon.defineClass('MonthPicker', flyingon.TextButton, function (base) {
 
 
     this.defaultValue('button', 'f-datepicker-button');
+
 
 
     //日期值

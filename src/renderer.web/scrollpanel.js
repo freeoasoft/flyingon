@@ -18,7 +18,7 @@ flyingon.renderer('ScrollPanel', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control, css) {
+    this.render = function (writer, control) {
 
         var text = this.__scroll_html;
 
@@ -27,7 +27,7 @@ flyingon.renderer('ScrollPanel', function (base) {
         //此处只渲染一个空的壳,实现渲染内容在update的时候根据需要渲染
         writer.push('<div');
         
-        this.renderDefault(writer, control, css);
+        this.renderDefault(writer, control);
         
         writer.push('>',
                 '<div style="position:absolute;left:0;top:0;right:0;bottom:0;width:auto;height:auto;overflow:auto;">',
@@ -76,7 +76,11 @@ flyingon.renderer('ScrollPanel', function (base) {
 
     this.update = function (control) {
 
-        var start, end, item;
+        var cache = base.update.call(this, control),
+            name = flyingon.rtl ? 'paddingLeft' : 'paddingRight',
+            start, 
+            end, 
+            any;
 
         //需要排列先重排
         if (control.__arrange_dirty > 1)
@@ -94,15 +98,23 @@ flyingon.renderer('ScrollPanel', function (base) {
             {
                 while (start <= end)
                 {
-                    if ((item = control[start++]) && !item.__visible_area)
+                    if ((any = control[start++]) && !any.__visible_area)
                     {
-                        this.__update_position(item);
+                        this.__update_position(any);
                     }
                 }
             }
         }
 
-        base.update.call(this, control);
+        if (cache[name] !== (any = control.__vscroll ? flyingon.vscroll_width : 0))
+        {
+            control.view.style[name] = (cache[name] = any) + 'px';
+        }
+
+        if (cache.paddingBottom !== (any = control.__hscroll ? flyingon.hscroll_height : 0))
+        {
+            control.view.style.paddingBottom = (cache.paddingBottom = any) + 'px';
+        }
 
         start = control.__visible_start;
         end = control.__visible_end + 1;
@@ -117,28 +129,9 @@ flyingon.renderer('ScrollPanel', function (base) {
             
             this.__update_children(control, start, end);
         }
-    };
-
-
-    this.__update_layout = function (control, style) {
-
-        var cache = base.__update_layout.call(this, control, style),
-            name = flyingon.rtl ? 'paddingLeft' : 'paddingRight',
-            any;
-
-        if (cache[name] !== (any = control.__vscroll ? flyingon.vscroll_width : 0))
-        {
-            style[name] = (cache[name] = any) + 'px';
-        }
-
-        if (cache.paddingBottom !== (any = control.__hscroll ? flyingon.hscroll_height : 0))
-        {
-            style.paddingBottom = (cache.paddingBottom = any) + 'px';
-        }
 
         return cache;
     };
-    
 
 
     this.scroll = function (control, x, y) {

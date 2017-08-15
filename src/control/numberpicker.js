@@ -1,4 +1,4 @@
-flyingon.defineClass('NumberPicker', flyingon.Control, function (base) {
+flyingon.Control.extend('NumberPicker', function (base) {
 
 
 

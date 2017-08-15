@@ -1,4 +1,4 @@
-flyingon.defineClass('Splitter', flyingon.Control, function (base) {
+flyingon.Control.extend('Splitter', function (base) {
 
 
 

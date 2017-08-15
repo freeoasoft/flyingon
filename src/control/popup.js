@@ -7,7 +7,7 @@
 * closing: 关闭前事件(可取消)
 * closed: 关闭后事件
 */
-flyingon.defineClass('Popup', flyingon.Panel, function () {
+flyingon.Panel.extend('Popup', function () {
 
 
 

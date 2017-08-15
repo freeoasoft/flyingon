@@ -8,7 +8,7 @@ flyingon.renderer('Tab', function (base) {
 
 
 
-    this.render = function (writer, control, css) {
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             any;
@@ -17,7 +17,7 @@ flyingon.renderer('Tab', function (base) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, css, 'f-tab-direction-' + storage.direction);
+        this.renderDefault(writer, control, 'f-tab-direction-' + storage.direction);
         
         writer.push('><div class="f-tab-head f-tab-theme-', storage.theme, '" tag="head">',
                     '<div class="f-tab-line"></div>',
@@ -188,11 +188,11 @@ flyingon.renderer('Tab', function (base) {
 
 
 
-    this.update = function (control, css) {
+    this.update = function (control) {
 
         var page = control.selectedPage();
 
-        base.update.call(this, control, css);
+        base.update.call(this, control);
         
         if (control.__reset_header)
         {
@@ -230,6 +230,7 @@ flyingon.renderer('Tab', function (base) {
         var view = control.view.firstChild.firstChild.nextSibling,
             node = view.firstChild,
             length = control.length,
+            name = flyingon.rtl ? 'right' : 'left',
             storage = control.__storage || control.__defaults,
             vertical = 'left,right'.indexOf(storage.direction) >= 0,
             space = storage.space,
@@ -247,7 +248,7 @@ flyingon.renderer('Tab', function (base) {
         }
         else
         {
-            style = 'margin-left:' + space + 'px;height:' + any + 'px;line-height:' + (any - 1) + 'px;';
+            style = 'margin-' + name + ':' + space + 'px;height:' + any + 'px;line-height:' + (any - 1) + 'px;';
             total = control.offsetWidth - control.borderLeft - control.borderRight - storage.start;
         }
 
@@ -282,7 +283,7 @@ flyingon.renderer('Tab', function (base) {
             }
             else
             {
-                style += 'width:' + any + 'margin-left:' + space + 'px;';
+                style += 'width:' + any + 'margin-' + name + ':' + space + 'px;';
             }
 
             while (node)
@@ -320,7 +321,7 @@ flyingon.renderer('Tab', function (base) {
             control.__scroll_header = size = any = 0;
         }
 
-        view.style[vertical ? 'top' : 'left'] = -(storage.start + size) + 'px';
+        view.style[vertical ? 'top' : name] = -(storage.start + size) + 'px';
 
         node = view.nextSibling;
         node.style.display = node.nextSibling.style.display = any > 0 ? '' : 'none';

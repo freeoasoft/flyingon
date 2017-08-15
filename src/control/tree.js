@@ -268,7 +268,7 @@ flyingon.defineClass('TreeNode', function () {
 
 
 
-flyingon.defineClass('Tree', flyingon.Control, function (base) {
+flyingon.Control.extend('Tree', function (base) {
 
 
 

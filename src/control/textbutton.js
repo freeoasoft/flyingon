@@ -1,4 +1,4 @@
-flyingon.defineClass('TextButton', flyingon.Control, function (base) {
+flyingon.Control.extend('TextButton', function (base) {
 
 
 
@@ -35,7 +35,7 @@ flyingon.defineClass('TextButton', flyingon.Control, function (base) {
 
 
     //按钮大小
-    this.defineProperty('size', 16);
+    this['button-size'] = this.defineProperty('buttonSize', 16);
 
 
 

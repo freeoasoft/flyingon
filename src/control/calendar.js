@@ -1,5 +1,5 @@
 //日历控件
-flyingon.defineClass('Calendar', flyingon.Control, function (base) {
+flyingon.Control.extend('Calendar', function (base) {
 
 
 
@@ -19,7 +19,10 @@ flyingon.defineClass('Calendar', flyingon.Control, function (base) {
 
             set: function () {
 
-                this.hasRender && this.renderer.set(this, 'refresh');
+                if (this.hasRender && !this.__location_dirty)
+                {
+                    this.renderer.set(this, 'refresh');
+                }
             }
         });
     };

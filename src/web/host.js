@@ -459,22 +459,22 @@
 
     */
 
-    //w3c标准使用捕获模式
-    if (document.addEventListener)
-    {
-        on(document, 'focus', focus, true);
-        on(document, 'blur', blur, true);
-    }
-    else //IE
-    {
-        on(document, 'focusin', focus);
-        on(document, 'focusout', blur);
-    }
+    //IE
+    // if ('onfocusin' in document)
+    // {
+    //     on(document, 'focusin', focus);
+    //     on(document, 'focusout', blur);
+    // }
+    // else //w3c标准使用捕获模式
+    // {
+    //     on(document, 'focus', focus, true);
+    //     on(document, 'blur', blur, true);
+    // }
 
 
     function focus(e) {
 
-        if (focus.disabled)
+        if (focus.__disabled)
         {
             return true;
         }
@@ -491,12 +491,12 @@
         {
             try
             {
-                focus.disabled = true;
+                focus.__disabled = true;
                 control.renderer.focus(control);
             }
             finally
             {
-                focus.disabled = false;
+                focus.__disabled = false;
             }
         }
     };

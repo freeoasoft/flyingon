@@ -1,4 +1,4 @@
-flyingon.defineClass('Dialog', flyingon.Panel, function (base) {
+flyingon.Panel.extend('Dialog', function (base) {
 
 
 

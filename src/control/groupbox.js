@@ -1,4 +1,4 @@
-flyingon.defineClass('GroupBox', flyingon.Panel, function (base) {
+flyingon.Panel.extend('GroupBox', function (base) {
 
 
 

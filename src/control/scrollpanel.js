@@ -1,4 +1,4 @@
-flyingon.defineClass('ScrollPanel', flyingon.Panel, function (base) {
+flyingon.Panel.extend('ScrollPanel', function (base) {
 
 
     //预渲染

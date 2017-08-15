@@ -22,15 +22,15 @@
 
     <script type="text/x-template" id="template">
         <Panel :layout="layout" height="100%" :class:silver="silver" :style:background-color="color" padding="10">
-            <div width="auto" height="65" #loop="items(item, index)" @click="operate_click(item, index)">
+            <div arrange="false" width="auto" height="65" #loop="items(item, index)" @click="operate_click(item, index)">
                 <Label width="90" :text="item_label(item, index)" style="display:inline-block;" />
                 <TextBox width="120" :value="item.text" #model="item.text" />
                 <Button tag="add" :text="operate.add" margin="0 5" />
                 <Button tag="edit" :text="operate.edit" />
                 <Button tag="remove" :text="operate.remove" margin="0 5" />
-                <Panel layout="vertical-line" width="auto" height="50" padding="4 0 4 90" style="overflow:hidden;">
-                    <div #loop="item.items(subitem)" :width="subitem_width(subitem)" height="5" style="background-color:silver;" />
-                </Panel>
+                <div width="auto" height="50" padding="4 0 4 90" style="overflow:hidden;">
+                    <div #loop="item.items(subitem)" :width="subitem_width(subitem)" style="margin:2px 0;background-color:silver;height:5px;" />
+                </div>
             </div>
             <Label :text="text" />
         </Panel>

@@ -108,11 +108,15 @@ flyingon.defineClass('Control', function () {
             
             group: 'layout',
 
-            set: function (value) {
+            set: function () {
 
-                if (dirty)
+                var patch;
+
+                this.__location_dirty |= dirty;
+
+                if (this.__as_html && (!(patch = this.__view_patch) || !patch.__location_patch))
                 {
-                    this.__location_dirty |= dirty;
+                    this.renderer.set(this, '__location_patch');
                 }
 
                 this.__update_dirty || this.invalidate();
@@ -163,6 +167,20 @@ flyingon.defineClass('Control', function () {
 
     //内边距
     define(this, 'padding', '', 16);
+
+
+    define = function (self, name, defaultValue, dirty) {
+   
+        return self.defineProperty(name, defaultValue, {
+            
+            group: 'layout',
+
+            set: function () {
+
+                this.__update_dirty || this.invalidate();
+            }
+        });
+    };
 
 
     //控件横向对齐方式
