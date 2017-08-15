@@ -152,6 +152,8 @@ var flyingon;
 
         module_current, //当前模块
 
+        fragments = flyingon.fragments || (flyingon.fragments = create(null)), //功能片段集合
+
         class_name = 'class name can use only letters and numbers and begin with a upper letter!',
 
         class_fn = 'class fn must be a function!';
@@ -292,6 +294,23 @@ var flyingon;
         finally
         {
             flyingon.endModule();
+        }
+    };
+
+
+
+    //功能片段
+    flyingon.fragment = function (name, fn) {
+
+        var any;
+
+        if (typeof fn === 'function')
+        {
+            fragments[name] = fn;
+        }
+        else if (any = fragments[name])
+        {
+            any.apply(fn, Array.prototype.slice.call(arguments, 2));
         }
     };
 
@@ -1994,7 +2013,7 @@ Function.prototype.bind || (Function.prototype.bind = function (context) {
 
 
 //序列化功能扩展
-flyingon.__extend_serialize = function () {
+flyingon.fragment('f.serialize', function () {
     
     
        
@@ -2050,7 +2069,7 @@ flyingon.__extend_serialize = function () {
     };
 
 
-};
+});
 
 
 
@@ -2670,8 +2689,8 @@ flyingon.RowCollection = flyingon.defineClass(function () {
 
 
 
-//数据集功能扩展
-flyingon.__extend_dataset = function () {
+//数据集功能片段
+flyingon.fragment('f.dataset', function () {
     
     
     
@@ -2916,7 +2935,7 @@ flyingon.__extend_dataset = function () {
     };
     
     
-};
+});
 
 
 
@@ -3173,7 +3192,7 @@ flyingon.DataRow = flyingon.defineClass(flyingon.RowCollection, function () {
 
     
     //扩展数据集功能
-    flyingon.__extend_dataset.call(this);
+    flyingon.fragment('f.dataset', this);
     
 
     
@@ -3252,11 +3271,11 @@ flyingon.DataSet = flyingon.defineClass(flyingon.RowCollection, function () {
     
             
     //扩展可序列化功能
-    flyingon.__extend_serialize.call(this);
+    flyingon.fragment('f.serialize', this);
     
         
     //扩展数据集功能
-    flyingon.__extend_dataset.call(this);
+    flyingon.fragment('f.dataset', this);
     
     
         
@@ -3733,8 +3752,8 @@ flyingon.DataSet = flyingon.defineClass(flyingon.RowCollection, function () {
 
 
 
-//可绑定对象扩展
-flyingon.__extend_bindable = function () {
+//可绑定功能片段
+flyingon.fragment('f.bindable', function () {
     
     
 
@@ -3875,7 +3894,7 @@ flyingon.__extend_bindable = function () {
 
     
     
-};
+});
 
 
 
@@ -3975,7 +3994,7 @@ flyingon.__extend_bindable = function () {
 
 
 //可视组件基础功能扩展
-flyingon.__extend_visual = function () {
+flyingon.fragment('f.visual', function () {
 
 
     //根据uniqueId组织的控件集合
@@ -4338,7 +4357,7 @@ flyingon.__extend_visual = function () {
     
 
 
-};
+});
 
 
 
@@ -12741,6 +12760,29 @@ flyingon.renderer('TreeNode', function (base) {
 
 
 
+flyingon.renderer('Grid', function (base) {
+
+
+    
+
+
+    this.renderRow = function (grid, dom, start, end) {
+
+    };
+
+
+});
+
+
+
+flyingon.renderer('TreeGrid', 'Grid', function (base) {
+
+
+});
+
+
+
+
 flyingon.renderer('Tab', function (base) {
 
 
@@ -13872,11 +13914,11 @@ flyingon.defineClass('Control', function () {
         
     
     //扩展可视组件功能
-    flyingon.__extend_visual.call(this);
+    flyingon.fragment('f.visual', this);
 
         
     //扩展可绑定功能
-    flyingon.__extend_bindable.call(this);
+    flyingon.fragment('f.bindable', this);
     
 
 
@@ -14675,7 +14717,7 @@ flyingon.defineClass('Control', function () {
     
     
     //扩展可序列化功能
-    flyingon.__extend_serialize.call(this);
+    flyingon.fragment('f.serialize', this);
 
 
     
@@ -14822,7 +14864,7 @@ flyingon.Control.extend('HtmlElement', function (base) {
     
 
     //扩展容器功能
-    flyingon.__extend_container.call(this);
+    flyingon.fragment('f.container', this);
 
 
 
@@ -15156,18 +15198,13 @@ flyingon.Control.extend('ProgressBar', function (base) {
 
 
 
-//容器组件功能扩展
-flyingon.__extend_container = function (childrenClass) {
-
+//集合功能扩展
+flyingon.fragment('f.collection', function () {
 
 
 
     var array = Array.prototype;
 
-
-
-
-    this.childrenClass = childrenClass || flyingon.Control;
 
 
     //子控件数量
@@ -15265,6 +15302,30 @@ flyingon.__extend_container = function (childrenClass) {
         
         return this;
     };
+
+
+});
+
+
+
+//容器组件功能扩展
+flyingon.fragment('f.container', function (childrenClass) {
+
+
+
+
+    var array = Array.prototype;
+
+
+
+    //子控件类
+    this.childrenClass = childrenClass || flyingon.Control;
+
+
+
+    //扩展集合功能
+    flyingon.fragment('f.collection', this);
+
 
 
     //分离所有子控件
@@ -15688,7 +15749,7 @@ flyingon.__extend_container = function (childrenClass) {
 
 
 
-};
+});
 
 
 
@@ -15738,7 +15799,7 @@ flyingon.Control.extend('Panel', function (base) {
 
 
     //扩展容器功能
-    flyingon.__extend_container.call(this);
+    flyingon.fragment('f.container', this);
 
 
               
@@ -16596,7 +16657,7 @@ flyingon.Control.extend('CheckBox', function (base) {
 
 
 
-flyingon.__extend_text = function () {
+flyingon.fragment('f.text', function () {
 
 
 
@@ -16623,7 +16684,7 @@ flyingon.__extend_text = function () {
 
 
 
-};
+});
 
 
 
@@ -16646,7 +16707,7 @@ flyingon.Control.extend('TextBox', function (base) {
     };
 
 
-    flyingon.__extend_text.call(this);
+    flyingon.fragment('f.text', this);
     
 
     this['max-length'] = this.defineProperty('maxLength', 0);
@@ -16699,7 +16760,7 @@ flyingon.Control.extend('TextButton', function (base) {
 
 
 
-    flyingon.__extend_text.call(this);
+    flyingon.fragment('f.text', this);
 
 
 
@@ -17435,7 +17496,7 @@ flyingon.defineClass('TreeNode', function () {
 
 
     //扩展可视组件功能
-    flyingon.__extend_visual.call(this);
+    flyingon.fragment('f.visual', this);
 
 
 
@@ -17544,7 +17605,7 @@ flyingon.defineClass('TreeNode', function () {
 
 
     //扩展容器功能
-    flyingon.__extend_container.call(this, flyingon.TreeNode);
+    flyingon.fragment('f.container', this, flyingon.TreeNode);
 
 
     //重写插入子节点方法
@@ -17750,7 +17811,7 @@ flyingon.Control.extend('Tree', function (base) {
 
 
     //扩展容器功能
-    flyingon.__extend_container.call(this, flyingon.TreeNode);
+    flyingon.fragment('f.container', this, flyingon.TreeNode);
 
 
     //重写插入子节点方法
@@ -17806,6 +17867,351 @@ flyingon.Control.extend('Tree', function (base) {
 
 
 }).register();
+
+
+
+
+flyingon.defineClass('GridColumn', function () {
+
+
+
+    this.init = function (column) {
+
+        if (column)
+        {
+            for (var name in column)
+            {
+                var value = column[name];
+
+                if (typeof value !== 'function')
+                {
+                    this[name] = value;
+                }
+            }
+        }
+    };
+
+
+
+    //所属表格控件
+    this.grid = null;
+
+
+    //绑定的字段名
+    this.name = '';
+
+
+    //数据类型
+    this.type = 'string';
+
+
+    //标题 值为数组则为多行标题
+    this.title = ''; 
+
+
+    //对齐方式
+    this.align = '';
+
+
+    //列宽
+    this.size = 100;
+
+
+    //是否可见
+    this.visible = true;
+
+
+    //是否只读
+    this.readonly = false;
+
+
+    //是否可调整列宽
+    this.resizable = true;
+
+
+    //是否可排序
+    this.sortable = true;
+
+
+    //是否降序排列
+    this.desc = false;
+
+
+    //是否可操作列
+    this.operate = true;
+
+
+    //格式化
+    this.formatter = null;
+
+
+
+    this.$set = this.set = function (name, value) {
+
+        var grid = this.grid,
+            any;
+
+        this[name] = value;
+
+        if (grid && grid.hasRender)
+        {
+            
+        }
+    };
+
+
+});
+
+
+
+
+flyingon.defineClass('GridColumns', function () {
+
+
+
+    this.init = function (grid) {
+
+        this.grid = grid;
+    };
+
+
+
+    flyingon.fragment('f.collection', this);
+
+
+    this.__insert_items = function (items, index, fn) {
+    
+        var Class = flyingon.GridColumn,
+            grid = this.grid,
+            length = items.length,
+            any;
+
+        while (index < length)
+        {
+            (items[index] = new Class(items[index++])).grid = grid;
+        }
+
+        return fn.apply(this, items);
+    };
+
+
+    this.__remove_items = function (items) {
+
+        
+    };
+
+
+    this.__remove_item = function (item) {
+
+        
+    };
+
+
+});
+
+
+
+
+flyingon.defineClass('GridRow', function () {
+
+    
+    
+    //所属表格
+    this.grid = null;
+    
+    //数据行唯一id
+    this.uniqueId = null;
+                 
+    
+    //是否选择
+    this.selected = false;
+    
+    //是否勾选
+    this.checked = false;
+    
+    
+    //是否展开
+    this.expanded = false;
+    
+    
+}, false);
+
+
+
+
+flyingon.Control.extend('Grid', function (base) {
+
+
+    this.init = function () {
+
+        (this.__storage = flyingon.create(this.__defaults)).columns = new flyingon.GridColumns();
+    };
+
+
+    //表格列
+    this.defineProperty('columns', null);
+
+
+    //行高
+    this.defineProperty('rowHeight', 28);
+
+
+    //延迟加载最大行数
+    this.defineProperty('maxDelayRows', 0);
+
+
+    //数据集
+    this.defineProperty('dataset', null);
+
+
+    //是否只读
+    this.defineProperty('readonly', true);
+
+
+    //前部锁定列数
+    this.defineProperty('lockedBefore', 0);
+
+
+    this.defineProperty('lockedAfter', 0);
+
+
+    //列头高
+    this.defineProperty('headerHeight', 30);
+
+
+    //是否自动选择当前行
+    this.defineProperty('autoCurrentRow', true);
+
+
+    //是否自动选择当前列
+    this.defineProperty('autoCurrentColumn', false);
+
+
+
+    //扩展行集功能
+    flyingon.fragment('f.rows', this, flyingon.GridRow);
+
+
+
+});
+
+
+
+
+flyingon.fragment('f.rows', function (childrenClass) {
+
+
+
+    flyingon.fragment('f.collection', this, childrenClass);
+
+
+    this.__insert_items = function (items, index, fn) {
+    
+        var Class = this.childrenClass,
+            grid = this.grid,
+            length = items.length,
+            any;
+
+        while (index < length)
+        {
+            items[index] = any = new Class(items[index++]);
+            
+            if (grid)
+            {
+                any.parent = this;
+                any.grid = grid;
+            }
+            else
+            {
+                any.grid = this;
+            }
+        }
+
+        return fn.apply(this, items);
+    };
+
+
+    this.__remove_items = function (items) {
+
+        
+    };
+
+
+    this.__remove_item = function (item) {
+
+        
+    };
+
+
+});
+
+
+
+
+flyingon.GridRow.extend('TreeGridRow', function (base) {
+
+
+
+    this.childrenClass = flyingon.TreeGridRow;
+
+
+    this.parent = null;
+
+
+    this.collapsed = true;
+
+
+    this.level = function () {
+
+        var parent = this.parent,
+            level = 0;
+
+        while (parent)
+        {
+            level++;
+            parent = parent.parent;
+        }
+
+        return level;
+    };
+
+
+    //扩展行集功能
+    flyingon.fragment('f.rows', this, flyingon.TreeGridRow);
+
+
+    this.expand = function () {
+
+    };
+
+
+    this.collapse = function () {
+
+    };
+
+
+});
+
+
+
+flyingon.Grid.extend('TreeGrid', function (base) {
+
+
+
+    this.childrenClass = flyingon.TreeGridRow;
+
+
+    this.expand = function () {
+
+    };
+
+
+    this.collapse = function () {
+
+    };
+
+
+});
 
 
 
@@ -18029,7 +18435,7 @@ flyingon.defineClass('Tab', flyingon.Control, function (base) {
 
 
     //扩展容器功能
-    flyingon.__extend_container.call(this, flyingon.TabPage);
+    flyingon.fragment('f.container', this, flyingon.TabPage);
 
 
 
@@ -19009,7 +19415,7 @@ flyingon.Layout = flyingon.defineClass(function () {
        
     
     //扩展可序列化功能
-    flyingon.__extend_serialize.call(this);
+    flyingon.fragment('f.serialize', this);
     
     
     

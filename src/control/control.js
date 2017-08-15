@@ -38,11 +38,11 @@ flyingon.defineClass('Control', function () {
         
     
     //扩展可视组件功能
-    flyingon.__extend_visual.call(this);
+    flyingon.fragment('f.visual', this);
 
         
     //扩展可绑定功能
-    flyingon.__extend_bindable.call(this);
+    flyingon.fragment('f.bindable', this);
     
 
 
@@ -841,7 +841,7 @@ flyingon.defineClass('Control', function () {
     
     
     //扩展可序列化功能
-    flyingon.__extend_serialize.call(this);
+    flyingon.fragment('f.serialize', this);
 
 
     

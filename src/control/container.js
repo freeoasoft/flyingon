@@ -1,15 +1,10 @@
-//容器组件功能扩展
-flyingon.__extend_container = function (childrenClass) {
-
+//集合功能扩展
+flyingon.fragment('f.collection', function () {
 
 
 
     var array = Array.prototype;
 
-
-
-
-    this.childrenClass = childrenClass || flyingon.Control;
 
 
     //子控件数量
@@ -107,6 +102,30 @@ flyingon.__extend_container = function (childrenClass) {
         
         return this;
     };
+
+
+});
+
+
+
+//容器组件功能扩展
+flyingon.fragment('f.container', function (childrenClass) {
+
+
+
+
+    var array = Array.prototype;
+
+
+
+    //子控件类
+    this.childrenClass = childrenClass || flyingon.Control;
+
+
+
+    //扩展集合功能
+    flyingon.fragment('f.collection', this);
+
 
 
     //分离所有子控件
@@ -530,4 +549,4 @@ flyingon.__extend_container = function (childrenClass) {
 
 
 
-};
+});

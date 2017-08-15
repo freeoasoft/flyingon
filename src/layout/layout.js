@@ -521,7 +521,7 @@ flyingon.Layout = flyingon.defineClass(function () {
        
     
     //扩展可序列化功能
-    flyingon.__extend_serialize.call(this);
+    flyingon.fragment('f.serialize', this);
     
     
     

@@ -1,5 +1,5 @@
 //序列化功能扩展
-flyingon.__extend_serialize = function () {
+flyingon.fragment('f.serialize', function () {
     
     
        
@@ -55,7 +55,7 @@ flyingon.__extend_serialize = function () {
     };
 
 
-};
+});
 
 
 

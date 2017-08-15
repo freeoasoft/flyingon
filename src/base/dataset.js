@@ -240,8 +240,8 @@ flyingon.RowCollection = flyingon.defineClass(function () {
 
 
 
-//数据集功能扩展
-flyingon.__extend_dataset = function () {
+//数据集功能片段
+flyingon.fragment('f.dataset', function () {
     
     
     
@@ -486,7 +486,7 @@ flyingon.__extend_dataset = function () {
     };
     
     
-};
+});
 
 
 
@@ -743,7 +743,7 @@ flyingon.DataRow = flyingon.defineClass(flyingon.RowCollection, function () {
 
     
     //扩展数据集功能
-    flyingon.__extend_dataset.call(this);
+    flyingon.fragment('f.dataset', this);
     
 
     
@@ -822,11 +822,11 @@ flyingon.DataSet = flyingon.defineClass(flyingon.RowCollection, function () {
     
             
     //扩展可序列化功能
-    flyingon.__extend_serialize.call(this);
+    flyingon.fragment('f.serialize', this);
     
         
     //扩展数据集功能
-    flyingon.__extend_dataset.call(this);
+    flyingon.fragment('f.dataset', this);
     
     
         

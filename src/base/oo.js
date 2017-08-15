@@ -152,6 +152,8 @@ var flyingon;
 
         module_current, //当前模块
 
+        fragments = flyingon.fragments || (flyingon.fragments = create(null)), //功能片段集合
+
         class_name = 'class name can use only letters and numbers and begin with a upper letter!',
 
         class_fn = 'class fn must be a function!';
@@ -292,6 +294,23 @@ var flyingon;
         finally
         {
             flyingon.endModule();
+        }
+    };
+
+
+
+    //功能片段
+    flyingon.fragment = function (name, fn) {
+
+        var any;
+
+        if (typeof fn === 'function')
+        {
+            fragments[name] = fn;
+        }
+        else if (any = fragments[name])
+        {
+            any.apply(fn, Array.prototype.slice.call(arguments, 2));
         }
     };
 

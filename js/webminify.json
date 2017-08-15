@@ -47,6 +47,7 @@
             '../src/renderer.web/calendar.js',
 
             '../src/renderer.web/tree.js',
+            '../src/renderer.web/grid.js',
             '../src/renderer.web/tab.js',
             '../src/renderer.web/popup.js',
             '../src/renderer.web/dialog.js',
@@ -79,6 +80,7 @@
             '../src/control/monthpicker.js',
 
             '../src/control/tree.js',
+            '../src/control/grid.js',
             '../src/control/tab.js',
             '../src/control/popup.js',
             '../src/control/dialog.js',

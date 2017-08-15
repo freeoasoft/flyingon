@@ -217,7 +217,7 @@ flyingon.defineClass('Tab', flyingon.Control, function (base) {
 
 
     //扩展容器功能
-    flyingon.__extend_container.call(this, flyingon.TabPage);
+    flyingon.fragment('f.container', this, flyingon.TabPage);
 
 
 

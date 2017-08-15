@@ -3,7 +3,7 @@ flyingon.defineClass('TreeNode', function () {
 
 
     //扩展可视组件功能
-    flyingon.__extend_visual.call(this);
+    flyingon.fragment('f.visual', this);
 
 
 
@@ -112,7 +112,7 @@ flyingon.defineClass('TreeNode', function () {
 
 
     //扩展容器功能
-    flyingon.__extend_container.call(this, flyingon.TreeNode);
+    flyingon.fragment('f.container', this, flyingon.TreeNode);
 
 
     //重写插入子节点方法
@@ -318,7 +318,7 @@ flyingon.Control.extend('Tree', function (base) {
 
 
     //扩展容器功能
-    flyingon.__extend_container.call(this, flyingon.TreeNode);
+    flyingon.fragment('f.container', this, flyingon.TreeNode);
 
 
     //重写插入子节点方法

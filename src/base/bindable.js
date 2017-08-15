@@ -1,5 +1,5 @@
-//可绑定对象扩展
-flyingon.__extend_bindable = function () {
+//可绑定功能片段
+flyingon.fragment('f.bindable', function () {
     
     
 
@@ -140,4 +140,4 @@ flyingon.__extend_bindable = function () {
 
     
     
-};
+});

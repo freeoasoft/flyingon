@@ -43,7 +43,7 @@ flyingon.Control.extend('Panel', function (base) {
 
 
     //扩展容器功能
-    flyingon.__extend_container.call(this);
+    flyingon.fragment('f.container', this);
 
 
               
