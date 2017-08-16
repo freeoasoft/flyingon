@@ -1,5 +1,5 @@
 //Ajax类
-flyingon.Ajax = flyingon.defineClass(flyingon.Async, function () {
+flyingon.Ajax = flyingon.Async.extend(function () {
 
     
     
@@ -393,7 +393,7 @@ flyingon.Ajax = flyingon.defineClass(flyingon.Async, function () {
 
     
 
-}, false);
+});
 
 
 

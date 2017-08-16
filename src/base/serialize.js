@@ -60,7 +60,7 @@ flyingon.fragment('f.serialize', function () {
 
 
 //读序列化类
-flyingon.SerializeReader = flyingon.defineClass(function () {
+flyingon.SerializeReader = Object.extend(function () {
 
     
 
@@ -229,12 +229,12 @@ flyingon.SerializeReader = flyingon.defineClass(function () {
       
         
 
-}, false);
+});
 
 
 
 //写序列化类
-flyingon.SerializeWriter = flyingon.defineClass(function () {
+flyingon.SerializeWriter = Object.extend(function () {
 
 
     
@@ -428,4 +428,4 @@ flyingon.SerializeWriter = flyingon.defineClass(function () {
 
     
 
-}, false);
+});

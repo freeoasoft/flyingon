@@ -202,7 +202,7 @@
 
 
 
-    var Root = flyingon.defineClass(function () {
+    var Root = Object.extend(function () {
 
 
 
@@ -312,7 +312,7 @@
 
 
 
-    var Route = flyingon.defineClass(function () {
+    var Route = Object.extend(function () {
 
         
         //当前hash值

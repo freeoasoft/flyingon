@@ -1,5 +1,5 @@
 //鼠标事件类型
-flyingon.MouseEvent = flyingon.defineClass(flyingon.Event, function () {
+flyingon.MouseEvent = flyingon.Event.extend(function () {
 
 
     this.init = function (event) {
@@ -54,7 +54,7 @@ flyingon.MouseEvent = flyingon.defineClass(flyingon.Event, function () {
 
 
 //键盘事件类型
-flyingon.KeyEvent = flyingon.defineClass(flyingon.Event, function () {
+flyingon.KeyEvent = flyingon.Event.extend(function () {
 
 
     this.init = function (event) {

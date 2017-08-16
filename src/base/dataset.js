@@ -1,5 +1,5 @@
 //行集合类
-flyingon.RowCollection = flyingon.defineClass(function () {
+flyingon.RowCollection = Object.extend(function () {
     
 
     //记录数
@@ -236,7 +236,7 @@ flyingon.RowCollection = flyingon.defineClass(function () {
     };
     
     
-}, false);
+});
 
 
 
@@ -491,7 +491,7 @@ flyingon.fragment('f.dataset', function () {
 
 
 //数据行基类
-flyingon.DataRow = flyingon.defineClass(flyingon.RowCollection, function () {
+flyingon.DataRow = Object.extend(flyingon.RowCollection, function () {
     
     
 
@@ -791,7 +791,7 @@ flyingon.DataRow = flyingon.defineClass(flyingon.RowCollection, function () {
 
 
 //数据集
-flyingon.DataSet = flyingon.defineClass(flyingon.RowCollection, function () {
+flyingon.DataSet = Object.extend(flyingon.RowCollection, function () {
     
     
     
@@ -1298,4 +1298,4 @@ flyingon.DataSet = flyingon.defineClass(flyingon.RowCollection, function () {
 
     
         
-}, true);
+});

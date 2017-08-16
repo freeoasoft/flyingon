@@ -1,5 +1,5 @@
 //异步处理类
-flyingon.Async = flyingon.defineClass(function () {
+flyingon.Async = Object.extend(function () {
 
 
     

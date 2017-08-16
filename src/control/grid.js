@@ -2,89 +2,94 @@ flyingon.defineClass('GridColumn', function () {
 
 
 
-    this.init = function (column) {
+    var defineProperty = this.defineProperty;
 
-        if (column)
-        {
-            for (var name in column)
-            {
-                var value = column[name];
 
-                if (typeof value !== 'function')
-                {
-                    this[name] = value;
-                }
-            }
-        }
+
+    this.init = function (grid) {
+
+        this.grid = grid;
     };
 
 
 
-    //所属表格控件
-    this.grid = null;
+    this.defineProperty = function (name, defaultValue, attributes) {
+
+        attributes === void 0 && (attributes = {
+
+            set: function (value) {
+
+                var grid = this.grid;
+
+                if (grid && grid.hasRender)
+                {
+                    grid.renderer.set(grid, 'column.' + name, value);
+                }
+            }
+        });
+
+        return defineProperty.call(this, name, defaultValue, attributes);
+    };
 
 
     //绑定的字段名
-    this.name = '';
+    this.defineProperty('name', '', { 
+        
+        set: function () {
 
-
-    //数据类型
-    this.type = 'string';
+            var grid = this.grid;
+            grid && grid.refresh(true);
+        }
+        
+     });
 
 
     //标题 值为数组则为多行标题
-    this.title = ''; 
+    this.defineProperty('title', null);
 
 
     //对齐方式
-    this.align = '';
+    this.defineProperty('align', '');
 
 
     //列宽
-    this.size = 100;
+    this.defineProperty('size', 100);
 
 
     //是否可见
-    this.visible = true;
+    this.defineProperty('visible', true);
 
 
     //是否只读
-    this.readonly = false;
+    this.defineProperty('readonly', false);
 
 
     //是否可调整列宽
-    this.resizable = true;
+    this.defineProperty('resizable', true);
 
 
     //是否可排序
-    this.sortable = true;
+    this.defineProperty('sortable', true);
 
 
     //是否降序排列
-    this.desc = false;
+    this.defineProperty('desc', false);
 
 
     //是否可操作列
-    this.operate = true;
+    this.defineProperty('operate', true);
 
 
     //格式化
-    this.formatter = null;
+    this.defineProperty('formatter', null, {
+        
+        set: function () {
 
-
-
-    this.$set = this.set = function (name, value) {
-
-        var grid = this.grid,
-            any;
-
-        this[name] = value;
-
-        if (grid && grid.hasRender)
-        {
-            
+            var grid = this.grid;
+            grid && grid.refresh(true);
         }
-    };
+        
+     });
 
 
 });
@@ -92,7 +97,7 @@ flyingon.defineClass('GridColumn', function () {
 
 
 
-flyingon.defineClass('GridColumns', function () {
+flyingon.GridColumns = Object.extend(function () {
 
 
 
@@ -124,14 +129,27 @@ flyingon.defineClass('GridColumns', function () {
 
     this.__remove_items = function (items) {
 
-        
+        if (items)
+        {
+            for (var i = items.length - 1; i >= 0; i--)
+            {
+                items[i].grid = null;
+            }
+
+            this.grid.refresh(true);
+        }
     };
 
 
     this.__remove_item = function (item) {
 
-        
+        if (item)
+        {
+            item.grid = null;
+            this.grid.refresh(true);
+        }
     };
+
 
 
 });
@@ -139,7 +157,7 @@ flyingon.defineClass('GridColumns', function () {
 
 
 
-flyingon.defineClass('GridRow', function () {
+flyingon.GridRow = Object.extend(function () {
 
     
     
@@ -161,22 +179,52 @@ flyingon.defineClass('GridRow', function () {
     this.expanded = false;
     
     
-}, false);
+});
 
 
 
 
-flyingon.Control.extend('Grid', function (base) {
+flyingon.BaseGrid = flyingon.defineClass(flyingon.Control, function (base) {
 
 
     this.init = function () {
 
-        (this.__storage = flyingon.create(this.__defaults)).columns = new flyingon.GridColumns();
+        this.__columns = new flyingon.GridColumns();
     };
 
 
     //表格列
-    this.defineProperty('columns', null);
+    this.defineProperty('columns', null, {
+
+        fn: function (value) {
+
+            var columns = this.__columns;
+
+            if (value)
+            {
+                if (columns.length > 0)
+                {
+                    columns.clear();
+                }
+                
+                if (typeof value === 'string')
+                {
+                    value = flyingon.parseJSON(value);
+                }
+
+                if (value instanceof Array)
+                {
+                    columns.push.apply(columns, value);
+                }
+                else
+                {
+                    columns.push(value);
+                }
+            }
+
+            return this.__columns;
+        }
+    });
 
 
     //行高
@@ -220,7 +268,38 @@ flyingon.Control.extend('Grid', function (base) {
 
 
 
+    //刷新表格
+    this.refresh = function (reset) {
+
+        if (this.hasRender && this.__visible)
+        {
+            var patch = this.__view_patch;
+
+            if (!patch || !patch.refresh)
+            {
+                this.renderer.set(this, 'refresh', reset || false);
+            }
+            else if (reset)
+            {
+                patch.refresh = true;
+            }
+        }
+        
+        return this;
+    };
+
+
+
 });
+
+
+
+
+flyingon.BaseGrid.extend('Grid', function (base) {
+
+
+
+}).register();
 
 
 
@@ -275,7 +354,7 @@ flyingon.fragment('f.rows', function (childrenClass) {
 
 
 
-flyingon.GridRow.extend('TreeGridRow', function (base) {
+flyingon.TreeGridRow = flyingon.GridRow.extend(function (base) {
 
 
 
@@ -321,7 +400,7 @@ flyingon.GridRow.extend('TreeGridRow', function (base) {
 
 
 
-flyingon.Grid.extend('TreeGrid', function (base) {
+flyingon.BaseGrid.extend('TreeGrid', function (base) {
 
 
 
@@ -338,4 +417,5 @@ flyingon.Grid.extend('TreeGrid', function (base) {
     };
 
 
-});
+
+}).register();

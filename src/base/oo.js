@@ -358,6 +358,33 @@ var flyingon;
     };
         
 
+    //从当前类派生子类
+    //name:             类名称,省略即创建匿名类型(匿名类型不支持自动反序列化)
+    //fn:               类代码, 函数, 参数(base:父类原型, self:当前类原型)
+    //property:         是否支持属性, 默认不支持
+    Object.extend = function (name, fn, property) {
+
+        //处理参数
+        if (typeof name !== 'string') //不传name则创建匿名类
+        {
+            property = fn;
+            fn = name;
+            name = null;
+        }
+        else if (!/^[A-Z]\w*$/.test(name))
+        {
+            throw class_name;
+        }
+
+        if (typeof fn !== 'function')
+        {
+            throw class_fn;
+        }
+        
+        return defineClass(name, this, fn, !!property);
+    };
+
+
     //定义类
     function defineClass(name, superclass, fn, property) {
 
@@ -423,7 +450,6 @@ var flyingon;
             prototype.once = once;
             prototype.off = off;
             prototype.trigger = trigger;
-            prototype.clone = clone;
             prototype.is = is;
             prototype.toString = toString;
             prototype.dispose = dispose;
@@ -481,37 +507,10 @@ var flyingon;
         Class.init = init;
 
         //派生子类方法
-        Class.extend = class_extend;
+        Class.extend = Object.extend;
 
         //返回当前类型
         return Class;
-    };
-
-
-    //从当前类派生子类
-    //name:             类名称,省略即创建匿名类型(匿名类型不支持自动反序列化)
-    //fn:               类代码, 函数, 参数(base:父类原型, self:当前类原型)
-    //property:         是否支持属性, 默认支持, 可以从非属性类继承生成非属性类, 不能从属性类继承生成非属性类
-    function class_extend(name, fn, property) {
-
-        //处理参数
-        if (typeof name !== 'string') //不传name则创建匿名类
-        {
-            property = fn;
-            fn = superclass;
-            name = null;
-        }
-        else if (!/^[A-Z]\w*$/.test(name))
-        {
-            throw class_name;
-        }
-
-        if (typeof fn !== 'function')
-        {
-            throw class_fn;
-        }
-        
-        return defineClass(name, this, fn, property);
     };
 
 
@@ -1103,29 +1102,6 @@ var flyingon;
         return [];
     };
 
-
-    //以当前对象的参照复制生成新对象
-    function clone() {
-
-        var target = new this.Class(),
-            storage = this.__storage,
-            names,
-            name;
-
-        if (storage)
-        {
-            target.__storage = create(this.__defaults);
-            names = this.getOwnPropertyNames();
-
-            for (var i = 0, l = names.length; i < l; i++)
-            {
-                target[name = names[i]](stroage[name], false);
-            }
-        }
-
-        return target;
-    };
-    
 
     //销毁对象
     function dispose() {

@@ -897,26 +897,6 @@ flyingon.defineClass('Control', function () {
     
     
 
-    var clone = this.clone;
-    
-    //以当前对象的参照复制生成新对象
-    this.clone = function () {
-
-        var target = clone.call(this),
-            any;
-
-        target.__dataset = this.__dataset;
-
-        if (any = this.__class_keys)
-        {
-            target.__class_keys = flyingon.extend({}, any);
-        }
-
-        return target;
-    };
-
-
-
     //被移除或关闭时是否自动销毁
     this.autoDispose = true;
     

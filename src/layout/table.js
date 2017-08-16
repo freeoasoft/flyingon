@@ -203,7 +203,7 @@ flyingon.defineLayout('table', function (base) {
     
         
     //布局单元格
-    var Cell = flyingon.defineClass(function () {
+    var Cell = Object.extend(function () {
         
                 
         //值
@@ -247,12 +247,12 @@ flyingon.defineLayout('table', function (base) {
         };
         
         
-    }, false);
+    });
     
     
     
     //布局组
-    var Group = flyingon.defineClass(function () {
+    var Group = Object.extend(function () {
         
 
         var pixel = flyingon.pixel,
@@ -638,7 +638,7 @@ flyingon.defineLayout('table', function (base) {
         };
 
         
-    }, false);
+    });
     
     
 });

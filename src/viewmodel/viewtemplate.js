@@ -1,5 +1,5 @@
 //视图模板类
-flyingon.view.Template = flyingon.defineClass(function () {
+flyingon.view.Template = Object.extend(function () {
 
 
 

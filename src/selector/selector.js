@@ -311,7 +311,7 @@ AB                      并且选择器
 
 
 //选择器节点类
-flyingon.Selector_node = flyingon.defineClass(function () {
+flyingon.Selector_node = Object.extend(function () {
     
     
 
@@ -531,12 +531,12 @@ flyingon.Selector_node = flyingon.defineClass(function () {
 
     
     
-}, false);
+});
 
 
 
 //复合选择器节点类
-flyingon.Selector_nodes = flyingon.defineClass(function () {
+flyingon.Selector_nodes = Object.extend(function () {
     
     
     
@@ -574,12 +574,12 @@ flyingon.Selector_nodes = flyingon.defineClass(function () {
     
     
     
-}, false);
+});
 
 
 
 //选择器属性类
-flyingon.Selector_property = flyingon.defineClass(function () {
+flyingon.Selector_property = Object.extend(function () {
     
     
     
@@ -800,12 +800,12 @@ flyingon.Selector_property = flyingon.defineClass(function () {
     };
         
     
-}, false);
+});
 
 
 
 //选择器伪类类
-flyingon.Selector_pseudo = flyingon.defineClass(function () {
+flyingon.Selector_pseudo = Object.extend(function () {
     
     
     
@@ -1057,12 +1057,12 @@ flyingon.Selector_pseudo = flyingon.defineClass(function () {
     };
 
     
-}, false);
+});
 
 
 
 //选择器查询类
-flyingon.Query = flyingon.defineClass(function () {
+flyingon.Query = Object.extend(function () {
     
     
     
@@ -1245,4 +1245,4 @@ flyingon.Query = flyingon.defineClass(function () {
 
     
     
-}, false);
+});
