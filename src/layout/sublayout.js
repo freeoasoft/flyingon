@@ -1,5 +1,5 @@
 //子布局
-flyingon.Sublayout = flyingon.defineClass(flyingon.Control, function (base) {
+flyingon.Sublayout = flyingon.Control.extend(function (base) {
        
     
         

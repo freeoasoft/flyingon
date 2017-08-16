@@ -531,7 +531,7 @@ flyingon.Selector_node = Object.extend(function () {
 
     
     
-});
+}, false);
 
 
 
@@ -574,7 +574,7 @@ flyingon.Selector_nodes = Object.extend(function () {
     
     
     
-});
+}, false);
 
 
 
@@ -800,7 +800,7 @@ flyingon.Selector_property = Object.extend(function () {
     };
         
     
-});
+}, false);
 
 
 
@@ -1057,7 +1057,7 @@ flyingon.Selector_pseudo = Object.extend(function () {
     };
 
     
-});
+}, false);
 
 
 
@@ -1245,4 +1245,4 @@ flyingon.Query = Object.extend(function () {
 
     
     
-});
+}, false);

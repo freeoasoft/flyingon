@@ -1,6 +1,6 @@
 //控件类
 //IE7点击滚动条时修改className会造成滚动条无法拖动,需在改变className后设置focus获取焦点解决此问题
-flyingon.defineClass('Control', function () {
+Object.extend('Control', function () {
 
     
     

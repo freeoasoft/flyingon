@@ -1,3 +1,129 @@
+//布局基类
+flyingon.Layout = Object.extend(function () {
+
+    
+
+    
+    //布局类型
+    this.type = null;
+
+    
+    
+    //自适应布局条件
+    this.defineProperty('condition', null);
+    
+    
+    //布局间隔宽度
+    //length	规定以具体单位计的值 比如像素 厘米等
+    //number%   控件客户区宽度的百分比
+    this.defineProperty('spacingX', '2');
+
+    //布局间隔高度
+    //length	规定以具体单位计的值 比如像素 厘米等
+    //number%   控件客户区高度的百分比
+    this.defineProperty('spacingY', '2');
+
+   
+    //子项定位属性值
+    this.defineProperty('location', null, {
+
+        set: function (value) {
+
+            this.__location = typeof value === 'function' ? value : null;
+        }
+    });
+
+    
+    //分割子布局
+    this.defineProperty('sublayouts', null, {
+       
+        set: function (value) {
+
+            this.__sublayouts = !!value;
+        }
+    });
+    
+    
+        
+    
+    //排列布局
+    this.arrange = function (container, items, hscroll, vscroll) {
+
+    };
+    
+    
+    //重排
+    this.rearrange = function (container, items, hscroll, vscroll) {
+ 
+        var flag = false;
+        
+        if (hscroll && (hscroll === 1 || container.arrangeRight > container.arrangeLeft + container.arrangeWidth))
+        {
+            if ((container.arrangeHeight -= flyingon.hscroll_height) < 0)
+            {
+                container.arrangeHeight = 0;
+            }
+            
+            hscroll = false;
+            flag = true;
+        }
+        
+        if (vscroll && (vscroll === 1 || container.arrangeBottom > container.arrangeTop + container.arrangeHeight))
+        {
+            if ((container.arrangeWidth -= flyingon.vscroll_width) < 0)
+            {
+                container.arrangeWidth = 0;
+            }
+            
+            vscroll = false;
+            flag = true;
+        }
+        
+        if (flag)
+        {
+            container.arrangeRight = container.arrangeLeft;
+            container.arrangeBottom = container.arrangeTop;
+            
+            this.arrange(container, items, hscroll, vscroll);
+            return true;
+        }
+    };
+    
+    
+    
+    //查找指定坐标的子控件
+    this.controlAt = function (items, x, y) {
+        
+        var item, any;
+        
+        for (var i = 0, l = items.length; i < l; i++)
+        {
+            if ((item = items[i]) && 
+                x >= (any = item.offsetLeft) && x <= any + item.offsetWidth &&
+                y >= (any = item.offsetTop) && y <= any + item.offsetHeight)
+            {
+                return items[i];
+            }
+        }
+
+        return null;
+    };
+    
+       
+    
+    //扩展可序列化功能
+    flyingon.fragment('f.serialize', this);
+    
+    
+    
+    //设置不反序列化type属性
+    this.deserialize_type = true;
+    
+
+});
+
+
+
 //布局基础方法
 (function () {
 
@@ -9,16 +135,17 @@
     //已定义的布局集合
     var layouts = flyingon.create(null); 
 
+    //反序列化读
     var reader = new flyingon.SerializeReader();
 
     
 
     //定义布局
-    flyingon.defineLayout = function (type, fn) {
+    flyingon.Layout.extend = function (type, fn) {
 
         if (type && fn)
         {
-            fn = flyingon.defineClass(flyingon.Layout, fn);
+            fn = flyingon.defineClass(this, fn);
             layouts[type] = [registry_list[type] = fn, null];
         }
     };
@@ -407,134 +534,8 @@
 
 
 
-//布局基类
-flyingon.Layout = flyingon.defineClass(function () {
-
-    
-
-    
-    //布局类型
-    this.type = null;
-
-    
-    
-    //自适应布局条件
-    this.defineProperty('condition', null);
-    
-    
-    //布局间隔宽度
-    //length	规定以具体单位计的值 比如像素 厘米等
-    //number%   控件客户区宽度的百分比
-    this.defineProperty('spacingX', '2');
-
-    //布局间隔高度
-    //length	规定以具体单位计的值 比如像素 厘米等
-    //number%   控件客户区高度的百分比
-    this.defineProperty('spacingY', '2');
-
-   
-    //子项定位属性值
-    this.defineProperty('location', null, {
-
-        set: function (value) {
-
-            this.__location = typeof value === 'function' ? value : null;
-        }
-    });
-
-    
-    //分割子布局
-    this.defineProperty('sublayouts', null, {
-       
-        set: function (value) {
-
-            this.__sublayouts = !!value;
-        }
-    });
-    
-    
-        
-    
-    //排列布局
-    this.arrange = function (container, items, hscroll, vscroll) {
-
-    };
-    
-    
-    //重排
-    this.rearrange = function (container, items, hscroll, vscroll) {
- 
-        var flag = false;
-        
-        if (hscroll && (hscroll === 1 || container.arrangeRight > container.arrangeLeft + container.arrangeWidth))
-        {
-            if ((container.arrangeHeight -= flyingon.hscroll_height) < 0)
-            {
-                container.arrangeHeight = 0;
-            }
-            
-            hscroll = false;
-            flag = true;
-        }
-        
-        if (vscroll && (vscroll === 1 || container.arrangeBottom > container.arrangeTop + container.arrangeHeight))
-        {
-            if ((container.arrangeWidth -= flyingon.vscroll_width) < 0)
-            {
-                container.arrangeWidth = 0;
-            }
-            
-            vscroll = false;
-            flag = true;
-        }
-        
-        if (flag)
-        {
-            container.arrangeRight = container.arrangeLeft;
-            container.arrangeBottom = container.arrangeTop;
-            
-            this.arrange(container, items, hscroll, vscroll);
-            return true;
-        }
-    };
-    
-    
-    
-    //查找指定坐标的子控件
-    this.controlAt = function (items, x, y) {
-        
-        var item, any;
-        
-        for (var i = 0, l = items.length; i < l; i++)
-        {
-            if ((item = items[i]) && 
-                x >= (any = item.offsetLeft) && x <= any + item.offsetWidth &&
-                y >= (any = item.offsetTop) && y <= any + item.offsetHeight)
-            {
-                return items[i];
-            }
-        }
-
-        return null;
-    };
-    
-       
-    
-    //扩展可序列化功能
-    flyingon.fragment('f.serialize', this);
-    
-    
-    
-    //设置不反序列化type属性
-    this.deserialize_type = true;
-    
-
-});
-
-
-
 //充满容器空间
-flyingon.defineLayout('fill', function (base) {
+flyingon.Layout.extend('fill', function (base) {
 
 
     //排列布局
@@ -560,7 +561,7 @@ flyingon.defineLayout('fill', function (base) {
 
 
 //单列布局类
-flyingon.defineLayout('line', function (base) {
+flyingon.Layout.extend('line', function (base) {
 
         
     //排列布局
@@ -596,7 +597,7 @@ flyingon.defineLayout('line', function (base) {
 
 
 //纵向单列布局类
-flyingon.defineLayout('vertical-line', function (base) {
+flyingon.Layout.extend('vertical-line', function (base) {
 
         
     //排列布局
@@ -632,7 +633,7 @@ flyingon.defineLayout('vertical-line', function (base) {
 
 
 //流式布局类
-flyingon.defineLayout('flow', function (base) {
+flyingon.Layout.extend('flow', function (base) {
 
 
 
@@ -693,7 +694,7 @@ flyingon.defineLayout('flow', function (base) {
 
 
 //纵向流式布局类
-flyingon.defineLayout('vertical-flow', function (base) {
+flyingon.Layout.extend('vertical-flow', function (base) {
 
 
     //行宽
@@ -753,7 +754,7 @@ flyingon.defineLayout('vertical-flow', function (base) {
 
 
 //停靠布局类
-flyingon.defineLayout('dock', function (base) {
+flyingon.Layout.extend('dock', function (base) {
 
     
     //排列布局
@@ -850,7 +851,7 @@ flyingon.defineLayout('dock', function (base) {
 
 
 //层叠布局类
-flyingon.defineLayout('cascade', function (base) {
+flyingon.Layout.extend('cascade', function (base) {
 
     
     //排列布局
@@ -889,7 +890,7 @@ flyingon.defineLayout('cascade', function (base) {
 
 
 //绝对定位布局类
-flyingon.defineLayout('absolute', function (base) {
+flyingon.Layout.extend('absolute', function (base) {
 
     
     //排列布局
@@ -933,7 +934,7 @@ flyingon.defineLayout('absolute', function (base) {
 
 
 //均分布局
-flyingon.defineLayout('uniform', function (base) {
+flyingon.Layout.extend('uniform', function (base) {
     
 
 

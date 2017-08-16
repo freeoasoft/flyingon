@@ -1,4 +1,4 @@
-flyingon.defineClass('TreeNode', function () {
+Object.extend('TreeNode', function () {
 
 
 

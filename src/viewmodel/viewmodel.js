@@ -97,7 +97,7 @@
         var template = view_template('widget', options),
             Class = components[template.parse().Class] || unkown;
 
-        Class = flyingon.defineClass(Class, widget_fn);
+        Class = Class.extend(widget_fn);
 
         Class.__widget_options = options;
         Class.__widget_template = template;

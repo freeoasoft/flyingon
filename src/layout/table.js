@@ -1,6 +1,6 @@
 
 //表格布局类
-flyingon.defineLayout('table', function (base) {
+flyingon.Layout.extend('table', function (base) {
 
     
 
@@ -247,7 +247,7 @@ flyingon.defineLayout('table', function (base) {
         };
         
         
-    });
+    }, false);
     
     
     
@@ -638,7 +638,7 @@ flyingon.defineLayout('table', function (base) {
         };
 
         
-    });
+    }, false);
     
     
 });

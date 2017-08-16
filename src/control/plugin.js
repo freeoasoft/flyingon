@@ -45,5 +45,5 @@ flyingon.plugin = function (superclass, fn) {
         superclass = flyingon.Plugin;
     }
 
-    return flyingon.defineClass(superclass, fn).init();
+    return superclass.extend(fn).init();
 };

@@ -381,7 +381,25 @@ var flyingon;
             throw class_fn;
         }
         
-        return defineClass(name, this, fn, !!property);
+        return defineClass(name, this, fn, property);
+    };
+
+
+
+    //定义简单类
+    Object.extend._ = function (superclass, fn) {
+
+        if (!fn)
+        {
+            fn = superclass;
+            superclass = Object;
+        }
+        
+        function Class() {};
+
+        fn.call(Class.prototype = create(superclass.prototype));
+
+        return Class;
     };
 
 
@@ -1171,7 +1189,7 @@ var flyingon;
 
 
 //事件基类
-flyingon.Event = flyingon.defineClass(function () {
+flyingon.Event = Object.extend(function () {
 
     
     
@@ -1633,7 +1651,7 @@ flyingon.Async = Object.extend(function () {
     };
     
     
-});
+}, false);
 
     
 
@@ -2219,7 +2237,7 @@ flyingon.SerializeReader = Object.extend(function () {
       
         
 
-});
+}, false);
 
 
 
@@ -2418,13 +2436,13 @@ flyingon.SerializeWriter = Object.extend(function () {
 
     
 
-});
+}, false);
 
 
 
 
 //行集合类
-flyingon.RowCollection = Object.extend(function () {
+flyingon.RowCollection = Object.extend._(function () {
     
 
     //记录数
@@ -2916,7 +2934,7 @@ flyingon.fragment('f.dataset', function () {
 
 
 //数据行基类
-flyingon.DataRow = Object.extend(flyingon.RowCollection, function () {
+flyingon.DataRow = Object.extend._(flyingon.RowCollection, function () {
     
     
 
@@ -3211,7 +3229,7 @@ flyingon.DataRow = Object.extend(flyingon.RowCollection, function () {
     
     
         
-});
+}, false);
 
 
 
@@ -3723,7 +3741,7 @@ flyingon.DataSet = Object.extend(flyingon.RowCollection, function () {
 
     
         
-});
+}, false);
 
 
 
@@ -7174,7 +7192,7 @@ flyingon.jsonpPost = function (url, options) {
         };
 
 
-    });
+    }, false);
 
 
 
@@ -7240,7 +7258,7 @@ flyingon.jsonpPost = function (url, options) {
         };
 
 
-    });
+    }, false);
 
 
 
@@ -7862,7 +7880,7 @@ flyingon.Selector_node = Object.extend(function () {
 
     
     
-});
+}, false);
 
 
 
@@ -7905,7 +7923,7 @@ flyingon.Selector_nodes = Object.extend(function () {
     
     
     
-});
+}, false);
 
 
 
@@ -8131,7 +8149,7 @@ flyingon.Selector_property = Object.extend(function () {
     };
         
     
-});
+}, false);
 
 
 
@@ -8388,7 +8406,7 @@ flyingon.Selector_pseudo = Object.extend(function () {
     };
 
     
-});
+}, false);
 
 
 
@@ -8576,7 +8594,7 @@ flyingon.Query = Object.extend(function () {
 
     
     
-});
+}, false);
 
 
 
@@ -13862,7 +13880,7 @@ flyingon.showMessage = function (title, text, type, buttons, focus) {
 
 //控件类
 //IE7点击滚动条时修改className会造成滚动条无法拖动,需在改变className后设置focus获取焦点解决此问题
-flyingon.defineClass('Control', function () {
+Object.extend('Control', function () {
 
     
     
@@ -16130,7 +16148,7 @@ flyingon.plugin = function (superclass, fn) {
         superclass = flyingon.Plugin;
     }
 
-    return flyingon.defineClass(superclass, fn).init();
+    return superclass.extend(fn).init();
 };
 
 
@@ -17457,7 +17475,7 @@ flyingon.TextButton.extend('MonthPicker', function (base) {
 
 
 
-flyingon.defineClass('TreeNode', function () {
+Object.extend('TreeNode', function () {
 
 
 
@@ -17837,8 +17855,12 @@ flyingon.Control.extend('Tree', function (base) {
 
 
 
-flyingon.defineClass('GridColumn', function () {
+flyingon.GridColumn = Object.extend(function () {
 
+
+
+    //注册的列集合
+    var columns = flyingon.GridColumn.columns = flyingon.create(null);
 
 
     var defineProperty = this.defineProperty;
@@ -17854,89 +17876,126 @@ flyingon.defineClass('GridColumn', function () {
 
     this.defineProperty = function (name, defaultValue, attributes) {
 
-        attributes === void 0 && (attributes = {
+        if (attributes !== void 0)
+        {
+            switch (attributes)
+            {
+                case 1:
+                    attributes = function () {
 
-            set: function (value) {
+                        var grid = this.grid;
 
-                var grid = this.grid;
+                        if (grid)
+                        {
+                            grid.refresh(false, true);
+                        }
+                    };
+                    break;
 
-                if (grid && grid.hasRender)
-                {
-                    grid.renderer.set(grid, 'column.' + name, value);
-                }
+                case 2:
+                    attributes = function () {
+
+                        var grid = this.grid;
+
+                        if (grid)
+                        {
+                            grid.refresh(true, true);
+                        }
+                    };
+                    break;
+
+                case 3:
+                    attributes = function (value) {
+
+                        var grid = this.grid;
+
+                        if (grid && grid.hasRender)
+                        {
+                            grid.renderer.set(grid, '__column_' + name, value);
+                        }
+                    };
+                    break;
             }
-        });
+
+            attributes = { set: attributes };
+        }
 
         return defineProperty.call(this, name, defaultValue, attributes);
     };
 
 
-    //绑定的字段名
-    this.defineProperty('name', '', { 
-        
-        set: function () {
 
-            var grid = this.grid;
-            grid && grid.refresh(true);
-        }
-        
-     });
+    //列类型
+    this.defineProperty('type', '');
+
+
+    //绑定的字段名
+    this.defineProperty('name', '', 1);
 
 
     //标题 值为数组则为多行标题
-    this.defineProperty('title', null);
+    this.defineProperty('title', null, 3);
 
 
     //对齐方式
-    this.defineProperty('align', '');
+    this.defineProperty('align', '', 3);
 
 
     //列宽
-    this.defineProperty('size', 100);
+    this.defineProperty('width', 100, 3);
+
+
+    //列高
+    this.defineProperty('height', 20, 3);
 
 
     //是否可见
-    this.defineProperty('visible', true);
+    this.defineProperty('visible', true, 3);
 
 
     //是否只读
-    this.defineProperty('readonly', false);
+    this.defineProperty('readonly', false, 3);
 
 
     //是否可调整列宽
-    this.defineProperty('resizable', true);
+    this.defineProperty('resizable', true, 3);
 
 
     //是否可排序
     this.defineProperty('sortable', true);
 
 
-    //是否降序排列
-    this.defineProperty('desc', false);
-
-
     //是否可操作列
     this.defineProperty('operate', true);
 
 
-    //格式化
-    this.defineProperty('formatter', null, {
-        
-        set: function () {
+    //是否降序排列
+    this.defineProperty('desc', false, 1);
 
-            var grid = this.grid;
-            grid && grid.refresh(true);
-        }
-        
-     });
+
+    //格式化
+    this.defineProperty('formatter', null, 1);
 
 
 });
 
 
 
+//重载扩展表格类的方法
+flyingon.GridColumn.extend = function (type, fn) {
+
+    
+};
+
+
+
 
 flyingon.GridColumns = Object.extend(function () {
+
+
+
+    //注册的表格列集合
+    var columns = flyingon.GridColumn.columns;
 
 
 
@@ -17954,15 +18013,17 @@ flyingon.GridColumns = Object.extend(function () {
     
         var Class = flyingon.GridColumn,
             grid = this.grid,
-            length = items.length,
-            any;
+            any = items.length;
 
-        while (index < length)
+        while (index < any)
         {
             (items[index] = new Class(items[index++])).grid = grid;
         }
 
-        return fn.apply(this, items);
+        any = fn.apply(this, items);
+        grid.refresh(true, true);
+
+        return any;
     };
 
 
@@ -17975,7 +18036,7 @@ flyingon.GridColumns = Object.extend(function () {
                 items[i].grid = null;
             }
 
-            this.grid.refresh(true);
+            this.grid.refresh(true, true);
         }
     };
 
@@ -17985,18 +18046,18 @@ flyingon.GridColumns = Object.extend(function () {
         if (item)
         {
             item.grid = null;
-            this.grid.refresh(true);
+            this.grid.refresh(true, true);
         }
     };
 
 
 
-});
+}, false);
 
 
 
-
-flyingon.GridRow = Object.extend(function () {
+//表格行
+flyingon.GridRow = Object.extend._(function () {
 
     
     
@@ -18014,132 +18075,11 @@ flyingon.GridRow = Object.extend(function () {
     this.checked = false;
     
     
-    //是否展开
-    this.expanded = false;
+    //单元格集合
+    this.cells = null;
     
     
 });
-
-
-
-
-flyingon.BaseGrid = flyingon.defineClass(flyingon.Control, function (base) {
-
-
-    this.init = function () {
-
-        this.__columns = new flyingon.GridColumns();
-    };
-
-
-    //表格列
-    this.defineProperty('columns', null, {
-
-        fn: function (value) {
-
-            var columns = this.__columns;
-
-            if (value)
-            {
-                if (columns.length > 0)
-                {
-                    columns.clear();
-                }
-                
-                if (typeof value === 'string')
-                {
-                    value = flyingon.parseJSON(value);
-                }
-
-                if (value instanceof Array)
-                {
-                    columns.push.apply(columns, value);
-                }
-                else
-                {
-                    columns.push(value);
-                }
-            }
-
-            return this.__columns;
-        }
-    });
-
-
-    //行高
-    this.defineProperty('rowHeight', 28);
-
-
-    //延迟加载最大行数
-    this.defineProperty('maxDelayRows', 0);
-
-
-    //数据集
-    this.defineProperty('dataset', null);
-
-
-    //是否只读
-    this.defineProperty('readonly', true);
-
-
-    //前部锁定列数
-    this.defineProperty('lockedBefore', 0);
-
-
-    this.defineProperty('lockedAfter', 0);
-
-
-    //列头高
-    this.defineProperty('headerHeight', 30);
-
-
-    //是否自动选择当前行
-    this.defineProperty('autoCurrentRow', true);
-
-
-    //是否自动选择当前列
-    this.defineProperty('autoCurrentColumn', false);
-
-
-
-    //扩展行集功能
-    flyingon.fragment('f.rows', this, flyingon.GridRow);
-
-
-
-    //刷新表格
-    this.refresh = function (reset) {
-
-        if (this.hasRender && this.__visible)
-        {
-            var patch = this.__view_patch;
-
-            if (!patch || !patch.refresh)
-            {
-                this.renderer.set(this, 'refresh', reset || false);
-            }
-            else if (reset)
-            {
-                patch.refresh = true;
-            }
-        }
-        
-        return this;
-    };
-
-
-
-});
-
-
-
-
-flyingon.BaseGrid.extend('Grid', function (base) {
-
-
-
-}).register();
-
 
 
 
@@ -18192,8 +18132,205 @@ flyingon.fragment('f.rows', function (childrenClass) {
 
 
 
+//表格基类
+flyingon.BaseGrid = flyingon.Control.extend(function (base) {
 
-flyingon.TreeGridRow = flyingon.GridRow.extend(function (base) {
+
+
+    var defineProperty = this.defineProperty;
+
+
+
+    this.defineProperty = function (name, defaultValue, attributes) {
+
+        if (attributes !== void 0)
+        {
+            switch (attributes)
+            {
+                case 1:
+                    attributes = function () {
+
+                        this.refresh(false, true);
+                    };
+                    break;
+
+                case 2:
+                    attributes = function () {
+
+                        this.refresh(true, true);
+                    };
+                    break;
+            }
+
+            attributes = { set: attributes };
+        }
+
+        return defineProperty.call(this, name, defaultValue, attributes);
+    };
+
+
+    //表格列
+    this.defineProperty('columns', null, {
+
+        fn: function (value) {
+
+            var columns = this.__columns;
+
+            if (value)
+            {
+                if (columns.length > 0)
+                {
+                    columns.clear();
+                }
+                
+                if (typeof value === 'string')
+                {
+                    value = flyingon.parseJSON(value);
+                }
+
+                if (value instanceof Array)
+                {
+                    columns.push.apply(columns, value);
+                }
+                else
+                {
+                    columns.push(value);
+                }
+            }
+
+            return this.__columns;
+        }
+    });
+
+
+    //行高
+    this.defineProperty('rowHeight', 28);
+
+
+    //是否只读
+    this.defineProperty('readonly', true);
+
+
+    //前面锁定列数
+    this.defineProperty('lockedBefore', 0);
+
+
+    //后面锁定列数
+    this.defineProperty('lockedAfter', 0);
+
+
+    //列头高
+    this.defineProperty('headerHeight', 30);
+
+
+    //选择模式
+    //0  仅选择单元格
+    //1  选择行
+    //2  选择列
+    //3  选择行及列
+    this.defineProperty('selectedMode', 0);
+
+
+    //分布模式
+    this.defineProperty('pagination', '');
+
+
+
+    //扩展行集功能
+    flyingon.fragment('f.rows', this, flyingon.GridRow);
+
+
+
+    //获取可见行集合
+    this.visibleRows = function () {
+
+        return this;
+    };
+
+
+
+    //刷新表格
+    this.refresh = function (columns, delay) {
+
+        if (this.hasRender && this.__visible)
+        {
+            var patch = this.__view_patch;
+
+            if (!patch || patch.refresh === void 0)
+            {
+                this.renderer.set(this, 'refresh', columns || false);
+            }
+            else if (columns)
+            {
+                patch.refresh = true;
+            }
+
+            if (patch)
+            {
+                delete patch.refresh;
+            }
+
+            if (!delay)
+            {
+                this.update();
+            }
+        }
+        
+        return this;
+    };
+
+
+
+});
+
+
+
+//表格控件
+flyingon.BaseGrid.extend('Grid', function (base) {
+
+
+
+    this.init = function () {
+
+        this.__columns = new flyingon.GridColumns(this);
+    };
+
+
+
+}).register();
+
+
+
+//数据表格控件
+flyingon.BaseGrid.extend('DataGrid', function (base) {
+
+
+
+    this.init = function () {
+
+        this.__columns = new flyingon.GridColumns(this);
+    };
+
+
+
+    //数据集
+    this.defineProperty('dataset', null);
+
+
+    //分组设置
+    this.defineProperty('group', '', {
+
+
+    });
+
+
+
+}).register();
+
+
+
+//树表行
+flyingon.TreeGridRow = Object.extend._(flyingon.GridRow, function (base) {
 
 
 
@@ -18203,7 +18340,7 @@ flyingon.TreeGridRow = flyingon.GridRow.extend(function (base) {
     this.parent = null;
 
 
-    this.collapsed = true;
+    this.expanded = false;
 
 
     this.level = function () {
@@ -18219,6 +18356,7 @@ flyingon.TreeGridRow = flyingon.GridRow.extend(function (base) {
 
         return level;
     };
+
 
 
     //扩展行集功能
@@ -18239,7 +18377,13 @@ flyingon.TreeGridRow = flyingon.GridRow.extend(function (base) {
 
 
 
+//树表控件
 flyingon.BaseGrid.extend('TreeGrid', function (base) {
+
+
+
+    //数据集
+    this.defineProperty('dataset', null);
 
 
 
@@ -18258,6 +18402,18 @@ flyingon.BaseGrid.extend('TreeGrid', function (base) {
 
 
 }).register();
+
+
+
+//竖向表格控件
+flyingon.BaseGrid.extend('VerticalGrid', function (base) {
+
+
+    //数据集
+    this.defineProperty('dataset', null);
+
+
+});
 
 
 
@@ -18319,7 +18475,7 @@ flyingon.Panel.extend('TabPage', function (base) {
 
 
 
-flyingon.defineClass('Tab', flyingon.Control, function (base) {
+flyingon.Control.extend('Tab', function (base) {
 
 
 
@@ -18846,7 +19002,7 @@ flyingon.Panel.extend('Dialog', function (base) {
 
 
 //子布局
-flyingon.Sublayout = flyingon.defineClass(flyingon.Control, function (base) {
+flyingon.Sublayout = flyingon.Control.extend(function (base) {
        
     
         
@@ -18938,6 +19094,132 @@ flyingon.Sublayout = flyingon.defineClass(flyingon.Control, function (base) {
 
 
 
+//布局基类
+flyingon.Layout = Object.extend(function () {
+
+    
+
+    
+    //布局类型
+    this.type = null;
+
+    
+    
+    //自适应布局条件
+    this.defineProperty('condition', null);
+    
+    
+    //布局间隔宽度
+    //length	规定以具体单位计的值 比如像素 厘米等
+    //number%   控件客户区宽度的百分比
+    this.defineProperty('spacingX', '2');
+
+    //布局间隔高度
+    //length	规定以具体单位计的值 比如像素 厘米等
+    //number%   控件客户区高度的百分比
+    this.defineProperty('spacingY', '2');
+
+   
+    //子项定位属性值
+    this.defineProperty('location', null, {
+
+        set: function (value) {
+
+            this.__location = typeof value === 'function' ? value : null;
+        }
+    });
+
+    
+    //分割子布局
+    this.defineProperty('sublayouts', null, {
+       
+        set: function (value) {
+
+            this.__sublayouts = !!value;
+        }
+    });
+    
+    
+        
+    
+    //排列布局
+    this.arrange = function (container, items, hscroll, vscroll) {
+
+    };
+    
+    
+    //重排
+    this.rearrange = function (container, items, hscroll, vscroll) {
+ 
+        var flag = false;
+        
+        if (hscroll && (hscroll === 1 || container.arrangeRight > container.arrangeLeft + container.arrangeWidth))
+        {
+            if ((container.arrangeHeight -= flyingon.hscroll_height) < 0)
+            {
+                container.arrangeHeight = 0;
+            }
+            
+            hscroll = false;
+            flag = true;
+        }
+        
+        if (vscroll && (vscroll === 1 || container.arrangeBottom > container.arrangeTop + container.arrangeHeight))
+        {
+            if ((container.arrangeWidth -= flyingon.vscroll_width) < 0)
+            {
+                container.arrangeWidth = 0;
+            }
+            
+            vscroll = false;
+            flag = true;
+        }
+        
+        if (flag)
+        {
+            container.arrangeRight = container.arrangeLeft;
+            container.arrangeBottom = container.arrangeTop;
+            
+            this.arrange(container, items, hscroll, vscroll);
+            return true;
+        }
+    };
+    
+    
+    
+    //查找指定坐标的子控件
+    this.controlAt = function (items, x, y) {
+        
+        var item, any;
+        
+        for (var i = 0, l = items.length; i < l; i++)
+        {
+            if ((item = items[i]) && 
+                x >= (any = item.offsetLeft) && x <= any + item.offsetWidth &&
+                y >= (any = item.offsetTop) && y <= any + item.offsetHeight)
+            {
+                return items[i];
+            }
+        }
+
+        return null;
+    };
+    
+       
+    
+    //扩展可序列化功能
+    flyingon.fragment('f.serialize', this);
+    
+    
+    
+    //设置不反序列化type属性
+    this.deserialize_type = true;
+    
+
+});
+
+
+
 //布局基础方法
 (function () {
 
@@ -18949,12 +19231,13 @@ flyingon.Sublayout = flyingon.defineClass(flyingon.Control, function (base) {
     //已定义的布局集合
     var layouts = flyingon.create(null); 
 
+    //反序列化读
     var reader = new flyingon.SerializeReader();
 
     
 
     //定义布局
-    flyingon.defineLayout = function (type, fn) {
+    flyingon.Layout.extend = function (type, fn) {
 
         if (type && fn)
         {
@@ -19347,134 +19630,8 @@ flyingon.Sublayout = flyingon.defineClass(flyingon.Control, function (base) {
 
 
 
-//布局基类
-flyingon.Layout = flyingon.defineClass(function () {
-
-    
-
-    
-    //布局类型
-    this.type = null;
-
-    
-    
-    //自适应布局条件
-    this.defineProperty('condition', null);
-    
-    
-    //布局间隔宽度
-    //length	规定以具体单位计的值 比如像素 厘米等
-    //number%   控件客户区宽度的百分比
-    this.defineProperty('spacingX', '2');
-
-    //布局间隔高度
-    //length	规定以具体单位计的值 比如像素 厘米等
-    //number%   控件客户区高度的百分比
-    this.defineProperty('spacingY', '2');
-
-   
-    //子项定位属性值
-    this.defineProperty('location', null, {
-
-        set: function (value) {
-
-            this.__location = typeof value === 'function' ? value : null;
-        }
-    });
-
-    
-    //分割子布局
-    this.defineProperty('sublayouts', null, {
-       
-        set: function (value) {
-
-            this.__sublayouts = !!value;
-        }
-    });
-    
-    
-        
-    
-    //排列布局
-    this.arrange = function (container, items, hscroll, vscroll) {
-
-    };
-    
-    
-    //重排
-    this.rearrange = function (container, items, hscroll, vscroll) {
- 
-        var flag = false;
-        
-        if (hscroll && (hscroll === 1 || container.arrangeRight > container.arrangeLeft + container.arrangeWidth))
-        {
-            if ((container.arrangeHeight -= flyingon.hscroll_height) < 0)
-            {
-                container.arrangeHeight = 0;
-            }
-            
-            hscroll = false;
-            flag = true;
-        }
-        
-        if (vscroll && (vscroll === 1 || container.arrangeBottom > container.arrangeTop + container.arrangeHeight))
-        {
-            if ((container.arrangeWidth -= flyingon.vscroll_width) < 0)
-            {
-                container.arrangeWidth = 0;
-            }
-            
-            vscroll = false;
-            flag = true;
-        }
-        
-        if (flag)
-        {
-            container.arrangeRight = container.arrangeLeft;
-            container.arrangeBottom = container.arrangeTop;
-            
-            this.arrange(container, items, hscroll, vscroll);
-            return true;
-        }
-    };
-    
-    
-    
-    //查找指定坐标的子控件
-    this.controlAt = function (items, x, y) {
-        
-        var item, any;
-        
-        for (var i = 0, l = items.length; i < l; i++)
-        {
-            if ((item = items[i]) && 
-                x >= (any = item.offsetLeft) && x <= any + item.offsetWidth &&
-                y >= (any = item.offsetTop) && y <= any + item.offsetHeight)
-            {
-                return items[i];
-            }
-        }
-
-        return null;
-    };
-    
-       
-    
-    //扩展可序列化功能
-    flyingon.fragment('f.serialize', this);
-    
-    
-    
-    //设置不反序列化type属性
-    this.deserialize_type = true;
-    
-
-});
-
-
-
 //充满容器空间
-flyingon.defineLayout('fill', function (base) {
+flyingon.Layout.extend('fill', function (base) {
 
 
     //排列布局
@@ -19500,7 +19657,7 @@ flyingon.defineLayout('fill', function (base) {
 
 
 //单列布局类
-flyingon.defineLayout('line', function (base) {
+flyingon.Layout.extend('line', function (base) {
 
         
     //排列布局
@@ -19536,7 +19693,7 @@ flyingon.defineLayout('line', function (base) {
 
 
 //纵向单列布局类
-flyingon.defineLayout('vertical-line', function (base) {
+flyingon.Layout.extend('vertical-line', function (base) {
 
         
     //排列布局
@@ -19572,7 +19729,7 @@ flyingon.defineLayout('vertical-line', function (base) {
 
 
 //流式布局类
-flyingon.defineLayout('flow', function (base) {
+flyingon.Layout.extend('flow', function (base) {
 
 
 
@@ -19633,7 +19790,7 @@ flyingon.defineLayout('flow', function (base) {
 
 
 //纵向流式布局类
-flyingon.defineLayout('vertical-flow', function (base) {
+flyingon.Layout.extend('vertical-flow', function (base) {
 
 
     //行宽
@@ -19693,7 +19850,7 @@ flyingon.defineLayout('vertical-flow', function (base) {
 
 
 //停靠布局类
-flyingon.defineLayout('dock', function (base) {
+flyingon.Layout.extend('dock', function (base) {
 
     
     //排列布局
@@ -19790,7 +19947,7 @@ flyingon.defineLayout('dock', function (base) {
 
 
 //层叠布局类
-flyingon.defineLayout('cascade', function (base) {
+flyingon.Layout.extend('cascade', function (base) {
 
     
     //排列布局
@@ -19829,7 +19986,7 @@ flyingon.defineLayout('cascade', function (base) {
 
 
 //绝对定位布局类
-flyingon.defineLayout('absolute', function (base) {
+flyingon.Layout.extend('absolute', function (base) {
 
     
     //排列布局
@@ -19873,7 +20030,7 @@ flyingon.defineLayout('absolute', function (base) {
 
 
 //均分布局
-flyingon.defineLayout('uniform', function (base) {
+flyingon.Layout.extend('uniform', function (base) {
     
 
 
@@ -19935,7 +20092,7 @@ flyingon.defineLayout('uniform', function (base) {
 
 
 //表格布局类
-flyingon.defineLayout('table', function (base) {
+flyingon.Layout.extend('table', function (base) {
 
     
 
@@ -20182,7 +20339,7 @@ flyingon.defineLayout('table', function (base) {
         };
         
         
-    });
+    }, false);
     
     
     
@@ -20573,7 +20730,7 @@ flyingon.defineLayout('table', function (base) {
         };
 
         
-    });
+    }, false);
     
     
 });
@@ -20680,7 +20837,7 @@ flyingon.defineLayout('table', function (base) {
         var template = view_template('widget', options),
             Class = components[template.parse().Class] || unkown;
 
-        Class = flyingon.defineClass(Class, widget_fn);
+        Class = Class.extend(widget_fn);
 
         Class.__widget_options = options;
         Class.__widget_template = template;
@@ -22700,7 +22857,7 @@ flyingon.view.Template = Object.extend(function () {
     rule.select = ['option'];
 
 
-});
+}, false);
 
 
 

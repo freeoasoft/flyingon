@@ -381,7 +381,25 @@ var flyingon;
             throw class_fn;
         }
         
-        return defineClass(name, this, fn, !!property);
+        return defineClass(name, this, fn, property);
+    };
+
+
+
+    //定义简单类
+    Object.extend._ = function (superclass, fn) {
+
+        if (!fn)
+        {
+            fn = superclass;
+            superclass = Object;
+        }
+        
+        function Class() {};
+
+        fn.call(Class.prototype = create(superclass.prototype));
+
+        return Class;
     };
 
 
@@ -1171,7 +1189,7 @@ var flyingon;
 
 
 //事件基类
-flyingon.Event = flyingon.defineClass(function () {
+flyingon.Event = Object.extend(function () {
 
     
     

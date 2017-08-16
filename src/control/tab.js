@@ -55,7 +55,7 @@ flyingon.Panel.extend('TabPage', function (base) {
 
 
 
-flyingon.defineClass('Tab', flyingon.Control, function (base) {
+flyingon.Control.extend('Tab', function (base) {
 
 
 

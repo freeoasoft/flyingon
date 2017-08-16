@@ -229,7 +229,7 @@ flyingon.SerializeReader = Object.extend(function () {
       
         
 
-});
+}, false);
 
 
 
@@ -428,4 +428,4 @@ flyingon.SerializeWriter = Object.extend(function () {
 
     
 
-});
+}, false);

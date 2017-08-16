@@ -551,4 +551,4 @@ flyingon.view.Template = Object.extend(function () {
     rule.select = ['option'];
 
 
-});
+}, false);

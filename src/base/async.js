@@ -243,7 +243,7 @@ flyingon.Async = Object.extend(function () {
     };
     
     
-});
+}, false);
 
     
 
