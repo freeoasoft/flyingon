@@ -39,7 +39,8 @@ body {
 .f-popup,
 .f-dialog, 
 .f-groupbox,
-.f-calendar {
+.f-calendar,
+.f-grid {
     border: 1px solid #95B8E7;
 }
 

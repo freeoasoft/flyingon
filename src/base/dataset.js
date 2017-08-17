@@ -786,12 +786,12 @@ flyingon.DataRow = Object.extend._(flyingon.RowCollection, function () {
     
     
         
-}, false);
+});
 
 
 
 //数据集
-flyingon.DataSet = Object.extend(flyingon.RowCollection, function () {
+flyingon.DataSet = flyingon.defineClass(flyingon.RowCollection, function () {
     
     
     
@@ -810,19 +810,11 @@ flyingon.DataSet = Object.extend(flyingon.RowCollection, function () {
         this.__changed_rows = [];
     };
     
-    
+
 
     //主键
     this.primaryKey = '';
 
-    
-    //数据行类
-    this.rowType = flyingon.DataRow;
-    
-    
-            
-    //扩展可序列化功能
-    flyingon.fragment('f.serialize', this);
     
         
     //扩展数据集功能
@@ -860,7 +852,7 @@ flyingon.DataSet = Object.extend(flyingon.RowCollection, function () {
     function load_data(dataset, parent, list, primaryKey, parentKey, childrenName, uniqueId) {
       
         var target = parent || dataset,
-            rowType = target.rowType || dataset.rowType,
+            rowType = flyingon.DataRow,
             keys1 = dataset.__keys1,
             keys2 = dataset.__keys2,
             index = target.length,

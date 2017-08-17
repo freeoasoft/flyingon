@@ -20,7 +20,11 @@ flyingon.fragment('f.collection', function () {
     //添加子控件
     this.push = function () {
 
-        this.__insert_items(arguments, 0, array.push);
+        if (arguments.length > 0)
+        {
+            this.__insert_items(arguments, 0, array.push);
+        }
+
         return this.length;
     };
 
@@ -42,7 +46,11 @@ flyingon.fragment('f.collection', function () {
     //在开始位置插入子控件
     this.unshift = function () {
 
-        this.__insert_items(arguments, 0, array.unshift);
+        if (arguments.length > 0)
+        {
+            this.__insert_items(arguments, 0, array.unshift);
+        }
+
         return this.length;
     };
 
@@ -152,16 +160,10 @@ flyingon.fragment('f.container', function (childrenClass) {
     //插入多个子项
     this.__insert_items = function (items, index, fn) {
 
-        var length = items.length;
-
-        if (length <= 0)
-        {
-            return;
-        }
-
         var Class = this.childrenClass,
             html = this instanceof flyingon.HtmlElement,
             patch = this.__content_render && !this.__insert_patch,
+            length = items.length,
             item,
             any;
 
@@ -305,7 +307,7 @@ flyingon.fragment('f.container', function (childrenClass) {
     //查找指定id的子控件
     this.findById = function (id, deep) {
 
-        var query = flyingon.create(flyingon.Query.prototype),
+        var query = new flyingon.Query(),
             list;
 
         if (id)
@@ -321,7 +323,7 @@ flyingon.fragment('f.container', function (childrenClass) {
     //查找指定类型的子控件
     this.findByType = function (name, deep) {
 
-        var query = flyingon.create(flyingon.Query.prototype),
+        var query = new flyingon.Query(),
             list;
 
         if (name)
@@ -337,7 +339,7 @@ flyingon.fragment('f.container', function (childrenClass) {
     //查找指定class的子控件
     this.findByClass = function (name, deep) {
 
-        var query = flyingon.create(flyingon.Query.prototype),
+        var query = new flyingon.Query(),
             list;
 
         if (name)

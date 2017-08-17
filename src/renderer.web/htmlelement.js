@@ -2,8 +2,17 @@ flyingon.renderer('HtmlElement', function (base) {
 
 
 
-    this.__scroll_html = '';
+    var tags = flyingon.create(null);
 
+    var check_tag = document.createElement('div');
+
+
+    tags.div = 'div';
+    tags.span = 'span';
+    tags.input = 'input';
+
+
+    this.__scroll_html = '';
 
 
 
@@ -11,8 +20,15 @@ flyingon.renderer('HtmlElement', function (base) {
     this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
-            tagName = control.tagName,
-            text;
+            tagName, 
+            any;
+
+        //注:IE8下不支持自定义标签,不支持的标签全部使用div
+        if (!(tagName = tags[any = control.tagName]))
+        {
+            check_tag.innerHTML = '<' + any + '></' + any + '>';
+            tags[any] = check_tag.firstChild ? any : 'div';
+        }
 
         //标注内容已渲染
         control.__content_render = true;
@@ -23,14 +39,14 @@ flyingon.renderer('HtmlElement', function (base) {
         
         writer.push('>');
 
-        if (text = storage.text)
+        if (any = storage.text)
         {
             if (!storage.html)
             {
-                text = flyingon.html_encode(text);
+                any = flyingon.html_encode(any);
             }
 
-            writer.push(text);
+            writer.push(any);
         }
         else if (control.length > 0 && control.__visible)
         {
@@ -63,45 +79,6 @@ flyingon.renderer('HtmlElement', function (base) {
         base.unmount.call(this, control);
     };
 
-
-
-    this.update = function (control) {
-
-        base.update.call(this, control);
-
-        if (control.length > 0 && control.arrange())
-        {
-            this.__arrange(control);
-        }
-        else
-        {
-            control.__arrange_dirty = 0;
-        }
-    };
-
-
-    this.__arrange = function (control) {
-
-        var Class = flyingon.HtmlElement,
-            width,
-            height,
-            any;
-
-        width = control.offsetWidth - control.borderLeft - control.borderRight - control.paddingLeft - control.paddingRight;
-        height = control.offsetHeight - control.borderTop - control.borderBottom - control.paddintTop - control.paddingBottom;
-
-        for (var i = 0, l = control.length; i < l; i++)
-        {
-            if ((any = control[i]) && !(any instanceof Class))
-            {
-                //css布局方式时,如果指定了宽和高且不是auto,则计算offset大小作为以后排列的依据
-                //在排列时直接读取view.offsetWidth或view.offsetHeight时性能太差
-                any.measure(width, height, width, height);
-            }
-        }
-
-        control.__arrange_dirty = 0;
-    };
 
 
     this.__measure_auto = function (control, auto) {

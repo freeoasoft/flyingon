@@ -1242,7 +1242,6 @@ flyingon.Query = Object.extend(function () {
         return this;
     };
 
-
     
     
 }, false);

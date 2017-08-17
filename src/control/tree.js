@@ -124,11 +124,6 @@ Object.extend('TreeNode', function () {
             item,
             any;
 
-        if (length <= 0)
-        {
-            return;
-        }
-
         while (index < length)
         {
             if ((item = items[index]) instanceof Class)

@@ -49,13 +49,13 @@
 
     
     //是否支持auto尺寸
-    this.__auto_size = true;
+    this.__auto_size = 1;
 
     //盒子模型是否不包含边框
-    this.__no_border = false;
+    this.__no_border = 0;
 
     //盒子模型是否不包含内边距
-    this.__no_padding = true;
+    this.__no_padding = 1;
 
 
     //是否设置padding
@@ -375,9 +375,10 @@
         
         control.view = view;
 
+try{
         any[view.flyingon_id = control.__uniqueId || any.id++] = control;
         //view.onscroll = flyingon.__dom_scroll;
-
+}catch (e) {debugger;}
         //触发控件挂载过程
         if (any = control.onmount)
         {

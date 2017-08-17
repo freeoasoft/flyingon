@@ -76,7 +76,7 @@ flyingon.SerializeReader = Object.extend(function () {
         {
             if (typeof data === 'string')
             {
-                data = JSON.parse(data);
+                data = flyingon.parseJSON(data);
             }
 
             if (typeof data === 'object')

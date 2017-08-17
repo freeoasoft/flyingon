@@ -55,7 +55,21 @@
         }
 
         template = template.ast;
-        control = options.control || new (components[template.Class] || unkown)();
+
+        if (!(control = options.control))
+        {
+            control = template.Class;
+
+            if (any = components[control])
+            {
+                control = new any();
+            }
+            else
+            {
+                control = new unkown();
+                control.tagName = control;
+            }
+        }
 
         if (any = options.creating)
         {
@@ -1283,8 +1297,6 @@
         //标记已创建控件
         vm.__created = true;
 
-        control.tagName = template.Class;
-
         bind_control(control, vm, scope, template);
 
         if (any = template.children)
@@ -1300,8 +1312,15 @@
 
         any = template.Class;
 
-        control = new (type || components[any] || unkown)();
-        control.tagName = any;
+        if (type || (type = components[any]))
+        {
+            control = new type();
+        }
+        else
+        {
+            control = new unkown();
+            control.tagName = any;
+        }
 
         if (any = control.vm)
         {
@@ -1451,7 +1470,7 @@
         var top = vm.__top,
             template = vm.__template,
             tag = template.Class,
-            type = components[tag] || unkown,
+            type = components[tag],
             node = template['#loop'],
             item = node.item,
             index = node.index,
@@ -1462,8 +1481,15 @@
         {
             while (start < end)
             {
-                control = new type();
-                control.tagName = tag;
+                if (type)
+                {
+                    control = new type();
+                }
+                else
+                {
+                    control = new unkown();
+                    control.tagName = tag;
+                }
 
                 if (any = control.vm)
                 {
