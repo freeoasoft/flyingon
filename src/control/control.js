@@ -86,6 +86,8 @@ Object.extend('Control', function () {
                 }
             }
 
+            any = this.parent || this;
+
             this.__update_dirty || this.invalidate();
         }
         
@@ -97,9 +99,6 @@ Object.extend('Control', function () {
     //定位属性变化
     this.__location_dirty = 0;
 
-    //标记位置已经变化
-    this.__update_dirty = true;
-
 
     //定义定位属性
     var define = function (self, name, defaultValue, dirty) {
@@ -110,15 +109,15 @@ Object.extend('Control', function () {
 
             set: function () {
 
-                var patch;
+                var any;
 
                 this.__location_dirty |= dirty;
 
-                if (this.__as_html && (!(patch = this.__view_patch) || !patch.__location_patch))
+                if (this.__as_html && (!(any = this.__view_patch) || !any.__location_patch))
                 {
                     this.renderer.set(this, '__location_patch');
                 }
-
+                
                 this.__update_dirty || this.invalidate();
             }
         });
@@ -177,7 +176,10 @@ Object.extend('Control', function () {
 
             set: function () {
 
-                this.__update_dirty || this.invalidate();
+                if (!this.__as_html && !this.__update_dirty)
+                {
+                    this.invalidate();
+                }
             }
         });
     };
@@ -777,6 +779,7 @@ Object.extend('Control', function () {
 
         host.appendChild(this.view || this.renderer.createView(this));
 
+        flyingon.__delay_update();
         this.renderer.__update_top(this, width, height);
 
         return this;
@@ -805,6 +808,8 @@ Object.extend('Control', function () {
 
        
 
+    this.__update_dirty = true;
+
     //使布局无效
     this.invalidate = function () {
 
@@ -814,9 +819,40 @@ Object.extend('Control', function () {
 
         if (parent)
         {
-            parent.invalidate();
+            parent.__arrange_delay(2);
+        }
+        else if (this.__top_control)
+        {
+            this.__arrange_dirty = 2;
+            flyingon.__delay_update(this);
+        }
+
+        return this;
+    };
+
+
+    this.__arrange_dirty = 0;
+
+    //启用延时排列
+    this.__arrange_delay = function (dirty) {
+
+        if (this.__arrange_dirty < dirty)
+        {
+            var parent = this.parent;
+
+            this.__arrange_dirty = dirty;
+
+            if (parent)
+            {
+                parent.__arrange_delay(1);
+            }
+            else if (this.__top_control)
+            {
+                flyingon.__delay_update(this);
+            }
         }
     };
+
 
     
     //更新视区
@@ -830,6 +866,32 @@ Object.extend('Control', function () {
         
         return this;
     };
+
+
+    this.__update_children = function () {
+
+        var item;
+
+        for (var i = 0, l = this.length; i < l; i++)
+        {
+            if ((item = this[i]) && item.view)
+            {
+                switch (item.__arrange_dirty)
+                {
+                    case 2:
+                        item.renderer.update(item);
+                        break;
+
+                    case 1:
+                        item.__update_children();
+                        break;
+                }
+            }
+        }
+
+        this.__arrange_dirty = 0;
+    };
+    
 
     
     

@@ -26,8 +26,65 @@ flyingon.Control.extend('HtmlElement', function (base) {
     
 
     //扩展容器功能
-    flyingon.fragment('f.container', this);
+    flyingon.fragment('f.container', this, true);
 
+
+    //插入多个子项
+    this.__insert_items = function (items, index, fn) {
+
+        var Class = this.childrenClass,
+            length = items.length,
+            item,
+            any;
+
+        this.__all && this.__clear_all();
+
+        while (index < length)
+        {
+            item = items[index];
+
+            if (item.__flyingon_class)
+            {
+                if (item instanceof Class)
+                {
+                    if (any = item.parent)
+                    {
+                        any.__remove_item(item);
+                    }
+                }
+                else
+                {
+                    this.__check_error(Class);
+                }
+            }
+            else if ((item = flyingon.ui(item, Class)) instanceof Class)
+            {
+                items[index] = item;
+            }
+            else
+            {
+                this.__check_error(Class);
+            }
+
+            item.parent = this;
+            item.__as_html = true;
+
+            if (item.__location_dirty && (!(any = item.__view_patch) || !any.__location_patch))
+            {
+                item.renderer.set(item, '__location_patch');
+            }
+
+            index++;
+        }
+
+        if (this.__content_render && !this.__insert_patch)
+        {
+            this.__insert_patch = true;
+            this.renderer.__children_dirty(this);
+        }
+
+        return fn.apply(this, items);
+    };
 
 
     //测量自动大小
@@ -52,7 +109,7 @@ flyingon.Control.extend('HtmlElement', function (base) {
     };
 
 
- 
+
     this.serialize = function (writer) {
         
         base.serialize.call(this, writer);

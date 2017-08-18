@@ -115,15 +115,18 @@ Object.extend('TreeNode', function () {
     flyingon.fragment('f.container', this, flyingon.TreeNode);
 
 
+
     //重写插入子节点方法
     this.__insert_items = function (items, index, fn) {
 
-        var Class = this.childrenClass,
+        var Class = flyingon.TreeNode,
             render = this.hasRender,
             length = items.length,
             item,
             any;
 
+        this.__all && this.__clear_all();
+        
         while (index < length)
         {
             if ((item = items[index]) instanceof Class)
@@ -139,11 +142,6 @@ Object.extend('TreeNode', function () {
             }
 
             item.parent = this;
-
-            if (any = item.onparentchange)
-            {
-                any.call(item, this);
-            }
 
             if (item.__storage.checked)
             {
@@ -176,7 +174,6 @@ Object.extend('TreeNode', function () {
 
         return fn.apply(this, items);
     };
-
 
 
     //获取节点级别

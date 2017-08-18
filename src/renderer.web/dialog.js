@@ -251,10 +251,9 @@ flyingon.showMessage = function (title, text, type, buttons, focus) {
     {
         buttons.push({
 
-            Class: 'button',
-            type: 'button',
+            Class: 'Button',
             height: 25,
-            style: 'min-width:80px;vertical-align:middle;',
+            style: 'min-width:80px;margin-top:8px;',
             tag: any[i],
             text: flyingon.i18ntext('system.' + any[i], any[i])
         });
@@ -285,7 +284,7 @@ flyingon.showMessage = function (title, text, type, buttons, focus) {
                 Class: 'div', 
                 height: 40,
                 className: 'f-message-foot', 
-                style: 'overflow:hidden;line-height:40px;',
+                style: 'overflow:hidden;',
                 children: buttons
             }
         ]

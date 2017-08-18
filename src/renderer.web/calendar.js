@@ -40,7 +40,7 @@ flyingon.renderer('Calendar', function (base) {
 
     function onclick(e) {
 
-        var target = e.target || e.srcElement,
+        var target = (e || (e = window.event)).target || e.srcElement,
             control = flyingon.findControl(target),
             data = control.__data,
             any;
@@ -199,7 +199,7 @@ flyingon.renderer('Calendar', function (base) {
 
     function onchange(e) {
 
-        var target = e.target || e.srcElement,
+        var target = (e || (e = window.event)).target || e.srcElement,
             control = flyingon.findControl(target),
             values = target.value.match(/\d+/g);
 
@@ -263,7 +263,15 @@ flyingon.renderer('Calendar', function (base) {
         {
             if (any = values[i])
             {
-                any = any > max ? max : ('0' + any).substr(-2);
+                //substr在IE7下使用负索引有问题
+                if (any > max)
+                {
+                    any = max;
+                }
+                else if ((any = '' + any).length === 1)
+                {
+                    any = '0' + any;
+                }
             }
             else
             {

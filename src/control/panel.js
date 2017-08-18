@@ -26,25 +26,42 @@ flyingon.Control.extend('Panel', function (base) {
      
         group: 'locate',
         query: true,
+
         set: function (value) {
 
             this.__layout = null;
-
-            if (this.scrollLeft || this.scrollTop)
-            {
-                this.renderer.__reset_scroll(this);
-            }
-            
-            this.invalidate();
+            this.__arrent_dirty < 2 && this.__arrange_delay();
         }
     });
     
     
 
-
     //扩展容器功能
-    flyingon.fragment('f.container', this);
+    flyingon.fragment('f.container', this, true);
 
+
+
+    //更新视区
+    this.update = function () {
+        
+        if (this.view)
+        {
+            flyingon.__update_patch();
+
+            switch (this.__arrange_dirty)
+            {
+                case 2:
+                    this.renderer.update(this);
+                    break;
+
+                case 1:
+                    this.__update_children();
+                    break;
+            }
+        }
+        
+        return this;
+    };
 
               
 
@@ -82,7 +99,7 @@ flyingon.Control.extend('Panel', function (base) {
         
     
     //查找指定坐标的子控件
-    this.controlAt = function (x, y) {
+    this.findAt = function (x, y) {
       
         if (this.length <= 0)
         {

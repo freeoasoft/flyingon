@@ -288,7 +288,15 @@ Function.prototype.bind || (Function.prototype.bind = function (context) {
                         break;
                 }
 
-                return length === 1 ? text : ('00' + text).substr(-length);
+                text = '' + text;
+
+                if (length === 1 || (length -= text.length) <= 0)
+                {
+                    return text;
+                }
+
+                //substr负索引有IE7下有问题
+                return '0000'.substring(0, length) + text;
             });
         }
         

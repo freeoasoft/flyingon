@@ -19,7 +19,7 @@ flyingon主要包含以下内容：
 
 
 浏览器支持：
-IE8+
+IE7+
 FF3+
 Safari4+
 chrome2+

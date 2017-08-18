@@ -111,11 +111,7 @@ flyingon.renderer('Tab', function (base) {
         }
 
         control.__scroll_header = size;
-
-        if (!control.__update_dirty)
-        {
-            update_header(control);
-        }
+        control.__update_dirty && update_header(control);
     };
 
 
@@ -243,12 +239,12 @@ flyingon.renderer('Tab', function (base) {
 
         if (vertical)
         {
-            style = 'margin-top:' + space + 'px;width:' + any + 'px;line-height:' + (storage.size - 1) + 'px;';
+            style = 'margin-top:' + space + 'px;width:' + any + 'px;line-height:' + (storage.size - 2) + 'px;';
             total = control.offsetHeight - control.borderTop - control.borderBottom - storage.start;
         }
         else
         {
-            style = 'margin-' + name + ':' + space + 'px;height:' + any + 'px;line-height:' + (any - 1) + 'px;';
+            style = 'margin-' + name + ':' + space + 'px;height:' + any + 'px;line-height:' + (any - 2) + 'px;';
             total = control.offsetWidth - control.borderLeft - control.borderRight - storage.start;
         }
 
@@ -439,19 +435,19 @@ flyingon.renderer('TabPage', 'Panel', function (base) {
             storage = control.__storage || control.__defaults,
             any;
 
-        node.className = 'f-tab-item-host' + (control.selected() ? ' f-tab-selected' : '');
+        node.className = 'f-tab-item' + (control.selected() ? ' f-tab-selected' : '');
 
-        writer.push('<a class="f-tab-item">',
+        writer.push('<a class="f-tab-link">',
             '<span class="f-tab-icon ', (any = storage.icon) ? encode(any) : 'f-tab-icon-none', '"></span>',
             '<span class="f-tab-text">', (any = storage.text) ? encode(any) : '', '</span>');
-        
+
         if ((any = storage.buttons) && (any = encode(any).replace(/(\w+)\W*/g, '<span class="f-tab-button $1" tag="button"></span>')))
         {
             writer.push(any);
         }
 
         writer.push('<span class="f-tab-close"', storage.closable ? '' : ' style="display:none"', ' tag="close"></span>',
-            '</a><span class="f-tab-line"></span>');
+            '</a>');
 
         node.innerHTML = writer.join('');
         
@@ -543,7 +539,7 @@ flyingon.renderer('TabPage', 'Panel', function (base) {
             control.view.style.display = value ? '' : 'none';
         }
 
-        control.view_head.className = 'f-tab-item-host' + (value ? ' f-tab-selected' : '');
+        control.view_head.className = 'f-tab-item' + (value ? ' f-tab-selected' : '');
     };
 
 

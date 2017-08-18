@@ -210,7 +210,11 @@ flyingon.fragment('f.visual', function () {
                 Array.prototype.splice.call(parent, index, 1);
 
                 this.view && this.renderer.set(this, 'detach');
-                parent.__update_dirty || parent.invalidate(2);
+
+                if (this.__arrange_delay && this.__arrange_dirty < 2)
+                {
+                    this.__arrange_delay(2);
+                }
             }
         }
     };

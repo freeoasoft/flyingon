@@ -375,22 +375,14 @@
         
         control.view = view;
 
-try{
         any[view.flyingon_id = control.__uniqueId || any.id++] = control;
         //view.onscroll = flyingon.__dom_scroll;
-}catch (e) {debugger;}
+
         //触发控件挂载过程
         if (any = control.onmount)
         {
             any.call(control, view);
         }
-
-        if (any = control.__view_patch)
-        {
-            control.__view_patch = null;
-            this.__apply_patch(control, view, any);
-        }
-
     };
 
 

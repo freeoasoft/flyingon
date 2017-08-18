@@ -119,5 +119,22 @@ flyingon.renderer('Panel', function (base) {
     };
 
 
+    this.__location_patch = function (control, view) {
+
+        base.__location_patch.call(this, control, view);
+        this.layout(control, view);
+    };
+
+
+    this.layout = function (control, view) {
+
+        // var width = view.offsetWidth,
+        //     height = view.offsetHeight;
+
+        control.measure(0, 0, 0, 0);
+        this.update(control);
+    };
+
+
 
 });

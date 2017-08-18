@@ -29,7 +29,7 @@ flyingon.renderer('ListBox', function (base) {
 
     function onclick(e) {
 
-        var target = e.target || e.srcElement;
+        var target = (e || (e = window.event)).target || e.srcElement;
 
         while (target !== this)
         {

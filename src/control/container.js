@@ -111,42 +111,17 @@ flyingon.fragment('f.collection', function () {
         return this;
     };
 
-
-});
-
-
-
-//容器组件功能扩展
-flyingon.fragment('f.container', function (childrenClass) {
-
-
-
-
-    var array = Array.prototype;
-
-
-
-    //子控件类
-    this.childrenClass = childrenClass || flyingon.Control;
-
-
-
-    //扩展集合功能
-    flyingon.fragment('f.collection', this);
-
-
-
+    
     //分离所有子控件
     this.detachAll = function () {
 
         if (this.length > 0)
         {
-            array.splice.call(this, 0);
-
+            Array.prototype.splice.call(this, 0);
             this.view && this.renderer.set(this, 'detachAll');
-            this.__update_dirty || this.invalidate(2);
         }
     };
+
 
     
     //获取子控件集合
@@ -157,15 +132,67 @@ flyingon.fragment('f.container', function (childrenClass) {
 
 
 
-    //插入多个子项
+    //添加多个子项
+    this.__insert_items = function (items, index, fn) {
+
+        return fn.apply(this, items);
+    };
+
+
+    //移除多个子项
+    this.__remove_items = function (items) {
+    };
+
+
+    //移除子项
+    this.__remove_item = function (item) {
+    };
+
+
+});
+
+
+
+//集合功能扩展
+flyingon.fragment('f.container', function (childrenClass, arrange) {
+
+
+
+    if (childrenClass === true)
+    {
+        childrenClass = null;
+        arrange = true;
+    }
+
+
+    //子控件类
+    this.childrenClass = childrenClass || flyingon.Control;
+
+
+    //是否需要排列
+    this.__arrange_dirty = 2;
+
+    
+
+    flyingon.fragment('f.collection', this);
+
+
+    this.__check_error = function (Class) {
+
+        throw '"' + this.Class.fullName + '" type can push "' + Class.fullName + '" type only!';
+    };
+
+  
+
+    //添加多个子项
     this.__insert_items = function (items, index, fn) {
 
         var Class = this.childrenClass,
-            html = this instanceof flyingon.HtmlElement,
-            patch = this.__content_render && !this.__insert_patch,
             length = items.length,
             item,
             any;
+
+        this.__all && this.__clear_all();
 
         while (index < length)
         {
@@ -195,63 +222,37 @@ flyingon.fragment('f.container', function (childrenClass) {
             }
 
             item.parent = this;
-
-            if ((item.__as_html = html) && item.__location_dirty &&
-                (!(any = item.__view_patch) || !any.__location_patch))
-            {
-                item.renderer.set(item, '__location_patch');
-            }
-
-            if (any = item.onparentchange)
-            {
-                any.call(item, this);
-            }
-
-            //添加子项补丁
-            if (patch)
-            {
-                patch = false;
-
-                this.__insert_patch = true;
-                this.renderer.__children_dirty(this);
-            }
-
             index++;
         }
 
-        any = fn.apply(this, items);
+        if (this.__content_render && !this.__insert_patch)
+        {
+            this.__insert_patch = true;
+            this.renderer.__children_dirty(this);
+        }
 
-        this.__update_dirty || this.invalidate(2);
+        if (arrange && this.__arrange_dirty < 2)
+        {
+            this.__arrange_delay(2);
+        }
 
-        return any;
+        return fn.apply(this, items);
     };
-
-
-
-    this.__check_error = function (Class) {
-
-        throw '"' + this.Class.fullName + '" type can push "' + Class.fullName + '" type only!';
-    };
-
 
 
     //移除多个子项
     this.__remove_items = function (items) {
 
         var patch = this.__remove_patch,
-            item,
-            any;
+            item;
+
+        this.__all && this.__clear_all();
 
         for (var i = items.length - 1; i >= 0; i--)
         {
             if (item = items[i])
             {
                 item.parent = null;
-
-                if (any = item.onparentchange)
-                {
-                    any.call(item, this);
-                }
 
                 if (patch)
                 {
@@ -264,8 +265,11 @@ flyingon.fragment('f.container', function (childrenClass) {
                 }
             }
         }
-
-        this.__update_dirty || this.invalidate(2);
+        
+        if (arrange && this.__arrange_dirty < 2)
+        {
+            this.__arrange_delay(2);
+        }
     };
 
 
@@ -274,12 +278,9 @@ flyingon.fragment('f.container', function (childrenClass) {
 
         var patch = this.__remove_patch;
 
-        item.parent = null;
+        this.__all && this.__clear_all();
 
-        if (patch = item.onparentchange)
-        {
-            patch.call(item, null);
-        }
+        item.parent = null;
 
         if (patch)
         {
@@ -291,10 +292,27 @@ flyingon.fragment('f.container', function (childrenClass) {
             this.renderer.__children_dirty(this);
         }
 
-        this.__update_dirty || this.invalidate(2);
+        if (arrange && this.__arrange_dirty < 2)
+        {
+            this.__arrange_delay(2);
+        }
     };
 
-    
+
+    //清除all缓存
+    this.__clear_all = function () {
+
+        var any = this.parent;
+
+        this.__all = null;
+
+        while (any && any.__all)
+        {
+            any.__all = null;
+            any = any.parent;
+        }
+    };
+
 
 
     //使用选择器查找子控件
@@ -384,7 +402,7 @@ flyingon.fragment('f.container', function (childrenClass) {
     //查找拖拉放置目标及位置
     this.findDropTarget = function (x, y) {
         
-        var control = this.controlAt(x, y);
+        var control = this.findAt(x, y);
 
         if (control)
         {
@@ -399,12 +417,27 @@ flyingon.fragment('f.container', function (childrenClass) {
     
     
     //查找指定坐标的子控件
-    this.controlAt = function (x, y) {
+    this.findAt = function (x, y) {
       
         return this;
     };
     
+  
     
+    this.deserialize_children = function (reader, values) {
+      
+        if (typeof values === 'function')
+        {
+            var any = [];
+
+            values(any); //values(values = []); 在IE7下会出错
+            values = any;
+        }
+
+        this.push.apply(this, reader.readArray(values, this.childrenClass));
+    };
+
+
 
     //接收数据集变更动作处理
     this.subscribeBind = function (dataset, action) {
@@ -424,131 +457,6 @@ flyingon.fragment('f.container', function (childrenClass) {
         
         return this;
     };
-    
-
-    
-    //是否需要排列
-    this.__arrange_dirty = 2;
-
-    
-    
-    //使布局无效
-    this.invalidate = function () {
-        
-        var target, any;
-
-        //清除查找缓存
-        if (arguments[0] === 2 && (any = this.__all))
-        {
-            this.__all = null;
-
-            while (any = any.parent)
-            {
-                any.__all = null;
-            }
-        }
-
-        this.__update_dirty = true;
-        this.__arrange_dirty = 2;
-
-        if (target = this.parent)
-        {
-            if (target.__arrange_dirty > 1)
-            {
-                return this;
-            }
-
-            target.__arrange_dirty = 2;
-            any = target;
-
-            while (target = any.parent)
-            {
-                if (!target.__arrange_dirty)
-                {
-                    target.__arrange_dirty = 1;
-                }
-
-                any = target;
-            }
-        }
-        else
-        {
-            any = this;
-        }
-
-        if (any.__top_control)
-        {
-            flyingon.__delay_update(any);
-        }
-
-        return this;
-    };
-
-
-
-    //更新视区
-    this.update = function () {
-        
-        if (this.view)
-        {
-            flyingon.__update_patch();
-
-            switch (this.__arrange_dirty)
-            {
-                case 2:
-                    this.renderer.update(this);
-                    break;
-
-                case 1:
-                    this.__update_children();
-                    break;
-            }
-        }
-        
-        return this;
-    };
-
-
-    this.__update_children = function () {
-
-        var item;
-
-        for (var i = 0, l = this.length; i < l; i++)
-        {
-            if ((item = this[i]) && item.view)
-            {
-                switch (item.__arrange_dirty)
-                {
-                    case 2:
-                        item.renderer.update(item);
-                        break;
-
-                    case 1:
-                        item.__update_children();
-                        break;
-                }
-            }
-        }
-
-        this.__arrange_dirty = 0;
-    };
-    
-
-  
-    
-    this.deserialize_children = function (reader, values) {
-      
-        if (typeof values === 'function')
-        {
-            var any = [];
-
-            values(any); //values(values = []); 在IE7下会出错
-            values = any;
-        }
-
-        this.push.apply(this, reader.readArray(values, this.childrenClass));
-    };
-
 
 
 });

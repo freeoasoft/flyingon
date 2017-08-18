@@ -27,7 +27,7 @@ flyingon.renderer('HtmlElement', function (base) {
         if (!(tagName = tags[any = control.tagName]))
         {
             check_tag.innerHTML = '<' + any + '></' + any + '>';
-            tags[any] = check_tag.firstChild ? any : 'div';
+            tags[any] = tagName = check_tag.firstChild ? any : 'div';
         }
 
         //标注内容已渲染

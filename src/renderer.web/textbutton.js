@@ -53,6 +53,8 @@ flyingon.renderer('TextButton', function (base) {
 
     function onclick(e) {
 
+        e = e || window.event;
+
         if ((e.target || e.srcElement).className.indexOf('f-textbutton-button') >= 0)
         {
             flyingon.findControl(this).__on_click();
