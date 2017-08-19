@@ -1,6 +1,7 @@
 flyingon.Control.extend('Label', function (base) {
    
-        
+    
+
     
     var define = function (self, name, defaultValue) {
 

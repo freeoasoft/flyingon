@@ -22,8 +22,8 @@ flyingon.renderer('Tab', function (base) {
         writer.push('><div class="f-tab-head f-tab-theme-', storage.theme, '" tag="head">',
                     '<div class="f-tab-line"></div>',
                     '<div class="f-tab-content"></div>',
-                    '<div class="f-tab-forward" tag="forward"><span class="f-tab-scroll" tag="forward"></span></div>',
-                    '<div class="f-tab-back" tag="back"><span class="f-tab-scroll" tag="back"></span></div>',
+                    '<div class="f-tab-move f-tab-forward" tag="forward"><a class="f-tab-move-link"><span class="f-tab-move-icon"></span></a></div>',
+                    '<div class="f-tab-move f-tab-back" tag="back"><a class="f-tab-move-link"><span class="f-tab-move-icon"></span></a></div>',
                 '</div>',
             '<div class="f-tab-body">');
 
@@ -49,37 +49,45 @@ flyingon.renderer('Tab', function (base) {
             page.renderer.mount(page, view.lastChild.firstChild);
         }
 
-        control.on('click', on_click);
+        view.firstChild.onclick = onclick;
     };
 
 
     this.unmount = function (control) {
+
+        control.view.firstChild.onclick = null;
 
         this.__unmount_children(control);
         base.unmount.call(this, control);
     };
 
 
-    function on_click(event) {
+    function onclick(e) {
 
-        var node = event.original_event.target;
+        var target = (e || (e = window.event)).target || e.srcElement,
+            control = flyingon.findControl(this);
 
-        switch (node.getAttribute('tag'))
+        while (target && target !== this)
         {
-            case 'forward':
-                if ((this.__scroll_header -= 100) < 0)
-                {
-                    this.__scroll_header = 0;
-                }
+            switch (target.getAttribute('tag'))
+            {
+                case 'forward':
+                    if ((control.__scroll_header -= 100) < 0)
+                    {
+                        control.__scroll_header = 0;
+                    }
 
-                update_header(this);
-                break;
+                    update_header(control);
+                    return;
 
-            case 'back':
-                this.__scroll_header += 100;
+                case 'back':
+                    control.__scroll_header += 100;
 
-                update_header(this);
-                break;
+                    update_header(control);
+                    return;
+            }
+
+            target = target.parentNode;
         }
     };
 
@@ -89,29 +97,60 @@ flyingon.renderer('Tab', function (base) {
         //移动到当前位置
         var storage = control.__storage || control.__defaults,
             size = storage.size,
-            space = storage.space;
+            space = storage.space,
+            head,
+            start;
 
         if (!page.view)
         {
             view.lastChild.appendChild(page.renderer.createView(page, false));
             page.renderer.locate(page);
         }
-        
+
+        head = page.view_head;
+
         if (size > 0)
         {
-            size = control.indexOf(page) * (size + space);
+            start = control.indexOf(page) * (size + space);
         }
         else if ('left,right'.indexOf(storage.direction) >= 0)
         {
-            size = page.view_head.offsetTop - space;
+            size = head.offsetWidth;
+            start = head.offsetTop - space;
         }
         else
         {
-            size = page.view_head.offsetLeft - space;
+            size = head.offsetHeight;
+            start = head.offsetLeft - space;
         }
 
-        control.__scroll_header = size;
-        control.__update_dirty && update_header(control);
+        view = view.firstChild.firstChild.nextSibling;
+        space = -view.offsetLeft;
+
+        //如果起始位置在可见区或可见区的右边
+        if (start > space)
+        {
+            //如果整个页头在可见区则不调整位置
+            size = head.offsetLeft + size;
+            start = view.parentNode.offsetWidth;
+
+            if (size < space + start)
+            {
+                return;
+            }
+
+            start = size - start + 80; //后移一点方便点击后一节点
+        }
+        else if ((start -= 50) < 0) //前移一点方便点击前一节点
+        {
+            start = 0;
+        }
+
+        if (control.__scroll_header !== start)
+        {
+            control.__scroll_header = start;
+            control.__update_dirty || update_header(control);
+        }
     };
 
 
@@ -452,21 +491,18 @@ flyingon.renderer('TabPage', 'Panel', function (base) {
         node.innerHTML = writer.join('');
         
         node.page = control;
-        node.onclick = on_click;
+        node.onclick = onclick;
     };
 
 
-    function on_click(event) {
+    function onclick(e) {
 
         var page = this.page,
-            node;
+            target = (e || (e = window.event)).target || e.srcElement;
 
-        event = event || window.event;
-        node = event.target || event.srcElement;
-
-        while (node && node !== this)
+        while (target && target !== this)
         {
-            switch (node.getAttribute('tag'))
+            switch (target.getAttribute('tag'))
             {
                 case 'close':
                     page.remove();
@@ -477,7 +513,7 @@ flyingon.renderer('TabPage', 'Panel', function (base) {
                     return;
             }
 
-            node = node.parentNode;
+            target = target.parentNode;
         }
 
         page.parent.selectedPage(page);
