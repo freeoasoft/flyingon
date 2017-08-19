@@ -167,9 +167,9 @@ flyingon.renderer('ListBox', function (base) {
     };
 
 
-    this.update = function (control) {
+    this.locate = function (control) {
 
-        base.update.call(this, control);
+        base.locate.call(this, control);
         this.content(control);
     };
 

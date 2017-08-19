@@ -188,6 +188,7 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
     this.__insert_items = function (items, index, fn) {
 
         var Class = this.childrenClass,
+            html = this instanceof flyingon.HtmlElement,
             length = items.length,
             item,
             any;
@@ -222,6 +223,8 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
             }
 
             item.parent = this;
+            item.__as_html = html;
+
             index++;
         }
 

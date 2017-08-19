@@ -13,11 +13,11 @@ flyingon.renderer('Splitter', function (base) {
     };
     
 
-    this.update = function (control) {
+    this.locate = function (control) {
 
         var vertical = control.offsetWidth > control.offsetHeight;
 
-        base.update.call(this, control);
+        base.locate.call(this, control);
 
         if (control.vertical !== vertical)
         {

@@ -24,7 +24,7 @@ flyingon.renderer('ScrollPanel', function (base) {
 
         //滚动位置控制(解决有右或底边距时拖不到底的问题)
         //使用模拟滚动条解决IE拖动闪烁问题
-        //此处只渲染一个空的壳,实现渲染内容在update的时候根据需要渲染
+        //此处只渲染一个空的壳,实现渲染内容在locate的时候根据需要渲染
         writer.push('<div');
         
         this.renderDefault(writer, control);
@@ -74,9 +74,9 @@ flyingon.renderer('ScrollPanel', function (base) {
 
 
 
-    this.update = function (control) {
+    this.locate = function (control) {
 
-        var cache = base.update.call(this, control),
+        var cache = base.locate.call(this, control),
             name = flyingon.rtl ? 'paddingLeft' : 'paddingRight',
             start, 
             end, 
@@ -89,7 +89,7 @@ flyingon.renderer('ScrollPanel', function (base) {
             end = control.__visible_end + 1;
 
             this.__arrange(control);
-            this.__update_scroll(control);
+            this.__locate_scroll(control);
             
             control.__compute_visible();
 
@@ -100,7 +100,7 @@ flyingon.renderer('ScrollPanel', function (base) {
                 {
                     if ((any = control[start++]) && !any.__visible_area)
                     {
-                        this.__update_position(any);
+                        this.__locate_position(any);
                     }
                 }
             }
@@ -121,39 +121,52 @@ flyingon.renderer('ScrollPanel', function (base) {
 
         if (start >= 0)
         {
+            //插件未挂载的子控件
             if (control.__visible_unmount)
             {
                 control.__visible_unmount = false;
                 this.__insert_patch(control, control.view.lastChild, start, end);
             }
             
-            this.__update_children(control, start, end);
+            //定位子控件
+            while (start < end)
+            {
+                any = control[start++];
+
+                if (item && item.view)
+                {
+                    item.renderer.locate(item);
+                }
+            }
         }
 
         return cache;
     };
 
 
-    this.scroll = function (control, x, y) {
+    //仅更新位置信息
+    this.__locate_position = function (control) {
 
-        var view = control.view.lastChild;
+        var style = control.view.style,
+            cache = control.__locate_cache,
+            any;
 
-        this.update(control);
-        
-        if (view.scrollLeft !== x)
+        if (cache)
         {
-            view.scrollLeft = x;
-        }
+            if (cache.left !== (any = control.offsetLeft))
+            {
+                style.left = (cache.left = any) + 'px';
+            }
 
-        if (view.scrollTop !== y)
-        {
-            view.scrollTop = y;
+            if (cache.top !== (any = control.offsetTop))
+            {
+                style.top = (cache.top = any) + 'px';
+            }
         }
     };
 
 
-
-    this.__update_scroll = function (control) {
+    this.__locate_scroll = function (control) {
 
         var view = control.view,
             style1 = view.firstChild.firstChild.style, //模拟滚动条控制
@@ -178,6 +191,23 @@ flyingon.renderer('ScrollPanel', function (base) {
     this.__sync_scroll = function (control) {
     };
 
+
+    this.scroll = function (control, x, y) {
+
+        var view = control.view.lastChild;
+
+        this.locate(control);
+        
+        if (view.scrollLeft !== x)
+        {
+            view.scrollLeft = x;
+        }
+
+        if (view.scrollTop !== y)
+        {
+            view.scrollTop = y;
+        }
+    };
 
 
 });

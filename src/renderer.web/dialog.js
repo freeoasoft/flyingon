@@ -179,7 +179,7 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
         }
 
         flyingon.__update_patch();
-        this.update(control, false);
+        this.update(control);
         
         control.trigger('shown');
     };

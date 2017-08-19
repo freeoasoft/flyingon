@@ -94,7 +94,7 @@ flyingon.renderer('Tab', function (base) {
         if (!page.view)
         {
             view.lastChild.appendChild(page.renderer.createView(page, false));
-            page.renderer.update(page, false);
+            page.renderer.locate(page);
         }
         
         if (size > 0)
@@ -184,11 +184,11 @@ flyingon.renderer('Tab', function (base) {
 
 
 
-    this.update = function (control) {
+    this.locate = function (control) {
 
         var page = control.selectedPage();
 
-        base.update.call(this, control);
+        base.locate.call(this, control);
         
         if (control.__reset_header)
         {
@@ -213,7 +213,7 @@ flyingon.renderer('Tab', function (base) {
                 control.view.lastChild.appendChild(page.renderer.createView(page, false));
             }
 
-            page.renderer.update(page, false);
+            page.renderer.locate(page);
         }
 
         control.__arrange_dirty = 0;

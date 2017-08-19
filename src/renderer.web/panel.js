@@ -79,9 +79,35 @@ flyingon.renderer('Panel', function (base) {
 
 
 
-    this.update = function (control) {
+    //作为html方式定位控件时需特殊处理
+    this.locate_html = function (control) {
 
-        base.update.call(this, control);
+        var any = control.__location_dirty,
+            width = 0,
+            height = 0;
+        
+        if (any)
+        {
+            this.__locate_html(control);
+        }
+
+        control.__update_dirty = false;
+
+        //如果需要适应容器,则计算容器大小(对性能有影响)
+        if ((any = control.view) && (any = any.parentNode) && control.adaption())
+        {
+            width = any.clientWidth;
+            height = any.clientHeight;
+        }
+        
+        control.measure(width, height, width, height);
+        this.locate(control);
+    };
+
+
+    this.locate = function (control) {
+
+        base.locate.call(this, control);
 
         if (control.length > 0 && !control.__content_render)
         {
@@ -92,16 +118,24 @@ flyingon.renderer('Panel', function (base) {
         if (control.__arrange_dirty > 1)
         {
             this.__arrange(control);
-            this.__update_scroll(control);
+            this.__locate_scroll(control);
         }
+ 
+        //定位子控件
+        for (var i = 0, l = control.length; i < l; i++)
+        {
+            var item = control[i];
 
-        this.__update_children(control, 0, control.length);
+            if (item && item.view)
+            {
+                item.renderer.locate(item);
+            }
+        }
     };
 
 
-
-    //更新滚动条
-    this.__update_scroll = function (control) {
+    //定位滚动条
+    this.__locate_scroll = function (control) {
 
         var style = (control.view_content || control.view).lastChild.style, //内容位置控制(解决有右或底边距时拖不到底的问题)
             cache = control.__scroll_cache || (control.__scroll_cache = {}),
@@ -116,23 +150,6 @@ flyingon.renderer('Panel', function (base) {
         {
             style.height = (control.__vscroll_length = any) + 'px'; 
         }
-    };
-
-
-    this.__location_patch = function (control, view) {
-
-        base.__location_patch.call(this, control, view);
-        this.layout(control, view);
-    };
-
-
-    this.layout = function (control, view) {
-
-        // var width = view.offsetWidth,
-        //     height = view.offsetHeight;
-
-        control.measure(0, 0, 0, 0);
-        this.update(control);
     };
 
 

@@ -411,7 +411,7 @@
 
 
 
-    //更新顶层控件
+    //更新顶级控件
     this.__update_top = function (control, width, height) {
 
         var view = control.view,
@@ -441,8 +441,103 @@
     };
 
 
-    //更新布局
+    //更新视图
     this.update = function (control) {
+
+        if (control.__as_html)
+        {
+            this.locate_html(control);
+        }
+        else
+        {
+            this.locate(control);
+        }
+    };
+
+
+    //按照html方式定位
+    this.locate_html = function (control) {
+
+        var dirty = control.__location_dirty;
+        
+        if (dirty)
+        {
+            this.__locate_html(control);
+        }
+
+        control.__update_dirty = false;
+    };
+
+
+    //按照html方式定位控件
+    this.__locate_html = function (control) {
+
+        var style = control.view.style,
+            values = control.__storage || control.__defaults,
+            dirty = control.__location_dirty,
+            flag = 1,
+            name,
+            value,
+            any;
+
+        control.__location_dirty = 0;
+
+        while (dirty >= flag)
+        {
+            if (dirty & flag)
+            {
+                switch (flag)
+                {
+                    case 1:
+                    case 2:
+                        if (value = values[name = flag === 1 ? 'width' : 'height'])
+                        {
+                            if (value === 'default' || value === 'auto')
+                            {
+                                style[name] = 'auto';
+                            }
+                            else
+                            {
+                                style[name] = value >= 0 ? value + 'px' : value;
+                            }
+                        }
+                        break;
+
+                    case 4:
+                    case 16:
+                        value = values[name = flag === 4 ? 'margin' : 'padding'];
+                        style[name] = sides_cache[value] || css_sides(value);
+                        break;
+
+                    case 8:
+                        value = values.border;
+                        style.borderWidth = sides_cache[value] || css_sides(value);
+                        break;
+
+                    case 32:
+                    case 64:
+                    case 128:
+                    case 256:
+                        any = location_map[flag];
+                        value = values[name = any[0]];
+                        style[name] = value > 0 ? value + 'px' : value;
+                        break;
+
+                    case 512:
+                    case 1024:
+                        value = values[name = flag < 1000 ? 'left' : 'top'];
+                        style[name] = (any = +value) === any ? value + 'px' : value;
+                        break;
+                }
+            }
+
+            flag <<= 1;
+        }
+    };
+
+
+    //定位控件
+    this.locate = function (control) {
 
         var style = control.view.style,
             cache = control.__style_cache,
@@ -452,6 +547,8 @@
             width = (value & 1) ? 'auto' : control.offsetWidth,
             height = (value & 2) ? 'auto' : control.offsetHeight,
             any;
+
+        control.__update_dirty = false;
 
         if (any = !cache)
         {
@@ -544,143 +641,7 @@
             }
         }
 
-        control.__update_dirty = false;
-
         return cache;
-    };
-
-
-    //仅更新位置信息
-    this.__update_position = function (control) {
-
-        var style = control.view.style,
-            cache = control.__locate_cache,
-            any;
-
-        if (cache)
-        {
-            if (cache.left !== (any = control.offsetLeft))
-            {
-                style.left = (cache.left = any) + 'px';
-            }
-
-            if (cache.top !== (any = control.offsetTop))
-            {
-                style.top = (cache.top = any) + 'px';
-            }
-        }
-    };
-
-
-
-
-    //css布局方式的位置补丁
-    this.__location_patch = function (control, view) {
-
-        var style = view.style,
-            values = control.__storage || control.__defaults,
-            dirty = control.__location_dirty,
-            flag = 1,
-            name,
-            value,
-            any;
-
-        control.__location_dirty = 0;
-
-        while (dirty >= flag)
-        {
-            if (dirty & flag)
-            {
-                switch (flag)
-                {
-                    case 1:
-                    case 2:
-                        if (value = values[name = flag === 1 ? 'width' : 'height'])
-                        {
-                            if (value === 'default' || value === 'auto')
-                            {
-                                style[name] = 'auto';
-                            }
-                            else
-                            {
-                                style[name] = value >= 0 ? value + 'px' : value;
-                            }
-                        }
-                        break;
-
-                    case 4:
-                    case 16:
-                        value = values[name = flag === 4 ? 'margin' : 'padding'];
-                        style[name] = sides_cache[value] || css_sides(value);
-                        break;
-
-                    case 8:
-                        value = values.border;
-                        style.borderWidth = sides_cache[value] || css_sides(value);
-                        break;
-
-                    case 32:
-                    case 64:
-                    case 128:
-                    case 256:
-                        any = location_map[flag];
-                        value = values[name = any[0]];
-                        style[name] = value > 0 ? value + 'px' : value;
-                        break;
-
-                    case 512:
-                    case 1024:
-                        value = values[name = flag < 1000 ? 'left' : 'top'];
-                        style[name] = (any = +value) === any ? value + 'px' : value;
-                        break;
-                }
-            }
-
-            flag <<= 1;
-        }
-    };
-
-
-
-    this.visible = function (control, view, value) {
-
-        view.style.display = value ? '' : 'none';
-    };
-
-
-    this.focus = function (control) {
-
-        control.view.focus();
-    };
-
-
-    this.blur = function (control) {
-
-        control.view.blur();
-    };
-
-
-    this.detach = function (control, view) {
-
-        var parent = view.parentNode;
-        
-        if (parent)
-        {
-            parent.removeChild(view);
-        }
-    };
-
-
-    this.detachAll = function (control, view) {
-
-        var node;
-
-        view = control.view_content || view;
-
-        while ((node = view.firstChild) && node.flyingon_id)
-        {
-            view.removeChild(node);
-        }
     };
 
 
@@ -698,53 +659,79 @@
     var update_delay;
     
         
-    //更新
-    function update() {
+    //立即更新所有控件
+    flyingon.update = function () {
         
         var list = update_list,
             index = 0,
             item,
             node;
 
+        if (update_delay)
+        {
+            clearTimeout(update_delay);
+        }
+
         flyingon.__update_patch();
         
         while (item = list[index++])
         {
-            item.__delay_update = false;
-
-            if (item.__update_dirty && (node = item.view) && (node = node.parentNode))
+            if (item.__update_dirty)
             {
-                item.renderer.__update_top(item, node.clientWidth, node.clientHeight);
+                if ((node = item.view) && (node = node.parentNode))
+                {
+                    item.renderer.__update_top(item, node.clientWidth, node.clientHeight);
+                }
             }
-            else
+            else           
             {
-                item.update();
+                switch (item.__arrange_dirty)
+                {
+                    case 2:
+                        item.renderer.update(item);
+                        break;
+
+                    case 1:
+                        update_children(item);
+                        break;
+                }
             }
         }
         
         list.length = update_delay = 0;
     };
-    
+
+
+    //递归更新子控件
+    function update_children(control) {
+
+        control.__arrange_dirty = 0;
+
+        for (var i = 0, l = control.length; i < l; i++)
+        {
+            var item = control[i];
+
+            switch (item.__arrange_dirty)
+            {
+                case 2:
+                    item.renderer.update(item);
+                    break;
+
+                case 1:
+                    update_children(item);
+                    break;
+            }
+        }
+    };
     
 
     //延时更新
-    flyingon.__delay_update = function (control) {
+    flyingon.__update_delay = function (control) {
       
-        var list = update_list;
-        
-        if (control)
+        if (update_list.indexOf(control) < 0)
         {
-            if (!control.__delay_update)
-            {
-                control.__delay_update = true;
-                list.push(control);
-
-                update_delay || (update_delay = setTimeout(update, 0)); //定时刷新
-            }
-        }
-        else
-        {
-            update();
+            update_list.push(control);
+            update_delay || (update_delay = setTimeout(flyingon.update, 0)); //定时刷新
         }
     };
 
@@ -808,7 +795,7 @@
 
             if (control.view)
             {
-                update_delay || (update_delay = setTimeout(update, 0)); //定时刷新
+                update_delay || (update_delay = setTimeout(flyingon.update, 0)); //定时刷新
             }
         }
     };
@@ -900,6 +887,48 @@
         }
     };
 
+
+
+    this.visible = function (control, view, value) {
+
+        view.style.display = value ? '' : 'none';
+    };
+
+
+    this.focus = function (control) {
+
+        control.view.focus();
+    };
+
+
+    this.blur = function (control) {
+
+        control.view.blur();
+    };
+
+
+    this.detach = function (control, view) {
+
+        var parent = view.parentNode;
+        
+        if (parent)
+        {
+            parent.removeChild(view);
+        }
+    };
+
+
+    this.detachAll = function (control, view) {
+
+        var node;
+
+        view = control.view_content || view;
+
+        while ((node = view.firstChild) && node.flyingon_id)
+        {
+            view.removeChild(node);
+        }
+    };
 
 
 
@@ -1038,27 +1067,12 @@
     };
 
 
-    //更新子控件
-    this.__update_children = function (control, start, end) {
-
-        var item;
-
-        while (start < end)
-        {
-            if ((item = control[start++]) && item.view)
-            {
-                item.renderer.update(item);
-            }
-        }
-    };
-
-
 
     //子项发生变化
     this.__children_dirty = function (control) {
 
         children.push(control);
-        update_delay || (update_delay = setTimeout(update, 0)); //定时刷新
+        update_delay || (update_delay = setTimeout(flyingon.update, 0)); //定时刷新
     };
     
 
@@ -1204,6 +1218,69 @@
         this.unmount(control);
 
         view.innerHTML = '';
+    };
+
+
+
+    //挂载顶级控件
+    flyingon.mountTo = function (control, host) {
+
+        if (typeof host === 'string')
+        {
+            host = document.getElementById(host);
+        }
+        
+        if (!host)
+        {
+            throw 'can not find host!';
+        }
+
+        var width = host.clientWidth,
+            height = host.clientHeight;
+
+        //挂载之前处理挂起的ready队列
+        flyingon.ready();
+        flyingon.__update_patch();
+
+        if (!control.__top_control)
+        {
+            control.__top_control = true;
+            control.fullClassName += ' f-host';
+        }
+
+        host.appendChild(control.view || control.renderer.createView(control));
+
+        if (update_list.indexOf(control) < 0)
+        {
+            update_list.push(control);
+        }
+
+        control.renderer.__update_top(control, width, height);
+    };
+
+
+    //取消挂载顶级控件
+    flyingon.unmount = function (control, dispose) {
+
+        if (control.__top_control)
+        {
+            var view = control.view,
+                any;
+
+            control.__top_control = false;
+
+            if (view && (any = view.parentNode))
+            {
+                any.removeChild(view);
+            }
+
+            control.fullClassName = control.fullClassName.replace(' f-host', '');
+
+            if (dispose !== false)
+            {
+                control.dispose();
+            }
+        }
     };
 
 

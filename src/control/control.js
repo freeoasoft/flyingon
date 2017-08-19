@@ -74,7 +74,7 @@ Object.extend('Control', function () {
 
             this.__visible = value;
             
-            if (this.view)
+            if (this.hasRender)
             {
                 if (any = this.__view_patch)
                 {
@@ -85,8 +85,6 @@ Object.extend('Control', function () {
                     this.renderer.set(this, 'visible', value);
                 }
             }
-
-            any = this.parent || this;
 
             this.__update_dirty || this.invalidate();
         }
@@ -109,15 +107,7 @@ Object.extend('Control', function () {
 
             set: function () {
 
-                var any;
-
                 this.__location_dirty |= dirty;
-
-                if (this.__as_html && (!(any = this.__view_patch) || !any.__location_patch))
-                {
-                    this.renderer.set(this, '__location_patch');
-                }
-                
                 this.__update_dirty || this.invalidate();
             }
         });
@@ -753,35 +743,7 @@ Object.extend('Control', function () {
     //挂载控件至指定容器
     this.mountTo = function (host) {
 
-        var width, height;
-
-        if (typeof host === 'string')
-        {
-            host = document.getElementById(host);
-        }
-        
-        if (!host)
-        {
-            throw 'can not find host!';
-        }
-
-        width = host.clientWidth;
-        height = host.clientHeight;
-
-        //挂载之前处理挂起的ready队列
-        flyingon.ready();
-
-        if (!this.__top_control)
-        {
-            this.__top_control = true;
-            this.fullClassName += ' f-host';
-        }
-
-        host.appendChild(this.view || this.renderer.createView(this));
-
-        flyingon.__delay_update();
-        this.renderer.__update_top(this, width, height);
-
+        flyingon.mountTo(this, host);
         return this;
     };
 
@@ -789,20 +751,7 @@ Object.extend('Control', function () {
     //取消挂载
     this.unmount = function () {
 
-        if (this.__top_control)
-        {
-            var view, any;
-        
-            this.__top_control = false;
-
-            if ((view = this.view) && (any = view.parentNode))
-            {
-                any.removeChild(view);
-            }
-
-            this.fullClassName = this.fullClassName.replace(' f-host', '');
-        }
-
+        flyingon.unmount(this);
         return this;
     };
 
@@ -823,8 +772,7 @@ Object.extend('Control', function () {
         }
         else if (this.__top_control)
         {
-            this.__arrange_dirty = 2;
-            flyingon.__delay_update(this);
+            flyingon.__update_delay(this);
         }
 
         return this;
@@ -848,52 +796,12 @@ Object.extend('Control', function () {
             }
             else if (this.__top_control)
             {
-                flyingon.__delay_update(this);
+                flyingon.__update_delay(this);
             }
         }
     };
 
-
-    
-    //更新视区
-    this.update = function () {
         
-        if (this.hasRender && this.__visible)
-        {
-            flyingon.__update_patch();
-            this.renderer.update(this);
-        }
-        
-        return this;
-    };
-
-
-    this.__update_children = function () {
-
-        var item;
-
-        for (var i = 0, l = this.length; i < l; i++)
-        {
-            if ((item = this[i]) && item.view)
-            {
-                switch (item.__arrange_dirty)
-                {
-                    case 2:
-                        item.renderer.update(item);
-                        break;
-
-                    case 1:
-                        item.__update_children();
-                        break;
-                }
-            }
-        }
-
-        this.__arrange_dirty = 0;
-    };
-    
-
-    
     
     //滚动事件处理
     this.__do_scroll = function (x, y) {

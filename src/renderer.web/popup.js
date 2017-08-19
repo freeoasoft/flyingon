@@ -100,7 +100,7 @@ flyingon.renderer('Popup', 'Panel', function (base) {
 
         flyingon.__update_patch();
         
-        this.update(control, false);
+        this.update(control);
 
         stack.push(current = control);
         

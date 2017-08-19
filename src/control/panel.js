@@ -12,7 +12,9 @@ flyingon.Control.extend('Panel', function (base) {
         
 
     //排列区域
-    this.arrangeLeft = this.arrangeTop = this.arrangeRight = this.arrangeBottom = this.arrangeWidth = this.arrangeHeight = 0;
+    this.arrangeLeft = this.arrangeTop = 
+    this.arrangeRight = this.arrangeBottom = 
+    this.arrangeWidth = this.arrangeHeight = 0;
 
 
 
@@ -33,6 +35,10 @@ flyingon.Control.extend('Panel', function (base) {
             this.__arrent_dirty < 2 && this.__arrange_delay();
         }
     });
+
+
+    //作为html布局时是否需要适应容器
+    this.defineProperty('adaption', false);
     
     
 
@@ -40,30 +46,6 @@ flyingon.Control.extend('Panel', function (base) {
     flyingon.fragment('f.container', this, true);
 
 
-
-    //更新视区
-    this.update = function () {
-        
-        if (this.view)
-        {
-            flyingon.__update_patch();
-
-            switch (this.__arrange_dirty)
-            {
-                case 2:
-                    this.renderer.update(this);
-                    break;
-
-                case 1:
-                    this.__update_children();
-                    break;
-            }
-        }
-        
-        return this;
-    };
-
-              
 
     //测量自动大小
     this.onmeasure = function (auto) {
@@ -78,7 +60,8 @@ flyingon.Control.extend('Panel', function (base) {
 
         if (auto)
         {
-            this.renderer.update(this);
+            this.renderer.locate(this);
+            this.__update_dirty = false;
 
             if (auto & 1)
             {

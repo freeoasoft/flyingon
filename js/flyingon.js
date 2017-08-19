@@ -7147,8 +7147,8 @@ flyingon.jsonpPost = function (url, options) {
 
                     page = any = null;
 
-                    //立即更新
-                    flyingon.__delay_update();
+                    //立即更新视图
+                    flyingon.update();
                 });
             }
         };
@@ -9015,7 +9015,7 @@ flyingon.Query = Object.extend(function () {
 
 
 
-    //更新顶层控件
+    //更新顶级控件
     this.__update_top = function (control, width, height) {
 
         var view = control.view,
@@ -9045,8 +9045,103 @@ flyingon.Query = Object.extend(function () {
     };
 
 
-    //更新布局
+    //更新视图
     this.update = function (control) {
+
+        if (control.__as_html)
+        {
+            this.locate_html(control);
+        }
+        else
+        {
+            this.locate(control);
+        }
+    };
+
+
+    //按照html方式定位
+    this.locate_html = function (control) {
+
+        var dirty = control.__location_dirty;
+        
+        if (dirty)
+        {
+            this.__locate_html(control);
+        }
+
+        control.__update_dirty = false;
+    };
+
+
+    //按照html方式定位控件
+    this.__locate_html = function (control) {
+
+        var style = control.view.style,
+            values = control.__storage || control.__defaults,
+            dirty = control.__location_dirty,
+            flag = 1,
+            name,
+            value,
+            any;
+
+        control.__location_dirty = 0;
+
+        while (dirty >= flag)
+        {
+            if (dirty & flag)
+            {
+                switch (flag)
+                {
+                    case 1:
+                    case 2:
+                        if (value = values[name = flag === 1 ? 'width' : 'height'])
+                        {
+                            if (value === 'default' || value === 'auto')
+                            {
+                                style[name] = 'auto';
+                            }
+                            else
+                            {
+                                style[name] = value >= 0 ? value + 'px' : value;
+                            }
+                        }
+                        break;
+
+                    case 4:
+                    case 16:
+                        value = values[name = flag === 4 ? 'margin' : 'padding'];
+                        style[name] = sides_cache[value] || css_sides(value);
+                        break;
+
+                    case 8:
+                        value = values.border;
+                        style.borderWidth = sides_cache[value] || css_sides(value);
+                        break;
+
+                    case 32:
+                    case 64:
+                    case 128:
+                    case 256:
+                        any = location_map[flag];
+                        value = values[name = any[0]];
+                        style[name] = value > 0 ? value + 'px' : value;
+                        break;
+
+                    case 512:
+                    case 1024:
+                        value = values[name = flag < 1000 ? 'left' : 'top'];
+                        style[name] = (any = +value) === any ? value + 'px' : value;
+                        break;
+                }
+            }
+
+            flag <<= 1;
+        }
+    };
+
+
+    //定位控件
+    this.locate = function (control) {
 
         var style = control.view.style,
             cache = control.__style_cache,
@@ -9056,6 +9151,8 @@ flyingon.Query = Object.extend(function () {
             width = (value & 1) ? 'auto' : control.offsetWidth,
             height = (value & 2) ? 'auto' : control.offsetHeight,
             any;
+
+        control.__update_dirty = false;
 
         if (any = !cache)
         {
@@ -9148,143 +9245,7 @@ flyingon.Query = Object.extend(function () {
             }
         }
 
-        control.__update_dirty = false;
-
         return cache;
-    };
-
-
-    //仅更新位置信息
-    this.__update_position = function (control) {
-
-        var style = control.view.style,
-            cache = control.__locate_cache,
-            any;
-
-        if (cache)
-        {
-            if (cache.left !== (any = control.offsetLeft))
-            {
-                style.left = (cache.left = any) + 'px';
-            }
-
-            if (cache.top !== (any = control.offsetTop))
-            {
-                style.top = (cache.top = any) + 'px';
-            }
-        }
-    };
-
-
-
-
-    //css布局方式的位置补丁
-    this.__location_patch = function (control, view) {
-
-        var style = view.style,
-            values = control.__storage || control.__defaults,
-            dirty = control.__location_dirty,
-            flag = 1,
-            name,
-            value,
-            any;
-
-        control.__location_dirty = 0;
-
-        while (dirty >= flag)
-        {
-            if (dirty & flag)
-            {
-                switch (flag)
-                {
-                    case 1:
-                    case 2:
-                        if (value = values[name = flag === 1 ? 'width' : 'height'])
-                        {
-                            if (value === 'default' || value === 'auto')
-                            {
-                                style[name] = 'auto';
-                            }
-                            else
-                            {
-                                style[name] = value >= 0 ? value + 'px' : value;
-                            }
-                        }
-                        break;
-
-                    case 4:
-                    case 16:
-                        value = values[name = flag === 4 ? 'margin' : 'padding'];
-                        style[name] = sides_cache[value] || css_sides(value);
-                        break;
-
-                    case 8:
-                        value = values.border;
-                        style.borderWidth = sides_cache[value] || css_sides(value);
-                        break;
-
-                    case 32:
-                    case 64:
-                    case 128:
-                    case 256:
-                        any = location_map[flag];
-                        value = values[name = any[0]];
-                        style[name] = value > 0 ? value + 'px' : value;
-                        break;
-
-                    case 512:
-                    case 1024:
-                        value = values[name = flag < 1000 ? 'left' : 'top'];
-                        style[name] = (any = +value) === any ? value + 'px' : value;
-                        break;
-                }
-            }
-
-            flag <<= 1;
-        }
-    };
-
-
-
-    this.visible = function (control, view, value) {
-
-        view.style.display = value ? '' : 'none';
-    };
-
-
-    this.focus = function (control) {
-
-        control.view.focus();
-    };
-
-
-    this.blur = function (control) {
-
-        control.view.blur();
-    };
-
-
-    this.detach = function (control, view) {
-
-        var parent = view.parentNode;
-        
-        if (parent)
-        {
-            parent.removeChild(view);
-        }
-    };
-
-
-    this.detachAll = function (control, view) {
-
-        var node;
-
-        view = control.view_content || view;
-
-        while ((node = view.firstChild) && node.flyingon_id)
-        {
-            view.removeChild(node);
-        }
     };
 
 
@@ -9302,53 +9263,79 @@ flyingon.Query = Object.extend(function () {
     var update_delay;
     
         
-    //更新
-    function update() {
+    //立即更新所有控件
+    flyingon.update = function () {
         
         var list = update_list,
             index = 0,
             item,
             node;
 
+        if (update_delay)
+        {
+            clearTimeout(update_delay);
+        }
+
         flyingon.__update_patch();
         
         while (item = list[index++])
         {
-            item.__delay_update = false;
-
-            if (item.__update_dirty && (node = item.view) && (node = node.parentNode))
+            if (item.__update_dirty)
             {
-                item.renderer.__update_top(item, node.clientWidth, node.clientHeight);
+                if ((node = item.view) && (node = node.parentNode))
+                {
+                    item.renderer.__update_top(item, node.clientWidth, node.clientHeight);
+                }
             }
-            else
+            else           
             {
-                item.update();
+                switch (item.__arrange_dirty)
+                {
+                    case 2:
+                        item.renderer.update(item);
+                        break;
+
+                    case 1:
+                        update_children(item);
+                        break;
+                }
             }
         }
         
         list.length = update_delay = 0;
     };
-    
+
+
+    //递归更新子控件
+    function update_children(control) {
+
+        control.__arrange_dirty = 0;
+
+        for (var i = 0, l = control.length; i < l; i++)
+        {
+            var item = control[i];
+
+            switch (item.__arrange_dirty)
+            {
+                case 2:
+                    item.renderer.update(item);
+                    break;
+
+                case 1:
+                    update_children(item);
+                    break;
+            }
+        }
+    };
     
 
     //延时更新
-    flyingon.__delay_update = function (control) {
+    flyingon.__update_delay = function (control) {
       
-        var list = update_list;
-        
-        if (control)
+        if (update_list.indexOf(control) < 0)
         {
-            if (!control.__delay_update)
-            {
-                control.__delay_update = true;
-                list.push(control);
-
-                update_delay || (update_delay = setTimeout(update, 0)); //定时刷新
-            }
-        }
-        else
-        {
-            update();
+            update_list.push(control);
+            update_delay || (update_delay = setTimeout(flyingon.update, 0)); //定时刷新
         }
     };
 
@@ -9412,7 +9399,7 @@ flyingon.Query = Object.extend(function () {
 
             if (control.view)
             {
-                update_delay || (update_delay = setTimeout(update, 0)); //定时刷新
+                update_delay || (update_delay = setTimeout(flyingon.update, 0)); //定时刷新
             }
         }
     };
@@ -9504,6 +9491,48 @@ flyingon.Query = Object.extend(function () {
         }
     };
 
+
+
+    this.visible = function (control, view, value) {
+
+        view.style.display = value ? '' : 'none';
+    };
+
+
+    this.focus = function (control) {
+
+        control.view.focus();
+    };
+
+
+    this.blur = function (control) {
+
+        control.view.blur();
+    };
+
+
+    this.detach = function (control, view) {
+
+        var parent = view.parentNode;
+        
+        if (parent)
+        {
+            parent.removeChild(view);
+        }
+    };
+
+
+    this.detachAll = function (control, view) {
+
+        var node;
+
+        view = control.view_content || view;
+
+        while ((node = view.firstChild) && node.flyingon_id)
+        {
+            view.removeChild(node);
+        }
+    };
 
 
 
@@ -9642,27 +9671,12 @@ flyingon.Query = Object.extend(function () {
     };
 
 
-    //更新子控件
-    this.__update_children = function (control, start, end) {
-
-        var item;
-
-        while (start < end)
-        {
-            if ((item = control[start++]) && item.view)
-            {
-                item.renderer.update(item);
-            }
-        }
-    };
-
-
 
     //子项发生变化
     this.__children_dirty = function (control) {
 
         children.push(control);
-        update_delay || (update_delay = setTimeout(update, 0)); //定时刷新
+        update_delay || (update_delay = setTimeout(flyingon.update, 0)); //定时刷新
     };
     
 
@@ -9808,6 +9822,69 @@ flyingon.Query = Object.extend(function () {
         this.unmount(control);
 
         view.innerHTML = '';
+    };
+
+
+
+    //挂载顶级控件
+    flyingon.mountTo = function (control, host) {
+
+        if (typeof host === 'string')
+        {
+            host = document.getElementById(host);
+        }
+        
+        if (!host)
+        {
+            throw 'can not find host!';
+        }
+
+        var width = host.clientWidth,
+            height = host.clientHeight;
+
+        //挂载之前处理挂起的ready队列
+        flyingon.ready();
+        flyingon.__update_patch();
+
+        if (!control.__top_control)
+        {
+            control.__top_control = true;
+            control.fullClassName += ' f-host';
+        }
+
+        host.appendChild(control.view || control.renderer.createView(control));
+
+        if (update_list.indexOf(control) < 0)
+        {
+            update_list.push(control);
+        }
+
+        control.renderer.__update_top(control, width, height);
+    };
+
+
+    //取消挂载顶级控件
+    flyingon.unmount = function (control, dispose) {
+
+        if (control.__top_control)
+        {
+            var view = control.view,
+                any;
+
+            control.__top_control = false;
+
+            if (view && (any = view.parentNode))
+            {
+                any.removeChild(view);
+            }
+
+            control.fullClassName = control.fullClassName.replace(' f-host', '');
+
+            if (dispose !== false)
+            {
+                control.dispose();
+            }
+        }
     };
 
 
@@ -9968,6 +10045,55 @@ flyingon.renderer('HtmlElement', function (base) {
 
 
 
+    //定位控件时
+    this.locate = function (control) {
+
+        base.locate.call(this, control);
+        
+        if (control.length > 0)
+        {
+            this.__locate_children(control);
+        }
+    };
+
+
+    //按照html方式定位控件时
+    this.locate_html = function (control) {
+
+        var dirty = control.__location_dirty;
+        
+        if (dirty)
+        {
+            this.__locate_html(control);
+        }
+
+        control.__update_dirty = false;
+
+        if (control.length > 0)
+        {
+            this.__locate_children(control);
+        }
+    };
+
+
+    //定位子控件
+    this.__locate_children = function (control) {
+
+        for (var i = 0, l = control.length; i < l; i++)
+        {
+            var item = control[i];
+
+            if (item && item.view)
+            {
+                item.renderer.locate_html(item);
+            }
+        }
+
+        control.__arrange_dirty = 0;
+    };
+
+
+
     this.__measure_auto = function (control, auto) {
 
         var view = control.view;
@@ -9976,7 +10102,7 @@ flyingon.renderer('HtmlElement', function (base) {
         {
             if (control.__content_render)
             {
-                this.update(control);
+                this.locate(control);
             }
             
             control.offsetHeight = view && view.offsetHeight || 0;
@@ -10305,16 +10431,9 @@ flyingon.renderer('Slider', function (base) {
 
 
 
-    this.update = function (control) {
+    this.locate = function (control) {
 
-        base.update.call(this, control);
-        this.refresh(control);
-    };
-
-
-    this.__location_patch = function (control) {
-
-        base.__location_patch.call(this, control);
+        base.locate.call(this, control);
         this.refresh(control);
     };
 
@@ -10537,9 +10656,35 @@ flyingon.renderer('Panel', function (base) {
 
 
 
-    this.update = function (control) {
+    //作为html方式定位控件时需特殊处理
+    this.locate_html = function (control) {
 
-        base.update.call(this, control);
+        var any = control.__location_dirty,
+            width = 0,
+            height = 0;
+        
+        if (any)
+        {
+            this.__locate_html(control);
+        }
+
+        control.__update_dirty = false;
+
+        //如果需要适应容器,则计算容器大小(对性能有影响)
+        if ((any = control.view) && (any = any.parentNode) && control.adaption())
+        {
+            width = any.clientWidth;
+            height = any.clientHeight;
+        }
+        
+        control.measure(width, height, width, height);
+        this.locate(control);
+    };
+
+
+    this.locate = function (control) {
+
+        base.locate.call(this, control);
 
         if (control.length > 0 && !control.__content_render)
         {
@@ -10550,16 +10695,24 @@ flyingon.renderer('Panel', function (base) {
         if (control.__arrange_dirty > 1)
         {
             this.__arrange(control);
-            this.__update_scroll(control);
+            this.__locate_scroll(control);
         }
+ 
+        //定位子控件
+        for (var i = 0, l = control.length; i < l; i++)
+        {
+            var item = control[i];
 
-        this.__update_children(control, 0, control.length);
+            if (item && item.view)
+            {
+                item.renderer.locate(item);
+            }
+        }
     };
 
 
-
-    //更新滚动条
-    this.__update_scroll = function (control) {
+    //定位滚动条
+    this.__locate_scroll = function (control) {
 
         var style = (control.view_content || control.view).lastChild.style, //内容位置控制(解决有右或底边距时拖不到底的问题)
             cache = control.__scroll_cache || (control.__scroll_cache = {}),
@@ -10574,23 +10727,6 @@ flyingon.renderer('Panel', function (base) {
         {
             style.height = (control.__vscroll_length = any) + 'px'; 
         }
-    };
-
-
-    this.__location_patch = function (control, view) {
-
-        base.__location_patch.call(this, control, view);
-        this.layout(control, view);
-    };
-
-
-    this.layout = function (control, view) {
-
-        // var width = view.offsetWidth,
-        //     height = view.offsetHeight;
-
-        control.measure(0, 0, 0, 0);
-        this.update(control);
     };
 
 
@@ -10758,7 +10894,7 @@ flyingon.renderer('ScrollPanel', function (base) {
 
         //滚动位置控制(解决有右或底边距时拖不到底的问题)
         //使用模拟滚动条解决IE拖动闪烁问题
-        //此处只渲染一个空的壳,实现渲染内容在update的时候根据需要渲染
+        //此处只渲染一个空的壳,实现渲染内容在locate的时候根据需要渲染
         writer.push('<div');
         
         this.renderDefault(writer, control);
@@ -10808,9 +10944,9 @@ flyingon.renderer('ScrollPanel', function (base) {
 
 
 
-    this.update = function (control) {
+    this.locate = function (control) {
 
-        var cache = base.update.call(this, control),
+        var cache = base.locate.call(this, control),
             name = flyingon.rtl ? 'paddingLeft' : 'paddingRight',
             start, 
             end, 
@@ -10823,7 +10959,7 @@ flyingon.renderer('ScrollPanel', function (base) {
             end = control.__visible_end + 1;
 
             this.__arrange(control);
-            this.__update_scroll(control);
+            this.__locate_scroll(control);
             
             control.__compute_visible();
 
@@ -10834,7 +10970,7 @@ flyingon.renderer('ScrollPanel', function (base) {
                 {
                     if ((any = control[start++]) && !any.__visible_area)
                     {
-                        this.__update_position(any);
+                        this.__locate_position(any);
                     }
                 }
             }
@@ -10855,39 +10991,52 @@ flyingon.renderer('ScrollPanel', function (base) {
 
         if (start >= 0)
         {
+            //插件未挂载的子控件
             if (control.__visible_unmount)
             {
                 control.__visible_unmount = false;
                 this.__insert_patch(control, control.view.lastChild, start, end);
             }
             
-            this.__update_children(control, start, end);
+            //定位子控件
+            while (start < end)
+            {
+                any = control[start++];
+
+                if (item && item.view)
+                {
+                    item.renderer.locate(item);
+                }
+            }
         }
 
         return cache;
     };
 
 
-    this.scroll = function (control, x, y) {
+    //仅更新位置信息
+    this.__locate_position = function (control) {
 
-        var view = control.view.lastChild;
+        var style = control.view.style,
+            cache = control.__locate_cache,
+            any;
 
-        this.update(control);
-        
-        if (view.scrollLeft !== x)
+        if (cache)
         {
-            view.scrollLeft = x;
-        }
+            if (cache.left !== (any = control.offsetLeft))
+            {
+                style.left = (cache.left = any) + 'px';
+            }
 
-        if (view.scrollTop !== y)
-        {
-            view.scrollTop = y;
+            if (cache.top !== (any = control.offsetTop))
+            {
+                style.top = (cache.top = any) + 'px';
+            }
         }
     };
 
 
-
-    this.__update_scroll = function (control) {
+    this.__locate_scroll = function (control) {
 
         var view = control.view,
             style1 = view.firstChild.firstChild.style, //模拟滚动条控制
@@ -10913,6 +11062,23 @@ flyingon.renderer('ScrollPanel', function (base) {
     };
 
 
+    this.scroll = function (control, x, y) {
+
+        var view = control.view.lastChild;
+
+        this.locate(control);
+        
+        if (view.scrollLeft !== x)
+        {
+            view.scrollLeft = x;
+        }
+
+        if (view.scrollTop !== y)
+        {
+            view.scrollTop = y;
+        }
+    };
+
 
 });
 
@@ -10934,11 +11100,11 @@ flyingon.renderer('Splitter', function (base) {
     };
     
 
-    this.update = function (control) {
+    this.locate = function (control) {
 
         var vertical = control.offsetWidth > control.offsetHeight;
 
-        base.update.call(this, control);
+        base.locate.call(this, control);
 
         if (control.vertical !== vertical)
         {
@@ -11163,9 +11329,9 @@ flyingon.renderer('ListBox', function (base) {
     };
 
 
-    this.update = function (control) {
+    this.locate = function (control) {
 
-        base.update.call(this, control);
+        base.locate.call(this, control);
         this.content(control);
     };
 
@@ -11944,18 +12110,9 @@ flyingon.renderer('Calendar', function (base) {
     };
 
 
-    this.update = function (control) {
+    this.locate = function (control) {
 
-        base.update.call(this, control);
-
-        control.__data = null;
-        render(control);
-    };
-
-
-    this.__location_patch = function (control, view) {
-
-        base.__location_patch.call(this, control, view);
+        base.locate.call(this, control);
 
         control.__data = null;
         render(control);
@@ -13088,7 +13245,7 @@ flyingon.renderer('Tab', function (base) {
         if (!page.view)
         {
             view.lastChild.appendChild(page.renderer.createView(page, false));
-            page.renderer.update(page, false);
+            page.renderer.locate(page);
         }
         
         if (size > 0)
@@ -13178,11 +13335,11 @@ flyingon.renderer('Tab', function (base) {
 
 
 
-    this.update = function (control) {
+    this.locate = function (control) {
 
         var page = control.selectedPage();
 
-        base.update.call(this, control);
+        base.locate.call(this, control);
         
         if (control.__reset_header)
         {
@@ -13207,7 +13364,7 @@ flyingon.renderer('Tab', function (base) {
                 control.view.lastChild.appendChild(page.renderer.createView(page, false));
             }
 
-            page.renderer.update(page, false);
+            page.renderer.locate(page);
         }
 
         control.__arrange_dirty = 0;
@@ -13644,7 +13801,7 @@ flyingon.renderer('Popup', 'Panel', function (base) {
 
         flyingon.__update_patch();
         
-        this.update(control, false);
+        this.update(control);
 
         stack.push(current = control);
         
@@ -13937,7 +14094,7 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
         }
 
         flyingon.__update_patch();
-        this.update(control, false);
+        this.update(control);
         
         control.trigger('shown');
     };
@@ -14154,7 +14311,7 @@ Object.extend('Control', function () {
 
             this.__visible = value;
             
-            if (this.view)
+            if (this.hasRender)
             {
                 if (any = this.__view_patch)
                 {
@@ -14165,8 +14322,6 @@ Object.extend('Control', function () {
                     this.renderer.set(this, 'visible', value);
                 }
             }
-
-            any = this.parent || this;
 
             this.__update_dirty || this.invalidate();
         }
@@ -14189,15 +14344,7 @@ Object.extend('Control', function () {
 
             set: function () {
 
-                var any;
-
                 this.__location_dirty |= dirty;
-
-                if (this.__as_html && (!(any = this.__view_patch) || !any.__location_patch))
-                {
-                    this.renderer.set(this, '__location_patch');
-                }
-                
                 this.__update_dirty || this.invalidate();
             }
         });
@@ -14833,35 +14980,7 @@ Object.extend('Control', function () {
     //挂载控件至指定容器
     this.mountTo = function (host) {
 
-        var width, height;
-
-        if (typeof host === 'string')
-        {
-            host = document.getElementById(host);
-        }
-        
-        if (!host)
-        {
-            throw 'can not find host!';
-        }
-
-        width = host.clientWidth;
-        height = host.clientHeight;
-
-        //挂载之前处理挂起的ready队列
-        flyingon.ready();
-
-        if (!this.__top_control)
-        {
-            this.__top_control = true;
-            this.fullClassName += ' f-host';
-        }
-
-        host.appendChild(this.view || this.renderer.createView(this));
-
-        flyingon.__delay_update();
-        this.renderer.__update_top(this, width, height);
-
+        flyingon.mountTo(this, host);
         return this;
     };
 
@@ -14869,20 +14988,7 @@ Object.extend('Control', function () {
     //取消挂载
     this.unmount = function () {
 
-        if (this.__top_control)
-        {
-            var view, any;
-        
-            this.__top_control = false;
-
-            if ((view = this.view) && (any = view.parentNode))
-            {
-                any.removeChild(view);
-            }
-
-            this.fullClassName = this.fullClassName.replace(' f-host', '');
-        }
-
+        flyingon.unmount(this);
         return this;
     };
 
@@ -14903,8 +15009,7 @@ Object.extend('Control', function () {
         }
         else if (this.__top_control)
         {
-            this.__arrange_dirty = 2;
-            flyingon.__delay_update(this);
+            flyingon.__update_delay(this);
         }
 
         return this;
@@ -14928,52 +15033,12 @@ Object.extend('Control', function () {
             }
             else if (this.__top_control)
             {
-                flyingon.__delay_update(this);
+                flyingon.__update_delay(this);
             }
         }
     };
 
-
-    
-    //更新视区
-    this.update = function () {
         
-        if (this.hasRender && this.__visible)
-        {
-            flyingon.__update_patch();
-            this.renderer.update(this);
-        }
-        
-        return this;
-    };
-
-
-    this.__update_children = function () {
-
-        var item;
-
-        for (var i = 0, l = this.length; i < l; i++)
-        {
-            if ((item = this[i]) && item.view)
-            {
-                switch (item.__arrange_dirty)
-                {
-                    case 2:
-                        item.renderer.update(item);
-                        break;
-
-                    case 1:
-                        item.__update_children();
-                        break;
-                }
-            }
-        }
-
-        this.__arrange_dirty = 0;
-    };
-    
-
-    
     
     //滚动事件处理
     this.__do_scroll = function (x, y) {
@@ -15106,69 +15171,11 @@ flyingon.Control.extend('HtmlElement', function (base) {
     //是否排列子控件(如果子控件或子子控件不包含布局控件,此值设为false可提升性能)
     this.defineProperty('arrange', true);
     
-
     
 
     //扩展容器功能
     flyingon.fragment('f.container', this, true);
 
-
-    //插入多个子项
-    this.__insert_items = function (items, index, fn) {
-
-        var Class = this.childrenClass,
-            length = items.length,
-            item,
-            any;
-
-        this.__all && this.__clear_all();
-
-        while (index < length)
-        {
-            item = items[index];
-
-            if (item.__flyingon_class)
-            {
-                if (item instanceof Class)
-                {
-                    if (any = item.parent)
-                    {
-                        any.__remove_item(item);
-                    }
-                }
-                else
-                {
-                    this.__check_error(Class);
-                }
-            }
-            else if ((item = flyingon.ui(item, Class)) instanceof Class)
-            {
-                items[index] = item;
-            }
-            else
-            {
-                this.__check_error(Class);
-            }
-
-            item.parent = this;
-            item.__as_html = true;
-
-            if (item.__location_dirty && (!(any = item.__view_patch) || !any.__location_patch))
-            {
-                item.renderer.set(item, '__location_patch');
-            }
-
-            index++;
-        }
-
-        if (this.__content_render && !this.__insert_patch)
-        {
-            this.__insert_patch = true;
-            this.renderer.__children_dirty(this);
-        }
-
-        return fn.apply(this, items);
-    };
 
 
     //测量自动大小
@@ -15691,6 +15698,7 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
     this.__insert_items = function (items, index, fn) {
 
         var Class = this.childrenClass,
+            html = this instanceof flyingon.HtmlElement,
             length = items.length,
             item,
             any;
@@ -15725,6 +15733,8 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
             }
 
             item.parent = this;
+            item.__as_html = html;
+
             index++;
         }
 
@@ -15981,7 +15991,9 @@ flyingon.Control.extend('Panel', function (base) {
         
 
     //排列区域
-    this.arrangeLeft = this.arrangeTop = this.arrangeRight = this.arrangeBottom = this.arrangeWidth = this.arrangeHeight = 0;
+    this.arrangeLeft = this.arrangeTop = 
+    this.arrangeRight = this.arrangeBottom = 
+    this.arrangeWidth = this.arrangeHeight = 0;
 
 
 
@@ -16002,6 +16014,10 @@ flyingon.Control.extend('Panel', function (base) {
             this.__arrent_dirty < 2 && this.__arrange_delay();
         }
     });
+
+
+    //作为html布局时是否需要适应容器
+    this.defineProperty('adaption', false);
     
     
 
@@ -16009,30 +16025,6 @@ flyingon.Control.extend('Panel', function (base) {
     flyingon.fragment('f.container', this, true);
 
 
-
-    //更新视区
-    this.update = function () {
-        
-        if (this.view)
-        {
-            flyingon.__update_patch();
-
-            switch (this.__arrange_dirty)
-            {
-                case 2:
-                    this.renderer.update(this);
-                    break;
-
-                case 1:
-                    this.__update_children();
-                    break;
-            }
-        }
-        
-        return this;
-    };
-
-              
 
     //测量自动大小
     this.onmeasure = function (auto) {
@@ -16047,7 +16039,8 @@ flyingon.Control.extend('Panel', function (base) {
 
         if (auto)
         {
-            this.renderer.update(this);
+            this.renderer.locate(this);
+            this.__update_dirty = false;
 
             if (auto & 1)
             {

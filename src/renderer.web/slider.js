@@ -15,16 +15,9 @@ flyingon.renderer('Slider', function (base) {
 
 
 
-    this.update = function (control) {
+    this.locate = function (control) {
 
-        base.update.call(this, control);
-        this.refresh(control);
-    };
-
-
-    this.__location_patch = function (control) {
-
-        base.__location_patch.call(this, control);
+        base.locate.call(this, control);
         this.refresh(control);
     };
 

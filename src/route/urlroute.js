@@ -259,8 +259,8 @@
 
                     page = any = null;
 
-                    //立即更新
-                    flyingon.__delay_update();
+                    //立即更新视图
+                    flyingon.update();
                 });
             }
         };

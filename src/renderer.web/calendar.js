@@ -286,18 +286,9 @@ flyingon.renderer('Calendar', function (base) {
     };
 
 
-    this.update = function (control) {
+    this.locate = function (control) {
 
-        base.update.call(this, control);
-
-        control.__data = null;
-        render(control);
-    };
-
-
-    this.__location_patch = function (control, view) {
-
-        base.__location_patch.call(this, control, view);
+        base.locate.call(this, control);
 
         control.__data = null;
         render(control);

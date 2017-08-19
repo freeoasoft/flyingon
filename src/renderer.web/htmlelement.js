@@ -81,6 +81,55 @@ flyingon.renderer('HtmlElement', function (base) {
 
 
 
+    //定位控件时
+    this.locate = function (control) {
+
+        base.locate.call(this, control);
+        
+        if (control.length > 0)
+        {
+            this.__locate_children(control);
+        }
+    };
+
+
+    //按照html方式定位控件时
+    this.locate_html = function (control) {
+
+        var dirty = control.__location_dirty;
+        
+        if (dirty)
+        {
+            this.__locate_html(control);
+        }
+
+        control.__update_dirty = false;
+
+        if (control.length > 0)
+        {
+            this.__locate_children(control);
+        }
+    };
+
+
+    //定位子控件
+    this.__locate_children = function (control) {
+
+        for (var i = 0, l = control.length; i < l; i++)
+        {
+            var item = control[i];
+
+            if (item && item.view)
+            {
+                item.renderer.locate_html(item);
+            }
+        }
+
+        control.__arrange_dirty = 0;
+    };
+
+
+
     this.__measure_auto = function (control, auto) {
 
         var view = control.view;
@@ -89,7 +138,7 @@ flyingon.renderer('HtmlElement', function (base) {
         {
             if (control.__content_render)
             {
-                this.update(control);
+                this.locate(control);
             }
             
             control.offsetHeight = view && view.offsetHeight || 0;
