@@ -30,13 +30,13 @@ flyingon.renderer('ScrollPanel', function (base) {
         this.renderDefault(writer, control);
         
         writer.push('>',
-                '<div style="position:absolute;left:0;top:0;right:0;bottom:0;width:auto;height:auto;overflow:auto;">',
-                    text,
-                '</div>',
-                '<div class="f-body" style="position:relative;overflow:hidden;margin:0;border:0;padding:0;left:0;top:0;width:100%;height:100%;">',
-                    text,
-                '</div>',
-            '</div>');
+            '<div style="position:absolute;left:0;top:0;right:0;bottom:0;width:auto;height:auto;overflow:auto;" onscroll="flyingon.__dom_scroll">',
+                text,
+            '</div>',
+            '<div style="position:relative;overflow:hidden;margin:0;border:0;padding:0;left:0;top:0;width:100%;height:100%;">',
+                text,
+            '</div>',
+        '</div>');
     };
 
 
@@ -46,16 +46,12 @@ flyingon.renderer('ScrollPanel', function (base) {
         base.mount.call(this, control, view);
 
         control.view_content = view.lastChild;
-        control.view.firstChild.onscroll = flyingon.__dom_scroll;
-        
         control.on('mousewheel', mousewheel);
     };
 
 
     this.unmount = function (control) {
 
-        control.view.firstChild.onscroll = null;
-        
         this.__unmount_children(control);
         base.unmount.call(this, control);
     };
@@ -68,7 +64,7 @@ flyingon.renderer('ScrollPanel', function (base) {
         if (view.style.overflowY !== 'hidden')
         {
             view.firstChild.scrollTop -= event.wheelDelta * 100 / 120;
-            event.stopPropagation();
+            flyingon.dom_stop(event);
         }
     };
 
@@ -133,9 +129,9 @@ flyingon.renderer('ScrollPanel', function (base) {
             {
                 any = control[start++];
 
-                if (item && item.view)
+                if (any && any.view)
                 {
-                    item.renderer.locate(item);
+                    any.renderer.locate(any);
                 }
             }
         }
@@ -185,10 +181,6 @@ flyingon.renderer('ScrollPanel', function (base) {
         {
             style1.height = style2.height = (cache.y2 = any) + 'px'; 
         }
-    };
-
-
-    this.__sync_scroll = function (control) {
     };
 
 

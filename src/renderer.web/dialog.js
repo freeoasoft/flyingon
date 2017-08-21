@@ -24,7 +24,7 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
         }
 
         writer.push('>',
-            '<div class="f-dialog-head" style="height:', head, 'px;line-height:', head, 'px;" tag="head">',
+            '<div class="f-dialog-head" style="height:', head, 'px;line-height:', head, 'px;" onmousedown="flyingon.Dialog.onmousedown.call(this, event)" onclick="flyingon.Dialog.onclick.call(this, event)">',
                 '<span class="f-dialog-icon ', (any = storage.icon) ? any : '" style="display:none;', '"></span>',
                 '<span class="f-dialog-text">', text, '</span>',
                 '<span class="f-dialog-close"', storage.closable ? '' : ' style="display:none;"', ' tag="close"></span>',
@@ -41,60 +41,42 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
         writer.push(this.__scroll_html, '</div></div>');
     };
     
+
+
+
+    flyingon.Dialog.onclick = function (e) {
+
+        var control = flyingon.findControl(this),
+            target = e.target || e.srcElement;
+
+        if (target.getAttribute('tag') === 'close')
+        {
+            control.close();
+        }
+        else
+        {
+            control.active();
+        }
+    };
     
+    
+    flyingon.Dialog.onmousedown = function (e) {
+
+        var control = flyingon.findControl(this);
+        
+        if (control.movable())
+        {
+            control.active();
+            control.renderer.movable(control, e);
+        }
+    };
+
+
+
     this.mount = function (control, view) {
 
         control.view_content = view.lastChild;
-
         base.mount.call(this, control, view);
-  
-        control.on('mousedown', mousedown);
-        control.on('click', click);
-    };
-
-
-    function mousedown(event) {
-
-        if (event.which === 1 && event.target === this && this.movable() && event_tag(this.view, event))
-        {
-            this.active();
-            this.renderer.movable(this, event);
-        }
-    };
-
-
-    function click(event) {
-
-        if (event.target === this)
-        {
-            switch (event_tag(this.view, event))
-            {
-                case 'close':
-                    this.close();
-                    break;
-
-                case 'head':
-                    this.active();
-                    break;
-            }
-        }
-    };
-
-
-    function event_tag(view, event) {
-
-        var dom = event.original_event.target,
-            any;
-
-        while (dom && dom !== view)
-        {
-            if (any = dom.getAttribute('tag'))
-            {
-                return any;
-            }
-
-            dom = dom.parentNode;
-        }
     };
 
 
@@ -198,11 +180,9 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
 
     this.movable = function (control, event) {
 
-        event = event.original_event;
         event.dom = control.view;
-
         flyingon.dom_drag(control, event);
-
+        
         event.dom = null;
     };
 

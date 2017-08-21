@@ -43,7 +43,7 @@ flyingon.GridColumn = Object.extend(function () {
 
                     if (grid)
                     {
-                        grid.__column_dirty = true;
+                        grid.__columns.dirty = true;
                         grid.refresh(true);
                     }
                 };
@@ -54,7 +54,7 @@ flyingon.GridColumn = Object.extend(function () {
 
                     var grid = this.grid;
 
-                    if (grid && grid.hasRender)
+                    if (grid && grid.rendered)
                     {
                         grid.renderer.set(grid, '__column_' + name, value);
                     }
@@ -82,23 +82,22 @@ flyingon.GridColumn = Object.extend(function () {
 
 
     //对齐方式
-    define(this, 'align', '', 3);
+    //left
+    //center
+    //right
+    define(this, 'align', 'left', 1);
 
 
-    //列宽
-    define(this, 'width', 100, 3);
+    //列大小
+    define(this, 'size', 100, 3);
 
 
     //列宽是否百分比
     define(this, 'persent', false, 3);
 
 
-    //是否可见
-    define(this, 'visible', true, 3);
-
-
     //是否只读
-    define(this, 'readonly', false, 3);
+    define(this, 'readonly', false, 1);
 
 
     //是否可调整列宽
@@ -111,13 +110,6 @@ flyingon.GridColumn = Object.extend(function () {
 
     //是否可操作列
     define(this, 'operate', true);
-
-
-    //排序显示
-    //none:  不显示
-    //asc:   显示升序
-    //desc:  显示降序
-    define(this, 'sort', 'none', 1);
 
 
     //格式化
@@ -134,6 +126,21 @@ flyingon.GridColumn = Object.extend(function () {
     define(this, 'summary', '', 1);
 
 
+
+    //渲染列头
+    this.render_header = function (title) {
+
+        return title;
+    };
+
+
+    //渲染单元格
+    this.render_cell = function (value, text) {
+
+
+    };
+
+
 });
 
 
@@ -144,11 +151,7 @@ flyingon.GridColumn.extend = function (type, fn) {
     if (type && fn)
     {
         var any = flyingon.GridColumn.all || (flyingon.GridColumn.all = flyingon.create(null));
-
-        any = any[type] = flyingon.defineClass(this, fn);
-        any.renderer = flyingon.GridColumn_renderer(type);
-
-        return any;
+        return any[type] = flyingon.defineClass(this, fn);
     }
 };
 
@@ -248,19 +251,138 @@ flyingon.GridColumns = Object.extend(function () {
 
         any = fn.apply(this, items);
 
-        grid.__column_dirty = true;
+        this.dirty = true;
         grid.refresh(true);
 
         return any;
     };
 
 
-    this.__remove_items = this.__remove_item = function (items) {
+    this.__remove_items = function (items) {
+
+        var grid = this.grid,
+            item;
+
+        for (var i = 0, l = items.length; i < l; i++)
+        {
+            item = items[i];
+            item.grid = null;
+
+            if (item.rendered)
+            {
+                grid.renderer.__remove_column(item);
+            }
+        }
+
+        this.dirty = true;
+        grid.refresh(true);
+    };
+
+
+    this.__remove_item = function (item) {
 
         var grid = this.grid;
 
-        grid.__column_dirty = true;
+        item.grid = null;
+
+        if (item.rendered)
+        {
+            grid.renderer.__remove_column(item);
+        }
+        
+        this.dirty = true;
         grid.refresh(true);
+    };
+
+
+
+    //计算列宽
+    this.compute = function (width) {
+
+        var left = 0,
+            sum = 0,
+            value,
+            any;
+
+        this.width = width;
+        this.dirty = false;
+
+        for (var i = 0, l = this.length; i < l; i++)
+        {
+            var column = this[i],
+                storage = column.__storage || column.__defaults;
+            
+            column.absoluteIndex = i;
+            column.left = left;
+
+            any = storage.size;
+
+            if (storage.persent)
+            {
+                value = any * width / 100;
+                any = value | 0;
+
+                if ((value -= any) > 0 && (sum += value) >= 1)
+                {
+                    sum--;
+                    any++;
+                }
+            }
+
+            left += (column.width = any);
+        }
+
+        this.width = left;
+        this.scroll = left > width;
+    };
+
+
+    //计算可见列索引范围
+    this.visibleRange = function (x, width) {
+
+        var start = this.before,
+            end = this.length - this.after,
+            left = 0,
+            right = x + width;
+
+        //计算锁定列宽度
+        
+        for (var i = this.length - 1; i >= end; i--)
+        {
+            left += this[i].width;
+        }
+
+        this.locked_after = left;
+
+        right -= left;
+        left = 0;
+
+        for (var i = 0; i < start; i++)
+        {
+            left += this[i].width;
+        }
+
+        this.locked_before = left;
+
+        //计算可见列
+        for (var i = start; i < end; i++)
+        {
+            if (left >= right)
+            {
+                end = i;
+                break;
+            }
+
+            left += this[i].width;
+
+            if (left <= x)
+            {
+                start = i;
+            }
+        }
+
+        this.start = start;
+        this.end = end;
     };
 
 
@@ -390,7 +512,7 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
             case 2:
                 attributes = function () {
 
-                    this.__column_dirty = true;
+                    this.__columns.dirty = true;
                     this.refresh(true);
                 };
                 break;
@@ -444,7 +566,7 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
 
 
     //行高
-    define(this, 'rowHeight', 28);
+    this['row-height'] = define(this, 'rowHeight', 28);
 
 
     //是否只读
@@ -461,14 +583,11 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
     //1  选择行
     //2  选择列
     //3  选择行及列
-    define(this, 'selectedMode', 0);
+    this['selected-mode'] = define(this, 'selectedMode', 0);
 
 
-    //分页模式
-    //none:     不分页
-    //scroll:   不分页,滚动加载
-    //number:   数字页码
-    define(this, 'pagination', 'none');
+    //延迟加载时默认行数
+    this['lazy-load'] = define(this, 'lazyLoad', 0);
 
 
     
@@ -498,41 +617,11 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
     };
 
 
-    //计算列宽
-    this.__compute_columns = function (columns, width) {
-
-        var size = 0,
-            persent = 0;
-
-        for (var i = columns.length - 1; i >= 0; i--)
-        {
-            var column = columns[i],
-                storage = column.__storage || column.__defaults;
-            
-            if (storage.persent)
-            {
-                persent += storage.width;
-            }
-            else
-            {
-                size += storage.width;
-            }
-        }
-
-        if (persent > 0)
-        {
-            size += persent * width | 0;
-        }
-
-        return size;
-    };
-
-
 
     //刷新表格
     this.refresh = function (delay) {
 
-        if (this.hasRender && this.__visible)
+        if (this.rendered && this.__visible)
         {
             var patch = this.__view_patch;
 

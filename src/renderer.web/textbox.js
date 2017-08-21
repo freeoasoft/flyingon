@@ -28,8 +28,23 @@ flyingon.renderer('TextBox', function (base) {
         
         this.renderDefault(writer, control);
         
-        writer.push(' value="', text, '"/>');
+        writer.push(' value="', text, '" onchange="flyingon.TextBox.onchange.call(this)"/>');
     };
+
+
+    flyingon.TextBox.onchange = function () {
+
+        var control = flyingon.findControl(this);
+
+        control.rendered = false;
+        control.value(this.value);
+        control.rendered = true;
+
+        this.value = control.text();
+
+        control.trigger('change', 'value', this.value);
+    };
+
 
 
     this.text = function (control, view) {
@@ -37,34 +52,6 @@ flyingon.renderer('TextBox', function (base) {
         view.value = control.text();
     };
 
-
-
-    this.mount = function (control, view) {
-
-        base.mount.call(this, control, view);
-        view.onchange = onchange;
-    };
-
-
-    this.unmount = function (control) {
-
-        control.view.onchange = null;
-        base.unmount.call(this, control);
-    };
-
-
-    function onchange() {
-
-        var control = flyingon.findControl(this);
-
-        control.hasRender = false;
-        control.value(this.value);
-        control.hasRender = true;
-
-        this.value = control.text();
-
-        control.trigger('change', 'value', this.value);
-    };
 
 
 });

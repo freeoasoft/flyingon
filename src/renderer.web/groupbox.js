@@ -24,7 +24,7 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
         }
 
         writer.push('>',
-            '<div class="f-groupbox-head" style="height:', head, 'px;line-height:', head, 'px;text-align:', storage.align, ';" tag="head">',
+            '<div class="f-groupbox-head" style="height:', head, 'px;line-height:', head, 'px;text-align:', storage.align, ';" onclick="flyingon.GroupBox.onclick.call(this, event)">',
                 '<span class="f-groupbox-icon ', (any = storage.icon) ? any : '" style="display:none;', '"></span>',
                 '<span class="f-groupbox-text">', text, '</span>',
                 '<span class="f-groupbox-flag f-groupbox-', storage.collapsed ? 'close"' : 'open"', storage.collapsable === 2 ? '' : ' style="display:none;"', '></span>',
@@ -42,27 +42,21 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
     };
     
 
-    this.mount = function (control, view) {
 
-        control.view_content = view.lastChild;
-        base.mount.call(this, control, view);
-        
-        control.on('click', on_click);
-    };
+    flyingon.GroupBox.onclick = function (e) {
 
+        var control = flyingon.findControl(this);
 
-    function on_click(event) {
-
-        if (this.collapsable())
+        if (control.collapsable())
         {
-            var view = this.view,
-                node = event.original_event.target;
+            var view = control.view,
+                node = e.target || e.srcElement;
 
             while (node !== view)
             {
                 if (node.getAttribute('tag') === 'head')
                 {
-                    this.collapsed(!this.collapsed());
+                    control.collapsed(!control.collapsed());
                 }
 
                 node = node.parentNode;

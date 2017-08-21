@@ -124,10 +124,13 @@
             {
                 text: '数据表格控件', 
                 children: [
-                    { text: '简单表格', url: url_datagrid + 'basic.js' },
-                    { text: '简单表格分组', url: url_datagrid + 'basic-group.js' },
-                    { text: '树表', url: url_datagrid + 'treegrid.js' },
-                    { text: '树分组', url: url_datagrid + 'treegrid-group.js' }
+                    { text: '行号列', url: url_datagrid + 'no-column.js' },
+                    { text: '选择列', url: url_datagrid + 'check-column.js' },
+                    { text: '多行列头', url: url_datagrid + 'multi-title.js' },
+                    { text: '自定义列头', url: url_datagrid + 'custom-title.js' },
+                    { text: '锁定', url: url_datagrid + 'locked.js' },
+                    { text: '分组', url: url_datagrid + 'group.js' },
+                    { text: '树表', url: url_datagrid + 'treegrid.js' }
                 ]
             }
 
@@ -217,7 +220,6 @@
 
 
         });
-
 
 
         flyingon.dom_on(window, 'resize', function () {

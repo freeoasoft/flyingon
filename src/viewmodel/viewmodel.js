@@ -92,7 +92,7 @@
 
         if (any = options.host)
         {
-            control.mountTo(any);
+            flyingon.show(control, any);
         }
 
         return control;

@@ -21,7 +21,7 @@ flyingon.TextBox.extend('TimePicker', function (base) {
 
         set: function () {
 
-            this.hasRender && this.renderer.set(this, 'text');
+            this.rendered && this.renderer.set(this, 'text');
         }
 
     });
@@ -32,7 +32,7 @@ flyingon.TextBox.extend('TimePicker', function (base) {
         
         set: function () {
 
-            this.hasRender && this.renderer.set(this, 'text');
+            this.rendered && this.renderer.set(this, 'text');
         }
     });
 

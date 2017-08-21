@@ -41,7 +41,7 @@
 
 
     //滚动条位置控制
-    this.__scroll_html = '<div style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;" tag="scroll"></div>';
+    this.__scroll_html = '<div style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;width:1px;height:1px;" tag="scroll"></div>';
 
        
     //设置text属性名
@@ -151,9 +151,9 @@
             html = control.__as_html,
             any;
 
-        control.hasRender = true;
+        control.rendered = true;
         
-        if (any = storage.id)
+        if (any = control.__id || storage.id)
         {
             writer.push(' id="', encode(any), '"');
         }
@@ -371,13 +371,18 @@
     //挂载视图
     this.mount = function (control, view) {
 
-        var any = uniqueId;
+        var any;
         
         control.view = view;
 
-        any[view.flyingon_id = control.__uniqueId || any.id++] = control;
-        //view.onscroll = flyingon.__dom_scroll;
+        if (!(any = control.__uniqueId))
+        {
+            any = uniqueId;
+            any[any = any.id++] = control;
+        }
 
+        view.flyingon_id = any;
+        
         //触发控件挂载过程
         if (any = control.onmount)
         {
@@ -400,7 +405,7 @@
                 any.call(control, view);
             }
 
-            control.view = view.onscroll = null;
+            control.view = null;
 
             if (any = view.parentNode)
             {
@@ -1220,68 +1225,6 @@
         view.innerHTML = '';
     };
 
-
-
-    //挂载顶级控件
-    flyingon.mountTo = function (control, host) {
-
-        if (typeof host === 'string')
-        {
-            host = document.getElementById(host);
-        }
-        
-        if (!host)
-        {
-            throw 'can not find host!';
-        }
-
-        var width = host.clientWidth,
-            height = host.clientHeight;
-
-        //挂载之前处理挂起的ready队列
-        flyingon.ready();
-        flyingon.__update_patch();
-
-        if (!control.__top_control)
-        {
-            control.__top_control = true;
-            control.fullClassName += ' f-host';
-        }
-
-        host.appendChild(control.view || control.renderer.createView(control));
-
-        if (update_list.indexOf(control) < 0)
-        {
-            update_list.push(control);
-        }
-
-        control.renderer.__update_top(control, width, height);
-    };
-
-
-    //取消挂载顶级控件
-    flyingon.unmount = function (control, dispose) {
-
-        if (control.__top_control)
-        {
-            var view = control.view,
-                any;
-
-            control.__top_control = false;
-
-            if (view && (any = view.parentNode))
-            {
-                any.removeChild(view);
-            }
-
-            control.fullClassName = control.fullClassName.replace(' f-host', '');
-
-            if (dispose !== false)
-            {
-                control.dispose();
-            }
-        }
-    };
 
 
 

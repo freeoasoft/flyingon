@@ -22,7 +22,7 @@ Object.extend('TreeNode', function () {
 
             set: function (value) {
 
-                this.hasRender && this.renderer.set(this, name, value);
+                this.rendered && this.renderer.set(this, name, value);
             }
         });
     };
@@ -58,7 +58,7 @@ Object.extend('TreeNode', function () {
                 parent = parent.parent;
             }
 
-            this.hasRender && this.renderer.set(this, 'checked', value);
+            this.rendered && this.renderer.set(this, 'checked', value);
             this.trigger('checked-change', 'value', value);
         }
     });
@@ -69,7 +69,7 @@ Object.extend('TreeNode', function () {
 
         set: function (value) {
 
-            if (this.view)
+            if (this.rendered)
             {
                 value ? this.collapse(false) : this.expand(false, false);
             }
@@ -120,7 +120,7 @@ Object.extend('TreeNode', function () {
     this.__insert_items = function (items, index, fn) {
 
         var Class = flyingon.TreeNode,
-            render = this.hasRender,
+            render = this.rendered,
             length = items.length,
             item,
             any;
@@ -215,7 +215,7 @@ Object.extend('TreeNode', function () {
                 }
             }
 
-            if (this.hasRender && arguments[2] !== false)
+            if (this.rendered && arguments[2] !== false)
             {
                 this.renderer.expand(this);
             }
@@ -243,7 +243,7 @@ Object.extend('TreeNode', function () {
 
             this.trigger('after-collapse');
 
-            this.hasRender && this.renderer.collapse(this);
+            this.rendered && this.renderer.collapse(this);
         }
         else if (!check)
         {
@@ -277,7 +277,7 @@ flyingon.Control.extend('Tree', function (base) {
 
             set: function (value) {
 
-                this.hasRender && this.renderer.set(this, name, value);
+                this.rendered && this.renderer.set(this, name, value);
             }
         });
     };

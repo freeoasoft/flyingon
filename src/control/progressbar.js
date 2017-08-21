@@ -24,7 +24,7 @@ flyingon.Control.extend('ProgressBar', function (base) {
 
         set: function (value) {
 
-            this.hasRender && this.renderer.set(this, 'value', value);
+            this.rendered && this.renderer.set(this, 'value', value);
         }
     });
 
@@ -33,7 +33,7 @@ flyingon.Control.extend('ProgressBar', function (base) {
 
         set: function (value) {
 
-            this.hasRender && this.renderer.set(this, 'text', value);
+            this.rendered && this.renderer.set(this, 'text', value);
         }
     });
 

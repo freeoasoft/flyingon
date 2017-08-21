@@ -19,7 +19,7 @@ flyingon.Control.extend('Calendar', function (base) {
 
             set: function () {
 
-                if (this.hasRender && !this.__location_dirty)
+                if (this.rendered && !this.__location_dirty)
                 {
                     this.renderer.set(this, 'refresh');
                 }

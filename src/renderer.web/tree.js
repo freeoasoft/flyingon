@@ -18,7 +18,7 @@ flyingon.renderer('Tree', function (base) {
                 (!any.icon ? ' f-tree-no-icon' : ''), 
             'overflow:auto;padding:2px;');
         
-        writer.push(' tag="tree">');
+        writer.push(' onclick="flyingon.Tree.onclick.call(this, event)">');
 
         if ((any = control.length) > 0 && control.__visible)
         {
@@ -49,55 +49,30 @@ flyingon.renderer('Tree', function (base) {
 
 
 
-    this.mount = function (control, view) {
+    flyingon.Tree.onclick = function (e) {
 
-        base.mount.call(this, control, view);
-
-        if (control.__content_render)
-        {
-            this.__mount_children(control, view, 0, view.firstChild);
-        }
-
-        control.on('click', on_click);
-    };
-    
-
-    this.unmount = function (control) {
-
-        this.__unmount_children(control);
-        base.unmount.call(this, control);
-    };
-
-
-    function on_click(event) {
-
-        var target = event.original_event.target;
+        var target = e.target || e.srcElement,
+            node;
 
         while (target)
         {
             switch (target.getAttribute('tag'))
             {
                 case 'folder':
-                    target = event.target;
-                    target.collapsed(!target.collapsed());
-                    event.stopPropagation();
+                    node = flyingon.findControl(target);
+                    node.collapsed(!node.collapsed());
                     return;
 
                 case 'check':
-                    target = event.target;
-                    target.checked(!target.checked());
-                    event.stopPropagation();
+                    node = flyingon.findControl(target);
+                    node.checked(!node.checked());
                     return;
 
-                case 'text':
-                    if (this.editable())
-                    {
-                        event.target.beginEdit();
-                        return;
-                    }
-
                 case 'node':
-                    this.trigger('node-click', 'node', event.target);
+                    node = flyingon.findControl(target);
+                    target = flyingon.findControl(this);
+
+                    target.trigger('node-click', 'node', node);
                     return;
 
                 case 'tree':
@@ -109,6 +84,26 @@ flyingon.renderer('Tree', function (base) {
             }
         }
     };
+
+
+
+    this.mount = function (control, view) {
+
+        base.mount.call(this, control, view);
+
+        if (control.__content_render)
+        {
+            this.__mount_children(control, view, 0, view.firstChild);
+        }
+    };
+    
+
+    this.unmount = function (control) {
+
+        this.__unmount_children(control);
+        base.unmount.call(this, control);
+    };
+
 
 
     this.theme = function (control, view, value) {
@@ -172,10 +167,10 @@ flyingon.renderer('TreeNode', function (base) {
             text,
             any;
 
-        node.hasRender = true;
+        node.rendered = true;
 
-        writer.push('<div class="', encode(node.fullClassName), '"><div class="f-tree-node',
-            last ? ' f-tree-node-last' : '',
+        writer.push('<div class="', encode(node.fullClassName), '">',
+            '<div class="f-tree-node', last ? ' f-tree-node-last' : '',
             (any = storage.className) ? ' class="' + encode(any) + '"' : '',  
             (any = storage.id) ? '" id="' + encode(any) + '"' : '', '" tag="node">');
 

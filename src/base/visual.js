@@ -114,7 +114,7 @@ flyingon.fragment('f.visual', function () {
 
 
     //是否已经渲染
-    this.hasRender = false;
+    this.rendered = false;
 
 
 
@@ -123,7 +123,7 @@ flyingon.fragment('f.visual', function () {
     //唯一id
     this.uniqueId = function () {
         
-        return this.__uniqueId || (this.__uniqueId = uniqueId.id++);
+        return uniqueId[this.__uniqueId || (this.__uniqueId = uniqueId.id++)] = this;
     };
     
 
@@ -209,7 +209,7 @@ flyingon.fragment('f.visual', function () {
             {
                 Array.prototype.splice.call(parent, index, 1);
 
-                this.view && this.renderer.set(this, 'detach');
+                this.rendered && this.renderer.set(this, 'detach');
 
                 if (this.__arrange_delay && this.__arrange_dirty < 2)
                 {
@@ -228,7 +228,7 @@ flyingon.fragment('f.visual', function () {
 
             var any;
 
-            if (this.view)
+            if (this.rendered)
             {
                 if (any = this.__view_patch)
                 {
@@ -253,7 +253,7 @@ flyingon.fragment('f.visual', function () {
 
             this.fullClassName = value = value ? this.defaultClassName + ' ' + value : this.defaultClassName;
 
-            if (this.view)
+            if (this.rendered)
             {
                 if (any = this.__view_patch)
                 {

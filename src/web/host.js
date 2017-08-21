@@ -55,10 +55,70 @@
     
     //默认拖动事件
     var ondragstart = null;
+
+    //获取属性值
+    var attr = document.getAttribute;
     
 
-       
+
+
+    //在指定dom容器显示控件
+    flyingon.show = function (control, host) {
+
+        if (typeof host === 'string')
+        {
+            host = document.getElementById(host);
+        }
         
+        if (!host)
+        {
+            throw 'can not find host!';
+        }
+
+        var width = host.clientWidth,
+            height = host.clientHeight;
+
+        //挂载之前处理挂起的ready队列
+        flyingon.ready();
+        flyingon.__update_patch();
+
+        if (!control.__top_control)
+        {
+            control.__top_control = true;
+            control.fullClassName += ' f-host';
+        }
+
+        host.appendChild(control.view || control.renderer.createView(control));
+        control.renderer.__update_top(control, width, height);
+    };
+
+
+    //隐藏控件
+    flyingon.hide = function (control, dispose) {
+
+        if (control.__top_control)
+        {
+            var view = control.view,
+                any;
+
+            control.__top_control = false;
+
+            if (view && (any = view.parentNode))
+            {
+                any.removeChild(view);
+            }
+
+            control.fullClassName = control.fullClassName.replace(' f-host', '');
+
+            if (dispose !== false)
+            {
+                control.dispose();
+            }
+        }
+    };
+
+    
+            
     //查找与指定dom关联的控件
     flyingon.findControl = function (dom) {
         
@@ -74,7 +134,7 @@
             dom = dom.parentNode;
         }
     };
-    
+
 
         
     //通用鼠标事件处理

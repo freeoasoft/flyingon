@@ -18,7 +18,7 @@ flyingon.Control.extend('ListBox', function (base) {
             set: function () {
 
                 this.__template = null;
-                this.hasRender && this.renderer.set(this, 'content');
+                this.rendered && this.renderer.set(this, 'content');
             }
         });
     };
@@ -55,7 +55,7 @@ flyingon.Control.extend('ListBox', function (base) {
                 this.__selectedIndex = void 0;
             }
 
-            this.hasRender && this.renderer.set(this, 'content');
+            this.rendered && this.renderer.set(this, 'content');
         }
     });
 
@@ -85,7 +85,7 @@ flyingon.Control.extend('ListBox', function (base) {
 
         set: function () {
 
-            this.hasRender && this.renderer.set(this, 'content');
+            this.rendered && this.renderer.set(this, 'content');
         }
     });
 
@@ -101,7 +101,7 @@ flyingon.Control.extend('ListBox', function (base) {
             this.__use_index = true;
 
             this.__selectedIndex = value;
-            this.hasRender && this.renderer.set(this, 'change');
+            this.rendered && this.renderer.set(this, 'change');
         }
     });
 
@@ -120,7 +120,7 @@ flyingon.Control.extend('ListBox', function (base) {
                 this.__selectedIndex = void 0;
             }
 
-            this.hasRender && this.renderer.set(this, 'change');
+            this.rendered && this.renderer.set(this, 'change');
         }
     });
 
@@ -134,7 +134,7 @@ flyingon.Control.extend('ListBox', function (base) {
             this.__use_index = false;
             this.__selectedIndex = void 0;
 
-            this.hasRender && this.renderer.set(this, 'change');
+            this.rendered && this.renderer.set(this, 'change');
         }
     });
 
@@ -291,7 +291,7 @@ flyingon.ListBox.extend('CheckListBox', function (base) {
             this.__use_index = true;
 
             this.__selectedIndex = value;
-            this.hasRender && this.renderer.set(this, 'content');
+            this.rendered && this.renderer.set(this, 'content');
         }
     });
 
@@ -304,7 +304,7 @@ flyingon.ListBox.extend('CheckListBox', function (base) {
             if (!this.__use_index)
             {
                 this.__selectedIndex = void 0;
-                this.hasRender && this.renderer.set(this, 'change');
+                this.rendered && this.renderer.set(this, 'change');
             }
         }
     });

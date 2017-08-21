@@ -71,7 +71,7 @@ flyingon.TextButton.extend('ComboBox', function (base) {
 
         set: function () {
 
-            this.hasRender && this.renderer.set(this, 'text');
+            this.rendered && this.renderer.set(this, 'text');
         }
     });
 

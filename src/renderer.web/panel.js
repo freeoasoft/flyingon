@@ -24,7 +24,7 @@ flyingon.renderer('Panel', function (base) {
         
         this.renderDefault(writer, control);
         
-        writer.push('>');
+        writer.push(' onscroll="flyingon.__dom_scroll(event)">');
 
         if (control.length > 0 && control.__visible)
         {
@@ -60,7 +60,6 @@ flyingon.renderer('Panel', function (base) {
         base.mount.call(this, control, view);
 
         view = control.view_content || view;
-        view.onscroll = flyingon.__dom_scroll;
 
         if (control.__content_render)
         {
@@ -71,7 +70,7 @@ flyingon.renderer('Panel', function (base) {
 
     this.unmount = function (control) {
 
-        control.view = control.view_content = (control.view_content || control.view).onscroll = null;
+        control.view = control.view_content = null;
 
         this.__unmount_children(control);
         base.unmount.call(this, control);

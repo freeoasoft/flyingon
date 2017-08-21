@@ -45,6 +45,8 @@ body {
 
 .f-slider-button div,
 .f-progressbar-back,
+.f-grid-head,
+.f-grid-head .f-grid-cell,
 .f-tab-head,
 .f-message-foot {
     background-color: #EFF5FF;
@@ -53,6 +55,8 @@ body {
 .f-slider-bar,
 .f-slider-button,
 .f-calendar-line,
+.f-grid-back,
+.f-grid-line,
 .f-tab-line,
 .f-groupbox-line,
 .f-dialog-line {
@@ -104,6 +108,7 @@ body {
 input,
 .f-slider-bar div,
 .f-input,
+.f-grid-cell,
 .f-popup,
 .f-dialog,
 .f-calendar {
@@ -498,6 +503,96 @@ input,
 
 .f-tree-icon-file {
     background: url(flyingon.png) no-repeat -141px -66px;
+}
+
+
+.f-grid-head {
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    outline: none;
+    white-space: nowrap;
+}
+
+.f-grid-scroll,
+.f-grid-body {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    overflow: auto;
+}
+
+.f-grid-body {
+    overflow: hidden;
+    outline: none;
+}
+
+.f-grid-back {
+    position: absolute;
+}
+
+.f-grid-resizable {
+    position: absolute;
+    right: -3px;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    cursor: ew-resize;
+    background-color: transparent;
+    z-index: 1;
+}
+
+.f-grid-left,
+.f-grid-center,
+.f-grid-right {
+    position: absolute;
+    top: 0;
+    height: 100%;
+}
+
+.f-grid-left .f-grid-line {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+}
+
+.f-grid-right .f-grid-line {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+}
+
+.f-grid-left {
+    left: 0;
+}
+
+.f-grid-right {
+    right: 0;
+}
+
+.f-grid-cell {
+    position: absolute;
+    left: 0;
+    right: 1px;
+    top: 0;
+    bottom: 1px;
+}
+
+.f-grid-right .f-grid-cell {
+    left: 1px;
+    right: 0;
+}
+
+.f-grid-head .f-grid-cell {
+    text-align: center;
 }
 
 

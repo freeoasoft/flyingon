@@ -11,7 +11,7 @@ flyingon.Panel.extend('GroupBox', function (base) {
 
         set: function (value) {
             
-            this.hasRender && this.renderer.set(this, 'header', value);
+            this.rendered && this.renderer.set(this, 'header', value);
             this.__update_dirty || this.invalidate();
         }
     });
@@ -24,7 +24,7 @@ flyingon.Panel.extend('GroupBox', function (base) {
 
             set: function (value) {
                 
-                this.hasRender && this.renderer.set(this, name, value);
+                this.rendered && this.renderer.set(this, name, value);
             }
         });
     };
@@ -54,7 +54,7 @@ flyingon.Panel.extend('GroupBox', function (base) {
 
         set: function (value) {
 
-            this.hasRender && this.renderer.set(this, 'collapsed', value);
+            this.rendered && this.renderer.set(this, 'collapsed', value);
 
             if (!value && (value = this.mutex()))
             {

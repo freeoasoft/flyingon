@@ -12,7 +12,7 @@ flyingon.Control.extend('Image', function (base) {
             
         set: function (value) {
 
-            this.hasRender && this.renderer.set(this, 'src', value);
+            this.rendered && this.renderer.set(this, 'src', value);
         }
     });
 
@@ -21,7 +21,7 @@ flyingon.Control.extend('Image', function (base) {
             
         set: function (value) {
 
-            this.hasRender && this.renderer.set(this, 'alt', value);
+            this.rendered && this.renderer.set(this, 'alt', value);
         }
     });
 

@@ -74,7 +74,7 @@ Object.extend('Control', function () {
 
             this.__visible = value;
             
-            if (this.hasRender)
+            if (this.rendered)
             {
                 if (any = this.__view_patch)
                 {
@@ -273,7 +273,7 @@ Object.extend('Control', function () {
             style.cssText = false;
         }
 
-        if (this.view)
+        if (this.rendered)
         {
             (this.__style_patch || style_patch(this))[name] = value;
         }
@@ -284,7 +284,7 @@ Object.extend('Control', function () {
     function set_style(style, list) {
 
         var watches = this.__watches,
-            view = this.view,
+            render = this.rendered,
             index = 0,
             length = list.length,
             name,
@@ -325,7 +325,7 @@ Object.extend('Control', function () {
                     this.notify('style:' + name, value, any);
                 }
 
-                if (view)
+                if (render)
                 {
                     (patch || (patch = this.__style_patch || style_patch(this)))[name] = value;
                 }
@@ -728,34 +728,17 @@ Object.extend('Control', function () {
 
     this.focus = function () {
 
-        this.view && this.renderer.focus(this);
+        this.rendered && this.renderer.focus(this);
     };
 
 
     this.blur = function () {
 
-        this.view && this.renderer.blur(this);
+        this.rendered && this.renderer.blur(this);
     };
     
            
-
-    
-    //挂载控件至指定容器
-    this.mountTo = function (host) {
-
-        flyingon.mountTo(this, host);
-        return this;
-    };
-
-
-    //取消挂载
-    this.unmount = function () {
-
-        flyingon.unmount(this);
-        return this;
-    };
-
-       
+      
 
     this.__update_dirty = true;
 
@@ -883,7 +866,7 @@ Object.extend('Control', function () {
             any.call(this);
         }
         
-        if (arguments[0] !== false && this.view)
+        if (arguments[0] !== false && this.rendered)
         {
             this.renderer.set(this, 'dispose');
         }

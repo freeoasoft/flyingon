@@ -37,7 +37,7 @@ flyingon.Control.extend('TextBox', function (base) {
 
         set: function (value) {
 
-            this.hasRender && this.renderer.set(this, 'text');
+            this.rendered && this.renderer.set(this, 'text');
         }
     });
 

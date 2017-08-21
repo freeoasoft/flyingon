@@ -162,8 +162,7 @@ flyingon.style = function (cssText) {
 
     
 
-    var fixed = window.Event && Event.prototype,
-        on = 'addEventListener';
+    var on = 'addEventListener';
 
 
     
@@ -173,17 +172,6 @@ flyingon.style = function (cssText) {
     {
         on = false;
     }
-    else if (fixed && !fixed.__stopPropagation) //修复w3c标准事件不支持cancelBubble的问题
-    {
-        fixed.__preventDefault = fixed.preventDefault;
-        fixed.__stopPropagation = fixed.stopPropagation;
-        fixed.__stopImmediatePropagation = fixed.stopImmediatePropagation;
-        
-        fixed.preventDefault = preventDefault;
-        fixed.stopPropagation = stopPropagation;
-        fixed.stopImmediatePropagation = stopImmediatePropagation;
-    }
-    
 
 
     //触发dom事件
@@ -196,20 +184,13 @@ flyingon.style = function (cssText) {
         {
             e.target || (e.target = e.srcElement);
 
-            if (!e.preventDefault)
-            {
-                e.preventDefault = preventDefault;
-                e.stopPropagation = stopPropagation;
-                e.stopImmediatePropagation = stopImmediatePropagation;
-            }
-
             for (var i = 0, l = items.length; i < l; i++)
             {
                 if ((fn = items[i]) && !fn.disabled)
                 {
                     if (fn.call(this, e) === false && e.returnValue !== false)
                     {
-                        e.preventDefault();
+                        flyingon.dom_prevent(e);
                     }
 
                     if (e.cancelBubble)
@@ -238,35 +219,37 @@ flyingon.style = function (cssText) {
         return fn;
     };
 
-
-    function preventDefault() {
-
-        this.returnValue = false;
-        this.__preventDefault && this.__preventDefault();
-    };
-
-    
-    function stopPropagation() {
-
-        this.cancelBubble = true;
-        this.__stopPropagation && this.__stopPropagation();
-    };
-
-    
-    function stopImmediatePropagation() {
-
-        this.cancelBubble = true;
-        this.returnValue = false;
-        this.__stopImmediatePropagation && this.__stopImmediatePropagation();
-    };
-        
     
     //挂起函数
     function suspend(e) {
       
-        e.stopPropagation(); //有些浏览器不会设置cancelBubble
+        flyingon.dom_stop(e); //有些浏览器不会设置cancelBubble
     };
-    
+
+
+
+    //组件dom默认事件
+    flyingon.dom_prevent = function (event) {
+
+        event.returnValue = false;
+        event.preventDefault && event.preventDefault();
+    };
+
+
+    //停止dom事件冒泡
+    flyingon.dom_stop = function (event, prevent) {
+
+        if (prevent)
+        {
+            event.returnValue = false;
+            event.preventDefault && event.preventDefault();
+        }
+
+        event.cancelBubble = true;
+        event.stopPropagation && event.stopPropagation();
+    };
+
+
 
     //只执行一次绑定的事件
     flyingon.dom_once = function (dom, type, fn) {
@@ -393,7 +376,7 @@ flyingon.style = function (cssText) {
     //触发事件
     flyingon.dom_trigger = function (dom, event) {
 
-        if (window && event)
+        if (dom && event)
         {
             return trigger.call(dom, event.type ? event : { type: event });
         }
@@ -715,12 +698,12 @@ flyingon.dom_html = function (host, html, refChild) {
 //拖动基础方法
 flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
 
-    var dom = event.dom || event.target,
-        style = dom.style,
+    var dom = event.dom || event.target || event.srcElement,
+        style = event.style !== false && dom.style,
         on = flyingon.dom_on,
         off = flyingon.dom_off,
-        x0 = dom.offsetLeft,
-        y0 = dom.offsetTop,
+        x0 = style && dom.offsetLeft,
+        y0 = style && dom.offsetTop,
         x1 = event.clientX,
         y1 = event.clientY,
         distanceX = 0,
@@ -767,7 +750,7 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
             distanceX = x;
             distanceY = y;
             
-            if (locked !== true)
+            if (style && locked !== true)
             {
                 if (locked !== 'x')
                 {
@@ -780,7 +763,7 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
                 }
             }
             
-            e.stopImmediatePropagation();
+            flyingon.dom_stop(e, true);
         }
     };
 
@@ -826,7 +809,7 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
     on(document, 'mousemove', mousemove);
     on(document, 'mouseup', mouseup);
     
-    event.stopImmediatePropagation();
+    flyingon.dom_stop(event, true);
 };
 
 

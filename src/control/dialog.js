@@ -28,7 +28,7 @@ flyingon.Panel.extend('Dialog', function (base) {
 
         set: function (value) {
 
-            this.hasRender && this.renderer.set(this, 'header', value);
+            this.rendered && this.renderer.set(this, 'header', value);
             this.__update_dirty || this.invalidate();
         }
     });
@@ -39,7 +39,7 @@ flyingon.Panel.extend('Dialog', function (base) {
 
         set: function (value) {
 
-            this.hasRender && this.renderer.set(this, 'icon', value);
+            this.rendered && this.renderer.set(this, 'icon', value);
         }
     });
 
@@ -49,7 +49,7 @@ flyingon.Panel.extend('Dialog', function (base) {
 
         set: function (value) {
 
-            this.hasRender && this.renderer.set(this, 'text', value);
+            this.rendered && this.renderer.set(this, 'text', value);
         }
     });
 
@@ -59,7 +59,7 @@ flyingon.Panel.extend('Dialog', function (base) {
 
         set: function (value) {
 
-            this.hasRender && this.renderer.set(this, 'closable', value);
+            this.rendered && this.renderer.set(this, 'closable', value);
         }
     });
 
@@ -174,7 +174,7 @@ flyingon.Panel.extend('Dialog', function (base) {
 
         if (this.trigger('closing', 'closeType', closeType) !== false)
         {
-            this.hasRender && this.renderer.close(this);
+            this.rendered && this.renderer.close(this);
             this.shown = false;
 
             stack.splice(stack.indexOf(this), 1);

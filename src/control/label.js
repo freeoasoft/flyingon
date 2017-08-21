@@ -9,7 +9,7 @@ flyingon.Control.extend('Label', function (base) {
             
             set: function () {
 
-                this.hasRender && this.renderer.set(this, 'text');
+                this.rendered && this.renderer.set(this, 'text');
             }
         });
     };

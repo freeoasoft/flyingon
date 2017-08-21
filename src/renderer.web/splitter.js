@@ -9,7 +9,7 @@ flyingon.renderer('Splitter', function (base) {
 
         this.renderDefault(writer, control, '', 'cursor:ew-resize;');
 
-        writer.push('><div></div></div>');
+        writer.push(' onmousedown="flyingon.Splitter.onmousedown.call(this, event)"><div></div></div>');
     };
     
 
@@ -27,21 +27,15 @@ flyingon.renderer('Splitter', function (base) {
     };
 
 
-    this.mount = function (control, view) {
-
-        base.mount.call(this, control, view);
-
-        control.on('mousedown', function (e) {
+    flyingon.Splitter.onmousedown = function (e) {
             
-            var data = resize_data(control);
+        var control = flyingon.findControl(this);
 
-            if (data)
-            {
-                flyingon.dom_drag(data, e.original_event, null, do_resize, null, data[1] ? 'x' : 'y');
-            }
-        });
+        if (data = resize_data(control))
+        {
+            flyingon.dom_drag(data, e, null, do_resize, null, data[1] ? 'x' : 'y');
+        }
     };
-
 
 
     function resize_data(control) {
@@ -60,9 +54,24 @@ flyingon.renderer('Splitter', function (base) {
 
         var control = this[0],
             vertical = this[1],
-            name = vertical ? 'distanceY' : 'distanceX';
+            style = control.__style,
+            name = vertical ? 'distanceY' : 'distanceX',
+            size = this[2] + event[name],
+            visible = 'visible';
 
-        control[vertical ? 'height' : 'width'](this[2] + event[name]);
+        if (size < 4)
+        {
+            size = 0;
+            visible = 'hidden';
+        }
+
+        if (!style || !style.visibility !== visible)
+        {
+            control.style('visibility', visible);
+        }
+
+        control[vertical ? 'height' : 'width'](size);
+
         event[name] = (vertical ? control.offsetHeight : control.offsetWidth) - this[2];
     };
 

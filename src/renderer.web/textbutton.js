@@ -19,11 +19,30 @@ flyingon.renderer('TextButton', function (base) {
 
         writer.push('>',
                 '<div class="f-textbutton-body" style="right:', size, 'px;">',
-                    '<input type="text" class="f-textbutton-text" value="', text, '"/>',
+                    '<input type="text" class="f-textbutton-text" value="', text, '" onchange="flyingon.TextButton.onchange.call(this)"/>',
                 '</div>',
-                '<div class="f-textbutton-button ', storage.button, '" style="width:', size, 'px;"></div>',
+                '<div class="f-textbutton-button ', storage.button, '" style="width:', size, 'px;" onclick="flyingon.TextButton.onclick.call(this)"></div>',
             '</div>');
     };
+
+
+    flyingon.TextButton.onclick = function () {
+
+        flyingon.findControl(this).__on_click();
+    };
+
+
+    flyingon.TextButton.onchange = function () {
+
+        var control = flyingon.findControl(this);
+
+        control.rendered = false;
+        control.value(this.value);
+        control.rendered = true;
+
+        control.trigger('change', 'value', this.value);
+    };
+
 
 
     this.text = function (control, view) {
@@ -31,48 +50,6 @@ flyingon.renderer('TextButton', function (base) {
         view.firstChild.firstChild.value = control.text();
     };
 
-
-
-    this.mount = function (control, view) {
-
-        base.mount.call(this, control, view);
-
-        view.onclick = onclick;
-        view.onchange = onchange;
-    };
-
-
-    this.unmount = function (control) {
-
-        var view = control.view;
-
-        view.onclick = view.onchange = null;
-        base.unmount.call(this, control);
-    };
-
-
-    function onclick(e) {
-
-        e = e || window.event;
-
-        if ((e.target || e.srcElement).className.indexOf('f-textbutton-button') >= 0)
-        {
-            flyingon.findControl(this).__on_click();
-        }
-    };
-
-
-    function onchange() {
-
-        var control = flyingon.findControl(this),
-            input = this.firstChild.firstChild;
-
-        control.hasRender = false;
-        control.value(input.value);
-        control.hasRender = true;
-
-        control.trigger('change', 'value', input.value);
-    };
 
 
 });

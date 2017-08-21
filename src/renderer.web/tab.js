@@ -19,11 +19,11 @@ flyingon.renderer('Tab', function (base) {
         
         this.renderDefault(writer, control, 'f-tab-direction-' + storage.direction);
         
-        writer.push('><div class="f-tab-head f-tab-theme-', storage.theme, '" tag="head">',
+        writer.push('><div class="f-tab-head f-tab-theme-', storage.theme, '">',
                     '<div class="f-tab-line"></div>',
                     '<div class="f-tab-content"></div>',
-                    '<div class="f-tab-move f-tab-forward" tag="forward"><a class="f-tab-move-link"><span class="f-tab-move-icon"></span></a></div>',
-                    '<div class="f-tab-move f-tab-back" tag="back"><a class="f-tab-move-link"><span class="f-tab-move-icon"></span></a></div>',
+                    '<div class="f-tab-move f-tab-forward" onclick="flyingon.Tab.forward.call(this)"><a class="f-tab-move-link"><span class="f-tab-move-icon"></span></a></div>',
+                    '<div class="f-tab-move f-tab-back" onclick="flyingon.Tab.back.call(this)"><a class="f-tab-move-link"><span class="f-tab-move-icon"></span></a></div>',
                 '</div>',
             '<div class="f-tab-body">');
 
@@ -34,6 +34,30 @@ flyingon.renderer('Tab', function (base) {
 
         writer.push('</div></div>');
     };
+
+
+
+    flyingon.Tab.forward = function () {
+
+        var control = control = flyingon.findControl(this);
+
+        if ((control.__scroll_header -= 100) < 0)
+        {
+            control.__scroll_header = 0;
+        }
+
+        update_header(control);
+    };
+
+
+    flyingon.Tab.back = function () {
+
+        var control = control = flyingon.findControl(this);
+
+        control.__scroll_header += 100;
+        update_header(control);
+    };
+
 
 
     this.mount = function (control, view) {
@@ -48,48 +72,15 @@ flyingon.renderer('Tab', function (base) {
         {
             page.renderer.mount(page, view.lastChild.firstChild);
         }
-
-        view.firstChild.onclick = onclick;
     };
 
 
     this.unmount = function (control) {
 
-        control.view.firstChild.onclick = null;
-
         this.__unmount_children(control);
         base.unmount.call(this, control);
     };
 
-
-    function onclick(e) {
-
-        var target = (e || (e = window.event)).target || e.srcElement,
-            control = flyingon.findControl(this);
-
-        while (target && target !== this)
-        {
-            switch (target.getAttribute('tag'))
-            {
-                case 'forward':
-                    if ((control.__scroll_header -= 100) < 0)
-                    {
-                        control.__scroll_header = 0;
-                    }
-
-                    update_header(control);
-                    return;
-
-                case 'back':
-                    control.__scroll_header += 100;
-
-                    update_header(control);
-                    return;
-            }
-
-            target = target.parentNode;
-        }
-    };
 
 
     this.selected = function (control, view, page) {

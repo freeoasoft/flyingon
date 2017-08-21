@@ -15,33 +15,15 @@ flyingon.renderer('Calendar', function (base) {
         
         this.renderDefault(writer, control, '', 'padding:8px;');
         
-        writer.push('></div>');
+        writer.push(' onclick="flyingon.Calendar.onclick.call(this, event);" onchange="flyingon.Calendar.onchange.call(this, event);"></div>');
     };
 
 
-    this.mount = function (control, view) {
 
-        view.onclick = onclick;
-        view.onchange = onchange;
+    flyingon.Calendar.onclick = function (e) {
 
-        base.mount.call(this, control, view);
-    };
-
-
-    this.unmount = function (control) {
-
-        var view = control.view;
-
-        view.onclick = view.onchange = null;
-
-        base.unmount.call(this, control);
-    };
-
-
-    function onclick(e) {
-
-        var target = (e || (e = window.event)).target || e.srcElement,
-            control = flyingon.findControl(target),
+        var control = flyingon.findControl(this),
+            target = e.target || e.srcElement,
             data = control.__data,
             any;
 
@@ -197,10 +179,10 @@ flyingon.renderer('Calendar', function (base) {
     };
 
 
-    function onchange(e) {
+    flyingon.Calendar.onchange = function (e) {
 
-        var target = (e || (e = window.event)).target || e.srcElement,
-            control = flyingon.findControl(target),
+        var control = flyingon.findControl(this),
+            target = e.target || e.srcElement,
             values = target.value.match(/\d+/g);
 
         target.value = control.__data[4] = values ? check_time(values) : '00:00:00';
@@ -242,9 +224,9 @@ flyingon.renderer('Calendar', function (base) {
 
         if (control.value() !== value)
         {
-            control.hasRender = false;
+            control.rendered = false;
             control.value(value);
-            control.hasRender = true;
+            control.rendered = true;
 
             control.trigger('change', 'value', value);
         }

@@ -8,7 +8,7 @@ flyingon.Control.extend('Button', function (base) {
 
             set: function (value) {
 
-                this.hasRender && this.renderer.set(this, name, value);
+                this.rendered && this.renderer.set(this, name, value);
             }
         });
     };

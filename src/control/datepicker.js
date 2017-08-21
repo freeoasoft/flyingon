@@ -15,7 +15,7 @@ flyingon.TextButton.extend('DatePicker', function (base) {
 
         set: function () {
 
-            this.hasRender && this.renderer.set(this, 'text');
+            this.rendered && this.renderer.set(this, 'text');
         }
     });
 
@@ -24,7 +24,7 @@ flyingon.TextButton.extend('DatePicker', function (base) {
         
         set: function () {
 
-            this.hasRender && this.renderer.set(this, 'text');
+            this.rendered && this.renderer.set(this, 'text');
         }
     });
 

@@ -8,32 +8,18 @@ flyingon.renderer('CheckBox', function (base) {
         
         this.renderDefault(writer, control);
         
-        writer.push('/>');
+        writer.push(' onchange="flyingon.RadioButton.onchange.call(this)"/>');
     };
 
 
 
-    this.mount = function (control, view) {
-
-        base.mount.call(this, control, view);
-        view.onchange = onchange;
-    };
-
-
-    this.unmount = function (control) {
-
-        control.view.onchange = null;
-        base.unmount.call(this, control);
-    };
-
-
-    function onchange() {
+    flyingon.RadioButton.onchange = function () {
 
         var control = flyingon.findControl(this);
 
-        control.hasRender = false;
+        control.rendered = false;
         control.checked(this.checked);
-        control.hasRender = true;
+        control.rendered = true;
 
         control.trigger('change', 'value', this.checked);
     };

@@ -82,7 +82,7 @@ Opera9+
 
 
     //定义子类ChildClass 从BaseClass继承
-    var ChildClass = flyingon.defineClass(BaseClass, function (base) {
+    var ChildClass = BaseClass.extend(function (base) {
 
 
         //定义构造函数
@@ -151,7 +151,7 @@ Opera9+
         alert('global event:' + event.type + data);
         
         //停止冒泡
-        //e.stopPropagation();
+        //e.stop();
     });
 
     //注册事件(支持事件冒泡)

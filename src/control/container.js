@@ -118,7 +118,7 @@ flyingon.fragment('f.collection', function () {
         if (this.length > 0)
         {
             Array.prototype.splice.call(this, 0);
-            this.view && this.renderer.set(this, 'detachAll');
+            this.rendered && this.renderer.set(this, 'detachAll');
         }
     };
 

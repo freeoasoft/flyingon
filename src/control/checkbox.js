@@ -1,20 +1,20 @@
 flyingon.Control.extend('CheckBox', function (base) {
 
 
-    this.defineProprty('name', false, {
+    this.defineProperty('name', false, {
 
         set: function (value) {
 
-            this.hasRender && this.renderer.set(this, 'name', value);
-        }   
+            this.rendered && this.renderer.set(this, 'name', value);
+        }
     });
 
 
-    this.defineProprty('checked', false, {
+    this.defineProperty('checked', false, {
 
         set: function (value) {
 
-            this.hasRender && this.renderer.set(this, 'checked', value);
+            this.rendered && this.renderer.set(this, 'checked', value);
         }   
     });
 

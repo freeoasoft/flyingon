@@ -8,8 +8,8 @@ flyingon.renderer('Slider', function (base) {
         this.renderDefault(writer, control);
 
         writer.push('>',
-                '<div class="f-slider-bar"><div></div></div>',
-                '<div class="f-slider-button"><div></div></div>',
+                '<div class="f-slider-bar" onclick="flyingon.Slider.onclick.call(this, event)"><div></div></div>',
+                '<div class="f-slider-button" onmousedown="flyingon.Slider.onmousedown.call(this, event)"><div></div></div>',
             '</div>');
     };
 
@@ -22,26 +22,7 @@ flyingon.renderer('Slider', function (base) {
     };
 
 
-    this.mount = function (control, view) {
-
-        base.mount.call(this, control, view);
-
-        view.firstChild.onclick = onclick;
-        view.lastChild.onmousedown = start_move;
-    };
-
-
-    this.unmount = function (control) {
-
-        var view = control.view;
-
-        view.firstChild.onclick = view.lastChild.onmousedown = null;
-
-        base.unmount.call(this, control);
-    };
-
-
-    function onclick(e) {
+    flyingon.Slider.onclick = function (e) {
 
         var control = flyingon.findControl(this),
             storage = control.__storage || control.__defaults,
@@ -61,7 +42,7 @@ flyingon.renderer('Slider', function (base) {
     };
 
 
-    function start_move(e) {
+    flyingon.Slider.onmousedown = function (e) {
 
         var control = flyingon.findControl(this),
             storage = control.__storage || control.__defaults,

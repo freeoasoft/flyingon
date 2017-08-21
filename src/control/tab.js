@@ -17,7 +17,7 @@ flyingon.Panel.extend('TabPage', function (base) {
 
             set: function (value) {
             
-                this.view_head && this.renderer[name](this, value);
+                this.rendered && this.renderer[name](this, value);
             }
         });
     };
@@ -80,7 +80,7 @@ flyingon.Control.extend('Tab', function (base) {
 
         set: function (value) {
 
-            this.hasRender && this.renderer.set(this, 'theme', value);
+            this.rendered && this.renderer.set(this, 'theme', value);
         }
     });
 
@@ -191,7 +191,7 @@ flyingon.Control.extend('Tab', function (base) {
                     page.renderer.selected(page, true);
                 }
 
-                this.hasRender && this.renderer.set(this, 'selected', page);
+                this.rendered && this.renderer.set(this, 'selected', page);
 
                 any = this.indexOf(page);
             }

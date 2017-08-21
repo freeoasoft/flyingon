@@ -1217,37 +1217,26 @@ flyingon.Event = Object.extend(function () {
 
 
     //阻止事件冒泡
-    this.stopPropagation = function () {
+    this.stop = function (prevent) {
 
         this.cancelBubble = true;
+        prevent && (this.defaultPrevented = true);
         
-        if (arguments[0] !== false && this.original_event)
+        if (arguments[1] !== false && this.original_event)
         {
-            this.original_event.stopPropagation();
+            flyingon.dom_stop(this.original_event, prevent);
         }
     };
 
 
     //禁止默认事件
-    this.preventDefault = function () {
+    this.prevent = function () {
 
         this.defaultPrevented = true;
         
         if (arguments[0] !== false && this.original_event)
         {
-            this.original_event.preventDefault();
-        }
-    };
-
-
-    //阻止事件冒泡及禁止默认事件
-    this.stopImmediatePropagation = function () {
-
-        this.cancelBubble = this.defaultPrevented = true;
-        
-        if (arguments[0] !== false && this.original_event)
-        {
-            this.original_event.stopImmediatePropagation();
+            flyingon.dom_prevent(this.original_event);
         }
     };
 

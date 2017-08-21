@@ -66,14 +66,10 @@ flyingon.renderer('HtmlElement', function (base) {
         {
             this.__mount_children(control, view, 0, view.firstChild);
         }
-
-        view.onscroll = flyingon.__dom_scroll;
     };
 
 
     this.unmount = function (control) {
-
-        control.view.onscroll = null;
 
         this.__unmount_children(control);
         base.unmount.call(this, control);

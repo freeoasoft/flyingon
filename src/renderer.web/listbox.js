@@ -8,28 +8,14 @@ flyingon.renderer('ListBox', function (base) {
         
         this.renderDefault(writer, control);
 
-        writer.push('></div>');
+        writer.push(' onclick="flyingon.ListBox.onclick.call(this, event)"></div>');
     };
 
 
 
-    this.mount = function (control, view) {
+    flyingon.ListBox.onclick = function (e) {
 
-        base.mount.call(this, control, view);
-        view.onclick = onclick;
-    };
-
-
-    this.unmount = function (control) {
-
-        control.view.onclick = null;
-        base.unmount.call(this, control);
-    };
-
-
-    function onclick(e) {
-
-        var target = (e || (e = window.event)).target || e.srcElement;
+        var target = e.target || e.srcElement;
 
         while (target !== this)
         {
