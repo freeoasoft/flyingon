@@ -22,7 +22,8 @@ flyingon.fragment('f.collection', function () {
 
         if (arguments.length > 0)
         {
-            this.__insert_items(arguments, 0, array.push);
+            this.__check_items(arguments, 0, this.length);
+            array.push.apply(this, arguments);
         }
 
         return this.length;
@@ -36,7 +37,7 @@ flyingon.fragment('f.collection', function () {
 
         if (item)
         {
-            this.__remove_item(item);
+            this.__remove_items([item]);
         }
 
         return item;
@@ -48,7 +49,8 @@ flyingon.fragment('f.collection', function () {
 
         if (arguments.length > 0)
         {
-            this.__insert_items(arguments, 0, array.unshift);
+            this.__check_items(arguments, 0, 0);
+            array.unshift.apply(this, arguments);
         }
 
         return this.length;
@@ -62,7 +64,7 @@ flyingon.fragment('f.collection', function () {
 
         if (item)
         {
-            this.__remove_item(item);
+            this.__remove_item([item]);
         }
 
         return item;
@@ -72,54 +74,46 @@ flyingon.fragment('f.collection', function () {
     //插入及移除子控件
     this.splice = function (index, length) {
 
-        var count = arguments.length,
-            any;
-
-        if (this.length > 0)
+        if (arguments.length > 2)
         {
-            //只传一个参数表示清除全部
-            if (count === 1)
+            var any = this.length;
+
+            if ((index |= 0) < 0)
             {
-                any = array.splice.call(this, index);
-                this.__remove_items(any);
+                index += any;
             }
-            else if (length > 0)
+
+            if (index < 0)
             {
-                any = array.splice.call(this, index, length);
-                this.__remove_items(any);
+                index = 0;
             }
+            else if (index > any)
+            {
+                index = any;
+            }
+
+            this.__check_items(arguments, 2, index);
         }
 
-        if (count > 2)
+        var items = array.splice.apply(this, arguments);
+
+        if (items.length > 0)
         {
-            arguments[1] = 0;
-            this.__insert_items(arguments, 2, array.splice); 
+            this.__remove_items(items);
         }
 
-        return any || [];
+        return items;
     };
 
-    
-    //清除子控件
-    this.clear = function () {
-      
-        if (this.length > 0)
-        {
-            this.__remove_items(array.splice.call(this, 0));
-        }
         
-        return this;
+
+    //增加子项前检测处理
+    this.__check_items = function (items, offset, index) {
     };
 
-    
-    //分离所有子控件
-    this.detachAll = function () {
 
-        if (this.length > 0)
-        {
-            Array.prototype.splice.call(this, 0);
-            this.rendered && this.renderer.set(this, 'detachAll');
-        }
+    //移除子项处理
+    this.__remove_items = function (items) {
     };
 
 
@@ -130,23 +124,6 @@ flyingon.fragment('f.collection', function () {
         return array.slice.call(this, 0);
     };
 
-
-
-    //添加多个子项
-    this.__insert_items = function (items, index, fn) {
-
-        return fn.apply(this, items);
-    };
-
-
-    //移除多个子项
-    this.__remove_items = function (items) {
-    };
-
-
-    //移除子项
-    this.__remove_item = function (item) {
-    };
 
 
 });
@@ -184,26 +161,60 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
 
   
 
-    //添加多个子项
-    this.__insert_items = function (items, index, fn) {
+    //分离子控件(不销毁)
+    this.detach = function (index, length) {
+
+        if (arguments.length > 2)
+        {            
+            var any = this.length;
+
+            if ((index |= 0) < 0)
+            {
+                index += any;
+            }
+
+            if (index < 0)
+            {
+                index = 0;
+            }
+            else if (index > any)
+            {
+                index = any;
+            }
+
+            this.__check_items(arguments, 2, index);
+        }
+
+        var items = array.splice.apply(this, arguments);
+
+        if (items.length > 0)
+        {
+            this.__remove_items(items, true);
+        }
+
+        return items;
+    };
+
+
+    //添加子项前检测处理
+    this.__check_items = function (items, start, index) {
 
         var Class = this.childrenClass,
             html = this instanceof flyingon.HtmlElement,
+            patch = this.__content_render && [],
             length = items.length,
             item,
             any;
 
-        this.__all && this.__clear_all();
-
-        while (index < length)
+        while (start < length)
         {
-            item = items[index];
+            item = items[start];
 
             if (item.__flyingon_class)
             {
                 if (item instanceof Class)
                 {
-                    if (any = item.parent)
+                    if ((any = item.parent) && any !== this)
                     {
                         any.__remove_item(item);
                     }
@@ -213,9 +224,9 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
                     this.__check_error(Class);
                 }
             }
-            else if ((item = flyingon.ui(item, Class)) instanceof Class)
+            else if ((item = this.__create_child(item, Class)) instanceof Class)
             {
-                items[index] = item;
+                items[start] = item;
             }
             else
             {
@@ -225,28 +236,36 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
             item.parent = this;
             item.__as_html = html;
 
-            index++;
+            if (patch)
+            {
+                patch.push(item);
+            }
+
+            start++;
         }
 
-        if (this.__content_render && !this.__insert_patch)
+        this.__all && this.__clear_all();
+
+        if (patch && patch[0])
         {
-            this.__insert_patch = true;
-            this.renderer.__children_dirty(this);
+            this.__children_dirty(1, index, patch);
         }
 
         if (arrange && this.__arrange_dirty < 2)
         {
             this.__arrange_delay(2);
         }
-
-        return fn.apply(this, items);
     };
 
 
-    //移除多个子项
-    this.__remove_items = function (items) {
+    //创建控件方法
+    this.__create_child = flyingon.ui;
 
-        var patch = this.__remove_patch,
+
+    //移除多个子项
+    this.__remove_items = function (items, detach) {
+
+        var patch = [],
             item;
 
         this.__all && this.__clear_all();
@@ -256,19 +275,16 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
             if (item = items[i])
             {
                 item.parent = null;
-
-                if (patch)
-                {
-                    patch.push(item);
-                }
-                else
-                {
-                    this.__remove_patch = patch = [item];
-                    this.renderer.__children_dirty(this);
-                }
+                patch.push(item);
             }
         }
-        
+
+        //注册子项变更补丁
+        if (patch[0])
+        {
+            this.__children_dirty(detach ? 3 : 2, -1, patch);
+        }
+
         if (arrange && this.__arrange_dirty < 2)
         {
             this.__arrange_delay(2);
@@ -276,30 +292,33 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
     };
 
 
-    //移除子项
-    this.__remove_item = function (item) {
+    //注册子项变更补丁
+    this.__children_dirty = function (type, index, items) {
 
-        var patch = this.__remove_patch;
-
-        this.__all && this.__clear_all();
-
-        item.parent = null;
+        var patch = this.__children_patch;
 
         if (patch)
         {
-            patch.push(item);
+            var any = patch.length - 3;
+
+            //相同类型进行合并处理
+            if (type === patch[any++] && patch[any++] === index)
+            {
+                any = patch[any + 1];
+                any.apply(any, items);
+            }
+            else
+            {
+                patch.push(type, index, items);
+            }
         }
         else
         {
-            this.__remove_patch = patch = [item];
+            this.__children_patch = [type, index, items];
             this.renderer.__children_dirty(this);
         }
-
-        if (arrange && this.__arrange_dirty < 2)
-        {
-            this.__arrange_delay(2);
-        }
     };
+
 
 
     //清除all缓存

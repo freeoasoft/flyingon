@@ -82,9 +82,15 @@ Object.extend('TreeNode', function () {
 
 
 
-    this.load = function (options) {
+    //扩展容器功能
+    flyingon.fragment('f.container', this, flyingon.TreeNode);
 
-        var storage = this.__storage || (this.__storage = flyingon.create(this.__defaults));
+
+    //创建子控件
+    this.__create_child = function (options, Class) {
+
+        var node = new Class(),
+            storage = node.__storage || (node.__storage = flyingon.create(node.__defaults));
 
         for (var name in options)
         {
@@ -97,7 +103,7 @@ Object.extend('TreeNode', function () {
 
                 case 'children':
                 case 'items':
-                    this.push.apply(this, options[name]);
+                    node.push.apply(node, options[name]);
                     break;
 
                 default:
@@ -106,73 +112,7 @@ Object.extend('TreeNode', function () {
             }
         }
 
-        return this;
-    };
-
-
-
-    //扩展容器功能
-    flyingon.fragment('f.container', this, flyingon.TreeNode);
-
-
-
-    //重写插入子节点方法
-    this.__insert_items = function (items, index, fn) {
-
-        var Class = flyingon.TreeNode,
-            render = this.rendered,
-            length = items.length,
-            item,
-            any;
-
-        this.__all && this.__clear_all();
-        
-        while (index < length)
-        {
-            if ((item = items[index]) instanceof Class)
-            {
-                if (any = item.parent)
-                {
-                    any.__remove_item(item);
-                }
-            }
-            else
-            {
-                items[index] = item = new Class().load(item);
-            }
-
-            item.parent = this;
-
-            if (item.__storage.checked)
-            {
-                any = this;
-
-                while (any && any.isTreeNode)
-                {
-                    any.checkedChildren++;
-                    any = any.parent;
-                }
-            }
-
-            //添加子项补丁
-            if (render)
-            {
-                render = false;
-
-                if (any = this.__children_patch)
-                {
-                    any[1] = 1;
-                }
-                else
-                {
-                    this.renderer.set(this, '__children_patch', this.__children_patch = [0, 1]);
-                }
-            }
-
-            index++;
-        }
-
-        return fn.apply(this, items);
+        return node;
     };
 
 
@@ -310,11 +250,10 @@ flyingon.Control.extend('Tree', function (base) {
 
 
     //扩展容器功能
-    flyingon.fragment('f.container', this, flyingon.TreeNode);
+    flyingon.fragment('f.container', this, flyingon.TreeNode.init());
 
 
-    //重写插入子节点方法
-    this.__insert_items = flyingon.TreeNode.init().prototype.__insert_items;
+    this.__create_child = flyingon.TreeNode.prototype.__create_child;
 
 
 

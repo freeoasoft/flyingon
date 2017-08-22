@@ -24,7 +24,7 @@ flyingon.renderer('Panel', function (base) {
         
         this.renderDefault(writer, control);
         
-        writer.push(' onscroll="flyingon.__dom_scroll(event)">');
+        writer.push(' onscroll="flyingon.__dom_scroll.call(this, event)">');
 
         if (control.length > 0 && control.__visible)
         {

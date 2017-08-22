@@ -222,28 +222,15 @@ flyingon.Control.extend('Tab', function (base) {
 
     var remove_items = this.__remove_items;
 
-    var remove_item = this.__remove_item;
 
-
-    this.__remove_items = function (items) {
+    this.__remove_items = function (items, detach) {
 
         var selected = this.selected();
 
-        remove_items.call(this, items);
+        remove_items.call(this, items, detach);
 
         this.selectedPage(this[selected] || this[--selected] || null);
     };
-
-
-    this.__remove_item = function (item) {
-
-        var selected = this.selected();
-
-        remove_item.call(this, item);
-
-        this.selectedPage(this[selected] || this[--selected] || null);
-    };
-
 
 
     this.findByKey = function (key, selected) {

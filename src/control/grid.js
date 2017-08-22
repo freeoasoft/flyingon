@@ -50,13 +50,13 @@ flyingon.GridColumn = Object.extend(function () {
                 break;
 
             case 3:
-                attributes = function (value) {
+                attributes = function () {
 
                     var grid = this.grid;
 
                     if (grid && grid.rendered)
                     {
-                        grid.renderer.set(grid, '__column_' + name, value);
+                        grid.renderer.set(grid, '__column_' + name);
                     }
                 };
                 break;
@@ -217,21 +217,22 @@ flyingon.GridColumns = Object.extend(function () {
         this.grid = grid;
     };
 
+    
 
     flyingon.fragment('f.collection', this);
 
 
-    this.__insert_items = function (items, index, fn) {
+    this.__check_items = function (items, start, index) {
 
         var Class = flyingon.GridColumn,
             columns = Class.all,
             grid = this.grid,
-            length = items.length,
+            end = items.length,
             any;
 
-        while (index < length)
+        while (start < end)
         {
-            any = items[index];
+            any = items[start];
 
             if (any instanceof Class)
             {
@@ -242,19 +243,15 @@ flyingon.GridColumns = Object.extend(function () {
             }
             else
             {
-                items[index] = any = new Class(any);
+                items[start] = any = new Class(any);
             }
 
             any.grid = this;
-            index++;
+            start++;
         }
-
-        any = fn.apply(this, items);
 
         this.dirty = true;
         grid.refresh(true);
-
-        return any;
     };
 
 
@@ -279,33 +276,23 @@ flyingon.GridColumns = Object.extend(function () {
     };
 
 
-    this.__remove_item = function (item) {
-
-        var grid = this.grid;
-
-        item.grid = null;
-
-        if (item.rendered)
-        {
-            grid.renderer.__remove_column(item);
-        }
-        
-        this.dirty = true;
-        grid.refresh(true);
-    };
-
-
 
     //计算列宽
     this.compute = function (width) {
 
-        var left = 0,
+        var locked = this.grid.__locked,
+            start = locked[0],
+            end = this.length - locked[1],
+            x = 0,
+            left = 0,
             sum = 0,
-            value,
+            mod,
             any;
 
-        this.width = width;
+        this.arrangeWidth = width;
         this.dirty = false;
+
+        this.locked1 = 0; //前锁定宽度
 
         for (var i = 0, l = this.length; i < l; i++)
         {
@@ -313,69 +300,69 @@ flyingon.GridColumns = Object.extend(function () {
                 storage = column.__storage || column.__defaults;
             
             column.absoluteIndex = i;
-            column.left = left;
+
+            if (i === start)
+            {
+                this.locked1 = left;
+                left = 0;
+            }
+            else if (i === end)
+            {
+                left = 0;
+            }
 
             any = storage.size;
 
             if (storage.persent)
             {
-                value = any * width / 100;
-                any = value | 0;
+                mod = any * width / 100;
+                any = mod | 0;
 
-                if ((value -= any) > 0 && (sum += value) >= 1)
+                if ((mod -= any) > 0 && (sum += mod) >= 1)
                 {
                     sum--;
                     any++;
                 }
             }
 
-            left += (column.width = any);
+            column.left = left;
+            column.width = any;
+
+            x += any;
+            left += any;
         }
 
-        this.width = left;
-        this.scroll = left > width;
+        this.locked2 = locked[1] ? left : 0; //后锁定宽度 
+        this.width = x; //总宽
+        this.scroll = x > width; //是否有水平滚动条
     };
 
 
     //计算可见列索引范围
     this.visibleRange = function (x, width) {
 
-        var start = this.before,
-            end = this.length - this.after,
-            left = 0,
-            right = x + width;
+        var locked = this.grid.__locked,
+            start = locked[0],
+            end = this.length - locked[1],
+            right = x + width - this.locked1 - this.locked2,
+            column,
+            left;
 
-        //计算锁定列宽度
-        
-        for (var i = this.length - 1; i >= end; i--)
-        {
-            left += this[i].width;
-        }
-
-        this.locked_after = left;
-
-        right -= left;
-        left = 0;
-
-        for (var i = 0; i < start; i++)
-        {
-            left += this[i].width;
-        }
-
-        this.locked_before = left;
+        this.arrangeLeft = x;
 
         //计算可见列
         for (var i = start; i < end; i++)
         {
-            if (left >= right)
+            column = this[i];
+            left = column.left;
+
+            if (left > right)
             {
                 end = i;
                 break;
             }
 
-            left += this[i].width;
-
-            if (left <= x)
+            if (left + column.width < x)
             {
                 start = i;
             }
@@ -498,31 +485,6 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
 
 
 
-    function define(self, name, defaultValue, attributes) {
-
-        switch (attributes)
-        {
-            case 1:
-                attributes = function () {
-
-                    this.refresh(true);
-                };
-                break;
-
-            case 2:
-                attributes = function () {
-
-                    this.__columns.dirty = true;
-                    this.refresh(true);
-                };
-                break;
-        }
-
-        attributes = { set: attributes };
-
-        return self.defineProperty(name, defaultValue, attributes);
-    };
-
 
     //表格列
     this.defineProperty('columns', null, {
@@ -552,6 +514,12 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
                     columns.push(value);
                 }
 
+                if (this.rendered)
+                {
+                    columns.dirty = true;
+                    this.refresh(true);
+                }
+                
                 return this;
             }
 
@@ -562,19 +530,58 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
 
 
     //列头大小
-    define(this, 'header', 30);
+    this.defineProperty('header', 30, {
+
+        set: function (value) {
+
+            if (this.rendered)
+            {
+                this.renderer.set(this, 'header', value);
+                this.refresh(true);
+            }
+        }
+    });
 
 
     //行高
-    this['row-height'] = define(this, 'rowHeight', 28);
+    this['row-height'] = this.defineProperty('rowHeight', 28, {
+
+        set: function () {
+
+            this.refresh(true);
+        }
+    });
 
 
     //是否只读
     this.defineProperty('readonly', true);
 
 
-    //锁定 锁定多个方向可按 top->right-bottom-left 顺序以空格分隔
-    this.defineProperty('locked', '');
+    this.__locked = [0, 0, 0, 0];
+
+    //锁定 锁定多个方向可按 left->right->top->bottom 顺序以空格分隔
+    this.defineProperty('locked', '', {
+
+        set: function (value) {
+
+            if (value && (value = value.match(/\d+/g)))
+            {
+                value = [value[0] | 0, value[1] | 0, value[2] | 0, value[3] | 0];
+            }
+            else
+            {
+                value = [0, 0, 0, 0]
+            }
+
+            this.__locked = value;
+
+            if (this.rendered)
+            {
+                this.__columns.dirty = true;
+                this.refresh(true);
+            }
+        }
+    });
 
 
 
@@ -583,11 +590,11 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
     //1  选择行
     //2  选择列
     //3  选择行及列
-    this['selected-mode'] = define(this, 'selectedMode', 0);
+    this['selected-mode'] = this.defineProperty('selectedMode', 0);
 
 
     //延迟加载时默认行数
-    this['lazy-load'] = define(this, 'lazyLoad', 0);
+    this['lazy-load'] = this.defineProperty('lazyLoad', 0);
 
 
     
@@ -621,7 +628,7 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
     //刷新表格
     this.refresh = function (delay) {
 
-        if (this.rendered && this.__visible)
+        if (this.rendered)
         {
             var patch = this.__view_patch;
 

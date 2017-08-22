@@ -9,7 +9,7 @@ flyingon.Control.extend('HtmlElement', function (base) {
         
         set: function (value) {
 
-            this.length > 0 && this.clear();
+            this.length > 0 && this.splice(0);
             this.rendered && this.renderer.set(this, 'text', value);
         }
     });

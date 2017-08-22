@@ -334,19 +334,7 @@ flyingon.fragment('f.dataset', function () {
         return any || [];
     };
 
-    
-    //清除子控件
-    this.clear = function () {
-      
-        if (this.length > 0)
-        {
-            remove_items.call(this, 0, this.length);
-        }
         
-        return this;
-    };
-
-    
     //获取子控件集合
     this.children = function () {
 

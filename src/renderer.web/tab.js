@@ -66,7 +66,7 @@ flyingon.renderer('Tab', function (base) {
 
         base.mount.call(this, control, view);
         
-        this.__insert_patch(control, view);
+        this.__insert_head(control);
 
         if (page)
         {
@@ -153,11 +153,12 @@ flyingon.renderer('Tab', function (base) {
 
     
 
-    this.__insert_patch = function (control, view) {
+    this.__insert_head = function (control) {
 
-        var item, node, tag;
-
-        view = view.firstChild.firstChild.nextSibling;
+        var view = control.view.firstChild.firstChild.nextSibling,
+            item, 
+            node, 
+            tag;        
             
         //处理插入带view的节点
         for (var i = control.length - 1; i >= 0; i--)
@@ -193,14 +194,20 @@ flyingon.renderer('Tab', function (base) {
     };
 
 
-    this.__remove_patch = function (control, patch) {
+    this.__insert_patch = function (control, index, items) {
+
+        this.__insert_head(control);
+    };
+
+
+    this.__remove_patch = function (control, items, detach) {
 
         var view = control.view.firstChild.firstChild.nextSibling,
             index = 0, 
             item,
             any;
 
-        while (item = patch[index++])
+        while (item = items[index++])
         {
             //移除节点且还未移除视图
             if (item.parent !== control && (any = item.view_head) && (any.parentNode === view))
@@ -208,7 +215,7 @@ flyingon.renderer('Tab', function (base) {
                 view.removeChild(any);
             }
         }
-        
+
         base.__remove_patch.apply(this, arguments);
     };
 

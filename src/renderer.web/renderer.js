@@ -41,7 +41,7 @@
 
 
     //滚动条位置控制
-    this.__scroll_html = '<div style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;width:1px;height:1px;" tag="scroll"></div>';
+    this.__scroll_html = '<div style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;width:1px;height:1px;"></div>';
 
        
     //设置text属性名
@@ -753,16 +753,10 @@
         //先处理子项变更
         while (item = list[index++])
         {
-            if (any = item.__remove_patch)
+            if (any = item.__children_patch)
             {
-                item.__remove_patch = null;
-                item.renderer.__remove_patch(item, any);
-            }
-
-            if (item.__insert_patch)
-            {
-                item.__insert_patch = false;
-                item.renderer.__insert_patch(item, item.view, 0, item.length);
+                item.__children_patch = null;
+                item.renderer.__children_patch(item, any);
             }
         }
 
@@ -912,30 +906,6 @@
     };
 
 
-    this.detach = function (control, view) {
-
-        var parent = view.parentNode;
-        
-        if (parent)
-        {
-            parent.removeChild(view);
-        }
-    };
-
-
-    this.detachAll = function (control, view) {
-
-        var node;
-
-        view = control.view_content || view;
-
-        while ((node = view.firstChild) && node.flyingon_id)
-        {
-            view.removeChild(node);
-        }
-    };
-
-
 
     //渲染子项
     this.__render_children = function (writer, control, start, end) {
@@ -1073,107 +1043,128 @@
 
 
 
-    //子项发生变化
+    //注册子项变更补丁
     this.__children_dirty = function (control) {
 
         children.push(control);
         update_delay || (update_delay = setTimeout(flyingon.update, 0)); //定时刷新
     };
+
+
+    //子项补丁
+    this.__children_patch = function (control, patch) {
+
+        for (var i = 0, l = patch.length; i < l; i++)
+        {
+            switch (patch[i++])
+            {
+                case 1: //增加子项
+                    this.__insert_patch(control, patch[i++], patch[i]);
+                    break;
+
+                case 2: //删除子项
+                    this.__remove_patch(control, patch[++i], false);
+                    break;
+
+                case 3: //分离子项
+                    this.__remove_patch(control, patch[++i], true);
+                    break;
+
+                default:
+                    ++i;
+                    break;
+            }
+        }
+    };
     
 
-    //插入视图补丁
-    this.__insert_patch = function (control, view, start, end) {
+    //插入子项
+    this.__insert_patch = function (control, index, items) {
 
-        var tag = (view = control.view_content || view).lastChild || null,
-            last = -1,
+        var view = control.view_content || control.view,
+            start = 0,
+            length = 0,
             item,
             node;
-            
-        //处理插入带view的节点
-        for (var i = end - 1; i >= start; i--)
+
+        for (var i = 0, l = items.length; i < l; i++)
         {
-            if (item = control[i])
+            if ((item = items[i]) && (node = item.view))
             {
-                if (node = item.view)
-                {
-                    if (node.parentNode !== view)
-                    {
-                        view.insertBefore(node, tag || null);
-                    }
+                view.insertBefore(node, view.children[index]);
 
-                    if (last > 0)
-                    {
-                        this.__unmount_html(control, view, i + 1, last, tag);
-                        last = -1;
-                    }
-
-                    tag = node;
-                }
-                else if (last < 0)
+                if (length > 0)
                 {
-                    last = i + 1;
+                    this.__unmount_html(view, items, start, start + length, node);
+
+                    index += length;
+                    length = 0;
                 }
+            }
+            else
+            {
+                length++;
             }
         }
 
-        if (last > 0)
+        if (length > 0)
         {
-            this.__unmount_html(control, view, start, last, tag);
+            this.__unmount_html(view, items, start, start + length, view.children[start] || null);
         }
     };
 
- 
-    //插入增量html片段
-    this.__unmount_html = function (control, view, start, end, tag) {
+
+    //插入未挂载的html片段
+    this.__unmount_html = function (view, items, start, end, tag) {
 
         var writer = [],
             node = tag && tag.previousSibling,
             item;
 
-        this.__render_children(writer, control, start, end);
-        
-        flyingon.dom_html(view, writer.join(''), tag);
-
-        node = node && node.nextSibling || view.firstChild;
-
-        while (start < end)
+        for (var i = start; i < end; i++)
         {
-            item = control[start++];
-            item.renderer.mount(item, node);
+            if (item = items[i])
+            {
+                item.renderer.render(writer, item);
+            }
+        }
+        
+        if (writer[0])
+        {
+            flyingon.dom_html(view, writer.join(''), tag);
 
-            node = node.nextSibling;
+            node = node && node.nextSibling || view.firstChild;
+
+            for (var i = start; i < end; i++)
+            {
+                if (item = items[start++])
+                {
+                    item.renderer.mount(item, node);
+                    node = node.nextSibling;
+                }
+            }
         }
     };
 
 
-    //子视图视图补丁
-    this.__remove_patch = function (control, patch) {
+    //移除子项
+    this.__remove_patch = function (control, items, detach) {
 
-        var index = 0,
-            item,
-            parent,
-            node;
+        var item, node;
         
-        while (item = patch[index++])
+        for (var i = 0, l = items.length; i < l; i++)
         {
-            //移除节点且还未移除视图
-            if ((parent = item.parent) !== control)
+            if (item = items[i])
             {
-                node = item.view;
-                
-                //有父控件或不允许自动销毁
-                if (parent || !item.autoDispose)
+                //允许自动销毁且没有父控件则销毁控件
+                if (!detach && item.autoDispose && !item.parent)
                 {
-                    //从dom树移除
-                    if (parent = node && node.parentNode)
-                    {
-                        parent.removeChild(node);
-                    }
+                    item.renderer.unmount(item);
+                    item.dispose();
                 }
-                else //否则取消挂载及销毁
+                else if ((node = item.view) && (item = node.parentNode)) //否则从dom树移除
                 {
-                     item.renderer.unmount(item);
-                     item.dispose();
+                    item.removeChild(node);
                 }
             }
         }

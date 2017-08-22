@@ -30,7 +30,7 @@ flyingon.renderer('ScrollPanel', function (base) {
         this.renderDefault(writer, control);
         
         writer.push('>',
-            '<div style="position:absolute;left:0;top:0;right:0;bottom:0;width:auto;height:auto;overflow:auto;" onscroll="flyingon.__dom_scroll">',
+            '<div style="position:absolute;left:0;top:0;right:0;bottom:0;width:auto;height:auto;overflow:auto;" onscroll="flyingon.__dom_scroll.call(this, event)">',
                 text,
             '</div>',
             '<div style="position:relative;overflow:hidden;margin:0;border:0;padding:0;left:0;top:0;width:100%;height:100%;">',
@@ -61,11 +61,8 @@ flyingon.renderer('ScrollPanel', function (base) {
 
         var view = this.view;
 
-        if (view.style.overflowY !== 'hidden')
-        {
-            view.firstChild.scrollTop -= event.wheelDelta * 100 / 120;
-            flyingon.dom_stop(event);
-        }
+        view.firstChild.scrollTop -= event.wheelDelta * 100 / 120;
+        flyingon.dom_stop(event);
     };
 
 
@@ -85,8 +82,7 @@ flyingon.renderer('ScrollPanel', function (base) {
             end = control.__visible_end + 1;
 
             this.__arrange(control);
-            this.__locate_scroll(control);
-            
+
             control.__compute_visible();
 
             //隐藏原来显示的子项
@@ -117,11 +113,11 @@ flyingon.renderer('ScrollPanel', function (base) {
 
         if (start >= 0)
         {
-            //插件未挂载的子控件
+            //插入未挂载的子控件
             if (control.__visible_unmount)
             {
                 control.__visible_unmount = false;
-                this.__insert_patch(control, control.view.lastChild, start, end);
+                this.__insert_children(control, control.view.lastChild, start, end);
             }
             
             //定位子控件
@@ -162,27 +158,62 @@ flyingon.renderer('ScrollPanel', function (base) {
     };
 
 
-    this.__locate_scroll = function (control) {
+    this.__sync_scroll = function (control) {
 
         var view = control.view,
             style1 = view.firstChild.firstChild.style, //模拟滚动条控制
-            style2 = view.lastChild.lastChild.style, //内容位置控制(解决有右或底边距时拖不到底的问题)
-            cache = control.__scroll_cache || (control.__scroll_cache = {}),
-            any;
+            style2 = view.lastChild.lastChild.style; //内容位置控制(解决有右或底边距时拖不到底的问题)
 
-        style1 = view.firstChild.firstChild.style; //模拟滚动条控制
+        style1.overflowX = control.__hscroll ? 'scroll' : 'hidden';
+        style1.overflowY = control.__vscroll ? 'scroll' : 'hidden';
 
-        if (cache.x2 !== (any = control.arrangeRight))
+        style1.width = style2.width = control.arrangeRight + 'px'; 
+        style1.height = style2.height = control.arrangeBottom + 'px'; 
+    };
+
+
+    //插入视图补丁
+    this.__insert_children = function (control, view, start, end) {
+
+        var tag = (view = control.view_content || view).lastChild || null,
+            last = -1,
+            item,
+            node;
+            
+        //处理插入带view的节点
+        for (var i = end - 1; i >= start; i--)
         {
-            style1.width = style2.width = (cache.x2 = any) + 'px'; 
+            if (item = control[i])
+            {
+                if (node = item.view)
+                {
+                    if (node.parentNode !== view)
+                    {
+                        view.insertBefore(node, tag || null);
+                    }
+
+                    if (last > 0)
+                    {
+                        this.__unmount_html(view, control, i + 1, last, tag);
+                        last = -1;
+                    }
+
+                    tag = node;
+                }
+                else if (last < 0)
+                {
+                    last = i + 1;
+                }
+            }
         }
 
-        if (cache.y2 !== (any = control.arrangeBottom))
+        if (last > 0)
         {
-            style1.height = style2.height = (cache.y2 = any) + 'px'; 
+            this.__unmount_html(view, control, start, last, tag);
         }
     };
 
+ 
 
     this.scroll = function (control, x, y) {
 

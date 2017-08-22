@@ -57,6 +57,7 @@ body {
 .f-calendar-line,
 .f-grid-back,
 .f-grid-line,
+.f-grid-resize-thumb,
 .f-tab-line,
 .f-groupbox-line,
 .f-dialog-line {
@@ -105,7 +106,7 @@ body {
     border-left-color: white;
 }
 
-input,
+input[type="text"],
 .f-slider-bar div,
 .f-input,
 .f-grid-cell,
@@ -526,6 +527,10 @@ input,
     overflow: auto;
 }
 
+.f-grid-scroll {
+    z-index: 11;
+}
+
 .f-grid-body {
     overflow: hidden;
     outline: none;
@@ -535,7 +540,7 @@ input,
     position: absolute;
 }
 
-.f-grid-resizable {
+.f-grid-resize {
     position: absolute;
     right: -3px;
     top: 0;
@@ -543,7 +548,16 @@ input,
     width: 5px;
     cursor: ew-resize;
     background-color: transparent;
-    z-index: 1;
+    z-index: 10;
+}
+
+.f-grid-resize-thumb {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    cursor: ew-resize;
+    z-index: 9;
 }
 
 .f-grid-left,
@@ -560,6 +574,7 @@ input,
     top: 0;
     bottom: 0;
     width: 2px;
+    z-index: 10;
 }
 
 .f-grid-right .f-grid-line {
@@ -568,6 +583,7 @@ input,
     top: 0;
     bottom: 0;
     width: 2px;
+    z-index: 1;
 }
 
 .f-grid-left {

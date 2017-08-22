@@ -29,9 +29,10 @@ flyingon.renderer('Splitter', function (base) {
 
     flyingon.Splitter.onmousedown = function (e) {
             
-        var control = flyingon.findControl(this);
+        var control = flyingon.findControl(this),
+            data = resize_data(control);
 
-        if (data = resize_data(control))
+        if (data)
         {
             flyingon.dom_drag(data, e, null, do_resize, null, data[1] ? 'x' : 'y');
         }

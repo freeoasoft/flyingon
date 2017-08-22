@@ -195,27 +195,15 @@ flyingon.fragment('f.visual', function () {
     };
 
 
-    //从父控件中分离(不销毁)
-    this.detach = function () {
+    //从父控件中独立出来(不销毁)
+    this.alone = function () {
 
         var parent = this.parent,
             index;
-        
-        if (parent)
+
+        if (parent && (index = parent.indexOf(this)) >= 0)
         {
-            this.parent = null;
-            
-            if ((index = parent.indexOf(this)) >= 0)
-            {
-                Array.prototype.splice.call(parent, index, 1);
-
-                this.rendered && this.renderer.set(this, 'detach');
-
-                if (this.__arrange_delay && this.__arrange_dirty < 2)
-                {
-                    this.__arrange_delay(2);
-                }
-            }
+            parent.detach(index, 1);
         }
     };
     

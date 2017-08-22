@@ -8,22 +8,23 @@ flyingon.renderer('Tree', function (base) {
 
     this.render = function (writer, control) {
 
-        var any = control.__storage || control.__defaults;
+        var storage = control.__storage || control.__defaults,
+            length = control.length;
         
         writer.push('<div');
         
         this.renderDefault(writer, control, 
-            'f-tree-theme-' + any.theme + 
-                (!any.checked ? ' f-tree-no-check' : '') + 
-                (!any.icon ? ' f-tree-no-icon' : ''), 
+            'f-tree-theme-' + storage.theme + 
+                (!storage.checked ? ' f-tree-no-check' : '') + 
+                (!storage.icon ? ' f-tree-no-icon' : ''), 
             'overflow:auto;padding:2px;');
         
         writer.push(' onclick="flyingon.Tree.onclick.call(this, event)">');
 
-        if ((any = control.length) > 0 && control.__visible)
+        if (length > 0 && control.__visible)
         {
             control.__content_render = true;
-            this.__render_children(writer, control, 0, any);
+            this.__render_children(writer, control, 0, length, storage.theme === 'line');
         }
 
         //滚动位置控制(解决有右或底边距时拖不到底的问题)
@@ -32,7 +33,7 @@ flyingon.renderer('Tree', function (base) {
 
 
 
-    this.__render_children = function (writer, control, start, end) {
+    this.__render_children = function (writer, control, start, end, line) {
 
         var format = control.format,
             last = control.length,
@@ -42,7 +43,7 @@ flyingon.renderer('Tree', function (base) {
         {
             if (item = control[start++])
             {
-                item.view || item.renderer.render(writer, item, start === last, format, 0);
+                item.view || item.renderer.render(writer, item, format, 0, start === last, line);
             }
         }
     };
@@ -54,7 +55,7 @@ flyingon.renderer('Tree', function (base) {
         var target = e.target || e.srcElement,
             node;
 
-        while (target)
+        while (target && target.getAttribute)
         {
             switch (target.getAttribute('tag'))
             {
@@ -154,12 +155,7 @@ flyingon.renderer('TreeNode', function (base) {
 
 
 
-    //空格html缓存
-    var space_cache = [];
-
-
-
-    this.render = function (writer, node, last, format, level) {
+    this.render = function (writer, node, format, level, last, line, space) {
 
         var encode = flyingon.html_encode,
             storage = node.__storage || node.__defaults,
@@ -170,13 +166,13 @@ flyingon.renderer('TreeNode', function (base) {
         node.rendered = true;
 
         writer.push('<div class="', encode(node.fullClassName), '">',
-            '<div class="f-tree-node', last ? ' f-tree-node-last' : '',
+            '<div class="f-tree-node', last && line ? ' f-tree-node-last' : '',
             (any = storage.className) ? ' class="' + encode(any) + '"' : '',  
             (any = storage.id) ? '" id="' + encode(any) + '"' : '', '" tag="node">');
 
-        if (level > 0)
+        if (space)
         {
-            writer.push(space_cache[level] || (space_cache[level] = new Array(level + 1).join('<span class="f-tree-space"></span>')));
+            writer.push(space);
         }
 
         if (any = storage.delay)
@@ -207,17 +203,17 @@ flyingon.renderer('TreeNode', function (base) {
 
         if (format)
         {
-            text = format(text);
+            text = format(node, text);
         }
 
         writer.push('<span class="f-tree-check f-tree-', storage.checked ? 'checked' : 'unchecked', '" tag="check"></span>',
             '<span class="f-tree-icon ', storage.icon || icon, '" tag="icon"></span>',
             '<span class="f-tree-text" tag="text">', text, '</span></div>',
-            '<div class="f-tree-list', last ? ' f-tree-list-last' : '', '">');
+            '<div class="f-tree-list', last && line ? ' f-tree-list-last' : '', '">');
 
         if (!storage.collapsed && node.length > 0)
         {
-            this.__render_children(writer, node, 0, node.length, format, ++level);
+            this.__render_children(writer, node, 0, node.length, format, ++level, last, line);
         }
 
         writer.push('</div></div>');
@@ -225,25 +221,44 @@ flyingon.renderer('TreeNode', function (base) {
 
 
     //渲染子项
-    this.__render_children = function (writer, node, start, end, format, level) {
+    this.__render_children = function (writer, node, start, end, format, level, last, line) {
 
-        var item, any;
+        var item, space, any;
 
         node.__content_render = true;
 
         //如果未传入渲染参数则初始化渲染参数
-        if (format === void 0)
+        if (format === void 0 && (item = node.parent))
         {
-            item = node;
-            level = 0;
+            level = 1;
+            last = item[item.length - 1] === node;
             
-            while ((any = item.parent) && any.isTreeNode)
+            do
             {
-                item = any;
-                level++;
+                if (item.isTreeNode)
+                {
+                    level++;
+                }
+                else
+                {
+                    format = item.format || null;
+                    line = item.theme() === 'line';
+                    break;
+                }
             }
+            while (item = item.parent);
+        }
+        else
+        {
+            level = 0;
+        }
 
-            format = item.format || null;
+        space = last && line ? ' style="background:none;"' : '';
+        space = '<span class="f-tree-space"' + space + '></span>';
+
+        if (level > 1)
+        {
+            space = new Array(level + 1).join(space);
         }
 
         any = node.length;
@@ -263,7 +278,7 @@ flyingon.renderer('TreeNode', function (base) {
                     item.renderer.unmount(item);
                 }
 
-                item.renderer.render(writer, item, start === any, format, item.__level = level);
+                item.renderer.render(writer, item, format, item.__level = level, start === any, line, space);
             }
         }
     };

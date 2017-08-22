@@ -67,11 +67,11 @@ flyingon.Control.extend('TextButton', function (base) {
 
                 if (this.__cache)
                 {
-                    this.detachAll();
+                    this.detach(0);
                 }
                 else
                 {
-                    this.clear();
+                    this.splice(0);
                 }
             });
 
