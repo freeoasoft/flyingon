@@ -29,7 +29,7 @@ flyingon.renderer('Panel', function (base) {
         if (control.length > 0 && control.__visible)
         {
             control.__content_render = true;
-            this.__render_children(writer, control, 0, control.length);
+            this.__render_children(writer, control, control, 0, control.length);
         }
 
         //滚动位置控制(解决有右或底边距时拖不到底的问题)
@@ -45,7 +45,7 @@ flyingon.renderer('Panel', function (base) {
         //标记已渲染
         control.__content_render = true;
 
-        this.__render_children(writer, control, 0, control.length);
+        this.__render_children(writer, control, control, 0, control.length);
 
         writer.push(this.__scroll_html);
 
@@ -63,7 +63,7 @@ flyingon.renderer('Panel', function (base) {
 
         if (control.__content_render)
         {
-            this.__mount_children(control, view, 0, view.firstChild);
+            this.__mount_children(control, view, control, 0, control.length, view.firstChild);
         }
     };
 

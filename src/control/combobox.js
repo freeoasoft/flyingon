@@ -161,7 +161,7 @@ flyingon.TextButton.extend('ComboBox', function (base) {
     //弹出日历窗口
     this.popup = this.__on_click = function () {
 
-        var popup = this.__get_popup(true),
+        var popup = this.__get_popup(),
             storage = this.__storage || this.__defaults,
             listbox = this.__get_listbox();
 

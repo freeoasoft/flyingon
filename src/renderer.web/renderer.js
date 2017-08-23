@@ -382,7 +382,7 @@
         }
 
         view.flyingon_id = any;
-        
+
         //触发控件挂载过程
         if (any = control.onmount)
         {
@@ -908,13 +908,13 @@
 
 
     //渲染子项
-    this.__render_children = function (writer, control, start, end) {
+    this.__render_children = function (writer, control, items, start, end) {
 
         var item;
 
         while (start < end)
         {
-            if (item = control[start++])
+            if (item = items[start++])
             {
                 item.view || item.renderer.render(writer, item);
             }
@@ -923,21 +923,24 @@
 
 
     //挂载子控件
-    this.__mount_children = function (control, view, index, node) {
+    this.__mount_children = function (control, view, items, start, end, node) {
 
         var item, any;
 
-        while (item = control[index++])
+        while (start < end)
         {
-            //如果子控件已经包含view
-            if (any = item.view)
+            if (item = items[start++])
             {
-                view.insertBefore(any, node);
-            }
-            else //子控件不包含view则分配新渲染的子视图
-            {
-                item.renderer.mount(item, node);
-                node = node.nextSibling;
+                //如果子控件已经包含view
+                if (any = item.view)
+                {
+                    view.insertBefore(any, node);
+                }
+                else //子控件不包含view则分配新渲染的子视图
+                {
+                    item.renderer.mount(item, node);
+                    node = node.nextSibling;
+                }
             }
         }
     };
@@ -1063,15 +1066,7 @@
                     break;
 
                 case 2: //删除子项
-                    this.__remove_patch(control, patch[++i], false);
-                    break;
-
-                case 3: //分离子项
-                    this.__remove_patch(control, patch[++i], true);
-                    break;
-
-                default:
-                    ++i;
+                    this.__remove_patch(control, patch[++i]);
                     break;
             }
         }
@@ -1081,74 +1076,30 @@
     //插入子项
     this.__insert_patch = function (control, index, items) {
 
-        var view = control.view_content || control.view,
-            start = 0,
-            length = 0,
-            item,
-            node;
-
-        for (var i = 0, l = items.length; i < l; i++)
-        {
-            if ((item = items[i]) && (node = item.view))
-            {
-                view.insertBefore(node, view.children[index]);
-
-                if (length > 0)
-                {
-                    this.__unmount_html(view, items, start, start + length, node);
-
-                    index += length;
-                    length = 0;
-                }
-            }
-            else
-            {
-                length++;
-            }
-        }
-
-        if (length > 0)
-        {
-            this.__unmount_html(view, items, start, start + length, view.children[start] || null);
-        }
+        var view = control.view_content || control.view;
+        this.__unmount_html(control, view, items, 0, items.length, view.children[index] || null);
     };
 
 
     //插入未挂载的html片段
-    this.__unmount_html = function (view, items, start, end, tag) {
+    this.__unmount_html = function (control, view, items, start, end, tag) {
 
         var writer = [],
             node = tag && tag.previousSibling,
             item;
 
-        for (var i = start; i < end; i++)
-        {
-            if (item = items[i])
-            {
-                item.renderer.render(writer, item);
-            }
-        }
+        this.__render_children(writer, control, items, start, end);
         
-        if (writer[0])
-        {
-            flyingon.dom_html(view, writer.join(''), tag);
+        writer[0] && flyingon.dom_html(view, writer.join(''), tag);
 
-            node = node && node.nextSibling || view.firstChild;
+        node = node && node.nextSibling || view.lastChild;
 
-            for (var i = start; i < end; i++)
-            {
-                if (item = items[start++])
-                {
-                    item.renderer.mount(item, node);
-                    node = node.nextSibling;
-                }
-            }
-        }
+        this.__mount_children(control, view, items, start, end, node);
     };
 
 
     //移除子项
-    this.__remove_patch = function (control, items, detach) {
+    this.__remove_patch = function (control, items) {
 
         var item, node;
         
@@ -1157,7 +1108,7 @@
             if (item = items[i])
             {
                 //允许自动销毁且没有父控件则销毁控件
-                if (!detach && item.autoDispose && !item.parent)
+                if (item.autoDispose && !item.parent)
                 {
                     item.renderer.unmount(item);
                     item.dispose();

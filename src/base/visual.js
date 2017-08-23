@@ -203,7 +203,8 @@ flyingon.fragment('f.visual', function () {
 
         if (parent && (index = parent.indexOf(this)) >= 0)
         {
-            parent.detach(index, 1);
+            parent.splice(index, 1);
+            this.autoDispose = false;
         }
     };
     

@@ -50,7 +50,7 @@ flyingon.renderer('HtmlElement', function (base) {
         }
         else if (control.length > 0 && control.__visible)
         {
-            this.__render_children(writer, control, 0, control.length);
+            this.__render_children(writer, control, control, 0, control.length);
         }
 
         writer.push('</', tagName, '>');
@@ -64,7 +64,7 @@ flyingon.renderer('HtmlElement', function (base) {
 
         if (control.__content_render)
         {
-            this.__mount_children(control, view, 0, view.firstChild);
+            this.__mount_children(control, view, control, 0, control.length, view.firstChild);
         }
     };
 

@@ -119,13 +119,13 @@ Object.extend('TreeNode', function () {
     //获取节点级别
     this.level = function () {
 
-        var Class = flyingon.TreeNode,
-            target = this,
-            index = -1;
+        var target = this.parent,
+            index = 0;
 
-        while ((target = target.parent) instanceof Class)
+        while (target && target.isTreeNode)
         {
             index++;
+            target = target.parent;
         }
 
         return index;

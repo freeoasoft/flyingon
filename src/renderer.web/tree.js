@@ -1,3 +1,72 @@
+flyingon.fragment('f.tree.renderer', function (base) {
+
+
+    this.unmount = function (control) {
+
+        this.__unmount_children(control);
+
+        control.view_content = null;
+        base.unmount.call(this, control);
+    };
+
+
+    this.__children_patch = function (control, patch) {
+
+        var view = control.view_content || control.view,
+            last = view.lastChild;
+
+        base.__children_patch.apply(this, arguments);
+
+        //最后一个节点发生变化且是线条风格则需处理
+        if (last !== view.lastChild && (last = last.firstChild) && 
+            last.className.indexOf(' f-tree-node-last') >= 0)
+        {
+            remove_line(last, control.isTreeNode ? control.level() + 1 : 0);
+        }
+    };
+
+
+    //移除节点线条
+    function remove_line(node, level) {
+
+        node.className = node.className.replace(' f-tree-node-last', '');
+
+        node = node.nextSibling;
+        node.className = node.className.replace(' f-tree-list-last', '');
+
+        if (node = node.firstChild)
+        {
+            remove_background(node, level);
+        }
+    };
+
+
+    //移除子节点线条背景
+    function remove_background(node, level) {
+
+        var dom;
+
+        while (node)
+        {
+            if (dom = node.firstChild)
+            {
+                dom.children[level].style.background = '';
+
+                if (dom = node.lastChild.firstChild)
+                {
+                    remove_background(dom, level);
+                }
+            }
+
+            node = node.nextSibling;
+        }
+    };
+
+
+});
+
+
+
 flyingon.renderer('Tree', function (base) {
 
 
@@ -24,7 +93,7 @@ flyingon.renderer('Tree', function (base) {
         if (length > 0 && control.__visible)
         {
             control.__content_render = true;
-            this.__render_children(writer, control, 0, length, storage.theme === 'line');
+            this.__render_children(writer, control, control, 0, length);
         }
 
         //滚动位置控制(解决有右或底边距时拖不到底的问题)
@@ -33,17 +102,18 @@ flyingon.renderer('Tree', function (base) {
 
 
 
-    this.__render_children = function (writer, control, start, end, line) {
+    this.__render_children = function (writer, control, items, start, end) {
 
-        var format = control.format,
-            last = control.length,
+        var line = (control.__storage || control.__defaults).theme === 'line',
+            format = control.format,
+            last = control[control.length - 1],
             item;
 
         while (start < end)
         {
-            if (item = control[start++])
+            if (item = items[start++])
             {
-                item.view || item.renderer.render(writer, item, format, 0, start === last, line);
+                item.view || item.renderer.render(writer, item, format, 0, item === last, line);
             }
         }
     };
@@ -71,9 +141,7 @@ flyingon.renderer('Tree', function (base) {
 
                 case 'node':
                     node = flyingon.findControl(target);
-                    target = flyingon.findControl(this);
-
-                    target.trigger('node-click', 'node', node);
+                    flyingon.findControl(this).trigger('node-click', 'node', node);
                     return;
 
                 case 'tree':
@@ -87,6 +155,9 @@ flyingon.renderer('Tree', function (base) {
     };
 
 
+    
+    flyingon.fragment('f.tree.renderer', this, base);
+
 
     this.mount = function (control, view) {
 
@@ -94,18 +165,10 @@ flyingon.renderer('Tree', function (base) {
 
         if (control.__content_render)
         {
-            this.__mount_children(control, view, 0, view.firstChild);
+            this.__mount_children(control, view, control, 0, control.length, view.firstChild);
         }
     };
     
-
-    this.unmount = function (control) {
-
-        this.__unmount_children(control);
-        base.unmount.call(this, control);
-    };
-
-
 
     this.theme = function (control, view, value) {
 
@@ -213,7 +276,7 @@ flyingon.renderer('TreeNode', function (base) {
 
         if (!storage.collapsed && node.length > 0)
         {
-            this.__render_children(writer, node, 0, node.length, format, ++level, last, line);
+            this.__render_children(writer, node, node, 0, node.length, format, ++level, last, line);
         }
 
         writer.push('</div></div>');
@@ -221,7 +284,7 @@ flyingon.renderer('TreeNode', function (base) {
 
 
     //渲染子项
-    this.__render_children = function (writer, node, start, end, format, level, last, line) {
+    this.__render_children = function (writer, node, items, start, end, format, level, last, line) {
 
         var item, space, any;
 
@@ -242,15 +305,11 @@ flyingon.renderer('TreeNode', function (base) {
                 else
                 {
                     format = item.format || null;
-                    line = item.theme() === 'line';
+                    line = (item.__storage || item.__defaults).theme === 'line';
                     break;
                 }
             }
             while (item = item.parent);
-        }
-        else
-        {
-            level = 0;
         }
 
         space = last && line ? ' style="background:none;"' : '';
@@ -261,46 +320,39 @@ flyingon.renderer('TreeNode', function (base) {
             space = new Array(level + 1).join(space);
         }
 
-        any = node.length;
+        any = items.length;
             
         while (start < end)
         {
-            if (item = node[start++])
+            if (item = items[start++])
             {
-                //相同级别的视图可以复用
                 if (item.view)
                 {
-                    if (item.__level === level)
-                    {
-                        continue;
-                    }
-
                     item.renderer.unmount(item);
                 }
 
-                item.renderer.render(writer, item, format, item.__level = level, start === any, line, space);
+                item.renderer.render(writer, item, format, level, start === any, line, space);
             }
         }
     };
 
         
-    this.mount = function (node, view) {
+    
+    flyingon.fragment('f.tree.renderer', this, base);
 
-        base.mount.call(this, node, view);
 
-        if (node.__content_render)
+    this.mount = function (control, view) {
+
+        var dom = control.view_content = view.lastChild;
+
+        base.mount.call(this, control, view);
+
+        if (control.__content_render)
         {
-            this.__mount_children(node, view, 0, view.lastChild.firstChild);
+            this.__mount_children(control, view, control, 0, control.length, dom.firstChild);
         }
     };
     
-
-    this.unmount = function (node) {
-
-        this.__unmount_children(node);
-        base.unmount.call(this, node);
-    };
-
 
 
     this.checked = function (node, view, value) {
@@ -355,11 +407,11 @@ flyingon.renderer('TreeNode', function (base) {
 
         if (!node.__content_render)
         {
-            this.__render_children(any = [], node, 0, node.length);
+            this.__render_children(any = [], node, node, 0, node.length);
 
             view.innerHTML = any.join('');
 
-            this.__mount_children(node, view, 0, view.firstChild);
+            this.__mount_children(node, view, node, 0, node.length, view.lastChild);
         }
         
         view.style.display = '';

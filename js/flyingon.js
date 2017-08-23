@@ -142,6 +142,8 @@ var flyingon;
         
         extend = flyingon.extend,
 
+        slice = [].slice,
+
         components = flyingon.components || (flyingon.components = create(null)), //已注册所有组件类型集合
     
         anonymous = 1,
@@ -310,7 +312,7 @@ var flyingon;
         }
         else if (any = fragments[name])
         {
-            any.apply(fn, Array.prototype.slice.call(arguments, 2));
+            any.apply(fn, slice.call(arguments, 2));
         }
     };
 
@@ -3249,6 +3251,7 @@ flyingon.DataSet = flyingon.defineClass(flyingon.RowCollection, function () {
     flyingon.fragment('f.dataset', this);
     
     
+    
         
     //从二维关系表加载树型数据
     this.loadTreeFromList = function (list, primaryKey, parentKey) {
@@ -4075,7 +4078,8 @@ flyingon.fragment('f.visual', function () {
 
         if (parent && (index = parent.indexOf(this)) >= 0)
         {
-            parent.detach(index, 1);
+            parent.splice(index, 1);
+            this.autoDispose = false;
         }
     };
     
@@ -8934,7 +8938,7 @@ flyingon.Query = Object.extend(function () {
         }
 
         view.flyingon_id = any;
-        
+
         //触发控件挂载过程
         if (any = control.onmount)
         {
@@ -9460,13 +9464,13 @@ flyingon.Query = Object.extend(function () {
 
 
     //渲染子项
-    this.__render_children = function (writer, control, start, end) {
+    this.__render_children = function (writer, control, items, start, end) {
 
         var item;
 
         while (start < end)
         {
-            if (item = control[start++])
+            if (item = items[start++])
             {
                 item.view || item.renderer.render(writer, item);
             }
@@ -9475,21 +9479,24 @@ flyingon.Query = Object.extend(function () {
 
 
     //挂载子控件
-    this.__mount_children = function (control, view, index, node) {
+    this.__mount_children = function (control, view, items, start, end, node) {
 
         var item, any;
 
-        while (item = control[index++])
+        while (start < end)
         {
-            //如果子控件已经包含view
-            if (any = item.view)
+            if (item = items[start++])
             {
-                view.insertBefore(any, node);
-            }
-            else //子控件不包含view则分配新渲染的子视图
-            {
-                item.renderer.mount(item, node);
-                node = node.nextSibling;
+                //如果子控件已经包含view
+                if (any = item.view)
+                {
+                    view.insertBefore(any, node);
+                }
+                else //子控件不包含view则分配新渲染的子视图
+                {
+                    item.renderer.mount(item, node);
+                    node = node.nextSibling;
+                }
             }
         }
     };
@@ -9615,15 +9622,7 @@ flyingon.Query = Object.extend(function () {
                     break;
 
                 case 2: //删除子项
-                    this.__remove_patch(control, patch[++i], false);
-                    break;
-
-                case 3: //分离子项
-                    this.__remove_patch(control, patch[++i], true);
-                    break;
-
-                default:
-                    ++i;
+                    this.__remove_patch(control, patch[++i]);
                     break;
             }
         }
@@ -9633,74 +9632,30 @@ flyingon.Query = Object.extend(function () {
     //插入子项
     this.__insert_patch = function (control, index, items) {
 
-        var view = control.view_content || control.view,
-            start = 0,
-            length = 0,
-            item,
-            node;
-
-        for (var i = 0, l = items.length; i < l; i++)
-        {
-            if ((item = items[i]) && (node = item.view))
-            {
-                view.insertBefore(node, view.children[index]);
-
-                if (length > 0)
-                {
-                    this.__unmount_html(view, items, start, start + length, node);
-
-                    index += length;
-                    length = 0;
-                }
-            }
-            else
-            {
-                length++;
-            }
-        }
-
-        if (length > 0)
-        {
-            this.__unmount_html(view, items, start, start + length, view.children[start] || null);
-        }
+        var view = control.view_content || control.view;
+        this.__unmount_html(control, view, items, 0, items.length, view.children[index] || null);
     };
 
 
     //插入未挂载的html片段
-    this.__unmount_html = function (view, items, start, end, tag) {
+    this.__unmount_html = function (control, view, items, start, end, tag) {
 
         var writer = [],
             node = tag && tag.previousSibling,
             item;
 
-        for (var i = start; i < end; i++)
-        {
-            if (item = items[i])
-            {
-                item.renderer.render(writer, item);
-            }
-        }
+        this.__render_children(writer, control, items, start, end);
         
-        if (writer[0])
-        {
-            flyingon.dom_html(view, writer.join(''), tag);
+        writer[0] && flyingon.dom_html(view, writer.join(''), tag);
 
-            node = node && node.nextSibling || view.firstChild;
+        node = node && node.nextSibling || view.lastChild;
 
-            for (var i = start; i < end; i++)
-            {
-                if (item = items[start++])
-                {
-                    item.renderer.mount(item, node);
-                    node = node.nextSibling;
-                }
-            }
-        }
+        this.__mount_children(control, view, items, start, end, node);
     };
 
 
     //移除子项
-    this.__remove_patch = function (control, items, detach) {
+    this.__remove_patch = function (control, items) {
 
         var item, node;
         
@@ -9709,7 +9664,7 @@ flyingon.Query = Object.extend(function () {
             if (item = items[i])
             {
                 //允许自动销毁且没有父控件则销毁控件
-                if (!detach && item.autoDispose && !item.parent)
+                if (item.autoDispose && !item.parent)
                 {
                     item.renderer.unmount(item);
                     item.dispose();
@@ -9896,7 +9851,7 @@ flyingon.renderer('HtmlElement', function (base) {
         }
         else if (control.length > 0 && control.__visible)
         {
-            this.__render_children(writer, control, 0, control.length);
+            this.__render_children(writer, control, control, 0, control.length);
         }
 
         writer.push('</', tagName, '>');
@@ -9910,7 +9865,7 @@ flyingon.renderer('HtmlElement', function (base) {
 
         if (control.__content_render)
         {
-            this.__mount_children(control, view, 0, view.firstChild);
+            this.__mount_children(control, view, control, 0, control.length, view.firstChild);
         }
     };
 
@@ -10465,7 +10420,7 @@ flyingon.renderer('Panel', function (base) {
         if (control.length > 0 && control.__visible)
         {
             control.__content_render = true;
-            this.__render_children(writer, control, 0, control.length);
+            this.__render_children(writer, control, control, 0, control.length);
         }
 
         //滚动位置控制(解决有右或底边距时拖不到底的问题)
@@ -10481,7 +10436,7 @@ flyingon.renderer('Panel', function (base) {
         //标记已渲染
         control.__content_render = true;
 
-        this.__render_children(writer, control, 0, control.length);
+        this.__render_children(writer, control, control, 0, control.length);
 
         writer.push(this.__scroll_html);
 
@@ -10499,7 +10454,7 @@ flyingon.renderer('Panel', function (base) {
 
         if (control.__content_render)
         {
-            this.__mount_children(control, view, 0, view.firstChild);
+            this.__mount_children(control, view, control, 0, control.length, view.firstChild);
         }
     };
 
@@ -10631,7 +10586,7 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
         if (control.length > 0 && control.__visible)
         {
             control.__content_render = true;
-            this.__render_children(writer, control, 0, control.length);
+            this.__render_children(writer, control, control, 0, control.length);
         }
 
         writer.push(this.__scroll_html, '</div></div>');
@@ -12300,6 +12255,75 @@ flyingon.renderer('Calendar', function (base) {
 
 
 
+flyingon.fragment('f.tree.renderer', function (base) {
+
+
+    this.unmount = function (control) {
+
+        this.__unmount_children(control);
+
+        control.view_content = null;
+        base.unmount.call(this, control);
+    };
+
+
+    this.__children_patch = function (control, patch) {
+
+        var view = control.view_content || control.view,
+            last = view.lastChild;
+
+        base.__children_patch.apply(this, arguments);
+
+        //最后一个节点发生变化且是线条风格则需处理
+        if (last !== view.lastChild && (last = last.firstChild) && 
+            last.className.indexOf(' f-tree-node-last') >= 0)
+        {
+            remove_line(last, control.isTreeNode ? control.level() + 1 : 0);
+        }
+    };
+
+
+    //移除节点线条
+    function remove_line(node, level) {
+
+        node.className = node.className.replace(' f-tree-node-last', '');
+
+        node = node.nextSibling;
+        node.className = node.className.replace(' f-tree-list-last', '');
+
+        if (node = node.firstChild)
+        {
+            remove_background(node, level);
+        }
+    };
+
+
+    //移除子节点线条背景
+    function remove_background(node, level) {
+
+        var dom;
+
+        while (node)
+        {
+            if (dom = node.firstChild)
+            {
+                dom.children[level].style.background = '';
+
+                if (dom = node.lastChild.firstChild)
+                {
+                    remove_background(dom, level);
+                }
+            }
+
+            node = node.nextSibling;
+        }
+    };
+
+
+});
+
+
+
 flyingon.renderer('Tree', function (base) {
 
 
@@ -12326,7 +12350,7 @@ flyingon.renderer('Tree', function (base) {
         if (length > 0 && control.__visible)
         {
             control.__content_render = true;
-            this.__render_children(writer, control, 0, length, storage.theme === 'line');
+            this.__render_children(writer, control, control, 0, length);
         }
 
         //滚动位置控制(解决有右或底边距时拖不到底的问题)
@@ -12335,17 +12359,18 @@ flyingon.renderer('Tree', function (base) {
 
 
 
-    this.__render_children = function (writer, control, start, end, line) {
+    this.__render_children = function (writer, control, items, start, end) {
 
-        var format = control.format,
-            last = control.length,
+        var line = (control.__storage || control.__defaults).theme === 'line',
+            format = control.format,
+            last = control[control.length - 1],
             item;
 
         while (start < end)
         {
-            if (item = control[start++])
+            if (item = items[start++])
             {
-                item.view || item.renderer.render(writer, item, format, 0, start === last, line);
+                item.view || item.renderer.render(writer, item, format, 0, item === last, line);
             }
         }
     };
@@ -12373,9 +12398,7 @@ flyingon.renderer('Tree', function (base) {
 
                 case 'node':
                     node = flyingon.findControl(target);
-                    target = flyingon.findControl(this);
-
-                    target.trigger('node-click', 'node', node);
+                    flyingon.findControl(this).trigger('node-click', 'node', node);
                     return;
 
                 case 'tree':
@@ -12389,6 +12412,9 @@ flyingon.renderer('Tree', function (base) {
     };
 
 
+    
+    flyingon.fragment('f.tree.renderer', this, base);
+
 
     this.mount = function (control, view) {
 
@@ -12396,18 +12422,10 @@ flyingon.renderer('Tree', function (base) {
 
         if (control.__content_render)
         {
-            this.__mount_children(control, view, 0, view.firstChild);
+            this.__mount_children(control, view, control, 0, control.length, view.firstChild);
         }
     };
     
-
-    this.unmount = function (control) {
-
-        this.__unmount_children(control);
-        base.unmount.call(this, control);
-    };
-
-
 
     this.theme = function (control, view, value) {
 
@@ -12515,7 +12533,7 @@ flyingon.renderer('TreeNode', function (base) {
 
         if (!storage.collapsed && node.length > 0)
         {
-            this.__render_children(writer, node, 0, node.length, format, ++level, last, line);
+            this.__render_children(writer, node, node, 0, node.length, format, ++level, last, line);
         }
 
         writer.push('</div></div>');
@@ -12523,7 +12541,7 @@ flyingon.renderer('TreeNode', function (base) {
 
 
     //渲染子项
-    this.__render_children = function (writer, node, start, end, format, level, last, line) {
+    this.__render_children = function (writer, node, items, start, end, format, level, last, line) {
 
         var item, space, any;
 
@@ -12544,15 +12562,11 @@ flyingon.renderer('TreeNode', function (base) {
                 else
                 {
                     format = item.format || null;
-                    line = item.theme() === 'line';
+                    line = (item.__storage || item.__defaults).theme === 'line';
                     break;
                 }
             }
             while (item = item.parent);
-        }
-        else
-        {
-            level = 0;
         }
 
         space = last && line ? ' style="background:none;"' : '';
@@ -12563,46 +12577,39 @@ flyingon.renderer('TreeNode', function (base) {
             space = new Array(level + 1).join(space);
         }
 
-        any = node.length;
+        any = items.length;
             
         while (start < end)
         {
-            if (item = node[start++])
+            if (item = items[start++])
             {
-                //相同级别的视图可以复用
                 if (item.view)
                 {
-                    if (item.__level === level)
-                    {
-                        continue;
-                    }
-
                     item.renderer.unmount(item);
                 }
 
-                item.renderer.render(writer, item, format, item.__level = level, start === any, line, space);
+                item.renderer.render(writer, item, format, level, start === any, line, space);
             }
         }
     };
 
         
-    this.mount = function (node, view) {
+    
+    flyingon.fragment('f.tree.renderer', this, base);
 
-        base.mount.call(this, node, view);
 
-        if (node.__content_render)
+    this.mount = function (control, view) {
+
+        var dom = control.view_content = view.lastChild;
+
+        base.mount.call(this, control, view);
+
+        if (control.__content_render)
         {
-            this.__mount_children(node, view, 0, view.lastChild.firstChild);
+            this.__mount_children(control, view, control, 0, control.length, dom.firstChild);
         }
     };
     
-
-    this.unmount = function (node) {
-
-        this.__unmount_children(node);
-        base.unmount.call(this, node);
-    };
-
 
 
     this.checked = function (node, view, value) {
@@ -12657,11 +12664,11 @@ flyingon.renderer('TreeNode', function (base) {
 
         if (!node.__content_render)
         {
-            this.__render_children(any = [], node, 0, node.length);
+            this.__render_children(any = [], node, node, 0, node.length);
 
             view.innerHTML = any.join('');
 
-            this.__mount_children(node, view, 0, view.firstChild);
+            this.__mount_children(node, view, node, 0, node.length, view.lastChild);
         }
         
         view.style.display = '';
@@ -13485,7 +13492,7 @@ flyingon.renderer('Tab', function (base) {
     };
 
 
-    this.__remove_patch = function (control, items, detach) {
+    this.__remove_patch = function (control, items) {
 
         var view = control.view.firstChild.firstChild.nextSibling,
             index = 0, 
@@ -14118,7 +14125,7 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
         if (control.length > 0 && control.__visible)
         {
             control.__content_render = true;
-            this.__render_children(writer, control, 0, control.length);
+            this.__render_children(writer, control, control, 0, control.length);
         }
 
         writer.push(this.__scroll_html, '</div></div>');
@@ -15806,32 +15813,19 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
     //分离子控件(不销毁)
     this.detach = function (index, length) {
 
-        if (arguments.length > 2)
-        {            
-            var any = this.length;
+        var items = this.splice.apply(this, arguments),
+            length = items.length,
+            item;
 
-            if ((index |= 0) < 0)
-            {
-                index += any;
-            }
-
-            if (index < 0)
-            {
-                index = 0;
-            }
-            else if (index > any)
-            {
-                index = any;
-            }
-
-            this.__check_items(arguments, 2, index);
-        }
-
-        var items = array.splice.apply(this, arguments);
-
-        if (items.length > 0)
+        if (length > 0)
         {
-            this.__remove_items(items, true);
+            for (var i = 0; i < length; i++)
+            {
+                if (item = items[i])
+                {
+                    item.autoDispose = false;
+                }
+            }
         }
 
         return items;
@@ -15905,7 +15899,7 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
 
 
     //移除多个子项
-    this.__remove_items = function (items, detach) {
+    this.__remove_items = function (items) {
 
         var patch = [],
             item;
@@ -15917,6 +15911,8 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
             if (item = items[i])
             {
                 item.parent = null;
+                item.autoDispose = true;
+
                 patch.push(item);
             }
         }
@@ -15924,7 +15920,7 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
         //注册子项变更补丁
         if (patch[0])
         {
-            this.__children_dirty(detach ? 3 : 2, -1, patch);
+            this.__children_dirty(2, -1, patch);
         }
 
         if (arrange && this.__arrange_dirty < 2)
@@ -17144,7 +17140,7 @@ flyingon.Control.extend('TextButton', function (base) {
     };
 
 
-    this.__get_popup = function (cache) {
+    this.__get_popup = function () {
 
         var popup = popup_cache;
 
@@ -17160,20 +17156,11 @@ flyingon.Control.extend('TextButton', function (base) {
 
             popup.on('closed', function () {
 
-                if (this.__cache)
-                {
-                    this.detach(0);
-                }
-                else
-                {
-                    this.splice(0);
-                }
+                this.detach(0);
             });
 
             popup.width('auto').height('auto');
         }
-
-        popup.__cache = cache;
 
         return popup;
     };
@@ -17348,7 +17335,7 @@ flyingon.TextButton.extend('ComboBox', function (base) {
     //弹出日历窗口
     this.popup = this.__on_click = function () {
 
-        var popup = this.__get_popup(true),
+        var popup = this.__get_popup(),
             storage = this.__storage || this.__defaults,
             listbox = this.__get_listbox();
 
@@ -17683,7 +17670,7 @@ flyingon.TextButton.extend('DatePicker', function (base) {
     //弹出日历窗口
     this.popup = this.__on_click = function () {
 
-        var popup = this.__get_popup(true),
+        var popup = this.__get_popup(),
             storage = this.__storage || this.__defaults,
             calendar = calendar_cache;
 
@@ -17834,7 +17821,7 @@ flyingon.TextButton.extend('MonthPicker', function (base) {
     //弹出日历窗口
     this.popup = this.__on_click = function () {
 
-        var popup = this.__get_popup(true),
+        var popup = this.__get_popup(),
             storage = this.__storage || this.__defaults,
             calendar = calendar_cache;
 
@@ -17986,13 +17973,13 @@ Object.extend('TreeNode', function () {
     //获取节点级别
     this.level = function () {
 
-        var Class = flyingon.TreeNode,
-            target = this,
-            index = -1;
+        var target = this.parent,
+            index = 0;
 
-        while ((target = target.parent) instanceof Class)
+        while (target && target.isTreeNode)
         {
             index++;
+            target = target.parent;
         }
 
         return index;
@@ -19153,11 +19140,11 @@ flyingon.Control.extend('Tab', function (base) {
     var remove_items = this.__remove_items;
 
 
-    this.__remove_items = function (items, detach) {
+    this.__remove_items = function (items) {
 
         var selected = this.selected();
 
-        remove_items.call(this, items, detach);
+        remove_items.call(this, items);
 
         this.selectedPage(this[selected] || this[--selected] || null);
     };

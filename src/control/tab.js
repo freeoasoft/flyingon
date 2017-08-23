@@ -223,11 +223,11 @@ flyingon.Control.extend('Tab', function (base) {
     var remove_items = this.__remove_items;
 
 
-    this.__remove_items = function (items, detach) {
+    this.__remove_items = function (items) {
 
         var selected = this.selected();
 
-        remove_items.call(this, items, detach);
+        remove_items.call(this, items);
 
         this.selectedPage(this[selected] || this[--selected] || null);
     };

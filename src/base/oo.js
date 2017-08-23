@@ -142,6 +142,8 @@ var flyingon;
         
         extend = flyingon.extend,
 
+        slice = [].slice,
+
         components = flyingon.components || (flyingon.components = create(null)), //已注册所有组件类型集合
     
         anonymous = 1,
@@ -310,7 +312,7 @@ var flyingon;
         }
         else if (any = fragments[name])
         {
-            any.apply(fn, Array.prototype.slice.call(arguments, 2));
+            any.apply(fn, slice.call(arguments, 2));
         }
     };
 

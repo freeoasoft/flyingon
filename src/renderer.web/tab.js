@@ -200,7 +200,7 @@ flyingon.renderer('Tab', function (base) {
     };
 
 
-    this.__remove_patch = function (control, items, detach) {
+    this.__remove_patch = function (control, items) {
 
         var view = control.view.firstChild.firstChild.nextSibling,
             index = 0, 

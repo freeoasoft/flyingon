@@ -49,7 +49,7 @@ flyingon.Control.extend('TextButton', function (base) {
     };
 
 
-    this.__get_popup = function (cache) {
+    this.__get_popup = function () {
 
         var popup = popup_cache;
 
@@ -65,20 +65,11 @@ flyingon.Control.extend('TextButton', function (base) {
 
             popup.on('closed', function () {
 
-                if (this.__cache)
-                {
-                    this.detach(0);
-                }
-                else
-                {
-                    this.splice(0);
-                }
+                this.detach(0);
             });
 
             popup.width('auto').height('auto');
         }
-
-        popup.__cache = cache;
 
         return popup;
     };

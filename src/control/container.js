@@ -164,32 +164,19 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
     //分离子控件(不销毁)
     this.detach = function (index, length) {
 
-        if (arguments.length > 2)
-        {            
-            var any = this.length;
+        var items = this.splice.apply(this, arguments),
+            length = items.length,
+            item;
 
-            if ((index |= 0) < 0)
-            {
-                index += any;
-            }
-
-            if (index < 0)
-            {
-                index = 0;
-            }
-            else if (index > any)
-            {
-                index = any;
-            }
-
-            this.__check_items(arguments, 2, index);
-        }
-
-        var items = array.splice.apply(this, arguments);
-
-        if (items.length > 0)
+        if (length > 0)
         {
-            this.__remove_items(items, true);
+            for (var i = 0; i < length; i++)
+            {
+                if (item = items[i])
+                {
+                    item.autoDispose = false;
+                }
+            }
         }
 
         return items;
@@ -263,7 +250,7 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
 
 
     //移除多个子项
-    this.__remove_items = function (items, detach) {
+    this.__remove_items = function (items) {
 
         var patch = [],
             item;
@@ -275,6 +262,8 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
             if (item = items[i])
             {
                 item.parent = null;
+                item.autoDispose = true;
+
                 patch.push(item);
             }
         }
@@ -282,7 +271,7 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
         //注册子项变更补丁
         if (patch[0])
         {
-            this.__children_dirty(detach ? 3 : 2, -1, patch);
+            this.__children_dirty(2, -1, patch);
         }
 
         if (arrange && this.__arrange_dirty < 2)

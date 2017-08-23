@@ -35,7 +35,7 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
         if (control.length > 0 && control.__visible)
         {
             control.__content_render = true;
-            this.__render_children(writer, control, 0, control.length);
+            this.__render_children(writer, control, control, 0, control.length);
         }
 
         writer.push(this.__scroll_html, '</div></div>');
