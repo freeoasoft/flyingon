@@ -29,7 +29,7 @@ flyingon.GridColumn = Object.extend(function () {
 
             set: function (value) {
 
-                this.rendered && this.renderer.set(this, name, value);
+                this.view && this.renderer.set(this, name, value);
             }
         });
     };
@@ -38,23 +38,14 @@ flyingon.GridColumn = Object.extend(function () {
     function update_data() {
 
         var grid = this.grid;
-
-        if (grid)
-        {
-            grid.refresh(true);
-        }
+        grid && grid.update(false);
     };
 
 
     function update_all() {
 
         var grid = this.grid;
-
-        if (grid)
-        {
-            grid.__columns.dirty = true;
-            grid.refresh(true);
-        }
+        grid && grid.update(true);
     };
 
 
@@ -72,8 +63,45 @@ flyingon.GridColumn = Object.extend(function () {
         
         set: function (value) {
 
-            this.__set_title(value);
-            this.rendered && this.renderer.set(this, 'title', value);
+            var any;
+
+            if (this.view)
+            {
+                this.view = false;
+
+                //记录原单元格
+                if (any = this.cells)
+                {
+                    any._ = any.slice(0);
+                }
+
+                this.__set_title(value);
+
+                //如果原来跨列或现在跨列,需重新计算跨列
+                if (any = this.grid)
+                {
+                    any.update(true);
+                }
+            }
+            else
+            {
+                this.__set_title(value);
+            }
+        }
+    });
+
+
+    //列大小(支持固定数字及百分比)
+    this.defineProperty('size', '100', {
+
+        set: function (value) {
+
+            var grid;
+            
+            if (this.view && (grid = this.grid))
+            {
+                grid.update(true);
+            }
         }
     });
 
@@ -83,10 +111,6 @@ flyingon.GridColumn = Object.extend(function () {
     //center
     //right
     define(this, 'align', 'left');
-
-
-    //列大小(支持固定数字及百分比)
-    define(this, 'size', '100');
 
 
     //是否只读
@@ -125,7 +149,7 @@ flyingon.GridColumn = Object.extend(function () {
         var cells = this.cells;
 
         cells.length = 0;
-        cells.span = false;
+        cells.span = 0;
 
         if (title instanceof Array)
         {
@@ -156,9 +180,9 @@ flyingon.GridColumn = Object.extend(function () {
                 name = ' ' + name;
             }
 
-            if (span > 0)
+            if (span > cells.span)
             {
-                cells.span = true;
+                cells.span = span;
             }
         }
         else
@@ -178,7 +202,7 @@ flyingon.GridColumn = Object.extend(function () {
 
 
     //绑定表格列渲染器
-    this.rendered = flyingon.renderer.bind(this, 'GridColumn');
+    flyingon.renderer.bind(this, 'GridColumn');
 
 
 
@@ -292,8 +316,7 @@ flyingon.GridColumns = Object.extend(function () {
             start++;
         }
 
-        this.dirty = true;
-        grid.refresh(true);
+        grid.update(true);
     };
 
 
@@ -307,14 +330,13 @@ flyingon.GridColumns = Object.extend(function () {
             item = items[i];
             item.grid = null;
 
-            if (item.rendered)
+            if (item.view)
             {
                 grid.renderer.__remove_column(grid, item);
             }
         }
 
-        this.dirty = true;
-        grid.refresh(true);
+        grid.update(true);
     };
 
 
@@ -328,8 +350,6 @@ flyingon.GridColumns = Object.extend(function () {
             column,
             left,
             right = x + width - locked[2] - locked[3];
-
-        this.arrangeLeft = x;
 
         //计算可见列
         for (var i = start; i < end; i++)
@@ -363,9 +383,6 @@ flyingon.GridColumns = Object.extend(function () {
             width = 0,
             mod = 0,
             any;
-
-        this.arrangeWidth = width;
-        this.dirty = false;
 
         //计算前锁定
         if (start > 0)
@@ -475,14 +492,18 @@ flyingon.GridColumns = Object.extend(function () {
             {
                 width = columns[index].width;
 
-                while (span > 0 && index + span < end && (column = columns[index + span])) //计算到结束位置则提前终止
+                while (span > 0) //计算到结束位置则提前终止
                 {
-                    if (column.offset < span)
+                    if (index + span < end && (column = columns[index + span]))
                     {
-                        column.offset = span;
+                        if (column.offset < span)
+                        {
+                            column.offset = span;
+                        }
+
+                        width += column.width;
                     }
 
-                    width += column.width;
                     span--;
                 }
 
@@ -692,12 +713,8 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
                     columns.push(value);
                 }
 
-                if (this.rendered)
-                {
-                    columns.dirty = true;
-                    this.refresh(true);
-                }
-                
+                this.rendered && this.update(true);
+ 
                 return this;
             }
 
@@ -710,12 +727,12 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
     //列头大小
     this.defineProperty('header', 30, {
 
-        set: function (value) {
+        set: function (value, oldValue) {
 
             if (this.rendered)
             {
                 this.renderer.set(this, 'header', value);
-                this.refresh(true);
+                this.update(false);
             }
         }
     });
@@ -726,7 +743,7 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
 
         set: function () {
 
-            this.refresh(true);
+            this.update(false);
         }
     });
 
@@ -754,11 +771,7 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
                 y[1] = value[3] | 0;
             }
 
-            if (this.rendered)
-            {
-                this.__columns.dirty = true;
-                this.refresh(true);
-            }
+            this.rendered && this.update(true);
         }
     });
 
@@ -805,25 +818,20 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
 
 
     //刷新表格
-    this.refresh = function (delay) {
+    this.update = function (column_dirty) {
 
         if (this.rendered)
         {
             var patch = this.__view_patch;
 
-            if (!patch || patch.refresh === void 0)
+            if (column_dirty)
             {
-                this.renderer.set(this, 'refresh', true);
+                this.__column_dirty = true;
             }
 
-            if (patch)
+            if (!patch || !patch.content)
             {
-                delete patch.refresh;
-            }
-
-            if (!delay)
-            {
-                this.update();
+                this.renderer.set(this, 'content', true);
             }
         }
         

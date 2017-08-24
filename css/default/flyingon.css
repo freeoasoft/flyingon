@@ -588,10 +588,12 @@ input[type="text"],
 
 .f-grid-left {
     left: 0;
+    z-index: 1;
 }
 
 .f-grid-right {
     right: 0;
+    z-index: 1;
 }
 
 .f-grid-cell {
