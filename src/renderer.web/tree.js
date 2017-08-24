@@ -1,4 +1,4 @@
-flyingon.fragment('f.tree.renderer', function (base) {
+flyingon.fragment('f-tree-renderer', function (base) {
 
 
     this.unmount = function (control) {
@@ -156,7 +156,7 @@ flyingon.renderer('Tree', function (base) {
 
 
     
-    flyingon.fragment('f.tree.renderer', this, base);
+    flyingon.fragment('f-tree-renderer', this, base);
 
 
     this.mount = function (control, view) {
@@ -338,7 +338,7 @@ flyingon.renderer('TreeNode', function (base) {
 
         
     
-    flyingon.fragment('f.tree.renderer', this, base);
+    flyingon.fragment('f-tree-renderer', this, base);
 
 
     this.mount = function (control, view) {

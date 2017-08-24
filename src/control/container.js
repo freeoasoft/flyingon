@@ -1,137 +1,5 @@
 //集合功能扩展
-flyingon.fragment('f.collection', function () {
-
-
-
-    var array = Array.prototype;
-
-
-
-    //子控件数量
-    this.length = 0;
-
-
-
-    //获取指定子控件的索引号
-    this.indexOf = this.lastIndexOf = [].indexOf;
-
-
-
-    //添加子控件
-    this.push = function () {
-
-        if (arguments.length > 0)
-        {
-            this.__check_items(arguments, 0, this.length);
-            array.push.apply(this, arguments);
-        }
-
-        return this.length;
-    };
-
-
-    //弹出最后一个子控件
-    this.pop = function () {
-        
-        var item = array.pop.call(this);
-
-        if (item)
-        {
-            this.__remove_items([item]);
-        }
-
-        return item;
-    };
-
-
-    //在开始位置插入子控件
-    this.unshift = function () {
-
-        if (arguments.length > 0)
-        {
-            this.__check_items(arguments, 0, 0);
-            array.unshift.apply(this, arguments);
-        }
-
-        return this.length;
-    };
-
-
-    //弹出第一个子控件
-    this.shift = function () {
-        
-        var item = array.shift.call(this);
-
-        if (item)
-        {
-            this.__remove_item([item]);
-        }
-
-        return item;
-    };
-
-
-    //插入及移除子控件
-    this.splice = function (index, length) {
-
-        if (arguments.length > 2)
-        {
-            var any = this.length;
-
-            if ((index |= 0) < 0)
-            {
-                index += any;
-            }
-
-            if (index < 0)
-            {
-                index = 0;
-            }
-            else if (index > any)
-            {
-                index = any;
-            }
-
-            this.__check_items(arguments, 2, index);
-        }
-
-        var items = array.splice.apply(this, arguments);
-
-        if (items.length > 0)
-        {
-            this.__remove_items(items);
-        }
-
-        return items;
-    };
-
-        
-
-    //增加子项前检测处理
-    this.__check_items = function (items, offset, index) {
-    };
-
-
-    //移除子项处理
-    this.__remove_items = function (items) {
-    };
-
-
-    
-    //获取子控件集合
-    this.children = function () {
-
-        return array.slice.call(this, 0);
-    };
-
-
-
-});
-
-
-
-//集合功能扩展
-flyingon.fragment('f.container', function (childrenClass, arrange) {
+flyingon.fragment('f-container', function (childrenClass, arrange) {
 
 
 
@@ -151,7 +19,7 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
 
     
 
-    flyingon.fragment('f.collection', this);
+    flyingon.fragment('f-collection', this);
 
 
     this.__check_error = function (Class) {
@@ -184,7 +52,7 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
 
 
     //添加子项前检测处理
-    this.__check_items = function (items, start, index) {
+    this.__check_items = function (index, items, start) {
 
         var Class = this.childrenClass,
             html = this instanceof flyingon.HtmlElement,
@@ -203,7 +71,7 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
                 {
                     if ((any = item.parent) && any !== this)
                     {
-                        any.__remove_item(item);
+                        any.__remove_items(any.indexOf(item), [item]);
                     }
                 }
                 else
@@ -250,7 +118,7 @@ flyingon.fragment('f.container', function (childrenClass, arrange) {
 
 
     //移除多个子项
-    this.__remove_items = function (items) {
+    this.__remove_items = function (index, items) {
 
         var patch = [],
             item;

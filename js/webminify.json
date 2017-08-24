@@ -8,6 +8,7 @@
             '../src/base/utils.js',
             '../src/base/async.js',
             '../src/base/extend.js',
+            '../src/base/collection.js',
             '../src/base/serialize.js',
             '../src/base/dataset.js',
             '../src/base/bindable.js',

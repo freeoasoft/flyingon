@@ -241,7 +241,7 @@ flyingon.RowCollection = Object.extend._(function () {
 
 
 //数据集功能片段
-flyingon.fragment('f.dataset', function () {
+flyingon.fragment('f-dataset', function () {
     
     
     
@@ -271,90 +271,17 @@ flyingon.fragment('f.dataset', function () {
     };
 
 
-    //获取指定子控件的索引号
-    this.indexOf = this.lastIndexOf = [].indexOf;
-
-
-
-    //添加子控件
-    this.push = function () {
-
-        insert_items.call(this, arguments, 0, array.push);
-        return this.length;
-    };
-
-
-    //弹出最后一个子控件
-    this.pop = function () {
-        
-        return remove_items.call(this, this.length - 1, 1);
-    };
-
-
-    //在开始位置插入子控件
-    this.unshift = function () {
-
-        insert_items.call(this, arguments, 0, array.unshift);
-        return this.length;
-    };
-
-
-    //弹出第一个子控件
-    this.shift = function () {
-        
-        return remove_items.call(this, 0, 1);
-    };
-
-
-    //插入及移除子控件
-    this.splice = function (index, length) {
-
-        var count = arguments.length,
-            any;
-
-        if (this.length > 0)
-        {
-            //只传一个参数表示清除全部
-            if (count === 1)
-            {
-                remove_items.call(this, index, this.length);
-            }
-            else if (length > 0)
-            {
-                remove_items.call(this, index, length);
-            }
-        }
-
-        if (count > 2)
-        {
-            arguments[1] = 0;
-            insert_items.call(this, arguments, 2, array.splice); 
-        }
-
-        return any || [];
-    };
-
-        
-    //获取子控件集合
-    this.children = function () {
-
-        return array.slice.call(this, 0);
-    };
+    //扩展集合操作功能
+    flyingon.fragment('f-collection', this);
     
     
-    //插入多个子项方法
-    function insert_items(items, index, fn) {
-
-        var length = items.length;
-
-        if (length <= 0)
-        {
-            return;
-        }
+    //插入子项
+    this.__check_items = function (index, items, start) {
 
         var Class = flyingon.DataRow,
             dataset = this.dataset,
             parent = null,
+            length = items.length,
             primaryKey,
             row,
             data;
@@ -370,7 +297,7 @@ flyingon.fragment('f.dataset', function () {
 
         primaryKey = dataset.primaryKey;
 
-        for (var i = index; i < length; i++)
+        for (var i = start; i < length; i++)
         {
             if ((data = items[i]) && data.dataset)
             {
@@ -394,17 +321,15 @@ flyingon.fragment('f.dataset', function () {
             dataset.__changed_rows.push(items[i] = row);
         }
 
-        fn.apply(this, items);
-
-        while (index < length)
+        while (start < length)
         {
-            dataset.trigger('row-added', 'parent', parent, 'row', items[index++]);
+            dataset.trigger('row-added', 'parent', parent, 'row', items[offset++]);
         }
     };
 
 
-    //移除多个子项
-    function remove_items(index, length) {
+    //移除子项
+    this.__remove_items = function (index, items) {
 
         var dataset = this.dataset,
             parent = null,
@@ -420,9 +345,9 @@ flyingon.fragment('f.dataset', function () {
             dataset = this;
         }
 
-        for (var i = 0; i < length; i++)
+        for (var i = 0, l = items.length; i < l; i++)
         {
-            row = this[index + i];
+            row = this[i];
 
             if (row.state !== 'unchanged')
             {
@@ -433,14 +358,10 @@ flyingon.fragment('f.dataset', function () {
             dataset.trigger('row-removed', 'parent', parent, 'row', row);
         }
 
-        any = splice.call(this, index, length);
-
         if (row.uniqueId === dataset.__current_id && (row = this[index] || this[--index]))
         {
             dataset.currentRow(row);
         }
-
-        return any;
     };
 
     
@@ -731,7 +652,7 @@ flyingon.DataRow = Object.extend._(flyingon.RowCollection, function () {
 
     
     //扩展数据集功能
-    flyingon.fragment('f.dataset', this);
+    flyingon.fragment('f-dataset', this);
     
 
     
@@ -806,7 +727,7 @@ flyingon.DataSet = flyingon.defineClass(flyingon.RowCollection, function () {
     
         
     //扩展数据集功能
-    flyingon.fragment('f.dataset', this);
+    flyingon.fragment('f-dataset', this);
     
     
     

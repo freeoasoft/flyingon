@@ -93,7 +93,7 @@
 
 
 //可视组件基础功能扩展
-flyingon.fragment('f.visual', function () {
+flyingon.fragment('f-visual', function () {
 
 
     //根据uniqueId组织的控件集合

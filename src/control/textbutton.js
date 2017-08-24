@@ -39,7 +39,7 @@ flyingon.Control.extend('TextButton', function (base) {
 
 
 
-    flyingon.fragment('f.text', this);
+    flyingon.fragment('f-textbox', this);
 
 
 

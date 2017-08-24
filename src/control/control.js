@@ -38,11 +38,11 @@ Object.extend('Control', function () {
         
     
     //扩展可视组件功能
-    flyingon.fragment('f.visual', this);
+    flyingon.fragment('f-visual', this);
 
         
     //扩展可绑定功能
-    flyingon.fragment('f.bindable', this);
+    flyingon.fragment('f-bindable', this);
     
 
 
@@ -794,7 +794,7 @@ Object.extend('Control', function () {
     
     
     //扩展可序列化功能
-    flyingon.fragment('f.serialize', this);
+    flyingon.fragment('f-serialize', this);
 
 
     

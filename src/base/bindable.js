@@ -1,5 +1,5 @@
 //可绑定功能片段
-flyingon.fragment('f.bindable', function () {
+flyingon.fragment('f-bindable', function () {
     
     
 

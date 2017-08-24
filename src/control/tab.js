@@ -217,17 +217,17 @@ flyingon.Control.extend('Tab', function (base) {
 
 
     //扩展容器功能
-    flyingon.fragment('f.container', this, flyingon.TabPage, true);
+    flyingon.fragment('f-container', this, flyingon.TabPage, true);
 
 
     var remove_items = this.__remove_items;
 
 
-    this.__remove_items = function (items) {
+    this.__remove_items = function (index, items) {
 
         var selected = this.selected();
 
-        remove_items.call(this, items);
+        remove_items.apply(this, arguments);
 
         this.selectedPage(this[selected] || this[--selected] || null);
     };

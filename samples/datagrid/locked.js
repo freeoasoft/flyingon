@@ -19,7 +19,7 @@ flyingon.widget({
         var columns = []
         var data = [];
 
-        for (var j = 1; j <= 20; j++)
+        for (var j = 1; j <= 1000; j++)
         {
             columns.push({ title: 'F' + j });
         }
@@ -30,7 +30,7 @@ flyingon.widget({
         {
             var item = {};
 
-            for (var j = 1; j <= 20; j++)
+            for (var j = 1; j <= 1000; j++)
             {
                 item['F' + j] = j;
             }

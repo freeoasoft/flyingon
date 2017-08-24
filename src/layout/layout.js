@@ -112,7 +112,7 @@ flyingon.Layout = Object.extend(function () {
        
     
     //扩展可序列化功能
-    flyingon.fragment('f.serialize', this);
+    flyingon.fragment('f-serialize', this);
     
     
     

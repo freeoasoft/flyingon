@@ -34,7 +34,7 @@ flyingon.widget({
 
                     { 
                         title: [
-                            { text: 'F5', height: 40 }, 
+                            { text: 'F5', size: 40 }, 
                             { text: 'F56', span: 1 }, 
                             { text: 'F5678', span: 3 }
                         ]
@@ -42,7 +42,7 @@ flyingon.widget({
 
                     { 
                         title: [
-                            { text: 'F6', height: 40 }, 
+                            { text: 'F6', size: 40 }, 
                             '', 
                             ''
                         ] 
@@ -50,7 +50,7 @@ flyingon.widget({
 
                     { 
                         title: [
-                            { text:'F7', height: 40 }, 
+                            { text:'F7', size: 40 }, 
                             { text: 'F78', span: 1 }, 
                             ''
                         ] 
@@ -58,7 +58,7 @@ flyingon.widget({
 
                     { 
                         title: [
-                            { text: 'F8', height: 40 }, 
+                            { text: 'F8', size: 40 }, 
                             '', 
                             ''
                         ]

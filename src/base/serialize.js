@@ -1,5 +1,5 @@
 //序列化功能扩展
-flyingon.fragment('f.serialize', function () {
+flyingon.fragment('f-serialize', function () {
     
     
        

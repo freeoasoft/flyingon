@@ -1,4 +1,4 @@
-flyingon.fragment('f.text', function () {
+flyingon.fragment('f-textbox', function () {
 
 
 
@@ -48,7 +48,7 @@ flyingon.Control.extend('TextBox', function (base) {
     };
 
 
-    flyingon.fragment('f.text', this);
+    flyingon.fragment('f-textbox', this);
     
 
     this['max-length'] = this.defineProperty('maxLength', 0);

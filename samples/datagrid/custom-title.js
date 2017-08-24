@@ -16,7 +16,7 @@ flyingon.widget({
                         title: [
                             'F1', 
                             {
-                                control: {
+                                text: {
                                     Class: 'CheckBox'
                                 }
                             }
@@ -27,7 +27,7 @@ flyingon.widget({
                         title: [
                             'F2', 
                             {
-                                control: {
+                                text: {
                                     Class: 'TextBox',
                                     width: '100%'
                                 }
@@ -37,7 +37,7 @@ flyingon.widget({
 
                     {
                         title: {
-                            control: {
+                            text: {
                                 Class: 'div',
                                 width: '100%',
                                 height: '100%',
@@ -58,7 +58,7 @@ flyingon.widget({
 
         this[0].on('change', function (e) {
 
-            alert(e.value);
+            alert('change event  column-index:' + e.target.columnIndex + ' value:' + e.value);
         });
     }
 

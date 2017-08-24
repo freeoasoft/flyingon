@@ -25,7 +25,7 @@ flyingon.Control.extend('HtmlElement', function (base) {
     
 
     //扩展容器功能
-    flyingon.fragment('f.container', this, true);
+    flyingon.fragment('f-container', this, true);
 
 
 
