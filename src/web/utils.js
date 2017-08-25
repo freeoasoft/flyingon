@@ -699,15 +699,15 @@ flyingon.dom_html = function (host, html, refChild) {
 flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
 
     var dom = event.dom || event.target || event.srcElement,
-        style = event.style !== false && dom.style,
         on = flyingon.dom_on,
         off = flyingon.dom_off,
-        x0 = style && dom.offsetLeft,
-        y0 = style && dom.offsetTop,
         x1 = event.clientX,
         y1 = event.clientY,
         distanceX = 0,
-        distanceY = 0;
+        distanceY = 0,
+        style,
+        x0,
+        y0;
 
     function start(e) {
         
@@ -715,6 +715,13 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
         {
             e.dom = dom;
             begin.call(context, e);
+            dom = e.dom;
+        }
+
+        if (style = dom && dom.style)
+        {
+            x0 = dom.offsetLeft;
+            y0 = dom.offsetTop;
         }
         
         flyingon.dom_suspend(dom, 'click', true);

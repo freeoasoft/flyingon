@@ -26,6 +26,10 @@ body {
     text-decoration: underline;
 }
 
+.f-information {
+    color: darkgray;
+}
+
 .f-input, 
 .f-back, 
 .f-progressbar,
@@ -39,13 +43,14 @@ body {
 .f-dialog, 
 .f-groupbox,
 .f-calendar,
-.f-grid {
+.f-grid,
+.f-grid-groupbox span {
     border: 1px solid #95B8E7;
 }
 
 .f-slider-button div,
 .f-progressbar-back,
-.f-grid-head,
+.f-grid-column-head,
 .f-grid-head .f-grid-cell,
 .f-tab-head,
 .f-message-foot {
@@ -62,6 +67,10 @@ body {
 .f-groupbox-line,
 .f-dialog-line {
     background-color: #95B8E7;
+}
+
+.f-grid-groupbox {
+    background-color: #F8F8F8;
 }
 
 .f-back, 
@@ -507,7 +516,9 @@ input[type="text"],
 }
 
 
-.f-grid-head {
+.f-grid-head,
+.f-grid-groupbox,
+.f-grid-column-head {
     position: relative;
     overflow: hidden;
     margin: 0;
@@ -515,6 +526,53 @@ input[type="text"],
     padding: 0;
     outline: none;
     white-space: nowrap;
+    cursor: default;
+}
+
+.f-grid-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    z-index: 10;
+}
+
+.f-grid-groupbox span {
+    margin-left: 8px;
+    padding: 2px 8px;
+}
+
+.f-grid-groupbox .f-information {
+    margin-left: 8px;
+    border: 0;
+    font-size: 14px;
+    color: darkgray;
+}
+
+.f-grid-column-thumb {
+    position:absolute;
+    z-index: 10;
+}
+
+.f-grid-column-thumb-body {
+    position: absolute;
+    width: 5px;
+    left: 50%;
+    margin-left: -2px;
+    top: 0;
+    bottom: 0;
+    border-top: 1px solid red;
+    border-bottom: 1px solid red;
+}
+
+.f-grid-column-thumb-body div {
+    position: absolute;
+    width: 1px;
+    top: 0;
+    bottom: 0;
+    left: 2px;
+    background-color: red;
 }
 
 .f-grid-scroll,
@@ -569,21 +627,18 @@ input[type="text"],
 }
 
 .f-grid-left .f-grid-line {
-    position: absolute;
-    right: 0;
+    left: auto;
     top: 0;
-    bottom: 0;
     width: 2px;
-    z-index: 10;
+    height: auto;
 }
 
 .f-grid-right .f-grid-line {
     position: absolute;
-    left: 0;
+    right: auto;
     top: 0;
-    bottom: 0;
     width: 2px;
-    z-index: 1;
+    height: auto;
 }
 
 .f-grid-left {
