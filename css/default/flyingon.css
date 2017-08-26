@@ -2,7 +2,7 @@ body {
     margin: 0;
     padding: 0;
     font: 12px "PingFang SC","Lantinghei SC","Microsoft YaHei",arial,"\5b8b\4f53",sans-serif,tahoma;
-    background-color: #fff;
+    background-color: white;
 }
 
 .f-calendar-dark {
@@ -10,23 +10,29 @@ body {
 }
 
 .f-calendar-disabled {
-    background-color: #f0f0f0;
+    background-color: #F0F0F0;
     color: darkgray;
 }
 
 .f-listbox-selected,
 .f-calendar-selected {
-    color: #3498db;
+    color: #3498DB;
 }
 
 .f-calendar-title span:hover,
 .f-calendar-today:hover,
 .f-calendar-clear:hover {
-    color: #3498db;
+    color: #3498DB;
     text-decoration: underline;
 }
 
-.f-information {
+.f-grid-groupbox {
+    background-color: #F8F8F8;
+}
+
+.f-grid-groupbox .f-information {
+    font-size: 14px;
+    background-color: #F8F8F8;
     color: darkgray;
 }
 
@@ -44,7 +50,7 @@ body {
 .f-groupbox,
 .f-calendar,
 .f-grid,
-.f-grid-groupbox span {
+.f-grid-groupbox-cell {
     border: 1px solid #95B8E7;
 }
 
@@ -52,6 +58,7 @@ body {
 .f-progressbar-back,
 .f-grid-column-head,
 .f-grid-head .f-grid-cell,
+.f-grid-groupbox-cell,
 .f-tab-head,
 .f-message-foot {
     background-color: #EFF5FF;
@@ -67,10 +74,6 @@ body {
 .f-groupbox-line,
 .f-dialog-line {
     background-color: #95B8E7;
-}
-
-.f-grid-groupbox {
-    background-color: #F8F8F8;
 }
 
 .f-back, 
@@ -90,13 +93,13 @@ body {
 .f-selected-back,
 .f-tab-selected .f-tab-link,
 .f-dialog-active .f-dialog-head {
-    background-color: #ffffff;
-    background: -webkit-linear-gradient(top,#EFF5FF 0,#ffffff 100%);
-    background: -moz-linear-gradient(top,#EFF5FF 0,#ffffff 100%);
-    background: -o-linear-gradient(top,#EFF5FF 0,#ffffff 100%);
-    background: linear-gradient(to bottom,#EFF5FF 0,#ffffff 100%);
+    background-color: white;
+    background: -webkit-linear-gradient(top,#EFF5FF 0,white 100%);
+    background: -moz-linear-gradient(top,#EFF5FF 0,white 100%);
+    background: -o-linear-gradient(top,#EFF5FF 0,white 100%);
+    background: linear-gradient(to bottom,#EFF5FF 0,white 100%);
     background-repeat: repeat-x;
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#EFF5FF,endColorstr=#ffffff,GradientType=0);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#EFF5FF,endColorstr=white,GradientType=0);
 }
 
 .f-tab-direction-top .f-tab-selected .f-tab-link {
@@ -535,19 +538,17 @@ input[type="text"],
     right: 0;
     bottom: 0;
     height: 1px;
-    z-index: 10;
+    z-index: 2;
 }
 
-.f-grid-groupbox span {
+.f-grid-groupbox-cell {
     margin-left: 8px;
-    padding: 2px 8px;
+    padding: 2px 20px;
 }
 
 .f-grid-groupbox .f-information {
     margin-left: 8px;
     border: 0;
-    font-size: 14px;
-    color: darkgray;
 }
 
 .f-grid-column-thumb {
@@ -557,22 +558,22 @@ input[type="text"],
 
 .f-grid-column-thumb-body {
     position: absolute;
-    width: 5px;
+    width: 9px;
     left: 50%;
-    margin-left: -2px;
+    margin-left: -4px;
     top: 0;
     bottom: 0;
-    border-top: 1px solid red;
-    border-bottom: 1px solid red;
+    border-top: 2px solid lightcoral;
+    border-bottom: 2px solid lightcoral;
 }
 
 .f-grid-column-thumb-body div {
     position: absolute;
-    width: 1px;
+    width: 3px;
     top: 0;
     bottom: 0;
-    left: 2px;
-    background-color: red;
+    left: 3px;
+    background-color: lightcoral;
 }
 
 .f-grid-scroll,
@@ -586,7 +587,7 @@ input[type="text"],
 }
 
 .f-grid-scroll {
-    z-index: 11;
+    z-index: 2;
 }
 
 .f-grid-body {
@@ -606,7 +607,7 @@ input[type="text"],
     width: 5px;
     cursor: ew-resize;
     background-color: transparent;
-    z-index: 10;
+    z-index: 2;
 }
 
 .f-grid-resize-thumb {
@@ -615,7 +616,7 @@ input[type="text"],
     bottom: 0;
     width: 2px;
     cursor: ew-resize;
-    z-index: 9;
+    z-index: 10;
 }
 
 .f-grid-left,

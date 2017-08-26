@@ -8,69 +8,50 @@ flyingon.widget({
 
             {
                 Class: 'DataGrid',
-                header: 80,
+                header: 40,
                 groupbox: 35,
+                locked: '1 1',
 
                 columns: [
 
                     { 
                         name: 'F1',
-                        title: [
-                            { text: 'F1234', span: 3, size: 35 }, 
-                            { text: 'F12', span: 1 }, 
-                            'F1'
-                        ]
+                        title: 'F1'
                     },
 
                     { 
                         name: 'F2',
-                        title: [{ text: '' , size: 35 }, '', 'F2'] 
+                        title: 'F2'
                     },
 
                     { 
                         name: 'F3',
-                        title: [{ text: '' , size: 35 }, { text: 'F34', span: 1 }, 'F3'] 
+                        title: [{ text: 'F34', span: 1 }, 'F3'] 
                     },
 
                     { 
                         name: 'F4',
-                        title: [{ text: '' , size: 35 }, '', 'F4'] 
+                        title: ['', 'F4'] 
                     },
 
                     { 
                         name: 'F5',
-                        title: [
-                            { text: 'F5', size: 35 }, 
-                            { text: 'F56', span: 1 }, 
-                            { text: 'F5678', span: 3 }
-                        ]
+                        title: [{ text: 'F56', span: 1 }, 'F5']
                     },
 
                     { 
                         name: 'F6',
-                        title: [
-                            { text: 'F6', size: 35 }, 
-                            '', 
-                            ''
-                        ] 
+                        title: ['', 'F6'] 
                     },
 
                     { 
                         name: 'F7',
-                        title: [
-                            { text:'F7', size: 35 }, 
-                            { text: 'F78', span: 1 }, 
-                            ''
-                        ] 
+                        title: 'F7'
                     },
 
                     { 
                         name: 'F8',
-                        title: [
-                            { text: 'F8', size: 35 }, 
-                            '', 
-                            ''
-                        ]
+                        title: 'F8'
                     }
                 ]
             }
