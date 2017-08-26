@@ -26,11 +26,11 @@ body {
     text-decoration: underline;
 }
 
-.f-grid-groupbox {
+.f-grid-group {
     background-color: #F8F8F8;
 }
 
-.f-grid-groupbox .f-information {
+.f-grid-group .f-information {
     font-size: 14px;
     background-color: #F8F8F8;
     color: darkgray;
@@ -50,7 +50,7 @@ body {
 .f-groupbox,
 .f-calendar,
 .f-grid,
-.f-grid-groupbox-cell {
+.f-grid-group-cell {
     border: 1px solid #95B8E7;
 }
 
@@ -58,7 +58,7 @@ body {
 .f-progressbar-back,
 .f-grid-column-head,
 .f-grid-head .f-grid-cell,
-.f-grid-groupbox-cell,
+.f-grid-group-cell,
 .f-tab-head,
 .f-message-foot {
     background-color: #EFF5FF;
@@ -520,7 +520,7 @@ input[type="text"],
 
 
 .f-grid-head,
-.f-grid-groupbox,
+.f-grid-group,
 .f-grid-column-head {
     position: relative;
     overflow: hidden;
@@ -538,15 +538,17 @@ input[type="text"],
     right: 0;
     bottom: 0;
     height: 1px;
+    width: auto;
+    height: 1px;
     z-index: 2;
 }
 
-.f-grid-groupbox-cell {
+.f-grid-group-cell {
     margin-left: 8px;
     padding: 2px 20px;
 }
 
-.f-grid-groupbox .f-information {
+.f-grid-group .f-information {
     margin-left: 8px;
     border: 0;
 }
@@ -619,39 +621,6 @@ input[type="text"],
     z-index: 10;
 }
 
-.f-grid-left,
-.f-grid-center,
-.f-grid-right {
-    position: absolute;
-    top: 0;
-    height: 100%;
-}
-
-.f-grid-left .f-grid-line {
-    left: auto;
-    top: 0;
-    width: 2px;
-    height: auto;
-}
-
-.f-grid-right .f-grid-line {
-    position: absolute;
-    right: auto;
-    top: 0;
-    width: 2px;
-    height: auto;
-}
-
-.f-grid-left {
-    left: 0;
-    z-index: 1;
-}
-
-.f-grid-right {
-    right: 0;
-    z-index: 1;
-}
-
 .f-grid-cell {
     position: absolute;
     left: 0;
@@ -667,6 +636,72 @@ input[type="text"],
 
 .f-grid-head .f-grid-cell {
     text-align: center;
+}
+
+.f-grid-top,
+.f-grid-middle,
+.f-grid-bottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    width: auto;
+}
+
+.f-grid-middle {
+    top: 0;
+    bottom: 0;
+}
+
+.f-grid-top {
+    top: 0;
+    z-index: 2;
+}
+
+.f-grid-bottom {
+    bottom: 0;
+    z-index: 2;
+}
+
+.f-grid-top .f-grid-line {
+    top: auto;
+    height: 2px;
+}
+
+.f-grid-bottom .f-grid-line {
+    bottom: auto;
+    height: 2px;
+}
+
+.f-grid-left,
+.f-grid-center,
+.f-grid-right {
+    position: absolute;
+    top: 0;
+    height: 100%;
+}
+
+.f-grid-left {
+    left: 0;
+    z-index: 2;
+}
+
+.f-grid-right {
+    right: 0;
+    z-index: 2;
+}
+
+.f-grid-left .f-grid-line {
+    left: auto;
+    top: 0;
+    width: 2px;
+    height: auto;
+}
+
+.f-grid-right .f-grid-line {
+    right: auto;
+    top: 0;
+    width: 2px;
+    height: auto;
 }
 
 

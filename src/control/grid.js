@@ -35,24 +35,13 @@ flyingon.GridColumn = Object.extend(function () {
     };
 
 
-    function update_data() {
+    function update() {
 
         var grid = this.grid;
 
         if (grid && grid.rendered)
         {
             grid.update(false);
-        }
-    };
-
-
-    function update_all() {
-
-        var grid = this.grid;
-
-        if (grid && grid.rendered)
-        {
-            grid.update(true);
         }
     };
 
@@ -94,14 +83,15 @@ flyingon.GridColumn = Object.extend(function () {
                 if (any = this.cells)
                 {
                     any._ = any.slice(0);
+                    any = any.span;
                 }
 
                 this.__set_title(value);
 
-                //如果原来跨列或现在跨列,需重新计算跨列
                 if (any = this.grid)
                 {
-                    any.update(true);
+                    //原来有跨列可现在有跨列则需重计算列
+                    any.update(any > 0 || this.cells.span > 0);
                 }
             }
             else
@@ -170,7 +160,7 @@ flyingon.GridColumn = Object.extend(function () {
 
 
     //格式化
-    this.defineProperty('formatter', null, { set: update_data });
+    this.defineProperty('formatter', null, { set: update });
 
 
     //过滤方式
@@ -184,11 +174,11 @@ flyingon.GridColumn = Object.extend(function () {
     //average:  平均值
     //sum:      总数
     //custom:   自定义
-    this.defineProperty('summary', '', { set: update_data });
+    this.defineProperty('summary', '', { set: update });
 
 
     //汇总信息是否显示在汇总行
-    this.defineProperty('summaryRow', false, { set: update_data });
+    this.defineProperty('summaryRow', false, { set: update });
 
 
 
@@ -768,20 +758,20 @@ flyingon.GridView = Object.extend(function () {
     flyingon.fragment(this, 'f-grid-rows');
 
 
+    //分组或取消分组
+    this.group = function (groups) {
+
+        
+    };
+
+
+
 });
 
 
 
-//表格分组视图
-flyingon.GroupGridView = flyingon.GridView.extend(function (base) {
-
-
-});
-
-
-
-//表格基类
-flyingon.BaseGrid = flyingon.Control.extend(function (base) {
+//表格控件
+flyingon.Control.extend('Grid', function (base) {
 
 
 
@@ -851,8 +841,8 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
     });
 
 
-    //分组框大小
-    this.defineProperty('groupbox', 0, {
+    //分组框高度
+    this.defineProperty('group', 0, {
 
         set: function (value) {
 
@@ -886,12 +876,46 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
     });
 
 
-    //是否显示过滤栏
-    this.defineProperty('filter', false);
+    //过滤栏高度
+    this.defineProperty('filter', 0, {
+
+        set: function (value) {
+
+            if (this.rendered)
+            {
+                this.renderer.set(this, 'filter', value);
+                this.update(false);
+            }
+        }
+    });
+
+
+    //锁定 锁定多个方向可按 left->right->top->bottom 顺序以空格分隔
+    this.defineProperty('locked', '', {
+
+        set: function (value) {
+
+            var locked = this.__columns.locked;
+
+            locked[0] = locked[1] = locked[2] = locked[3] = 
+            this.__locked_top = this.__locked_bottom = 0;
+
+            if (value && (value = value.match(/\d+/g)))
+            {
+                locked[0] = value[0] | 0;
+                locked[1] = value[1] | 0;
+
+                this.__locked_top = value[2] | 0;
+                this.__locked_bottom = value[3] | 0;
+            }
+
+            this.rendered && this.update(true);
+        }
+    });
 
 
     //行高
-    this['row-height'] = this.defineProperty('rowHeight', 28, {
+    this['row-height'] = this.defineProperty('rowHeight', 25, {
 
         set: function () {
 
@@ -900,33 +924,31 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
     });
 
 
-    //是否只读
-    this.defineProperty('readonly', true);
-
-
-    //锁定 锁定多个方向可按 left->right->top->bottom 顺序以空格分隔
-    this.defineProperty('locked', '', {
+    //分组设置
+    this.defineProperty('groups', '', {
 
         set: function (value) {
 
-            var x = this.__columns.locked,
-                y = this.__rows.locked;
-
-            x[0] = x[1] = x[2] = x[3] = y[0] = y[1] = 0;
-
-            if (value && (value = value.match(/\d+/g)))
-            {
-                x[0] = value[0] | 0;
-                x[1] = value[1] | 0;
-
-                y[0] = value[2] | 0;
-                y[1] = value[3] | 0;
-            }
-
-            this.rendered && this.update(true);
+            this.__group_dirty = true;
+            this.__row_dirty = 2;
+            this.rendered && this.update(false);
         }
     });
 
+
+    //分组时是否显示汇总行
+    this.defineProperty('summary', false, {
+
+        set: function (value) {
+
+            this.__row_dirty = 2;
+            this.rendered && this.update(false);
+        }
+    });
+
+
+    //是否只读
+    this.defineProperty('readonly', true);
 
 
     //选择模式
@@ -936,6 +958,13 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
     //3  选择行及列
     this['selected-mode'] = this.defineProperty('selectedMode', 0);
 
+
+
+    //树表列
+    this['tree-column'] = this.defineProperty('treeColumn', '', {
+        
+
+    });
 
 
     
@@ -989,46 +1018,12 @@ flyingon.BaseGrid = flyingon.Control.extend(function (base) {
 
 
 
-});
-
-
-
-// //表格控件
-// flyingon.BaseGrid.extend('Grid', function (base) {
-
-
-
-// }).register();
+}).register();
 
 
 
 //数据表格控件
-flyingon.BaseGrid.extend('DataGrid', function (base) {
-
-
-
-    //分组设置
-    this.defineProperty('group', '', {
-
-        set: function (value) {
-
-            this.__group_dirty = true;
-            this.__row_dirty = 2;
-            this.rendered && this.update(false);
-        }
-    });
-
-
-    //分组时是否显示汇总行
-    this.defineProperty('summary', false, {
-
-        set: function (value) {
-
-            this.__row_dirty = 2;
-            this.rendered && this.update(false);
-        }
-    });
-
+flyingon.Grid.extend('DataGrid', function (base) {
 
 
     //数据集
@@ -1068,13 +1063,6 @@ flyingon.BaseGrid.extend('DataGrid', function (base) {
 
 
 
-    //树表列
-    this.defineProperty('treeField', '', {
-        
-    });
-
-
-
     this.__init_row = function (rows, index) {
 
         var row, any;
@@ -1096,12 +1084,9 @@ flyingon.BaseGrid.extend('DataGrid', function (base) {
 
 
 
-// //竖向表格控件
-// flyingon.BaseGrid.extend('VerticalGrid', function (base) {
+// //属性表格控件
+// flyingon.Grid.extend('PropertyGrid', function (base) {
 
-
-//     //数据集
-//     this.defineProperty('dataset', null);
 
 
 // });

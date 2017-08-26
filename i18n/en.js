@@ -11,7 +11,7 @@ flyingon.i18n('system', {
 flyingon.i18n({
 
     'listbox.clear': '--------',
-    'grid.groupbox': 'drag column header to group here'
+    'grid.group': 'drag column header to group here'
 });
 
 

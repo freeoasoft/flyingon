@@ -41,7 +41,7 @@
 
 
     //滚动条位置控制
-    this.__scroll_html = '<div style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;width:1px;height:1px;"></div>';
+    this.__scroll_html = '<div class="f-scroll" style="position:static;overflow:hidden;visibility:hidden;margin:0;border:0;padding:0;width:1px;height:1px;"></div>';
 
        
     //设置text属性名
@@ -1130,7 +1130,7 @@
 
         view = control.view_content || view;
 
-        if ((last = view.lastChild) && last.getAttribute('tag') === 'scroll')
+        if ((last = view.lastChild) && last.className === 'f-scroll')
         {
             tag = last;
             last = last.previousSibling;

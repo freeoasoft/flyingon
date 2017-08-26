@@ -49,18 +49,7 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
 
         if (control.collapsable())
         {
-            var view = control.view,
-                node = e.target || e.srcElement;
-
-            while (node !== view)
-            {
-                if (node.getAttribute('tag') === 'head')
-                {
-                    control.collapsed(!control.collapsed());
-                }
-
-                node = node.parentNode;
-            }
+            control.collapsed(!control.collapsed());
         }
     };
 

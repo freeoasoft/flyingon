@@ -11,7 +11,7 @@ flyingon.i18n('system', {
 flyingon.i18n({
 
     'listbox.clear': '--------',
-    'grid.groupbox': '可拖动列头到此处进行分组'
+    'grid.group': '可拖动列头到此处进行分组'
 });
 
 
