@@ -8,28 +8,28 @@ flyingon.fragment('f-bindable', function () {
         
         fn: function (value) {
 
-            var oldValue = this.__dataset || null;
+            var any = this.__dataset || null;
 
             if (value === void 0)
             {
-                return oldValue;
+                return any;
             }
 
-            if (oldValue === value)
+            if (any === value)
             {
                 return this;
             }
 
-            if (this.__watch_list && flyingon.__do_watch(this, name, value) === false)
+            if (this.__watch_list && flyingon.__do_watch(this, 'dataset', value) === false)
             {
                 return this;
             }
 
             this.__dataset = value;
 
-            if (oldValue) 
+            if (any) 
             {
-                oldValue.subscribe(this, true);
+                any.subscribe(this, true);
             }
 
             if (value) 

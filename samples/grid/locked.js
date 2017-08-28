@@ -7,7 +7,7 @@ flyingon.widget({
         children: [
 
             {
-                Class: 'DataGrid',
+                Class: 'Grid',
                 locked: '2 2 2 2'
             }
 
@@ -19,7 +19,7 @@ flyingon.widget({
         var columns = []
         var data = [];
 
-        for (var j = 1; j <= 100; j++)
+        for (var j = 1; j <= 10; j++)
         {
             columns.push({ title: 'F' + j });
         }
@@ -30,10 +30,12 @@ flyingon.widget({
         {
             var item = {};
 
-            for (var j = 1; j <= 100; j++)
+            for (var j = 1; j <= 10; j++)
             {
                 item['F' + j] = j;
             }
+
+            data.push(item);
         }
 
         var dataset = new flyingon.DataSet();

@@ -7,7 +7,7 @@ flyingon.widget({
         children: [
 
             {
-                Class: 'DataGrid',
+                Class: 'Grid',
                 header: 60,
 
                 columns: [

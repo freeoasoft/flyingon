@@ -54,6 +54,22 @@ body {
     border: 1px solid #95B8E7;
 }
 
+.f-grid-left {
+    border-right: 1px solid #95B8E7;
+}
+
+.f-grid-right {
+    border-left: 1px solid #95B8E7;
+}
+
+.f-grid-top {
+    border-bottom: 1px solid #95B8E7;
+}
+
+.f-grid-bottom {
+    border-top: 1px solid #95B8E7;
+}
+
 .f-slider-button div,
 .f-progressbar-back,
 .f-grid-column-head,
@@ -159,6 +175,18 @@ input[type="text"],
 .f-rtl {
     direction: rtl;
 }
+
+
+.f-scrollpanel-scroll,
+.f-scrollpanel-body {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    overflow: auto;
+}
+
 
 .f-slider-bar {
     position: absolute;
@@ -521,7 +549,8 @@ input[type="text"],
 
 .f-grid-head,
 .f-grid-group,
-.f-grid-column-head {
+.f-grid-column-head,
+.f-grid-filter {
     position: relative;
     overflow: hidden;
     margin: 0;
@@ -586,10 +615,6 @@ input[type="text"],
     top: 0;
     bottom: 0;
     overflow: auto;
-}
-
-.f-grid-scroll {
-    z-index: 2;
 }
 
 .f-grid-body {
@@ -662,16 +687,6 @@ input[type="text"],
     z-index: 2;
 }
 
-.f-grid-top .f-grid-line {
-    top: auto;
-    height: 2px;
-}
-
-.f-grid-bottom .f-grid-line {
-    bottom: auto;
-    height: 2px;
-}
-
 .f-grid-left,
 .f-grid-center,
 .f-grid-right {
@@ -688,20 +703,6 @@ input[type="text"],
 .f-grid-right {
     right: 0;
     z-index: 2;
-}
-
-.f-grid-left .f-grid-line {
-    left: auto;
-    top: 0;
-    width: 2px;
-    height: auto;
-}
-
-.f-grid-right .f-grid-line {
-    right: auto;
-    top: 0;
-    width: 2px;
-    height: auto;
 }
 
 

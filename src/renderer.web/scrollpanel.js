@@ -30,10 +30,10 @@ flyingon.renderer('ScrollPanel', function (base) {
         this.renderDefault(writer, control);
         
         writer.push('>',
-            '<div style="position:absolute;left:0;top:0;right:0;bottom:0;width:auto;height:auto;overflow:auto;" onscroll="flyingon.__dom_scroll.call(this, event)">',
+            '<div class="f-scrollpanel-scroll" onscroll="flyingon.__dom_scroll.call(this, event)">',
                 text,
             '</div>',
-            '<div style="position:relative;overflow:hidden;margin:0;border:0;padding:0;left:0;top:0;width:100%;height:100%;">',
+            '<div class="f-scrollpanel-body" style="overflow:hidden;">',
                 text,
             '</div>',
         '</div>');
@@ -52,6 +52,7 @@ flyingon.renderer('ScrollPanel', function (base) {
 
     this.unmount = function (control) {
 
+        control.view_content = null;
         this.__unmount_children(control);
         base.unmount.call(this, control);
     };
@@ -70,7 +71,6 @@ flyingon.renderer('ScrollPanel', function (base) {
     this.locate = function (control) {
 
         var cache = base.locate.call(this, control),
-            name = flyingon.rtl ? 'paddingLeft' : 'paddingRight',
             start, 
             end, 
             any;
@@ -98,15 +98,9 @@ flyingon.renderer('ScrollPanel', function (base) {
             }
         }
 
-        if (cache[name] !== (any = control.__vscroll ? flyingon.vscroll_width : 0))
-        {
-            control.view.style[name] = (cache[name] = any) + 'px';
-        }
-
-        if (cache.paddingBottom !== (any = control.__hscroll ? flyingon.hscroll_height : 0))
-        {
-            control.view.style.paddingBottom = (cache.paddingBottom = any) + 'px';
-        }
+        any = control.view_content.style;
+        any[flyingon.rtl ? 'left' : 'right'] = (control.__vscroll ? flyingon.vscroll_width : 0) + 'px';
+        any.bottom = (control.__hscroll ? flyingon.hscroll_height : 0) + 'px';
 
         start = control.__visible_start;
         end = control.__visible_end + 1;
@@ -117,7 +111,7 @@ flyingon.renderer('ScrollPanel', function (base) {
             if (control.__visible_unmount)
             {
                 control.__visible_unmount = false;
-                this.__insert_children(control, control.view.lastChild, start, end);
+                this.__insert_children(control, control.view_content, start, end);
             }
             
             //定位子控件
@@ -175,7 +169,7 @@ flyingon.renderer('ScrollPanel', function (base) {
     //插入视图补丁
     this.__insert_children = function (control, view, start, end) {
 
-        var tag = (view = control.view_content || view).lastChild || null,
+        var tag = view.lastChild || null,
             last = -1,
             item,
             node;
@@ -194,7 +188,7 @@ flyingon.renderer('ScrollPanel', function (base) {
 
                     if (last > 0)
                     {
-                        this.__unmount_html(view, control, i + 1, last, tag);
+                        this.__unmount_html(control, view, control, i + 1, last, tag);
                         last = -1;
                     }
 
@@ -209,7 +203,7 @@ flyingon.renderer('ScrollPanel', function (base) {
 
         if (last > 0)
         {
-            this.__unmount_html(view, control, start, last, tag);
+            this.__unmount_html(control, view, control, start, last, tag);
         }
     };
 

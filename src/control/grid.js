@@ -172,18 +172,9 @@ flyingon.GridColumn = Object.extend(function () {
     //max:      最大值
     //min:      最小值
     //average:  平均值
-    //sum:      总数
+    //sum:      求和
     //custom:   自定义
     this.defineProperty('summary', '', { set: update });
-
-
-    //汇总信息是否显示在汇总行
-    this.defineProperty('summaryRow', false, { set: update });
-
-
-
-    //自定义单元格渲染
-    this.onrender = null;
 
 
 
@@ -356,7 +347,7 @@ flyingon.GridColumns = Object.extend(function () {
             }
             else
             {
-                items[start] = any = new Class(any);
+                items[start] = any = new (any && columns[any.type] || Class)(any);
             }
 
             any.grid = grid;
@@ -381,7 +372,7 @@ flyingon.GridColumns = Object.extend(function () {
 
             if (item.view)
             {
-                this.renderer.unmount(item);
+                item.renderer.unmount(item);
             }
         }
 
@@ -489,6 +480,7 @@ flyingon.GridColumns = Object.extend(function () {
             column = columns[start];
 
             column.absoluteIndex = start++;
+            column.dirty = true; //标记列已重计算过
             column.offset = 0; //前置偏移
 
             if (!column.__visible)
@@ -631,35 +623,13 @@ flyingon.GridColumns = Object.extend(function () {
 
 
 
-//表格行集片段
-flyingon.fragment('f-grid-rows', function () {
-
-
-    flyingon.fragment(this, 'f-collection');
-
-
-    this.__check_items = function (index, items, start) {
-
-    };
-
-
-    this.__remove_items = function (index, items) {
-
-    };
-
-
-});
-
-
-
 //表格行
 flyingon.GridRow = Object.extend._(function () {
 
     
-    
     //所属表格
     this.grid = null;
-    
+
     //上级行
     this.parent = null;
     
@@ -672,8 +642,8 @@ flyingon.GridRow = Object.extend._(function () {
     //是否展开
     this.expanded = false;
 
-    //单元格集合
-    this.cells = null;
+    //行数据
+    this.data = null;
 
 
     //获取行级别
@@ -692,38 +662,18 @@ flyingon.GridRow = Object.extend._(function () {
     };
 
 
-    
-    //扩展表格行集功能
-    flyingon.fragment(this, 'f-grid-rows');
-
-
 
     //获取指定索引行或行记录数
     this.rows = function (index) {
 
-        var rows = this.__rows,
-            row,
-            any;
+        var rows = this.__rows;
 
         if (index >= 0)
         {
-            if (row = rows[index])
-            {
-                return row;
-            }
-
-            if ((any = this.row) && (any = any[index]))
-            {
-                row = new flyingon.TreeGridRow();
-                row.parent = this;
-                row.row = any;
-                row.data = any.data;
-
-                return row;
-            }
+            return rows && rows[index] || null;
         }
 
-        return rows.length;
+        return rows || (this.__rows = new flyingon.GridRows(this.grid));
     };
     
 
@@ -738,7 +688,149 @@ flyingon.GridRow = Object.extend._(function () {
 
     };
 
+
+
+    //销毁
+    this.dispose = function (deep) {
+
+        var list, cell, any;
+
+        this.grid = null;
+
+        if (deep !== false && (list = this.__rows))
+        {
+            for (var i = list.length - 1; i >= 0; i--)
+            {
+                rows[i].dispose();
+            }
+
+            this.rows = null;
+        }
+
+        if (list = this.cells)
+        {
+            for (var i = list.length - 1; i >= 0; i--)
+            {
+                cell = list[i];
+
+                if (any = cell.control)
+                {
+                    any.parent = any.view = null;
+                    any.renderer.unmount(any);
+                }
+
+                if ((cell = cell.view) && (any = cell.parentNode))
+                {
+                    any.removeChild(cell);
+                }
+            }
+        }
+    };
+
+
+    flyingon.renderer.bind(this, 'GridRow');
+
     
+});
+
+
+
+//分组行
+flyingon.GroupGridRow = Object.extend._(flyingon.GridRow, function (base) {
+
+
+    this.dispose = function (deep) {
+
+        var rows;
+
+        base.dispose.call(this, deep);
+
+        if (deep === false && (rows = this.rows) && rows[0] instanceof flyingon.GroupGridRow)
+        {
+            for (var i = rows.length - 1; i >= 0; i--)
+            {
+                rows[i].dispose();
+            }
+
+            this.rows = null;
+        }
+    };
+
+
+    flyingon.renderer.bind(this, 'GroupGridRow');
+
+
+});
+
+
+
+//表格行集合
+flyingon.GridRows = Object.extend(function () {
+
+
+
+    this.init = function (grid) {
+
+        this.grid = grid;
+    };
+
+
+    
+    flyingon.fragment(this, 'f-collection');
+
+
+
+    this.__check_items = function (index, items, start) {
+
+        var Class = flyingon.GridRow,
+            grid = this.grid,
+            end = items.length,
+            any;
+
+        while (start < end)
+        {
+            any = items[start];
+
+            if (any instanceof Class)
+            {
+                if (any.grid)
+                {
+                    any.remove();
+                }
+            }
+            else
+            {
+                items[start] = any = new Class(any);
+            }
+
+            any.grid = grid;
+            start++;
+        }
+
+        grid.rendered && grid.update(false);
+    };
+
+
+    this.__remove_items = function (index, items) {
+
+        var grid = this.grid,
+            item;
+
+        for (var i = 0, l = items.length; i < l; i++)
+        {
+            item = items[i];
+            item.grid = null;
+
+            if (item.view)
+            {
+                item.renderer.unmount(item);
+            }
+        }
+
+        grid.rendered && grid.update(false);
+    };
+
+
 });
 
 
@@ -747,21 +839,100 @@ flyingon.GridRow = Object.extend._(function () {
 flyingon.GridView = Object.extend(function () {
 
 
+    //rows: 物理行集
+    //view: 视图,未分组时等于物理行集
     this.init = function (grid) {
 
         this.grid = grid;
-        this.locked = [0, 0];
+        this.rows = this.view = new flyingon.GridRows(grid);
     };
 
 
-    //扩展表格行集功能
-    flyingon.fragment(this, 'f-grid-rows');
+
+    //初始化视图
+    this.__init_view = function () {
+
+        var grid = this.grid,
+            any;
+
+        if (any = this.__group)
+        {
+            this.__group = null;
+            
+            for (var i = any.length - 1; i >= 0; i--)
+            {
+                any[i].dispose(false);
+            }
+        }
+
+        if ((any = grid.groups()) && (any = any.match(/\w+/g)))
+        {
+            this.group(any);
+        }
+        else
+        {
+            this.view = this.rows;
+        }
+    };
 
 
-    //分组或取消分组
-    this.group = function (groups) {
+    //标记分组变更
+    this.__group_dirty = function () {
+
+        var view = this.view;
+
+        this.view = this.__visual = null;
+
+        if (view !== this.rows)
+        {
+            this.__group = view;
+        }
+    };
+
+
+    //获取当前视图
+    this.current = function () {
+
+        return this.__visual || this.view || this.__init_view();
+    };
+
+
+    //分组
+    this.group = function (list) {
 
         
+    };
+
+
+    //从dataset加载数据行
+    this.dataset = function (dataset) {
+
+        var Class = flyingon.GridRow,
+            grid = this.grid,
+            rows = this.rows,
+            length = rows.length;
+
+        if (length > 0)
+        {
+            for (var i = length - 1; i >= 0; i--)
+            {
+                rows[i].dispose();
+            }
+
+            //Array.prototype.splice.call(rows, 0);
+        }
+
+        length = rows.length = dataset.length;
+
+        for (var i = 0; i < length; i++)
+        {
+            var gr = rows[i] = new Class(),
+                dr = dataset[i];
+
+            gr.grid = grid;
+            gr.data = dr.data;
+            gr.rowId = dr.uniqueId; 
+        }
     };
 
 
@@ -778,7 +949,7 @@ flyingon.Control.extend('Grid', function (base) {
     this.init = function () {
 
         this.__columns = new flyingon.GridColumns(this);
-        this.__rows = new flyingon.GridView(this);
+        this.__view = new flyingon.GridView(this);
     };
 
 
@@ -794,13 +965,6 @@ flyingon.Control.extend('Grid', function (base) {
     //表格列是否需要更新
     this.__column_dirty = false;
 
-    //表格行更新方式
-    //0 不需要更新
-    //1 需要处理过滤栏
-    //2 需要处理分组栏
-    //4 需要处理汇总栏
-    this.__row_dirty = 0;
-
 
 
     //表格列
@@ -810,33 +974,31 @@ flyingon.Control.extend('Grid', function (base) {
 
             var columns = this.__columns;
 
+            if (value === void 0)
+            {
+                return columns;
+            }
+
             if (value >= 0)
             {
                 return columns[value];
             }
 
-            if (value)
+            if (typeof value === 'string')
             {
-                if (typeof value === 'string')
-                {
-                    value = flyingon.parseJSON(value);
-                }
-
-                if (value instanceof Array)
-                {
-                    columns.push.apply(columns, value);
-                }
-                else
-                {
-                    columns.push(value);
-                }
-
-                this.rendered && this.update(true);
- 
-                return this;
+                value = flyingon.parseJSON(value);
             }
 
-            return columns;
+            if (value instanceof Array)
+            {
+                columns.push.apply(columns, value);
+            }
+            else
+            {
+                columns.push(value);
+            }
+            
+            return this;
         }
     });
 
@@ -927,21 +1089,15 @@ flyingon.Control.extend('Grid', function (base) {
     //分组设置
     this.defineProperty('groups', '', {
 
+        check: function (value) {
+        
+            return value && value.match(/\w/) ? value : ''
+        },
+
         set: function (value) {
 
             this.__group_dirty = true;
-            this.__row_dirty = 2;
-            this.rendered && this.update(false);
-        }
-    });
-
-
-    //分组时是否显示汇总行
-    this.defineProperty('summary', false, {
-
-        set: function (value) {
-
-            this.__row_dirty = 2;
+            this.__view.__group_dirty(value);
             this.rendered && this.update(false);
         }
     });
@@ -967,30 +1123,67 @@ flyingon.Control.extend('Grid', function (base) {
     });
 
 
-    
-    //获取指定索引行或行记录数
-    this.rows = function (index) {
-        
-        var rows = this.__rows,
-            row;
 
-        if (index >= 0)
-        {
-            if (row = rows[index])
+    //数据集
+    this.defineProperty('dataset', null, {
+
+        fn: function (value) {
+
+            var any = this.__dataset || null;
+
+            if (any === void 0)
             {
-                return row;
+                return any;
             }
 
-            return this.__init_row(rows, index);
+            if (any === value)
+            {
+                return this;
+            }
+
+            if (this.__watch_list && flyingon.__do_watch(this, 'dataset', value) === false)
+            {
+                return this;
+            }
+
+            this.__dataset = value;
+
+            if (any) 
+            {
+                any.subscribe(this, true);
+            }
+
+            if (value) 
+            {
+                value.subscribe(this);
+            }
+
+            this.__view.dataset(value);
+
+            return this;
+        }
+    });
+
+
+
+    //延迟加载时默认行数
+    this['lazy-load'] = this.defineProperty('lazyLoad', 0);
+
+
+    
+    //获取指定索引行或行集合
+    this.rows = function (index) {
+        
+        var view = this.__view;
+
+        view = view.view || view.__init_view();
+
+        if (index === void 0)
+        {
+            return view;
         }
 
-        return rows.length;
-    };
-
-
-    this.__init_row = function (rows, index) {
-
-
+        return view[index] || null;
     };
 
 
@@ -1019,74 +1212,3 @@ flyingon.Control.extend('Grid', function (base) {
 
 
 }).register();
-
-
-
-//数据表格控件
-flyingon.Grid.extend('DataGrid', function (base) {
-
-
-    //数据集
-    this.defineProperty('dataset', null, {
-
-        fn: function (value) {
-
-            var oldValue = this.__dataset || null;
-
-            if (value === void 0)
-            {
-                return oldValue;
-            }
-
-            if (oldValue === value)
-            {
-                return this;
-            }
-
-            if (this.__watch_list && flyingon.__do_watch(this, name, value) === false)
-            {
-                return this;
-            }
-
-            this.__dataset = value;
-
-            //
-
-            return this;
-        }
-    });
-
-
-
-    //延迟加载时默认行数
-    this['lazy-load'] = this.defineProperty('lazyLoad', 0);
-
-
-
-    this.__init_row = function (rows, index) {
-
-        var row, any;
-
-        if ((any = this.__dataset) && (any = any[index]))
-        {
-            row = new flyingon.GridRow();
-            row.row = any;
-            row.data = any.data;
-
-            return row;
-        }
-    };
-
-
-
-}).register();
-
-
-
-
-// //属性表格控件
-// flyingon.Grid.extend('PropertyGrid', function (base) {
-
-
-
-// });

@@ -1092,7 +1092,7 @@
         
         writer[0] && flyingon.dom_html(view, writer.join(''), tag);
 
-        node = node && node.nextSibling || view.lastChild;
+        node = node && node.nextSibling || view.firstChild;
 
         this.__mount_children(control, view, items, start, end, node);
     };
