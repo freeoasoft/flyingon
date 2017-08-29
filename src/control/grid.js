@@ -2,10 +2,16 @@ flyingon.GridColumn = Object.extend(function () {
 
 
 
+    var Class = flyingon.Label;
+
+    var create = flyingon.create;
+
+
+
     this.init = function (options) {
 
-        //列头单元格集合
-        this.cells = [];
+        //列头控件集合
+        this.__cells = [];
 
         if (options)
         {
@@ -80,10 +86,10 @@ flyingon.GridColumn = Object.extend(function () {
                 this.view = false;
 
                 //记录原单元格
-                if (any = this.cells)
+                if (any = this.__cells)
                 {
                     any._ = any.slice(0);
-                    any = any.span;
+                    any = any.__column_span;
                 }
 
                 this.__set_title(value);
@@ -91,7 +97,7 @@ flyingon.GridColumn = Object.extend(function () {
                 if (any = this.grid)
                 {
                     //原来有跨列可现在有跨列则需重计算列
-                    any.update(any > 0 || this.cells.span > 0);
+                    any.update(any > 0 || this.__cells.__column_span > 0);
                 }
             }
             else
@@ -180,10 +186,10 @@ flyingon.GridColumn = Object.extend(function () {
 
     this.__set_title = function (title) {
 
-        var cells = this.cells;
+        var cells = this.__cells;
 
         cells.length = 0;
-        cells.span = 0;
+        this.__column_span = false;
 
         if (title instanceof Array)
         {
@@ -201,37 +207,80 @@ flyingon.GridColumn = Object.extend(function () {
 
     this.__create_header = function (cells, title) {
 
-        var text, size, span, name;
+        var control, size, span;
 
         if (title && typeof title === 'object')
         {
-            text = title.text;
             size = title.size | 0;
             span = title.span | 0;
-            
-            if (name = title.className)
-            {
-                name = ' ' + name;
-            }
 
-            if (span > cells.span)
+            if (control = title.control)
             {
-                cells.span = span;
+                control = flyingon.ui(control);
+            }
+            else
+            {
+                title = title.text;
             }
         }
-        else
+        
+        if (!control)
         {
-            text = title;
+            control = new Class();
+            (control.__storage = create(control.__defaults)).text = '' + title;
         }
 
-        cells.push({
+        if (size > 0)
+        {
+            control.__column_size = size;
+        }
 
-            text: text == null ? '' : text, 
-            size: size > 0 ? size : 0, 
-            span: span > 0 ? span : 0,
-            count: span > 0 ? span : 1,
-            className: name
-        });
+        if (span > 0)
+        {
+            control.__column_span = span;
+            this.__column_span = true;
+        }
+
+        cells.push(control);
+    };
+
+
+    this.__find_text = function () {
+
+        var title = this.title(),
+            any;
+
+        if (title && typeof title === 'object')
+        {
+            if (title instanceof Array)
+            {
+                if ((any = title[0]) && any.span)
+                {
+                    return any && any.text || any;
+                }
+
+                any = title[title.length - 1];
+                return any && any.text || any;
+            }
+            
+            return title.text;
+        }
+
+        return title;
+    };
+
+
+    //创建单元格控件
+    this.__create_control = function (row) {
+
+        var control = new Class(),
+            storage = this.__storage,
+            name = storage && storage.name;
+
+        storage = control.__storage = create(control.__defaults);
+        storage.text = name ? row.data[name] : '';
+
+        return control;
     };
 
 
@@ -513,7 +562,7 @@ flyingon.GridColumns = Object.extend(function () {
             width += size;
 
             //检测是否需要跨列处理
-            if (span < 0 && (any = column.cells).span)
+            if (span < 0 && column.__column_span)
             {
                 span = start - 1;
             }
@@ -529,9 +578,11 @@ flyingon.GridColumns = Object.extend(function () {
 
             while (start < end)
             {
-                if ((any = columns[start].cells) && any.span)
+                column = columns[start];
+
+                if (column.__column_span)
                 {
-                    compute_span(columns, start, end, any);
+                    compute_span(columns, start, end, column.__cells);
                 }
 
                 start++;
@@ -548,7 +599,7 @@ flyingon.GridColumns = Object.extend(function () {
         for (var i = cells.length - 1; i >= 0; i--)
         {
             var cell = cells[i],
-                span = cell.span,
+                span = cell.__column_span,
                 count = span + 1, //包含列数
                 column,
                 width;
@@ -579,10 +630,10 @@ flyingon.GridColumns = Object.extend(function () {
                     span--;
                 }
 
-                cell.width = width;
+                cell.__column_width = width;
             }
 
-            cell.count = count;
+            cell.__column_count = count;
         }
     };
 
@@ -663,17 +714,17 @@ flyingon.GridRow = Object.extend._(function () {
 
 
 
-    //获取指定索引行或行记录数
+    //获取指定索引的子表格行或子表格行集合
     this.rows = function (index) {
 
         var rows = this.__rows;
 
-        if (index >= 0)
+        if (index === void 0)
         {
-            return rows && rows[index] || null;
+            return rows || (this.__rows = new flyingon.GridRows(this.grid));
         }
 
-        return rows || (this.__rows = new flyingon.GridRows(this.grid));
+        return rows && rows[index];
     };
     
 
@@ -707,7 +758,7 @@ flyingon.GridRow = Object.extend._(function () {
             this.rows = null;
         }
 
-        if (list = this.cells)
+        if (list = this.__cells)
         {
             for (var i = list.length - 1; i >= 0; i--)
             {
@@ -774,7 +825,7 @@ flyingon.GridRows = Object.extend(function () {
         this.grid = grid;
     };
 
-
+this.length = 0;
     
     flyingon.fragment(this, 'f-collection');
 
@@ -1164,10 +1215,6 @@ flyingon.Control.extend('Grid', function (base) {
         }
     });
 
-
-
-    //延迟加载时默认行数
-    this['lazy-load'] = this.defineProperty('lazyLoad', 0);
 
 
     

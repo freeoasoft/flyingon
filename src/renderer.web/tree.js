@@ -75,7 +75,7 @@ flyingon.renderer('Tree', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, className, cssText) {
 
         var storage = control.__storage || control.__defaults,
             length = control.length;
@@ -83,10 +83,9 @@ flyingon.renderer('Tree', function (base) {
         writer.push('<div');
         
         this.renderDefault(writer, control, 
-            'f-tree-theme-' + storage.theme + 
+            (className || '') + 'f-tree-theme-' + storage.theme + 
                 (!storage.checked ? ' f-tree-no-check' : '') + 
-                (!storage.icon ? ' f-tree-no-icon' : ''), 
-            'overflow:auto;padding:2px;');
+                (!storage.icon ? ' f-tree-no-icon' : ''));
         
         writer.push(' onclick="flyingon.Tree.onclick.call(this, event)">');
 

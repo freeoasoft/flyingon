@@ -2,20 +2,7 @@ flyingon.renderer('TextBox', function (base) {
 
 
 
-    //检测盒模型
-    flyingon.dom_test(function (div) {
-        
- 
-        div.innerHTML = '<input type="text" class="f-control f-textbox"/>';
-
-        this.checkBoxModel(div.children[0]);
-
-
-    }, this);
-
-    
-
-    this.render = function (writer, control) {
+    this.render = function (writer, control, className, cssText) {
 
         var text = control.text();
 
@@ -24,11 +11,11 @@ flyingon.renderer('TextBox', function (base) {
             text = flyingon.html_encode(text);
         }
 
-        writer.push('<input type="text"');
+        writer.push('<input');
         
-        this.renderDefault(writer, control);
+        this.renderDefault(writer, control, className, cssText);
         
-        writer.push(' value="', text, '" onchange="flyingon.TextBox.onchange.call(this)"/>');
+        writer.push(' type="text" value="', text, '" onchange="flyingon.TextBox.onchange.call(this)"/>');
     };
 
 
@@ -47,9 +34,9 @@ flyingon.renderer('TextBox', function (base) {
 
 
 
-    this.text = function (control, view) {
+    this.text = function (control, view, value) {
 
-        view.value = control.text();
+        view.firstChild.value = value;
     };
 
 

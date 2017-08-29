@@ -45,12 +45,12 @@ flyingon.widget({
                             { text: 'F6', size: 35 }, 
                             '', 
                             ''
-                        ] 
+                        ]
                     },
 
                     { 
                         title: [
-                            { text:'F7', size: 35 }, 
+                            { text: 'F7', size: 35 }, 
                             { text: 'F78', span: 1 }, 
                             ''
                         ] 

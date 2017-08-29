@@ -21,7 +21,7 @@ flyingon.widget({
 
         for (var j = 1; j <= 10; j++)
         {
-            columns.push({ title: 'F' + j });
+            columns.push({ title: 'F' + j, name: 'F' + j });
         }
 
         this[0].columns(columns);

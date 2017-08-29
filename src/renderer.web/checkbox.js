@@ -2,13 +2,14 @@ flyingon.renderer('CheckBox', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, className, cssText) {
 
-        writer.push('<input type="checkbox" name="', control.name(), '"');
+        writer.push('<div');
         
-        this.renderDefault(writer, control);
+        this.renderDefault(writer, control, className, cssText);
         
-        writer.push(' onchange="flyingon.CheckBox.onchange.call(this)" />');
+        writer.push('><input type="checkbox" name="', control.name(), 
+            '" class="f-checkbox-input" onchange="flyingon.CheckBox.onchange.call(this)" /></div>');
     };
 
 
@@ -22,6 +23,12 @@ flyingon.renderer('CheckBox', function (base) {
         control.rendered = true;
 
         control.trigger('change', 'value', this.checked);
+    };
+
+
+    this.checked = function (control, view, value) {
+
+        view.firstChild.checked = value;
     };
 
 

@@ -16,9 +16,7 @@ flyingon.widget({
                         title: [
                             'F1', 
                             {
-                                text: {
-                                    Class: 'CheckBox'
-                                }
+                                control: { Class: 'CheckBox' }
                             }
                         ]
                     },
@@ -27,20 +25,15 @@ flyingon.widget({
                         title: [
                             'F2', 
                             {
-                                text: {
-                                    Class: 'TextBox',
-                                    width: '100%'
-                                }
+                                control: { Class: 'TextBox' }
                             }
                         ]
                     },
 
                     {
                         title: {
-                            text: {
+                            control: {
                                 Class: 'div',
-                                width: '100%',
-                                height: '100%',
                                 children: [
                                     { Class: 'Label', text: 'F3', width: 'auto' },
                                     { Class: 'TextBox', width: 60 }

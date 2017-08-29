@@ -2,7 +2,7 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, className, cssText) {
 
         var storage = control.__storage || control.__defaults,
             head = storage.header,
@@ -11,7 +11,7 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        this.renderDefault(writer, control, className, cssText);
         
         if (text)
         {

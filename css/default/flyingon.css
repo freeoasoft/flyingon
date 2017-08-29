@@ -5,6 +5,68 @@ body {
     background-color: white;
 }
 
+.f-slider-button div,
+.f-progressbar-back,
+.f-grid-column-head,
+.f-grid-head .f-grid-cell,
+.f-grid-group-cell,
+.f-tab-head,
+.f-message-foot {
+    background-color: #EFF5FF;
+}
+
+.f-slider-bar,
+.f-slider-button,
+.f-calendar-line,
+.f-grid-line,
+.f-grid-resize-thumb,
+.f-tab-line,
+.f-groupbox-line,
+.f-dialog-line {
+    background-color: #95B8E7;
+}
+
+input[type="text"],
+.f-input,
+.f-textbox,
+.f-grid-head .f-textbox,
+.f-slider-bar div,
+.f-popup,
+.f-dialog,
+.f-calendar {
+    background-color: white;
+}
+
+.f-overlay {
+    background-color: silver;
+}
+
+.f-back, 
+.f-tab-link,
+.f-tab-move-link,
+.f-groupbox-head,
+.f-dialog-head {
+    background-color: #EFF5FF;
+    background: -webkit-linear-gradient(top,#EFF5FF 0,#E0ECFF 100%);
+    background: -moz-linear-gradient(top,#EFF5FF 0,#E0ECFF 100%);
+    background: -o-linear-gradient(top,#EFF5FF 0,#E0ECFF 100%);
+    background: linear-gradient(to bottom,#EFF5FF 0,#E0ECFF 100%);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#EFF5FF,endColorstr=#E0ECFF,GradientType=0);
+}
+
+.f-selected-back,
+.f-tab-selected .f-tab-link,
+.f-dialog-active .f-dialog-head {
+    background-color: white;
+    background: -webkit-linear-gradient(top,#EFF5FF 0,white 100%);
+    background: -moz-linear-gradient(top,#EFF5FF 0,white 100%);
+    background: -o-linear-gradient(top,#EFF5FF 0,white 100%);
+    background: linear-gradient(to bottom,#EFF5FF 0,white 100%);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#EFF5FF,endColorstr=white,GradientType=0);
+}
+
 .f-calendar-dark {
     color: darkgray;
 }
@@ -38,7 +100,7 @@ body {
 
 .f-input, 
 .f-back, 
-.f-progressbar,
+.f-textbox,
 .f-textbutton,
 .f-listbox,
 .f-tree, 
@@ -49,73 +111,19 @@ body {
 .f-dialog, 
 .f-groupbox,
 .f-calendar,
+.f-progressbar,
 .f-grid,
 .f-grid-group-cell {
     border: 1px solid #95B8E7;
 }
 
-.f-grid-left {
-    border-right: 1px solid #95B8E7;
-}
-
-.f-grid-right {
-    border-left: 1px solid #95B8E7;
-}
-
-.f-grid-top {
-    border-bottom: 1px solid #95B8E7;
-}
-
-.f-grid-bottom {
-    border-top: 1px solid #95B8E7;
-}
-
-.f-slider-button div,
-.f-progressbar-back,
-.f-grid-column-head,
-.f-grid-head .f-grid-cell,
-.f-grid-group-cell,
-.f-tab-head,
-.f-message-foot {
-    background-color: #EFF5FF;
-}
-
-.f-slider-bar,
-.f-slider-button,
-.f-calendar-line,
-.f-grid-back,
-.f-grid-line,
-.f-grid-resize-thumb,
-.f-tab-line,
-.f-groupbox-line,
-.f-dialog-line {
-    background-color: #95B8E7;
-}
-
-.f-back, 
-.f-tab-link,
-.f-tab-move-link,
-.f-groupbox-head,
-.f-dialog-head {
-    background-color: #EFF5FF;
-    background: -webkit-linear-gradient(top,#EFF5FF 0,#E0ECFF 100%);
-    background: -moz-linear-gradient(top,#EFF5FF 0,#E0ECFF 100%);
-    background: -o-linear-gradient(top,#EFF5FF 0,#E0ECFF 100%);
-    background: linear-gradient(to bottom,#EFF5FF 0,#E0ECFF 100%);
-    background-repeat: repeat-x;
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#EFF5FF,endColorstr=#E0ECFF,GradientType=0);
-}
-
-.f-selected-back,
-.f-tab-selected .f-tab-link,
-.f-dialog-active .f-dialog-head {
-    background-color: white;
-    background: -webkit-linear-gradient(top,#EFF5FF 0,white 100%);
-    background: -moz-linear-gradient(top,#EFF5FF 0,white 100%);
-    background: -o-linear-gradient(top,#EFF5FF 0,white 100%);
-    background: linear-gradient(to bottom,#EFF5FF 0,white 100%);
-    background-repeat: repeat-x;
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#EFF5FF,endColorstr=white,GradientType=0);
+.f-grid-left,
+.f-grid-right,
+.f-grid-top,
+.f-grid-bottom,
+.f-grid-cell {
+    border-style: solid;
+    border-color: #95B8E7;
 }
 
 .f-tab-direction-top .f-tab-selected .f-tab-link {
@@ -134,31 +142,20 @@ body {
     border-left-color: white;
 }
 
-input[type="text"],
-.f-slider-bar div,
-.f-input,
-.f-grid-cell,
-.f-popup,
-.f-dialog,
-.f-calendar {
-    background-color: white;
-}
-
 .f-popup, 
 .f-dialog {
     box-shadow: 2px 2px 2px silver;
 }
 
-.f-overlay {
-    background-color: silver;
-}
-
-.f-control {
+.f-control,
+.f-grid-left,
+.f-grid-right {
     -moz-box-sizing: border-box;  
     -webkit-box-sizing: border-box; 
     -o-box-sizing: border-box; 
     -ms-box-sizing: border-box; 
     box-sizing: border-box; 
+    *behavior: url(../css/box-sizing.htc);
 }
 
 .f-absolute {
@@ -174,6 +171,31 @@ input[type="text"],
 
 .f-rtl {
     direction: rtl;
+}
+
+
+.f-label {
+    padding: 0 2px;
+}
+
+.f-button span {
+    display: inline-block;
+}
+
+.f-textbox {
+    outline: none;
+    padding: 0 2px;
+}
+
+.f-checkbox-input {
+    position: absolute;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    left: 50%;
+    top: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
 }
 
 
@@ -411,6 +433,11 @@ input[type="text"],
 }
 
 
+.f-tree {
+    overflow: auto;
+    padding: 2px;
+}
+
 .f-tree-node {
     white-space: nowrap;
     cursor: pointer;
@@ -573,6 +600,7 @@ input[type="text"],
 }
 
 .f-grid-group-cell {
+    position: static;
     margin-left: 8px;
     padding: 2px 20px;
 }
@@ -622,15 +650,18 @@ input[type="text"],
     outline: none;
 }
 
-.f-grid-back {
+.f-grid-cell {
     position: absolute;
+    border-width: 0 1px 1px 0;
+}
+
+.f-grid-head .f-label,
+.f-grid-head .f-htmlelement {
+    text-align: center;
 }
 
 .f-grid-resize {
     position: absolute;
-    right: -3px;
-    top: 0;
-    bottom: 0;
     width: 5px;
     cursor: ew-resize;
     background-color: transparent;
@@ -646,23 +677,6 @@ input[type="text"],
     z-index: 10;
 }
 
-.f-grid-cell {
-    position: absolute;
-    left: 0;
-    right: 1px;
-    top: 0;
-    bottom: 1px;
-}
-
-.f-grid-right .f-grid-cell {
-    left: 1px;
-    right: 0;
-}
-
-.f-grid-head .f-grid-cell {
-    text-align: center;
-}
-
 .f-grid-top,
 .f-grid-middle,
 .f-grid-bottom {
@@ -670,6 +684,7 @@ input[type="text"],
     left: 0;
     right: 0;
     width: auto;
+    overflow: hidden;
 }
 
 .f-grid-middle {
@@ -678,11 +693,13 @@ input[type="text"],
 }
 
 .f-grid-top {
+    border-width: 0 0 2px 0;
     top: 0;
     z-index: 2;
 }
 
 .f-grid-bottom {
+    border-width: 2px 0 0 0;
     bottom: 0;
     z-index: 2;
 }
@@ -691,17 +708,22 @@ input[type="text"],
 .f-grid-center,
 .f-grid-right {
     position: absolute;
+    left: 0;
+    right: 0;
     top: 0;
-    height: 100%;
+    bottom: 0;
+    overflow: hidden;
 }
 
 .f-grid-left {
-    left: 0;
+    border-width: 0 2px 0 0;
+    right: auto;
     z-index: 2;
 }
 
 .f-grid-right {
-    right: 0;
+    border-width: 0 0 0 2px;
+    left: auto;
     z-index: 2;
 }
 

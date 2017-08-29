@@ -8,7 +8,7 @@ flyingon.renderer('Tab', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, className, cssText) {
 
         var storage = control.__storage || control.__defaults,
             any;
@@ -17,7 +17,7 @@ flyingon.renderer('Tab', function (base) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, 'f-tab-direction-' + storage.direction);
+        this.renderDefault(writer, control, (className || '') + 'f-tab-direction-' + storage.direction, cssText);
         
         writer.push('><div class="f-tab-head f-tab-theme-', storage.theme, '">',
                     '<div class="f-tab-line"></div>',

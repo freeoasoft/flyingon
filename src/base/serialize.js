@@ -34,7 +34,10 @@ flyingon.fragment('f-serialize', function () {
         
         for (var name in values)
         {
-            value = values[name];
+            if ((value = values[name]) === void 0)
+            {
+                continue;
+            }
             
             if (bind && typeof value === 'string' && value.charAt(0) === '{' && (any = value.match(/^\{\{(\w+)\}\}$/)))
             {

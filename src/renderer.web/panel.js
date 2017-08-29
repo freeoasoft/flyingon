@@ -7,10 +7,6 @@ flyingon.renderer('Panel', function (base) {
     this.__auto_size = 0;
 
 
-    //设置渲染大小时不包含padding
-    this.__no_padding = 0;
-
-
     //不渲染padding
     this.padding = 0;
     
@@ -18,11 +14,11 @@ flyingon.renderer('Panel', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control) {
+    this.render = function (writer, control, className, cssText) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        this.renderDefault(writer, control, className, cssText);
         
         writer.push(' onscroll="flyingon.__dom_scroll.call(this, event)">');
 

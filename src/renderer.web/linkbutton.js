@@ -2,14 +2,14 @@ flyingon.renderer('LinkButton', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, className, cssText) {
 
         var storage = control.__storage || control.__defaults,
             any;
         
         writer.push('<a type="button"');
         
-        this.renderDefault(writer, control);
+        this.renderDefault(writer, control, className, cssText);
 
         if (any = storage.href)
         {

@@ -1,13 +1,13 @@
 flyingon.renderer('ProgressBar', function (base) {
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, className, cssText) {
 
         var value = (control.__storage || control.__defaults).value;
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        this.renderDefault(writer, control, className, cssText);
 
         writer.push('>',
                 '<div class="f-progressbar-back" style="width:', value, '%;"></div>',

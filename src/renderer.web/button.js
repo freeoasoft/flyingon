@@ -2,11 +2,11 @@ flyingon.renderer('Button', function (base) {
 
     
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, className, cssText) {
 
         writer.push('<button type="button"');
         
-        this.renderDefault(writer, control);
+        this.renderDefault(writer, control, className, cssText);
         
         writer.push('>');
 

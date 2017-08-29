@@ -21,7 +21,7 @@ flyingon是一个使用100%原生javascript开发前端组件库
 4. 高级控件(Tree, Grid, TreeGrid...)
 
 
-几乎支持所有常见的浏览器：
+支持所浏览器如下：
 IE7+
 FF3+
 Safari4+

@@ -51,43 +51,10 @@
     //是否支持auto尺寸
     this.__auto_size = 1;
 
-    //盒子模型是否不包含边框
-    this.__no_border = 0;
-
-    //盒子模型是否不包含内边距
-    this.__no_padding = 1;
-
 
     //是否设置padding
     this.padding = 1;
     
-
-
-    //检测盒子模型
-    this.checkBoxModel = function (dom) {
-            
-        var style = dom.style,
-            pixel = flyingon.pixel;
-
-        style.width = style.height = '100px';
-        style.padding = '2px';
-        style.overflow = 'scroll'; //IE9下当box-sizing值为border-box且有滚动条时会缩小
-
-        return this.__no_border = dom.offsetWidth !== 100;
-    };
-
-
-    //检测盒模型
-    flyingon.dom_test(function (div) {
-        
- 
-        div.innerHTML = '<div class="f-control"><div>';
-
-        this.checkBoxModel(div.children[0]);
-
-
-    }, this);
-
 
 
 
@@ -133,11 +100,11 @@
 
 
     //渲染html
-    this.render = function (writer, control) {
+    this.render = function (writer, control, className, cssText) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, control);
+        this.renderDefault(writer, control, className, cssText);
 
         writer.push('></div>');
     };
@@ -574,59 +541,13 @@
         if (any || width !== cache.width)
         {
             cache.width = width;
-
-            if (value & 1)
-            {
-                style.width = width;
-            }
-            else
-            {
-                if (this.__no_border)
-                {
-                    width -= control.borderLeft + control.borderRight;
-
-                    if (this.__no_padding)
-                    {
-                        width -= control.paddingLeft + control.paddingRight;
-                    }
-
-                    if (width < 0)
-                    {
-                        width = 0;
-                    }
-                }
-
-                style.width = width + 'px';
-            }
+            style.width = (value & 1) ? width : width + 'px';
         }
 
         if (any || height !== cache.height)
         {
             cache.height = height;
-
-            if (value & 2)
-            {
-                style.height = height;
-            }
-            else
-            {
-                if (this.__no_border)
-                {
-                    height -= control.borderTop + control.borderBottom;
-
-                    if (this.__no_padding)
-                    {
-                        height -= control.paddingTop + control.paddingBottom;
-                    }
-
-                    if (height < 0)
-                    {
-                        height = 0;
-                    }
-                }
-
-                style.height = height + 'px';
-            }
+            style.height = (value & 2) ? height : height + 'px';
         }
 
         if (any = control.__location_dirty)
