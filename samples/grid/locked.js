@@ -19,20 +19,20 @@ flyingon.widget({
         var columns = []
         var data = [];
 
-        for (var j = 1; j <= 10; j++)
+        for (var j = 1; j <= 500; j++)
         {
             columns.push({ title: 'F' + j, name: 'F' + j });
         }
 
         this[0].columns(columns);
 
-        for (var i = 0; i < 100; i++)
+        for (var i = 0; i < 500; i++)
         {
             var item = {};
 
-            for (var j = 1; j <= 10; j++)
+            for (var j = 1; j <= 500; j++)
             {
-                item['F' + j] = j;
+                item['F' + j] = 'R:' + (i + 1) + ' C:' + j;
             }
 
             data.push(item);

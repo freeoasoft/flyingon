@@ -7,8 +7,8 @@ body {
 
 .f-slider-button div,
 .f-progressbar-back,
-.f-grid-column-head,
 .f-grid-head .f-grid-cell,
+.f-grid-head .f-grid-right,
 .f-grid-group-cell,
 .f-tab-head,
 .f-message-foot {
@@ -18,7 +18,6 @@ body {
 .f-slider-bar,
 .f-slider-button,
 .f-calendar-line,
-.f-grid-line,
 .f-grid-resize-thumb,
 .f-tab-line,
 .f-groupbox-line,
@@ -29,7 +28,9 @@ body {
 input[type="text"],
 .f-input,
 .f-textbox,
-.f-grid-head .f-textbox,
+.f-grid-left,
+.f-grid-center,
+.f-grid-right,
 .f-slider-bar div,
 .f-popup,
 .f-dialog,
@@ -88,7 +89,9 @@ input[type="text"],
     text-decoration: underline;
 }
 
-.f-grid-group {
+.f-grid-group,
+.f-grid-top .f-grid-cell,
+.f-grid-bottom .f-grid-cell {
     background-color: #F8F8F8;
 }
 
@@ -117,13 +120,20 @@ input[type="text"],
     border: 1px solid #95B8E7;
 }
 
-.f-grid-left,
-.f-grid-right,
+.f-grid-group,
+.f-grid-column-head,
+.f-grid-filter,
 .f-grid-top,
 .f-grid-bottom,
 .f-grid-cell {
     border-style: solid;
     border-color: #95B8E7;
+}
+
+.f-grid-left,
+.f-grid-right {
+    border-style: solid;
+    border-color: darkgray;
 }
 
 .f-tab-direction-top .f-tab-selected .f-tab-link {
@@ -148,8 +158,12 @@ input[type="text"],
 }
 
 .f-control,
+.f-grid-group,
+.f-grid-column-head,
+.f-grid-filter,
 .f-grid-left,
-.f-grid-right {
+.f-grid-right,
+.f-grid-top {
     -moz-box-sizing: border-box;  
     -webkit-box-sizing: border-box; 
     -o-box-sizing: border-box; 
@@ -183,8 +197,9 @@ input[type="text"],
 }
 
 .f-textbox {
-    outline: none;
     padding: 0 2px;
+    height: 21px;
+    outline: none;
 }
 
 .f-checkbox-input {
@@ -574,29 +589,17 @@ input[type="text"],
 }
 
 
-.f-grid-head,
 .f-grid-group,
 .f-grid-column-head,
 .f-grid-filter {
     position: relative;
     overflow: hidden;
     margin: 0;
-    border: 0;
+    border-width: 0 0 1px 0;
     padding: 0;
     outline: none;
     white-space: nowrap;
     cursor: default;
-}
-
-.f-grid-line {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 1px;
-    width: auto;
-    height: 1px;
-    z-index: 2;
 }
 
 .f-grid-group-cell {
@@ -693,13 +696,13 @@ input[type="text"],
 }
 
 .f-grid-top {
-    border-width: 0 0 2px 0;
+    border-width: 0 0 1px 0;
     top: 0;
     z-index: 2;
 }
 
 .f-grid-bottom {
-    border-width: 2px 0 0 0;
+    border-width: 1px 0 0 0;
     bottom: 0;
     z-index: 2;
 }

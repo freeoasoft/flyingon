@@ -41,17 +41,6 @@ flyingon.GridColumn = Object.extend(function () {
     };
 
 
-    function update() {
-
-        var grid = this.grid;
-
-        if (grid && grid.rendered)
-        {
-            grid.update(false);
-        }
-    };
-
-
 
     //列类型
     this.type = '';
@@ -130,10 +119,6 @@ flyingon.GridColumn = Object.extend(function () {
     define(this, 'align', 'left');
 
 
-    //是否可调整列宽
-    define(this, 'resizable', true);
-
-
     //是否只读
     define(this, 'readonly', false);
 
@@ -157,16 +142,16 @@ flyingon.GridColumn = Object.extend(function () {
     });
 
 
+    //是否可调整列宽
+    this.defineProperty('resizable', true);
+
+
     //是否可点击列头排序
     this.defineProperty('sortable', true);
 
 
-    //是否可拖动
+    //是否可拖动调整顺序
     this.defineProperty('draggable', true);
-
-
-    //格式化
-    this.defineProperty('formatter', null, { set: update });
 
 
     //过滤方式
@@ -180,7 +165,19 @@ flyingon.GridColumn = Object.extend(function () {
     //average:  平均值
     //sum:      求和
     //custom:   自定义
-    this.defineProperty('summary', '', { set: update });
+    this.defineProperty('summary', '', { 
+        
+        set: function update() {
+
+            var grid = this.grid;
+
+            if (grid && grid.rendered)
+            {
+                grid.__summary_list = null;
+                grid.update(false);
+            }
+        }
+    });
 
 
 
@@ -267,6 +264,23 @@ flyingon.GridColumn = Object.extend(function () {
         }
 
         return title;
+    };
+
+
+    this.__span_width = function (count) {
+
+        var columns = this.grid.__columns,
+            index = this.absoluteIndex,
+            width = 0,
+            column;
+
+        while (count > 0 && (column = columns[index + count]))
+        {
+            width += column.width;
+            count--;
+        }
+
+        return width;
     };
 
 
@@ -431,48 +445,71 @@ flyingon.GridColumns = Object.extend(function () {
 
 
     //计算可见列索引范围
-    this.__compute_visible = function (x) {
+    this.__compute_visible = function (x, scroll) {
 
         var locked = this.locked,
             start = locked[0],
             end = this.length - locked[1],
             column,
             left,
-            right;
+            any;
 
-        if (x == null)
-        {
-            x = this.arrangeLeft;
-        }
-        else
-        {
-            this.arrangeLeft = x;
-        }
+        this.arrangeLeft = x;
 
-        right = x + this.arrangeWidth - locked[2] - locked[3];
+        x += locked[2];
 
-        //计算可见列
+        //计算开始位置
         for (var i = start; i < end; i++)
         {
-            if ((column = this[i]) && column.__visible)
+            if ((column = this[i]) && column.__visible && column.left + column.width >= x)
             {
-                left = column.left;
-
-                if (left > right)
-                {
-                    end = i;
-                    break;
-                }
-
-                if (left < x && start < i)
-                {
-                    start = i;
-                }
+                start = i;
+                break;
             }
         }
 
-        this.start = start;
-        this.end = end;
+        //计算结束位置
+        any = x + this.arrangeWidth - locked[2] - locked[3];
+
+        for (var i = start; i < end; i++)
+        {
+            if ((column = this[i]) && column.__visible && column.left > any)
+            {
+                end = i + 1;
+                break;
+            }
+        }
+
+        //记录可见范围
+        this.__visible_start = start;
+        this.__visible_end = end;
+
+        //滚动时如果未超出上次渲染范围则返回true
+        if (scroll && this.__show_start <= start && this.__show_end >= end)
+        {
+            return true;
+        }
+
+        //多渲染部分列以减少滚动处理
+        any = end + 8;
+        end = this.length - locked[1];
+        end = any > end ? end : any;
+
+        //处理跨列偏移
+        start -= this[start].offset; 
+
+        if (any = this.grid.oncolumnstart)
+        {
+            any = any.call(this.grid, this, start);
+
+            if (any >= 0)
+            {
+                start = any;
+            }
+        }
+
+        this.__show_start = start;
+        this.__show_end = end;
     };
 
 
@@ -486,39 +523,35 @@ flyingon.GridColumns = Object.extend(function () {
             mod = 0,
             any;
 
-        if (width != null)
-        {
-            this.arrangeWidth = width;
-        }
+        this.arrangeWidth = width;
 
         //计算前锁定
         if (start > 0)
         {
-            mod = compute_size(this, 0, start, mod);
+            mod = compute_size(this, 0, 0, start, mod);
             size += (locked[2] = this.width);
         }
 
         //计算后锁定
         if ((any = locked[1]) > 0)
         {
-            mod = compute_size(this, end - any, end, mod);
+            mod = compute_size(this, 0, end - any, end, mod);
             end -= any;
 
             size += (locked[3] = this.width);
         }
 
         //计算滚动区
-        compute_size(this, start, end, mod);
+        compute_size(this, locked[2], start, end, mod);
 
         this.width += size;
     };
 
 
     //计算列大小
-    function compute_size(columns, start, end, mod) {
+    function compute_size(columns, left, start, end, mod) {
 
-        var left = 0,
-            width = 0,
+        var width = 0,
             span = -1,
             column,
             size,
@@ -663,11 +696,6 @@ flyingon.GridColumns = Object.extend(function () {
 
         return (this.__keys || cache_name(this))[name];
     };
-
-
-    //绑定渲染器
-    flyingon.renderer.bind(this, 'GridColumns');
-
 
 
 });
@@ -825,7 +853,7 @@ flyingon.GridRows = Object.extend(function () {
         this.grid = grid;
     };
 
-this.length = 0;
+
     
     flyingon.fragment(this, 'f-collection');
 
@@ -899,34 +927,6 @@ flyingon.GridView = Object.extend(function () {
     };
 
 
-
-    //初始化视图
-    this.__init_view = function () {
-
-        var grid = this.grid,
-            any;
-
-        if (any = this.__group)
-        {
-            this.__group = null;
-            
-            for (var i = any.length - 1; i >= 0; i--)
-            {
-                any[i].dispose(false);
-            }
-        }
-
-        if ((any = grid.groups()) && (any = any.match(/\w+/g)))
-        {
-            this.group(any);
-        }
-        else
-        {
-            this.view = this.rows;
-        }
-    };
-
-
     //标记分组变更
     this.__group_dirty = function () {
 
@@ -948,10 +948,40 @@ flyingon.GridView = Object.extend(function () {
     };
 
 
+
+    //初始化视图
+    this.__init_view = function () {
+
+        var grid = this.grid,
+            any;
+
+        if (any = this.__group)
+        {
+            this.__group = null;
+            
+            for (var i = any.length - 1; i >= 0; i--)
+            {
+                any[i].dispose(false);
+            }
+        }
+
+        if ((any = grid.groups()) && (any = any.match(/\w+/g)))
+        {
+            any = this.group(any);
+        }
+        else
+        {
+            any = this.rows;
+        }
+
+        return this.view = any;
+    };
+
+
     //分组
     this.group = function (list) {
 
-        
+        return this.rows;
     };
 
 
@@ -1005,7 +1035,7 @@ flyingon.Control.extend('Grid', function (base) {
 
 
 
-    this.defaultWidth = 600;
+    this.defaultWidth = 800;
 
     this.defaultHeight = 300;
 
@@ -1015,6 +1045,9 @@ flyingon.Control.extend('Grid', function (base) {
 
     //表格列是否需要更新
     this.__column_dirty = false;
+
+    //默认锁定行
+    this.__locked_top = this.__locked_bottom = 0;
 
 
 
@@ -1128,13 +1161,7 @@ flyingon.Control.extend('Grid', function (base) {
 
 
     //行高
-    this['row-height'] = this.defineProperty('rowHeight', 25, {
-
-        set: function () {
-
-            this.update(false);
-        }
-    });
+    this['row-height'] = this.defineProperty('rowHeight', 25);
 
 
     //分组设置

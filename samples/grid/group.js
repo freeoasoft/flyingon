@@ -52,6 +52,16 @@ flyingon.widget({
                     { 
                         name: 'F8',
                         title: 'F8'
+                    },
+
+                    {
+                        name: 'F9',
+                        title: 'F9'
+                    },
+
+                    { 
+                        name: 'F10',
+                        title: 'F10'
                     }
                 ]
             }
