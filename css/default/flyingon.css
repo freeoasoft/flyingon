@@ -5,20 +5,11 @@ body {
     background-color: white;
 }
 
-.f-slider-button div,
-.f-progressbar-back,
-.f-grid-head .f-grid-cell,
-.f-grid-head .f-grid-right,
-.f-grid-group-cell,
-.f-tab-head,
-.f-message-foot {
-    background-color: #EFF5FF;
-}
-
 .f-slider-bar,
 .f-slider-button,
 .f-calendar-line,
 .f-grid-resize-thumb,
+.f-grid-group-line,
 .f-tab-line,
 .f-groupbox-line,
 .f-dialog-line {
@@ -27,10 +18,9 @@ body {
 
 input[type="text"],
 .f-input,
-.f-textbox,
-.f-grid-left,
-.f-grid-center,
-.f-grid-right,
+.f-grid-column-head .f-textbox,
+.f-grid-cell,
+.f-grid-group-row,
 .f-slider-bar div,
 .f-popup,
 .f-dialog,
@@ -40,6 +30,52 @@ input[type="text"],
 
 .f-overlay {
     background-color: silver;
+}
+
+.f-calendar-dark {
+    color: darkgray;
+}
+
+.f-calendar-disabled {
+    background-color: #F0F0F0;
+    color: darkgray;
+}
+
+.f-listbox-selected,
+.f-calendar-selected {
+    color: #3498DB;
+}
+
+.f-calendar-title span:hover,
+.f-calendar-today:hover,
+.f-calendar-clear:hover {
+    color: #3498DB;
+    text-decoration: underline;
+}
+
+.f-grid-group-box,
+.f-grid-left .f-grid-cell,
+.f-grid-right .f-grid-cell {
+    background-color: #F8F8F8;
+}
+
+.f-grid-group-box .f-information {
+    font-size: 14px;
+    background-color: #F8F8F8;
+    color: darkgray;
+}
+
+.f-slider-button div,
+.f-progressbar-back,
+.f-grid-head .f-grid-cell,
+.f-grid-head .f-grid-left,
+.f-grid-head .f-grid-right,
+.f-grid-column-head,
+.f-grid-group-cell,
+.f-grid-group,
+.f-tab-head,
+.f-message-foot {
+    background-color: #EFF5FF;
 }
 
 .f-back, 
@@ -68,42 +104,8 @@ input[type="text"],
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#EFF5FF,endColorstr=white,GradientType=0);
 }
 
-.f-calendar-dark {
-    color: darkgray;
-}
-
-.f-calendar-disabled {
-    background-color: #F0F0F0;
-    color: darkgray;
-}
-
-.f-listbox-selected,
-.f-calendar-selected {
-    color: #3498DB;
-}
-
-.f-calendar-title span:hover,
-.f-calendar-today:hover,
-.f-calendar-clear:hover {
-    color: #3498DB;
-    text-decoration: underline;
-}
-
-.f-grid-group,
-.f-grid-top .f-grid-cell,
-.f-grid-bottom .f-grid-cell {
-    background-color: #F8F8F8;
-}
-
-.f-grid-group .f-information {
-    font-size: 14px;
-    background-color: #F8F8F8;
-    color: darkgray;
-}
-
 .f-input, 
 .f-back, 
-.f-textbox,
 .f-textbutton,
 .f-listbox,
 .f-tree, 
@@ -120,18 +122,20 @@ input[type="text"],
     border: 1px solid #95B8E7;
 }
 
-.f-grid-group,
+.f-grid-group-box,
 .f-grid-column-head,
 .f-grid-filter,
 .f-grid-top,
 .f-grid-bottom,
+.f-grid-right,
+.f-grid-group,
 .f-grid-cell {
     border-style: solid;
     border-color: #95B8E7;
 }
 
-.f-grid-left,
-.f-grid-right {
+.f-grid-top,
+.f-grid-bottom {
     border-style: solid;
     border-color: darkgray;
 }
@@ -158,12 +162,14 @@ input[type="text"],
 }
 
 .f-control,
-.f-grid-group,
+.f-grid-group-box,
 .f-grid-column-head,
 .f-grid-filter,
 .f-grid-left,
 .f-grid-right,
-.f-grid-top {
+.f-grid-group,
+.f-grid-top,
+.f-grid-cell {
     -moz-box-sizing: border-box;  
     -webkit-box-sizing: border-box; 
     -o-box-sizing: border-box; 
@@ -192,15 +198,11 @@ input[type="text"],
     padding: 0 2px;
 }
 
+
 .f-button span {
     display: inline-block;
 }
 
-.f-textbox {
-    padding: 0 2px;
-    height: 21px;
-    outline: none;
-}
 
 .f-checkbox-input {
     position: absolute;
@@ -589,7 +591,7 @@ input[type="text"],
 }
 
 
-.f-grid-group,
+.f-grid-group-box,
 .f-grid-column-head,
 .f-grid-filter {
     position: relative;
@@ -608,7 +610,7 @@ input[type="text"],
     padding: 2px 20px;
 }
 
-.f-grid-group .f-information {
+.f-grid-group-box .f-information {
     margin-left: 8px;
     border: 0;
 }
@@ -696,38 +698,66 @@ input[type="text"],
 }
 
 .f-grid-top {
-    border-width: 0 0 1px 0;
+    border-width: 0 0 2px 0;
     top: 0;
     z-index: 2;
 }
 
 .f-grid-bottom {
-    border-width: 1px 0 0 0;
+    border-width: 2px 0 0 0;
     bottom: 0;
     z-index: 2;
 }
 
 .f-grid-left,
 .f-grid-center,
-.f-grid-right {
+.f-grid-right,
+.f-grid-group {
     position: absolute;
     left: 0;
     right: 0;
     top: 0;
     bottom: 0;
-    overflow: hidden;
 }
 
 .f-grid-left {
-    border-width: 0 2px 0 0;
     right: auto;
     z-index: 2;
 }
 
 .f-grid-right {
-    border-width: 0 0 0 2px;
+    border-width: 0 0 0 1px;
     left: auto;
     z-index: 2;
+}
+
+.f-grid-group {
+    border-width: 0 1px 0 0;
+    right: auto;
+    z-index: 2;
+}
+
+.f-grid-group-row {
+    position: absolute;
+    border: 0;
+    width: auto;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.f-grid-group-line {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 10000px;
+    height: 1px;
+}
+
+.f-grid-expand {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: url(flyingon.png) no-repeat -13px -90px;
 }
 
 

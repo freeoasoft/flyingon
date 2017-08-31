@@ -56,9 +56,7 @@ flyingon.renderer('ScrollPanel', function (base) {
 
     function mousewheel(event) {
 
-        var view = this.view;
-
-        view.firstChild.scrollTop -= event.wheelDelta * 100 / 120;
+        this.view.firstChild.scrollTop -= event.wheelDelta * 100 / 120;
         flyingon.dom_stop(event);
     };
 

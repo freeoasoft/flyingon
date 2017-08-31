@@ -22,7 +22,7 @@ flyingon是一个使用100%原生javascript开发前端组件库
 
 
 支持所浏览器如下：
-IE7+
+IE8+
 FF3+
 Safari4+
 chrome2+
