@@ -18,9 +18,6 @@ body {
 
 input[type="text"],
 .f-input,
-.f-grid-column-head .f-textbox,
-.f-grid-cell,
-.f-grid-group-row,
 .f-slider-bar div,
 .f-popup,
 .f-dialog,
@@ -76,6 +73,12 @@ input[type="text"],
 .f-tab-head,
 .f-message-foot {
     background-color: #EFF5FF;
+}
+
+.f-grid-column-head .f-textbox,
+.f-grid-cell,
+.f-grid-group-row {
+    background-color: white;
 }
 
 .f-back, 
@@ -658,6 +661,8 @@ input[type="text"],
 .f-grid-cell {
     position: absolute;
     border-width: 0 1px 1px 0;
+    padding: 0 2px;
+    outline: none;
 }
 
 .f-grid-head .f-label,
@@ -742,7 +747,7 @@ input[type="text"],
     border: 0;
     width: auto;
     white-space: nowrap;
-    text-align: center;
+    text-align: right;
 }
 
 .f-grid-group-line {

@@ -60,7 +60,7 @@ flyingon.renderer('GridColumn', function (base) {
             'px;width:' + width + 
             'px;height:' + height + 
             'px;line-height:' + height + 'px;' + 
-            (cell.__count > 1 ? 'z-index:1;' : ''));
+            (cell.columnSpan ? 'z-index:1;' : ''));
     };
 
 
@@ -163,6 +163,7 @@ flyingon.renderer('GridRow', function (base) {
             cell,
             view,
             style,
+            column,
             any;
 
         while (start < end)
@@ -175,13 +176,16 @@ flyingon.renderer('GridRow', function (base) {
                 {
                     cell.__show_tag = tag;
 
-                    any = columns[start];
+                    column = columns[start];
 
                     style = view.style;
-                    style.left = any.__start + 'px';
+                    style.left = column.__start + 'px';
                     style.top = y + 'px';
-                    style.width = any.__size + 'px';
-                    style.height = height + 'px';
+
+                    any = (any = cell.columnSpan) ? column.__span_size(any) : 0;
+                    style.width = column.__size + any + 'px';
+
+                    style.height = ((any = cell.rowSpan) ? ++any * height : height) + 'px';
                 }
             }
             else
@@ -212,21 +216,44 @@ flyingon.renderer('GridRow', function (base) {
         {
             any.call(column, cell, row, column);
 
-            if ((any = cell.rowSpan) && (any |= 0) > 0)
+            if (any = cell.rowSpan) 
             {
-                span = 1;
-                height += any * height;
+                if ((any |= 0) > 0)
+                {
+                    span = 1;
+                    height += any * height;
+                }
+                else
+                {
+                    any = 0;
+                }
+
+                cell.rowSpan = any;
             }
 
-            if ((any = cell.columnSpan) && (any |= 0) > 0)
+            if (any = cell.columnSpan) 
             {
-                span = 1;
-                width += column.__span_size(any);
+                if ((any |= 0) > 0)
+                {
+                    span = 1;
+                    width += column.__span_size(any);
+                }
+                else
+                {
+                    any = 0;
+                }
+
+                cell.columnSpan = any;
             }
         }
 
         any = column.__storage;
-        any = any && (any = any.align) ? 'text-align:' + any : '';
+        any = any && (any = any.align) && any !== 'left' ? 'text-align:' + any + ';' : '';
+
+        if (span)
+        {
+            any += 'z-index:1;';
+        }
 
         cell.row = row;
         cell.column = column;
@@ -238,8 +265,7 @@ flyingon.renderer('GridRow', function (base) {
             'px;width:' + width + 
             'px;height:' + height + 
             'px;line-height:' + height + 'px;' +
-            any,
-            (span ? 'z-index:1;' : ''));
+            any);
 
         return cell;
     };
@@ -305,29 +331,27 @@ flyingon.renderer('GroupGridRow', 'GridRow', function (base) {
         if ((summary = storage && storage.summary) && (name = storage.name))
         {
             var cell = new flyingon.Label(),
-                width = column.__size,
-                fn = column.__summary_fn || (column.__summary_fn = flyingon.summary_fn(summary)),
+                fn,
                 any;
 
             cell.row = row;
             cell.column = column;
             cell.__as_html = true;
-            
-            any = fn(row, name);
-            
-            if ((fn = column.onsummary) && (any = fn.call(column, any, summary)))
+
+            fn = column.__summary_fn || (column.__summary_fn = flyingon.summary_fn(summary));
+            any = row.compute(column, name, fn[0], fn[1]);
+
+            if (!(fn = column.onsummary) || !(any = fn.call(column, row, any, summary)))
             {
-                cell.text(any);
+                any = summary + '=' + any.toFixed(storage.precision);
             }
-            else
-            {
-                cell.text(summary + '=' + any.toFixed(storage.precision));
-            }
+
+            cell.text(any);
 
             cell.renderer.render(writer, cell, 'f-grid-group-row',
                 'left:' + column.__start + 
                 'px;top:' + y + 
-                'px;width:' + width + 
+                'px;width:' + column.__size + 
                 'px;height:' + height + 
                 'px;line-height:' + height + 'px;');
 
@@ -473,22 +497,32 @@ flyingon.renderer('Grid', function (base) {
         var target = e.target || e.srcElement,
             grid,
             column,
-            cell;
+            cell,
+            any;
 
         if (target.className.indexOf('f-grid-cell') >= 0 && 
             (cell = flyingon.findControl(target)) &&
             (grid = flyingon.findControl(this)) &&
-            (column = cell.column) && column.resizable())
+            (column = cell.column))
         {
-            var dom = grid.view_head.lastChild,
-                style = dom.style;
+            //处理跨列
+            if (any = cell.columnSpan)
+            {
+                column = grid.__columns[column.absoluteIndex + any];
+            }
 
-            dom.column = column;
+            if (column && column.resizable())
+            {
+                var dom = grid.view_head.lastChild,
+                    style = dom.style;
 
-            style.left = target.parentNode.offsetLeft + target.offsetLeft + target.offsetWidth - 3 + 'px';
-            style.top = target.offsetTop + 'px';
-            style.height = target.offsetHeight + 'px';
-            style.display = '';
+                dom.column = column;
+
+                style.left = target.parentNode.offsetLeft + target.offsetLeft + target.offsetWidth - 3 + 'px';
+                style.top = target.offsetTop + 'px';
+                style.height = target.offsetHeight + 'px';
+                style.display = '';
+            }
         }
     };
 
@@ -580,7 +614,7 @@ flyingon.renderer('Grid', function (base) {
                 {
                     if (any = cell.column)
                     {
-                        check_drag(this, dom, any, '', cell.__count || 1);
+                        check_drag(this, dom, any, '', (cell.columnSpan | 0) + 1);
                         break;
                     }
 
@@ -1274,9 +1308,9 @@ flyingon.renderer('Grid', function (base) {
             right += 1;
         }
 
-        layout_locked(view, left, right, group, scroll);
+        layout_locked(view, left, vscroll ? right + flyingon.vscroll_width : right, group, scroll);
 
-        layout_locked(view = grid.view_body.firstChild, left, vscroll ? right + flyingon.vscroll_width : right, group, scroll);
+        layout_locked(view = grid.view_body.firstChild, left, right, group, scroll);
         layout_locked(view = view.nextSibling, left, right, group, scroll);
         layout_locked(view.nextSibling, left, right, group, scroll);
     };
@@ -1287,21 +1321,10 @@ flyingon.renderer('Grid', function (base) {
         var dom = view.firstChild,
             style = dom.style;
 
+        //center
         style[flyingon.rtl ? 'right' : 'left'] = -scroll + 'px';
 
-        dom = dom.nextSibling;
-        style = dom.style;
-
-        if (left > 0)
-        {
-            style.width = left + 'px';
-            style.display = '';
-        }
-        else
-        {
-            style.display = 'none';
-        }
-
+        //right
         dom = dom.nextSibling;
         style = dom.style;
 
@@ -1315,6 +1338,21 @@ flyingon.renderer('Grid', function (base) {
             style.display = 'none';
         }
 
+        //left
+        dom = dom.nextSibling;
+        style = dom.style;
+
+        if (left > 0)
+        {
+            style.width = left + 'px';
+            style.display = '';
+        }
+        else
+        {
+            style.display = 'none';
+        }
+
+        //group
         style = dom.nextSibling.style;
 
         if (group > 0)
@@ -1416,7 +1454,7 @@ flyingon.renderer('Grid', function (base) {
             {
                 writer.push('<div class="f-grid-group-row" style="top:', top, 'px;height:', height, 'px;line-height:', height, 'px;left:0;">',
                     '<span class="f-grid-expand" style="margin-left:', row.level * 20, 'px;"></span>',
-                    '<span> ', row.text, ' (', row.length, ')</span>', 
+                    '<span> ', row.text, ' (', row.total, ')</span>', 
                     '<div class="f-grid-group-line"></div>',
                 '</div>');
             }

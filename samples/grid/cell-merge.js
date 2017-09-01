@@ -19,28 +19,36 @@ flyingon.widget({
         var columns = []
         var data = [];
 
-        for (var j = 1; j <= 20; j++)
+        for (var j = 1; j <= 10; j++)
         {
             columns.push({ title: 'F' + j, name: 'F' + j });
         }
 
         grid.columns(columns);
 
+        grid.columns(1).onrender = grid.columns(5).onrender = function (cell, row) {
 
-        columns = grid.columns();
-
-        function render(cell, row, column) {
-
-            if ((column.absoluteIndex & 1) === (row.data.index & 1))
+            if (row.data.index % 3 === 1)
             {
-                cell.style('background-color:silver;color:blue');
+                //跨一行
+                cell.rowSpan = 1;
+
+                //跨两列
+                cell.columnSpan = 2;
             }
         };
 
-        for (var i = columns.length - 1; i >= 0; i--)
-        {
-            columns[i].onrender = render;
-        }
+
+        grid.onrowstart = function (rows, start) {
+
+            return start > 1 ? start - 1 : 0; //起始位置减小一行
+        };
+
+
+        grid.oncolumnstart = function (columns, start) {
+
+            return 0;
+        };
 
 
         for (var i = 0; i < 100; i++)
@@ -49,7 +57,7 @@ flyingon.widget({
 
             item.index = i;
 
-            for (var j = 1; j <= 20; j++)
+            for (var j = 1; j <= 10; j++)
             {
                 item['F' + j] = 'R:' + (i + 1) + ' C:' + j;
             }

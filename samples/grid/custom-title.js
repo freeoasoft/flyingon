@@ -51,7 +51,7 @@ flyingon.widget({
 
         this[0].on('change', function (e) {
 
-            alert('change event  column-index:' + e.target.columnIndex + ' value:' + e.value);
+            alert('change event  column-index:' + e.target.column.absoluteIndex + ' value:' + e.value);
         });
     }
 

@@ -89,13 +89,21 @@ flyingon.widget({
 
         for (var i = 0; i < 100; i++)
         {
-            var item = {};
+            var item = {},
+                value;
 
             item.index = i;
 
-            for (var j = 1; j <= 10; j++)
+            for (var j = 1; j <= 7; j++)
             {
-                item['F' + j] = j > 6 ? (random() * 10000 | 0) / 100 : 'G:' + (i % 10 + 1) + ' C:' + j;
+                item['F' + j] = 'G:' + (i % 10 + 1) + ' C:' + j;
+            }
+
+            value = (random() * 10000 | 0) / 100;
+            
+            for (var j = 7; j <= 10; j++)
+            {
+                item['F' + j] = value;
             }
 
             data.push(item);
