@@ -166,11 +166,6 @@
         }
 
         writer.push('"');
-
-        if (any = control.__view_patch)
-        {
-            this.__render_patch(writer, control, any, encode);
-        }
     };
 
 
@@ -223,35 +218,6 @@
                     any[name] = value;
                     break;
             }
-        }
-    };
-
-
-    this.__render_patch = function (writer, control, values, encode) {
-
-        var flag, value;
-
-        for (var name in values)
-        {
-            if (!this[name])
-            {
-                if ((value = values[name]) || value === 0)
-                {
-                    writer.push(' ', name, '="', encode('' + value), '"');
-                }
-
-                //标记已处理
-                values[name] = null;
-            }
-            else
-            {
-                flag = true;
-            }
-        }
-
-        if (!flag)
-        {
-            control.__view_patch = null;
         }
     };
 
@@ -349,6 +315,13 @@
         }
 
         view.flyingon_id = any;
+
+        //应用补丁
+        if (any = control.__view_patch)
+        {
+            control.__view_patch = null;
+            this.__apply_patch(control, view, any);
+        }
 
         //触发控件挂载过程
         if (any = control.onmount)
@@ -711,10 +684,10 @@
         else
         {
             (control.__view_patch = {})[name] = value;
-            controls.push(control);
-
+            
             if (control.view)
             {
+                controls.push(control);
                 update_delay || (update_delay = setTimeout(flyingon.update, 0)); //定时刷新
             }
         }

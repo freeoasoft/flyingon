@@ -39,9 +39,10 @@ flyingon.renderer('ScrollPanel', function (base) {
     
     this.mount = function (control, view) {
 
+        control.view_content = view.lastChild;
+        
         base.mount.call(this, control, view);
 
-        control.view_content = view.lastChild;
         control.on('mousewheel', mousewheel);
     };
 

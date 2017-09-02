@@ -758,11 +758,17 @@ input[type="text"],
     height: 1px;
 }
 
-.f-grid-expand {
+.f-grid-expand,
+.f-grid-collapse {
     display: inline-block;
     width: 16px;
     height: 16px;
-    background: url(flyingon.png) no-repeat -13px -90px;
+    vertical-align: middle;
+    background: url(flyingon.png) no-repeat -13px -95px;
+}
+
+.f-grid-collapse {
+    background: url(flyingon.png) no-repeat -34px -95px;
 }
 
 

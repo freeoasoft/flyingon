@@ -8,8 +8,9 @@ flyingon.widget({
 
             {
                 Class: 'Grid',
-                header: 40,
-                group: 35,
+                header: 40, //列头高度
+                group: 35, //分组框高度
+                //groups: 'F1,F2', //设置默认分组
 
                 columns: [
 
