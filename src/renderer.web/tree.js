@@ -121,33 +121,28 @@ flyingon.renderer('Tree', function (base) {
 
     flyingon.Tree.onclick = function (e) {
 
-        var target = e.target || e.srcElement,
-            node;
+        var tree = flyingon.findControl(this),
+            dom = e.target || e.srcElement,
+            node = flyingon.findControl(dom);
 
-        while (target && target.getAttribute)
+        while (dom && dom !== this)
         {
-            switch (target.getAttribute('tag'))
+            switch (dom.getAttribute('tag'))
             {
                 case 'folder':
-                    node = flyingon.findControl(target);
-                    node.collapsed(!node.collapsed());
+                    tree[node.expanded ? 'collapse' : 'expand'](node);
                     return;
 
                 case 'check':
-                    node = flyingon.findControl(target);
                     node.checked(!node.checked());
                     return;
 
                 case 'node':
-                    node = flyingon.findControl(target);
-                    flyingon.findControl(this).trigger('node-click', 'node', node);
-                    return;
-
-                case 'tree':
+                    tree.trigger('node-click', 'node', node);
                     return;
 
                 default:
-                    target = target.parentNode;
+                    dom = dom.parentNode;
                     break;
             }
         }
@@ -244,7 +239,7 @@ flyingon.renderer('TreeNode', function (base) {
         
         if (any || node.length > 0)
         {
-            if (any || storage.collapsed)
+            if (any || !node.expanded)
             {
                 icon = 'f-tree-icon-close';
                 writer.push('<span class="f-tree-folder f-tree-close" tag="folder"></span>');
@@ -273,7 +268,7 @@ flyingon.renderer('TreeNode', function (base) {
             '<span class="f-tree-text" tag="text">', text, '</span></div>',
             '<div class="f-tree-list', last && line ? ' f-tree-list-last' : '', '">');
 
-        if (!storage.collapsed && node.length > 0)
+        if (node.expanded && node.length > 0)
         {
             this.__render_children(writer, node, node, 0, node.length, format, ++level, last, line);
         }
@@ -393,27 +388,50 @@ flyingon.renderer('TreeNode', function (base) {
     this.expand = function (node) {
 
         var view = node.view,
+            folder = find_dom(view, 'folder'),
+            icon = find_dom(view, 'icon'),
             any;
 
-        find_dom(view, 'folder', 'f-tree-folder f-tree-open');
-
-        if (any = find_dom(view, 'icon'))
+        if (node.length > 0)
         {
-            any.className = any.className.replace('f-tree-icon-close', 'f-tree-icon-open');
+            if (folder)
+            {
+                folder.className = 'f-tree-folder f-tree-open';
+            }
+
+            if (icon)
+            {
+                icon.className = 'f-tree-icon f-tree-icon-open';
+            }
+
+            view = view.lastChild;
+
+            if (!node.__content_render)
+            {
+                this.__render_children(any = [], node, node, 0, node.length);
+
+                view.innerHTML = any.join('');
+
+                this.__mount_children(node, view, node, 0, node.length, view.firstChild);
+            }
+            
+            view.style.display = '';
         }
-
-        view = view.lastChild;
-
-        if (!node.__content_render)
+        else
         {
-            this.__render_children(any = [], node, node, 0, node.length);
+            if (folder)
+            {
+                folder.className = 'f-tree-file';
+                folder.removeAttribute('tag');
+            }
 
-            view.innerHTML = any.join('');
+            if (icon)
+            {
+                icon.className = 'f-tree-icon f-tree-icon-file';
+            }
 
-            this.__mount_children(node, view, node, 0, node.length, view.lastChild);
+            view.lastChild.style.display = 'none';
         }
-        
-        view.style.display = '';
     };
 
 

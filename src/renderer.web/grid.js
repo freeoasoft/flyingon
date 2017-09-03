@@ -173,13 +173,16 @@ flyingon.renderer('GridRow', function (base) {
             {
                 fragment.appendChild(view = cell.view);
 
-                style = view.style;
-                style.top = y + 'px';
+                if (cell.__top !== y)
+                {
+                    view.style.top = (cell.__top = y) + 'px';
+                }
 
                 if (cell.__show_tag !== tag)
                 {
                     cell.__show_tag = tag;
 
+                    style = view.style;
                     style.left = column.__start + 'px';
 
                     any = (any = cell.columnSpan) ? column.__span_size(any) : 0;
@@ -190,6 +193,7 @@ flyingon.renderer('GridRow', function (base) {
             }
             else if (cell = this.render(writer, row, column, y, height))
             {
+                cell.__top = y;
                 cell.__show_tag = tag;
                 cells[column.uniqueId] = cell;
             }
@@ -338,7 +342,11 @@ flyingon.renderer('GroupGridRow', 'GridRow', function (base) {
             fn = column.__summary_fn || (column.__summary_fn = flyingon.Grid.summary(summary));
             any = row.compute(column, name, fn[0], fn[1]);
 
-            if (!(fn = column.onsummary) || !(any = fn.call(column, row, any, summary)))
+            if ((fn = column.onsummary) && (fn = fn.call(column, row, any, summary)))
+            {
+                any = fn;
+            }
+            else
             {
                 any = summary + '=' + any.toFixed(storage.precision);
             }
@@ -503,14 +511,14 @@ flyingon.renderer('Grid', function (base) {
 
     flyingon.Grid.onmouseover = function (e) {
 
-        var target = e.target || e.srcElement,
+        var dom = e.target || e.srcElement,
             grid,
             column,
             cell,
             any;
 
-        if (target.className.indexOf('f-grid-cell') >= 0 && 
-            (cell = flyingon.findControl(target)) &&
+        if (dom.className.indexOf('f-grid-cell') >= 0 && 
+            (cell = flyingon.findControl(dom)) &&
             (grid = flyingon.findControl(this)) &&
             (column = cell.column))
         {
@@ -527,9 +535,9 @@ flyingon.renderer('Grid', function (base) {
 
                 dom.column = column;
 
-                style.left = target.parentNode.offsetLeft + target.offsetLeft + target.offsetWidth - 3 + 'px';
-                style.top = target.offsetTop + 'px';
-                style.height = target.offsetHeight + 'px';
+                style.left = dom.parentNode.offsetLeft + dom.offsetLeft + dom.offsetWidth - 3 + 'px';
+                style.top = dom.offsetTop + 'px';
+                style.height = dom.offsetHeight + 'px';
                 style.display = '';
             }
         }
@@ -1099,7 +1107,7 @@ flyingon.renderer('Grid', function (base) {
         }
 
         //显示内容
-        any = this.__show_body(grid, grid.__view.current(), height);
+        any = this.__show_body(grid, grid.currentView(), height);
 
         //排列横向锁定区域
         this.__layout_locked(grid, columns.__locked, any);
@@ -1475,11 +1483,13 @@ flyingon.renderer('Grid', function (base) {
 
         for (var i = start; i < end; i++)
         {
-            row = rows[i];
-            row.__show_index = i; //记录显示行索引以便于事件处理
-            row.renderer.show(fragment, writer, row, columns, column_start, column_end, top, height, tag);
+            if (row = rows[i])
+            {
+                row.__show_index = i; //记录显示行索引以便于事件处理
+                row.renderer.show(fragment, writer, row, columns, column_start, column_end, top, height, tag);
 
-            top += height;
+                top += height;
+            }
         }
 
         if (writer[0])
@@ -1509,11 +1519,13 @@ flyingon.renderer('Grid', function (base) {
 
         var writer = [],
             fragment = dom_fragment,
+            tag = grid.__columns.__show_tag,
+            size = grid.__group_size,
             fn = grid.ongroup,
             index = start,
             row,
             node,
-            tag,
+            text,
             any;
 
         while (index < end)
@@ -1525,31 +1537,32 @@ flyingon.renderer('Grid', function (base) {
                     //记录行索引以支持事件定位
                     row.__show_index = index;
 
+                    text = any = fn && fn(row) || row.text + ' (' + row.total + ')';
+
                     if (node = row.view)
                     {
                         fragment.appendChild(node);
 
-                        any = node.style;
-                        any.top = top - 1 + 'px';
-
-                        if (row.__show_tag !== tag)
+                        if (row.__text !== text)
                         {
-                            row.__show_tag = tag;
+                            node.firstChild.nextSibling[text_name] = row.__text = text;
+                        }
 
-                            node[text_name] = fn && fn(row.text) || row.text + ' (' + row.total + ')';
-
-                            any.left = column.__start + 'px';
-                            any.width = column.__size + 'px';
-                            any.height = height + 1 + 'px';
+                        if (row.__top !== top)
+                        {
+                            node.style.top = (row.__top = top) - 1 + 'px';
                         }
                     }
                     else
                     {
-                        any = fn && fn(row.text) || row.text + ' (' + row.total + ')';
-
-                        writer.push('<div class="f-grid-group-row" style="top:', top - 1, 'px;height:', height + 1, 'px;line-height:', height, 'px;">',
-                            '<span class="f-grid-expand" style="margin-left:', row.level * 20, 'px;" tag="expand"></span>',
-                            '<span> ', any, '</span>', 
+                        writer.push('<div class="f-grid-group-row" style="top:', (row.__top = top) - 1, 
+                                'px;height:', height + 1, 
+                                'px;line-height:', height, 
+                                'px;min-width:', size, 'px;',
+                                'px;text-align:left;">',
+                            '<span class="f-grid-', row.expanded ? 'collapse" tag="collapse"' : 'expand" tag="expand"',
+                            ' style="margin-left:', row.level * 20, 'px;"></span>',
+                            '<span> ', row.__text = text, '</span>', 
                             '<div class="f-grid-group-line" style="top:0;bottom:auto;"></div>',
                             '<div class="f-grid-group-line"></div>',
                         '</div>');
@@ -1671,7 +1684,7 @@ flyingon.renderer('Grid', function (base) {
 
         if (update)
         {
-            var rows = grid.__view.current(),
+            var rows = grid.currentView(),
                 any;
             
             view =  grid.view_body.firstChild;
@@ -1695,7 +1708,7 @@ flyingon.renderer('Grid', function (base) {
     //处理竖直滚动
     this.__do_vscroll = function (grid, top) {
 
-        var rows = grid.__view.current(),
+        var rows = grid.currentView(),
             view = grid.view_body.firstChild;
 
         view.style.top = -top + 'px';

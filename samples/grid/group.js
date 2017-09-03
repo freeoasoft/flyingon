@@ -10,7 +10,7 @@ flyingon.widget({
                 Class: 'Grid',
                 header: 40, //列头高度
                 group: 35, //分组框高度
-                //groups: 'F1,F2', //设置默认分组
+                groups: 'F1,F2', //设置默认分组
 
                 columns: [
 
@@ -84,9 +84,27 @@ flyingon.widget({
     created: function () {
 
         var grid = this[0];
+        var columns = grid.columns();
+
         var data = [];
 
         var random = Math.random;
+
+        //自定义组头
+        grid.ongroup = function (row) {
+
+            if (row.name === 'F1')
+            {
+                return row.text + ' 共(' + row.total + '条)';
+            }
+        };
+
+        //自定义列汇总
+        columns[6].onsummary = function (row, value, summary) {
+
+            return '合计:' + value.toFixed(2);
+        };
+
 
         for (var i = 0; i < 100; i++)
         {
@@ -95,9 +113,9 @@ flyingon.widget({
 
             item.index = i;
 
-            for (var j = 1; j <= 7; j++)
+            for (var j = 1; j < 7; j++)
             {
-                item['F' + j] = 'G:' + (i % 10 + 1) + ' C:' + j;
+                item['F' + j] = 'data-' + ((random(10) * 5 | 0) + 1);
             }
 
             value = (random() * 10000 | 0) / 100;
@@ -115,6 +133,9 @@ flyingon.widget({
         dataset.load(data);
 
         grid.dataset(dataset);
+
+        //默认展开第一级
+        grid.expandTo(1);
     }
 
 

@@ -8,7 +8,7 @@ flyingon.widget({
 
             {
                 Class: 'Grid',
-                locked: '2 2 2 2'
+                locked: '2 2'
             }
 
         ]
@@ -16,21 +16,22 @@ flyingon.widget({
 
     created: function () {
 
-        var columns = []
+        var grid = this[0];
+        var columns = [];
         var data = [];
 
-        for (var j = 1; j <= 100; j++)
+        for (var i = 1; i <= 10000; i++)
         {
-            columns.push({ title: 'F' + j, name: 'F' + j });
+            columns.push({ title: 'F' + i, name: 'F' + i });
         }
 
-        this[0].columns(columns);
+        grid.columns(columns);
 
-        for (var i = 0; i < 100; i++)
+        for (var i = 0; i < 20; i++)
         {
             var item = {};
 
-            for (var j = 1; j <= 100; j++)
+            for (var j = 1; j <= 10000; j++)
             {
                 item['F' + j] = 'R:' + (i + 1) + ' C:' + j;
             }
@@ -42,7 +43,7 @@ flyingon.widget({
 
         dataset.load(data);
 
-        this[0].dataset(dataset);
+        grid.dataset(dataset);
     }
 
 

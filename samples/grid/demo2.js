@@ -8,29 +8,29 @@ flyingon.widget({
 
             {
                 Class: 'Grid',
-                locked: '2 2 2 2'
+                locked: '0 0 2 2'
             }
-
         ]
     },
 
     created: function () {
 
+        var grid = this[0];
         var columns = []
         var data = [];
 
-        for (var j = 1; j <= 100; j++)
+        for (var j = 1; j <= 10; j++)
         {
             columns.push({ title: 'F' + j, name: 'F' + j });
         }
 
-        this[0].columns(columns);
+        grid.columns(columns);
 
-        for (var i = 0; i < 100; i++)
+        for (var i = 0; i < 100000; i++)
         {
             var item = {};
 
-            for (var j = 1; j <= 100; j++)
+            for (var j = 1; j <= 10; j++)
             {
                 item['F' + j] = 'R:' + (i + 1) + ' C:' + j;
             }
@@ -42,7 +42,7 @@ flyingon.widget({
 
         dataset.load(data);
 
-        this[0].dataset(dataset);
+        grid.dataset(dataset);
     }
 
 

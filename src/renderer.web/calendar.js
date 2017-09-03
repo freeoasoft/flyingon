@@ -15,7 +15,7 @@ flyingon.renderer('Calendar', function (base) {
         
         this.renderDefault(writer, control, className, (cssText || '') + 'padding:8px;');
         
-        writer.push(' onclick="flyingon.Calendar.onclick.call(this, event);" onchange="flyingon.Calendar.onchange.call(this, event);"></div>');
+        writer.push(' onclick="flyingon.Calendar.onclick.call(this, event);"></div>');
     };
 
 
@@ -23,11 +23,11 @@ flyingon.renderer('Calendar', function (base) {
     flyingon.Calendar.onclick = function (e) {
 
         var control = flyingon.findControl(this),
-            target = e.target || e.srcElement,
+            dom = e.target || e.srcElement,
             data = control.__data,
             any;
 
-        switch (target.getAttribute('tag'))
+        switch (dom.getAttribute('tag'))
         {
             case 'to-year':
                 render_year(control, data);
@@ -130,13 +130,13 @@ flyingon.renderer('Calendar', function (base) {
                 break;
 
             case 'year':
-                data[0] = data[4] = +target.innerHTML;
+                data[0] = data[4] = +dom.innerHTML;
                 (control.month() ? render_month : render_date)(control, data);
                 break;
 
             case 'month':
                 data[0] = data[4];
-                data[1] = data[5] = +target.getAttribute('value');
+                data[1] = data[5] = +dom.getAttribute('value');
 
                 if (control.month())
                 {
@@ -149,9 +149,9 @@ flyingon.renderer('Calendar', function (base) {
                 break;
                 
             case 'date':
-                if (target.className.indexOf('f-calendar-disabled') < 0)
+                if (dom.className.indexOf('f-calendar-disabled') < 0)
                 {
-                    any = data[5] + (target.getAttribute('offset') | 0);
+                    any = data[5] + (dom.getAttribute('offset') | 0);
 
                     if (any < 1)
                     {
@@ -170,7 +170,7 @@ flyingon.renderer('Calendar', function (base) {
 
                     data[0] = data[4];
                     data[1] = data[5] = any;
-                    data[2] = +target.innerHTML;
+                    data[2] = +dom.innerHTML;
 
                     do_change(control, data, render_date);
                 }
@@ -179,13 +179,12 @@ flyingon.renderer('Calendar', function (base) {
     };
 
 
-    flyingon.Calendar.onchange = function (e) {
+    flyingon.Calendar.onchange = function () {
 
         var control = flyingon.findControl(this),
-            target = e.target || e.srcElement,
-            values = target.value.match(/\d+/g);
+            values = this.value.match(/\d+/g);
 
-        target.value = control.__data[4] = values ? check_time(values) : '00:00:00';
+        this.value = control.__data[3] = values ? check_time(values) : '00:00:00';
     };
 
 
@@ -578,7 +577,7 @@ flyingon.renderer('Calendar', function (base) {
         {
             writer.push('<div class="f-calendar-space" style="height:4px;"></div><div class="f-calendar-foot" style="height:25px;line-height:25px;">');
 
-            storage.time && writer.push('<input type="text" class="f-calendar-time" value="', data[3], '" />');
+            storage.time && writer.push('<input type="text" class="f-calendar-time" value="', data[3], '" onchange="flyingon.Calendar.onchange.call(this)"/>');
 
             storage.clear && writer.push('<span class="f-calendar-clear" tag="clear">', i18n('calendar.clear', 'clear'), '</span>');
             

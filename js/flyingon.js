@@ -10949,11 +10949,11 @@ flyingon.renderer('ListBox', function (base) {
 
     flyingon.ListBox.onclick = function (e) {
 
-        var target = e.target || e.srcElement;
+        var dom = e.target || e.srcElement;
 
-        while (target !== this)
+        while (dom !== this)
         {
-            var index = target.getAttribute('index');
+            var index = dom.getAttribute('index');
 
             if (index)
             {
@@ -10961,7 +10961,7 @@ flyingon.renderer('ListBox', function (base) {
                 return;
             }
 
-            target = target.parentNode;
+            dom = dom.parentNode;
         }
     };
 
@@ -11527,7 +11527,7 @@ flyingon.renderer('Calendar', function (base) {
         
         this.renderDefault(writer, control, className, (cssText || '') + 'padding:8px;');
         
-        writer.push(' onclick="flyingon.Calendar.onclick.call(this, event);" onchange="flyingon.Calendar.onchange.call(this, event);"></div>');
+        writer.push(' onclick="flyingon.Calendar.onclick.call(this, event);"></div>');
     };
 
 
@@ -11535,11 +11535,11 @@ flyingon.renderer('Calendar', function (base) {
     flyingon.Calendar.onclick = function (e) {
 
         var control = flyingon.findControl(this),
-            target = e.target || e.srcElement,
+            dom = e.target || e.srcElement,
             data = control.__data,
             any;
 
-        switch (target.getAttribute('tag'))
+        switch (dom.getAttribute('tag'))
         {
             case 'to-year':
                 render_year(control, data);
@@ -11642,13 +11642,13 @@ flyingon.renderer('Calendar', function (base) {
                 break;
 
             case 'year':
-                data[0] = data[4] = +target.innerHTML;
+                data[0] = data[4] = +dom.innerHTML;
                 (control.month() ? render_month : render_date)(control, data);
                 break;
 
             case 'month':
                 data[0] = data[4];
-                data[1] = data[5] = +target.getAttribute('value');
+                data[1] = data[5] = +dom.getAttribute('value');
 
                 if (control.month())
                 {
@@ -11661,9 +11661,9 @@ flyingon.renderer('Calendar', function (base) {
                 break;
                 
             case 'date':
-                if (target.className.indexOf('f-calendar-disabled') < 0)
+                if (dom.className.indexOf('f-calendar-disabled') < 0)
                 {
-                    any = data[5] + (target.getAttribute('offset') | 0);
+                    any = data[5] + (dom.getAttribute('offset') | 0);
 
                     if (any < 1)
                     {
@@ -11682,7 +11682,7 @@ flyingon.renderer('Calendar', function (base) {
 
                     data[0] = data[4];
                     data[1] = data[5] = any;
-                    data[2] = +target.innerHTML;
+                    data[2] = +dom.innerHTML;
 
                     do_change(control, data, render_date);
                 }
@@ -11691,13 +11691,12 @@ flyingon.renderer('Calendar', function (base) {
     };
 
 
-    flyingon.Calendar.onchange = function (e) {
+    flyingon.Calendar.onchange = function () {
 
         var control = flyingon.findControl(this),
-            target = e.target || e.srcElement,
-            values = target.value.match(/\d+/g);
+            values = this.value.match(/\d+/g);
 
-        target.value = control.__data[4] = values ? check_time(values) : '00:00:00';
+        this.value = control.__data[3] = values ? check_time(values) : '00:00:00';
     };
 
 
@@ -12090,7 +12089,7 @@ flyingon.renderer('Calendar', function (base) {
         {
             writer.push('<div class="f-calendar-space" style="height:4px;"></div><div class="f-calendar-foot" style="height:25px;line-height:25px;">');
 
-            storage.time && writer.push('<input type="text" class="f-calendar-time" value="', data[3], '" />');
+            storage.time && writer.push('<input type="text" class="f-calendar-time" value="', data[3], '" onchange="flyingon.Calendar.onchange.call(this)"/>');
 
             storage.clear && writer.push('<span class="f-calendar-clear" tag="clear">', i18n('calendar.clear', 'clear'), '</span>');
             
@@ -12304,33 +12303,28 @@ flyingon.renderer('Tree', function (base) {
 
     flyingon.Tree.onclick = function (e) {
 
-        var target = e.target || e.srcElement,
-            node;
+        var tree = flyingon.findControl(this),
+            dom = e.target || e.srcElement,
+            node = flyingon.findControl(dom);
 
-        while (target && target.getAttribute)
+        while (dom && dom !== this)
         {
-            switch (target.getAttribute('tag'))
+            switch (dom.getAttribute('tag'))
             {
                 case 'folder':
-                    node = flyingon.findControl(target);
-                    node.collapsed(!node.collapsed());
+                    tree[node.expanded ? 'collapse' : 'expand'](node);
                     return;
 
                 case 'check':
-                    node = flyingon.findControl(target);
                     node.checked(!node.checked());
                     return;
 
                 case 'node':
-                    node = flyingon.findControl(target);
-                    flyingon.findControl(this).trigger('node-click', 'node', node);
-                    return;
-
-                case 'tree':
+                    tree.trigger('node-click', 'node', node);
                     return;
 
                 default:
-                    target = target.parentNode;
+                    dom = dom.parentNode;
                     break;
             }
         }
@@ -12427,7 +12421,7 @@ flyingon.renderer('TreeNode', function (base) {
         
         if (any || node.length > 0)
         {
-            if (any || storage.collapsed)
+            if (any || !node.expanded)
             {
                 icon = 'f-tree-icon-close';
                 writer.push('<span class="f-tree-folder f-tree-close" tag="folder"></span>');
@@ -12456,7 +12450,7 @@ flyingon.renderer('TreeNode', function (base) {
             '<span class="f-tree-text" tag="text">', text, '</span></div>',
             '<div class="f-tree-list', last && line ? ' f-tree-list-last' : '', '">');
 
-        if (!storage.collapsed && node.length > 0)
+        if (node.expanded && node.length > 0)
         {
             this.__render_children(writer, node, node, 0, node.length, format, ++level, last, line);
         }
@@ -12576,27 +12570,50 @@ flyingon.renderer('TreeNode', function (base) {
     this.expand = function (node) {
 
         var view = node.view,
+            folder = find_dom(view, 'folder'),
+            icon = find_dom(view, 'icon'),
             any;
 
-        find_dom(view, 'folder', 'f-tree-folder f-tree-open');
-
-        if (any = find_dom(view, 'icon'))
+        if (node.length > 0)
         {
-            any.className = any.className.replace('f-tree-icon-close', 'f-tree-icon-open');
+            if (folder)
+            {
+                folder.className = 'f-tree-folder f-tree-open';
+            }
+
+            if (icon)
+            {
+                icon.className = 'f-tree-icon f-tree-icon-open';
+            }
+
+            view = view.lastChild;
+
+            if (!node.__content_render)
+            {
+                this.__render_children(any = [], node, node, 0, node.length);
+
+                view.innerHTML = any.join('');
+
+                this.__mount_children(node, view, node, 0, node.length, view.firstChild);
+            }
+            
+            view.style.display = '';
         }
-
-        view = view.lastChild;
-
-        if (!node.__content_render)
+        else
         {
-            this.__render_children(any = [], node, node, 0, node.length);
+            if (folder)
+            {
+                folder.className = 'f-tree-file';
+                folder.removeAttribute('tag');
+            }
 
-            view.innerHTML = any.join('');
+            if (icon)
+            {
+                icon.className = 'f-tree-icon f-tree-icon-file';
+            }
 
-            this.__mount_children(node, view, node, 0, node.length, view.lastChild);
+            view.lastChild.style.display = 'none';
         }
-        
-        view.style.display = '';
     };
 
 
@@ -12817,13 +12834,16 @@ flyingon.renderer('GridRow', function (base) {
             {
                 fragment.appendChild(view = cell.view);
 
-                style = view.style;
-                style.top = y + 'px';
+                if (cell.__top !== y)
+                {
+                    view.style.top = (cell.__top = y) + 'px';
+                }
 
                 if (cell.__show_tag !== tag)
                 {
                     cell.__show_tag = tag;
 
+                    style = view.style;
                     style.left = column.__start + 'px';
 
                     any = (any = cell.columnSpan) ? column.__span_size(any) : 0;
@@ -12834,6 +12854,7 @@ flyingon.renderer('GridRow', function (base) {
             }
             else if (cell = this.render(writer, row, column, y, height))
             {
+                cell.__top = y;
                 cell.__show_tag = tag;
                 cells[column.uniqueId] = cell;
             }
@@ -12982,7 +13003,11 @@ flyingon.renderer('GroupGridRow', 'GridRow', function (base) {
             fn = column.__summary_fn || (column.__summary_fn = flyingon.Grid.summary(summary));
             any = row.compute(column, name, fn[0], fn[1]);
 
-            if (!(fn = column.onsummary) || !(any = fn.call(column, row, any, summary)))
+            if ((fn = column.onsummary) && (fn = fn.call(column, row, any, summary)))
+            {
+                any = fn;
+            }
+            else
             {
                 any = summary + '=' + any.toFixed(storage.precision);
             }
@@ -13147,14 +13172,14 @@ flyingon.renderer('Grid', function (base) {
 
     flyingon.Grid.onmouseover = function (e) {
 
-        var target = e.target || e.srcElement,
+        var dom = e.target || e.srcElement,
             grid,
             column,
             cell,
             any;
 
-        if (target.className.indexOf('f-grid-cell') >= 0 && 
-            (cell = flyingon.findControl(target)) &&
+        if (dom.className.indexOf('f-grid-cell') >= 0 && 
+            (cell = flyingon.findControl(dom)) &&
             (grid = flyingon.findControl(this)) &&
             (column = cell.column))
         {
@@ -13171,9 +13196,9 @@ flyingon.renderer('Grid', function (base) {
 
                 dom.column = column;
 
-                style.left = target.parentNode.offsetLeft + target.offsetLeft + target.offsetWidth - 3 + 'px';
-                style.top = target.offsetTop + 'px';
-                style.height = target.offsetHeight + 'px';
+                style.left = dom.parentNode.offsetLeft + dom.offsetLeft + dom.offsetWidth - 3 + 'px';
+                style.top = dom.offsetTop + 'px';
+                style.height = dom.offsetHeight + 'px';
                 style.display = '';
             }
         }
@@ -13743,7 +13768,7 @@ flyingon.renderer('Grid', function (base) {
         }
 
         //显示内容
-        any = this.__show_body(grid, grid.__view.current(), height);
+        any = this.__show_body(grid, grid.currentView(), height);
 
         //排列横向锁定区域
         this.__layout_locked(grid, columns.__locked, any);
@@ -14119,11 +14144,13 @@ flyingon.renderer('Grid', function (base) {
 
         for (var i = start; i < end; i++)
         {
-            row = rows[i];
-            row.__show_index = i; //记录显示行索引以便于事件处理
-            row.renderer.show(fragment, writer, row, columns, column_start, column_end, top, height, tag);
+            if (row = rows[i])
+            {
+                row.__show_index = i; //记录显示行索引以便于事件处理
+                row.renderer.show(fragment, writer, row, columns, column_start, column_end, top, height, tag);
 
-            top += height;
+                top += height;
+            }
         }
 
         if (writer[0])
@@ -14153,11 +14180,13 @@ flyingon.renderer('Grid', function (base) {
 
         var writer = [],
             fragment = dom_fragment,
+            tag = grid.__columns.__show_tag,
+            size = grid.__group_size,
             fn = grid.ongroup,
             index = start,
             row,
             node,
-            tag,
+            text,
             any;
 
         while (index < end)
@@ -14169,31 +14198,32 @@ flyingon.renderer('Grid', function (base) {
                     //记录行索引以支持事件定位
                     row.__show_index = index;
 
+                    text = any = fn && fn(row) || row.text + ' (' + row.total + ')';
+
                     if (node = row.view)
                     {
                         fragment.appendChild(node);
 
-                        any = node.style;
-                        any.top = top - 1 + 'px';
-
-                        if (row.__show_tag !== tag)
+                        if (row.__text !== text)
                         {
-                            row.__show_tag = tag;
+                            node.firstChild.nextSibling[text_name] = row.__text = text;
+                        }
 
-                            node[text_name] = fn && fn(row.text) || row.text + ' (' + row.total + ')';
-
-                            any.left = column.__start + 'px';
-                            any.width = column.__size + 'px';
-                            any.height = height + 1 + 'px';
+                        if (row.__top !== top)
+                        {
+                            node.style.top = (row.__top = top) - 1 + 'px';
                         }
                     }
                     else
                     {
-                        any = fn && fn(row.text) || row.text + ' (' + row.total + ')';
-
-                        writer.push('<div class="f-grid-group-row" style="top:', top - 1, 'px;height:', height + 1, 'px;line-height:', height, 'px;">',
-                            '<span class="f-grid-expand" style="margin-left:', row.level * 20, 'px;" tag="expand"></span>',
-                            '<span> ', any, '</span>', 
+                        writer.push('<div class="f-grid-group-row" style="top:', (row.__top = top) - 1, 
+                                'px;height:', height + 1, 
+                                'px;line-height:', height, 
+                                'px;min-width:', size, 'px;',
+                                'px;text-align:left;">',
+                            '<span class="f-grid-', row.expanded ? 'collapse" tag="collapse"' : 'expand" tag="expand"',
+                            ' style="margin-left:', row.level * 20, 'px;"></span>',
+                            '<span> ', row.__text = text, '</span>', 
                             '<div class="f-grid-group-line" style="top:0;bottom:auto;"></div>',
                             '<div class="f-grid-group-line"></div>',
                         '</div>');
@@ -14315,7 +14345,7 @@ flyingon.renderer('Grid', function (base) {
 
         if (update)
         {
-            var rows = grid.__view.current(),
+            var rows = grid.currentView(),
                 any;
             
             view =  grid.view_body.firstChild;
@@ -14339,7 +14369,7 @@ flyingon.renderer('Grid', function (base) {
     //处理竖直滚动
     this.__do_vscroll = function (grid, top) {
 
-        var rows = grid.__view.current(),
+        var rows = grid.currentView(),
             view = grid.view_body.firstChild;
 
         view.style.top = -top + 'px';
@@ -15204,9 +15234,9 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
     flyingon.Dialog.onclick = function (e) {
 
         var control = flyingon.findControl(this),
-            target = e.target || e.srcElement;
+            dom = e.target || e.srcElement;
 
-        if (target.getAttribute('tag') === 'close')
+        if (dom.getAttribute('tag') === 'close')
         {
             control.close();
         }
@@ -18800,9 +18830,13 @@ Object.extend('TreeNode', function () {
     this.isTreeNode = true;
 
 
+    //是否展开
+    this.expanded = false;
+
+
     //选中的子项数量
     this.checkedChildren = 0;
-
+    
 
 
     function define(self, name, defaltValue) {
@@ -18852,18 +18886,6 @@ Object.extend('TreeNode', function () {
         }
     });
 
-
-    //是否收拢
-    this.defineProperty('collapsed', true, {
-
-        set: function (value) {
-
-            if (this.rendered)
-            {
-                value ? this.collapse(false) : this.expand(false, false);
-            }
-        }
-    });
 
 
     //是否启用延时加载
@@ -18918,68 +18940,6 @@ Object.extend('TreeNode', function () {
         }
 
         return index;
-    };
-
-
-
-    //展开节点
-    this.expand = function (deep) {
-
-        var check = arguments[1] !== false;
-
-        if ((!check || this.collapsed()) && this.trigger('before-expand') !== false)
-        {
-            if (check)
-            {
-                this.collapsed(false);
-            }
-
-            this.trigger('after-expand');
-
-            if (deep)
-            {
-                for (var i = 0, l = this.length; i < l; i++)
-                {
-                    this[i].expand(true, true, false);
-                }
-            }
-
-            if (this.rendered && arguments[2] !== false)
-            {
-                this.renderer.expand(this);
-            }
-        }
-        else if (!check)
-        {
-            this.__storage.collapsed = true;
-        }
-
-        return this;
-    };
-
-
-    //收拢节点
-    this.collapse = function () {
-
-        var check = arguments[0] !== false;
-
-        if (!(check && this.collapsed()) && this.trigger('before-collapse') !== false)
-        {
-            if (check)
-            {
-                this.collapsed(true);
-            }
-
-            this.trigger('after-collapse');
-
-            this.rendered && this.renderer.collapse(this);
-        }
-        else if (!check)
-        {
-            this.__storage.collapsed = false;
-        }
-
-        return this;
     };
 
 
@@ -19046,25 +19006,120 @@ flyingon.Control.extend('Tree', function (base) {
 
 
 
-    this.expand = function (deep) {
+    //展开节点
+    this.expand = function (node) {
 
-        for (var i = 0, l = this.length; i < l; i++)
+        if (node)
         {
-            this[i].expand(deep);
+            this.__expand_node(node);
+        }
+        else
+        {
+            for (var i = 0, l = this.length; i < l; i++)
+            {
+                this.__expand_node(this[i]);
+            }
         }
 
         return this;
     };
 
 
-    this.collapse = function () {
+    this.__expand_node = function (node) {
 
-        for (var i = 0, l = this.length; i < l; i++)
+        if (!node.expanded && this.trigger('expand', 'node', node) !== false)
         {
-            this[i].collapse();
+            node.expanded = true;
+            node.rendered && node.renderer.set(node, 'expand');
+        }
+    };
+
+
+    //展开节点至指定级别
+    this.expandTo = function (node, level) {
+
+        if (arguments.length < 2)
+        {
+            level = node;
+            node = null;
+        }
+
+        this.__expand_to(node || this, level | 0);
+        return this;
+    };
+
+
+    this.__expand_to = function (nodes, level) {
+
+        level--;
+
+        for (var i = nodes.length - 1; i >= 0; i--)
+        {
+            var node = nodes[i];
+
+            if (!node.expanded)
+            {
+                if (this.trigger('expand', 'node', node) === false)
+                {
+                    continue;
+                }
+
+                node.expanded = true;
+                node.rendered && node.renderer.set(node, 'expand');
+            }
+
+            if (node.length > 0)
+            {
+                if (level)
+                {
+                    this.__expand_to(node, level);
+                }
+                else
+                {
+                    //收拢最后一级
+                    for (var j = node.length - 1; j >= 0; j--)
+                    {
+                        var item = node[j];
+
+                        if (item.expanded && this.trigger('collapse', 'node', node) !== false)
+                        {
+                            item.expanded = false;
+                            item.rendered && item.renderer.set(item, 'collapse');
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+
+    //收拢节点
+    this.collapse = function (node) {
+
+        if (node)
+        {
+            this.__collapse_node(node);
+        }
+        else
+        {
+            for (var i = 0, l = this.length; i < l; i++)
+            {
+                this.__collapse_node(this[i]);
+            }
         }
 
         return this;
+    };
+
+
+    //收拢节点
+    this.__collapse_node = function (node) {
+
+        if (node.expanded && node.length > 0 && this.trigger('collapse', 'node', node) !== false)
+        {
+            node.expanded = false;
+            node.rendered && node.renderer.set(node, 'collapse');
+        }
     };
 
 
@@ -19161,7 +19216,7 @@ flyingon.GridColumn = Object.extend(function () {
             if (grid && grid.rendered)
             {
                 grid.__columns.__keys = null;
-                grid.update(false);
+                grid.update();
             }
         }
     });
@@ -19276,7 +19331,7 @@ flyingon.GridColumn = Object.extend(function () {
             if (grid && grid.rendered)
             {
                 grid.__summary_list = this.__summary_fn = null;
-                grid.update(false);
+                grid.update();
             }
         }
     });
@@ -19576,14 +19631,20 @@ flyingon.GridColumns = Object.extend(function () {
 
         var locked = this.__locked,
             start = locked[0],
-            end = this.length - locked[1],
+            end = this.length,
             column,
             left,
             any;
 
+        if (end <= 0)
+        {
+            return;
+        }
+
         this.__arrange_start = x;
 
         x += locked[2];
+        end -= locked[1];
 
         //计算开始位置
         for (var i = start; i < end; i++)
@@ -19837,6 +19898,22 @@ flyingon.GridColumns = Object.extend(function () {
     };
 
 
+    //同步因分组隐藏的列
+    this.__sync_visible = function () {
+
+        for (var i = this.length - 1; i >= 0; i--)
+        {
+            var column = this[i],
+                storage;
+
+            if (!column.__visible && (!(storage = column.__storage) || storage.visible))
+            {
+                column.__visible = true;
+            }
+        }
+    };
+
+
 });
 
 
@@ -19845,10 +19922,10 @@ flyingon.GridColumns = Object.extend(function () {
 flyingon.GridRow = Object.extend._(function () {
 
     
-
+    
     //上级行
     this.parent = null;
-        
+
     //行数据
     this.data = null;
 
@@ -19860,6 +19937,7 @@ flyingon.GridRow = Object.extend._(function () {
     
     //是否展开
     this.expanded = false;
+
 
 
     //获取行级别
@@ -19876,7 +19954,6 @@ flyingon.GridRow = Object.extend._(function () {
 
         return level;
     };
-
 
 
     //销毁
@@ -19926,10 +20003,10 @@ flyingon.GroupGridRow = Object.extend._(function (base) {
 
     //上级行
     this.parent = null;
-        
+
     //行数据
     this.data = null;
-    
+
 
     //分组列名
     this.name = '';
@@ -19938,12 +20015,12 @@ flyingon.GroupGridRow = Object.extend._(function (base) {
     this.level = 0;
 
 
-    //总子项数(含子项的子项)
-    this.total = 0;
-
-
     //是否展开
     this.expanded = false;
+
+
+    //总子项数(含子项的子项)
+    this.total = 0;
 
 
 
@@ -19978,7 +20055,7 @@ flyingon.GroupGridRow = Object.extend._(function (base) {
         return summary ? summary(this, name, any) : any;
     };
 
-    
+
 
     //销毁
     this.dispose = function (deep) {
@@ -20028,6 +20105,7 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
     this.init = function (grid) {
 
         this.grid = grid;
+        this.view = this;
         this.keys = flyingon.create(null);
     };
 
@@ -20038,62 +20116,52 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
 
         var Class = flyingon.GridRow,
             keys = this.keys,
-            grid = this.grid;
+            grid = this.grid,
+            row,
+            any;
 
-        this.view = null;
-        
         if (this.length > 0)
         {
+            this.dispose();
+
             this.splice(0);
+            this.view = this;
+            this.grid = grid;
+            this.keys = flyingon.create(null);
         }
 
         for (var i = 0, l = this.length = dataset.length; i < l; i++)
-        {
-            var row = this[i] = new Class(),
-                data = dataset[i];
+        {            
+            any = dataset[i];
 
+            row = this[i] = new Class();
             row.grid = grid;
-            row.data = data.data;
+            row.data = any.data;
 
-            keys[row.rowId = data.uniqueId] = row; 
+            keys[row.rowId = any.uniqueId] = row; 
+        }
+
+        if (this.__group_view = !!(any = grid.__groups))
+        {
+            group_view(this, any);
         }
     };
 
 
-
-    //获取当前视图
-    this.current = function () {
-
-        return this.view || this.__init_view();
-    };
-
-
-
-    //初始化视图
-    this.__init_view = function () {
-
-        var grid = this.grid,
-            any;
+    //切换分组
+    this.__change_group = function (groups) {
 
         //如果当前是分组视图,需先销毁原分组行
         if (this.__group_view)
         {
-            ungroup_view(this);
-        }
-
-        if (any = grid.__groups)
-        {
-            any = group_view(this, any);
-        }
-        else
-        {
-            any = this;
+            ungroup_view(this.view = this);
         }
 
         //标记是否分组视图
-        this.__group_view = any !== this;
-
-        return this.view = any;
+        if (this.__group_view = !!groups)
+        {
+            group_view(this, groups);
+        }
     };
 
 
@@ -20107,8 +20175,6 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
             rows = group_rows(flyingon.GroupGridRow, self.grid, null, rows, groups, 0, 0);
             rows.push.apply(self, rows);
         }
-
-        return rows;
     };
 
 
@@ -20120,15 +20186,16 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
             next = !!groups[index],
             row;
 
-        for (var key in keys)
+        for (var i = 0, l = keys.length; i < l; i++)
         {
-            rows = keys[key];
-
             row = new Class();
+
             row.grid = grid;
             row.parent = parent;
             row.name = name,
-            row.text = key;
+
+            rows = keys[row.text = keys[i]];
+
             row.level = level;
             row.total = rows.length;
             
@@ -20148,17 +20215,31 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
 
     function group_data(rows, name) {
 
-        var keys = create ? create(null) : {},
+        var keys = [],
             row,
             data,
-            key;
+            key,
+            any;
 
         for (var i = 0, l = rows.length; i < l; i++)
         {
             if ((row = rows[i]) && (data = row.data))
             {
-                (keys[key = data[name]] || (keys[key] = [])).push(row);
+                if (any = keys[key = data[name]])
+                {
+                    any.push(row);
+                }
+                else
+                {
+                    keys.push(key);
+                    keys[key] = [row];
+                }
             }
+        }
+
+        if (keys.length > 0)
+        {
+            keys.sort();
         }
 
         return keys;
@@ -20169,12 +20250,15 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
     function ungroup_view(self) {
 
         var rows = self.splice(0),
-            exports;
+            any;
+
+        //显示分组列
+        self.grid.__columns.__sync_visible();
 
         if (rows.length > 0)
         {
-            ungroup_rows(rows, exports = []);
-            exports.push.apply(self, exports);
+            ungroup_rows(rows, any = []);
+            any.push.apply(self, any);
         }
     };
 
@@ -20210,10 +20294,48 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
 
 
 
+    //同步展开视图
+    this.__sync_view = function () {
+
+        var view = this.view;
+
+        if (view === this)
+        {
+            view = this.view = [];
+        }
+        else
+        {
+            view.splice(0);
+        }
+
+        this.__dirty = false;
+        sync_view(view, this);
+
+        return view;
+    };
+
+
+    function sync_view(view, rows) {
+
+        for (var i = 0, l = rows.length; i < l; i++)
+        {
+            var row = rows[i];
+
+            view.push(row);
+
+            if (row.expanded && row.length > 0)
+            {
+                sync_view(view, row);
+            }
+        }
+    };
+
+
+
     //展开指定行(仅供界面操作用)
     this.__expand_row = function (row) {
 
-        if (row && !row.expanded)
+        if (row && !row.expanded && this.grid.trigger('expand', 'row', row) !== false)
         {
             row.expanded = true;
 
@@ -20230,7 +20352,11 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
                 expand_rows(row, rows);
                 rows.splice.apply(view, rows);
 
-                this.grid.update(false);
+                this.grid.update();
+            }
+            else
+            {
+                return false; //告知展开后无子节点
             }
         }
     };
@@ -20239,20 +20365,12 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
     //收拢指定行(仅供界面操作用)
     this.__collapse_row = function (row) {
 
-        if (row && row.expanded)
+        if (row && row.expanded && row.length > 0 && this.grid.trigger('collapse') !== false)
         {
             row.expanded = false;
 
-            if (row.length > 0)
-            {
-                var view = this.view;
-
-                if (view !== this)
-                {
-                    view.splice(row.__show_index + 1, expand_count(row));
-                    this.grid.update(false);
-                }
-            }
+            this.view.splice(row.__show_index + 1, expand_count(row));
+            this.grid.update();
         }
     };
 
@@ -20328,7 +20446,7 @@ flyingon.Control.extend('Grid', function (base) {
 
     this.defaultWidth = 800;
 
-    this.defaultHeight = 300;
+    this.defaultHeight = 400;
 
 
     this.defaultValue('border', 1);
@@ -20397,7 +20515,7 @@ flyingon.Control.extend('Grid', function (base) {
             if (this.rendered)
             {
                 this.renderer.set(this, 'header', 1);
-                this.update(false);
+                this.update();
             }
         }
     });
@@ -20411,7 +20529,7 @@ flyingon.Control.extend('Grid', function (base) {
             if (this.rendered)
             {
                 this.renderer.set(this, 'header', 2);
-                this.update(false);
+                this.update();
             }
         }
     });
@@ -20425,7 +20543,7 @@ flyingon.Control.extend('Grid', function (base) {
             if (this.rendered)
             {
                 this.renderer.set(this, 'filter', value);
-                this.update(false);
+                this.update();
             }
         }
     });
@@ -20472,12 +20590,17 @@ flyingon.Control.extend('Grid', function (base) {
 
     this.__set_groups = function (value) {
 
-        //清空视图
-        this.__view.view = null;
+        var view = this.__view;
 
         this.__groups = value = value && value.match(/\w+/g) || null;
         this.__group_size = value ? value.length * 20 : 0;
 
+        if (view.length > 0)
+        {
+            view.__change_group(value);
+        }
+
+        this.trigger(value ? 'group' : 'ungroup');
         this.renderer.set(this, '__render_group');
     };
 
@@ -20503,17 +20626,12 @@ flyingon.Control.extend('Grid', function (base) {
 
             var any = this.__dataset || null;
 
-            if (any === void 0)
+            if (value === void 0)
             {
                 return any;
             }
 
-            if (any === value)
-            {
-                return this;
-            }
-
-            if (this.__watch_list && flyingon.__do_watch(this, 'dataset', value) === false)
+            if (any === value && this.__watch_list && flyingon.__do_watch(this, 'dataset', value) === false)
             {
                 return this;
             }
@@ -20531,6 +20649,7 @@ flyingon.Control.extend('Grid', function (base) {
             }
 
             this.__view.dataset(value);
+            this.rendered && this.update();
 
             return this;
         }
@@ -20543,8 +20662,6 @@ flyingon.Control.extend('Grid', function (base) {
         
         var view = this.__view;
 
-        view = view.view || view.__init_view();
-
         if (index === void 0)
         {
             return view;
@@ -20554,69 +20671,164 @@ flyingon.Control.extend('Grid', function (base) {
     };
 
 
+
+    //获取当前渲染视图
+    this.currentView = function () {
+    
+        var view = this.__view;
+        return view.__dirty ? view.__sync_view() : view.view;
+    };
+
+
+
     //在指定行前或后插入新表格行
     this.insert = function (row, after) {
 
+        return this;
     };
 
 
-    //展开表格行至指定级别
-     this.expand = function (row, level) {
 
-        var view = this.view;
+    //展开行
+    this.expand = function (row) {
 
-        if (row >= -1)
+        var view = this.__view,
+            dirty;
+
+        if (row)
         {
-            level = row | 0;
+            if (!row.expanded && this.trigger('expand', 'row', row) !== false)
+            {
+                dirty = 1;
+                row.expanded = true;
+            }
+        }
+        else
+        {
+            for (var i = 0, l = view.length; i < l; i++)
+            {
+                if ((row = view[i]) && !row.expanded && this.trigger('expand', 'row', row) !== false)
+                {
+                    dirty = 1;
+                    row.expanded = true;
+                }
+            }
+        }
+
+        if (dirty)
+        {
+            view.__dirty = true;
+            this.rendered && this.update();
+        }
+
+        return this;
+    };
+
+
+    //展开行到指定级别
+    this.expandTo = function (row, level) {
+
+        if (arguments.length < 2)
+        {
+            level = row;
             row = null;
         }
-        else
+
+        if (this.__expand_to(row || this.__view, level | 0))
         {
-            level |= 0;
+            this.__view.__dirty = true;
+            this.rendered && this.update();
         }
 
-        if (row)
+        return this;
+    };
+
+    
+    this.__expand_to = function (rows, level) {
+
+        var dirty;
+
+        level--;
+
+        for (var i = rows.length - 1; i >= 0; i--)
         {
-            if (row.length > 0 && !row.expanded)
+            var row = rows[i];
+
+            if (!row.expanded)
             {
-                view.__expand_row(row, level);
-            }
-        }
-        else
-        {
-            for (var i = 0, l = view.length; i < l; i++)
-            {
-                if ((row = view[i]) && row.length > 0 && !row.expanded)
+                if (this.trigger('expand', 'row', row) === false)
                 {
-                    view.__expand_row(row, level);
+                    continue;
+                }
+
+                row.expanded = true;
+                dirty = 1;
+            }
+
+            if (row.length > 0)
+            {
+                if (level)
+                {
+                    if (this.__expand_to(row, level))
+                    {
+                        dirty = 1;
+                    }
+                }
+                else
+                {
+                    //收拢最后一级
+                    for (var j = row.length - 1; j >= 0; j--)
+                    {
+                        var item = row[j];
+
+                        if (item.expanded && this.trigger('collapse', 'row', row) !== false)
+                        {
+                            item.expanded = false;
+                            dirty = 1;
+                        }
+                    }
                 }
             }
         }
+
+        return dirty;
     };
 
 
-    //收拢表格行
+    //收拢行
     this.collapse = function (row) {
 
-        var view = this.__view;
+        var view = this.__view,
+            dirty;
 
         if (row)
         {
-            if (row.length > 0 && row.expanded)
+            if (row.expanded && this.trigger('collapse', 'row', row) !== false)
             {
-                view.__collapse_row(row);
+                dirty = 1;
+                row.expanded = false;
             }
         }
         else
         {
+
             for (var i = 0, l = view.length; i < l; i++)
             {
-                if ((row = view[i]) && row.length > 0 && row.expanded)
+                if ((row = view[i]) && row.expanded && this.trigger('collapse', 'row', row) !== false)
                 {
-                    view.__collapse_row(row);
+                    dirty = 1;
+                    row.expanded = false;
                 }
             }
         }
+
+        if (dirty)
+        {
+            view.__dirty = true;
+            this.rendered && this.update();
+        }
+
+        return this;
     };
 
 

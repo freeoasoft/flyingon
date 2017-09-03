@@ -47,9 +47,9 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
     flyingon.Dialog.onclick = function (e) {
 
         var control = flyingon.findControl(this),
-            target = e.target || e.srcElement;
+            dom = e.target || e.srcElement;
 
-        if (target.getAttribute('tag') === 'close')
+        if (dom.getAttribute('tag') === 'close')
         {
             control.close();
         }

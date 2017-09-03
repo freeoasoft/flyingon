@@ -15,11 +15,11 @@ flyingon.renderer('ListBox', function (base) {
 
     flyingon.ListBox.onclick = function (e) {
 
-        var target = e.target || e.srcElement;
+        var dom = e.target || e.srcElement;
 
-        while (target !== this)
+        while (dom !== this)
         {
-            var index = target.getAttribute('index');
+            var index = dom.getAttribute('index');
 
             if (index)
             {
@@ -27,7 +27,7 @@ flyingon.renderer('ListBox', function (base) {
                 return;
             }
 
-            target = target.parentNode;
+            dom = dom.parentNode;
         }
     };
 

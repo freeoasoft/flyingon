@@ -61,7 +61,7 @@ flyingon.GridColumn = Object.extend(function () {
             if (grid && grid.rendered)
             {
                 grid.__columns.__keys = null;
-                grid.update(false);
+                grid.update();
             }
         }
     });
@@ -176,7 +176,7 @@ flyingon.GridColumn = Object.extend(function () {
             if (grid && grid.rendered)
             {
                 grid.__summary_list = this.__summary_fn = null;
-                grid.update(false);
+                grid.update();
             }
         }
     });
@@ -476,14 +476,20 @@ flyingon.GridColumns = Object.extend(function () {
 
         var locked = this.__locked,
             start = locked[0],
-            end = this.length - locked[1],
+            end = this.length,
             column,
             left,
             any;
 
+        if (end <= 0)
+        {
+            return;
+        }
+
         this.__arrange_start = x;
 
         x += locked[2];
+        end -= locked[1];
 
         //计算开始位置
         for (var i = start; i < end; i++)
@@ -737,6 +743,22 @@ flyingon.GridColumns = Object.extend(function () {
     };
 
 
+    //同步因分组隐藏的列
+    this.__sync_visible = function () {
+
+        for (var i = this.length - 1; i >= 0; i--)
+        {
+            var column = this[i],
+                storage;
+
+            if (!column.__visible && (!(storage = column.__storage) || storage.visible))
+            {
+                column.__visible = true;
+            }
+        }
+    };
+
+
 });
 
 
@@ -745,10 +767,10 @@ flyingon.GridColumns = Object.extend(function () {
 flyingon.GridRow = Object.extend._(function () {
 
     
-
+    
     //上级行
     this.parent = null;
-        
+
     //行数据
     this.data = null;
 
@@ -760,6 +782,7 @@ flyingon.GridRow = Object.extend._(function () {
     
     //是否展开
     this.expanded = false;
+
 
 
     //获取行级别
@@ -776,7 +799,6 @@ flyingon.GridRow = Object.extend._(function () {
 
         return level;
     };
-
 
 
     //销毁
@@ -826,10 +848,10 @@ flyingon.GroupGridRow = Object.extend._(function (base) {
 
     //上级行
     this.parent = null;
-        
+
     //行数据
     this.data = null;
-    
+
 
     //分组列名
     this.name = '';
@@ -838,12 +860,12 @@ flyingon.GroupGridRow = Object.extend._(function (base) {
     this.level = 0;
 
 
-    //总子项数(含子项的子项)
-    this.total = 0;
-
-
     //是否展开
     this.expanded = false;
+
+
+    //总子项数(含子项的子项)
+    this.total = 0;
 
 
 
@@ -878,7 +900,7 @@ flyingon.GroupGridRow = Object.extend._(function (base) {
         return summary ? summary(this, name, any) : any;
     };
 
-    
+
 
     //销毁
     this.dispose = function (deep) {
@@ -928,6 +950,7 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
     this.init = function (grid) {
 
         this.grid = grid;
+        this.view = this;
         this.keys = flyingon.create(null);
     };
 
@@ -938,62 +961,52 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
 
         var Class = flyingon.GridRow,
             keys = this.keys,
-            grid = this.grid;
+            grid = this.grid,
+            row,
+            any;
 
-        this.view = null;
-        
         if (this.length > 0)
         {
+            this.dispose();
+
             this.splice(0);
+            this.view = this;
+            this.grid = grid;
+            this.keys = flyingon.create(null);
         }
 
         for (var i = 0, l = this.length = dataset.length; i < l; i++)
-        {
-            var row = this[i] = new Class(),
-                data = dataset[i];
+        {            
+            any = dataset[i];
 
+            row = this[i] = new Class();
             row.grid = grid;
-            row.data = data.data;
+            row.data = any.data;
 
-            keys[row.rowId = data.uniqueId] = row; 
+            keys[row.rowId = any.uniqueId] = row; 
+        }
+
+        if (this.__group_view = !!(any = grid.__groups))
+        {
+            group_view(this, any);
         }
     };
 
 
-
-    //获取当前视图
-    this.current = function () {
-
-        return this.view || this.__init_view();
-    };
-
-
-
-    //初始化视图
-    this.__init_view = function () {
-
-        var grid = this.grid,
-            any;
+    //切换分组
+    this.__change_group = function (groups) {
 
         //如果当前是分组视图,需先销毁原分组行
         if (this.__group_view)
         {
-            ungroup_view(this);
-        }
-
-        if (any = grid.__groups)
-        {
-            any = group_view(this, any);
-        }
-        else
-        {
-            any = this;
+            ungroup_view(this.view = this);
         }
 
         //标记是否分组视图
-        this.__group_view = any !== this;
-
-        return this.view = any;
+        if (this.__group_view = !!groups)
+        {
+            group_view(this, groups);
+        }
     };
 
 
@@ -1007,8 +1020,6 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
             rows = group_rows(flyingon.GroupGridRow, self.grid, null, rows, groups, 0, 0);
             rows.push.apply(self, rows);
         }
-
-        return rows;
     };
 
 
@@ -1020,15 +1031,16 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
             next = !!groups[index],
             row;
 
-        for (var key in keys)
+        for (var i = 0, l = keys.length; i < l; i++)
         {
-            rows = keys[key];
-
             row = new Class();
+
             row.grid = grid;
             row.parent = parent;
             row.name = name,
-            row.text = key;
+
+            rows = keys[row.text = keys[i]];
+
             row.level = level;
             row.total = rows.length;
             
@@ -1048,17 +1060,31 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
 
     function group_data(rows, name) {
 
-        var keys = create ? create(null) : {},
+        var keys = [],
             row,
             data,
-            key;
+            key,
+            any;
 
         for (var i = 0, l = rows.length; i < l; i++)
         {
             if ((row = rows[i]) && (data = row.data))
             {
-                (keys[key = data[name]] || (keys[key] = [])).push(row);
+                if (any = keys[key = data[name]])
+                {
+                    any.push(row);
+                }
+                else
+                {
+                    keys.push(key);
+                    keys[key] = [row];
+                }
             }
+        }
+
+        if (keys.length > 0)
+        {
+            keys.sort();
         }
 
         return keys;
@@ -1069,12 +1095,15 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
     function ungroup_view(self) {
 
         var rows = self.splice(0),
-            exports;
+            any;
+
+        //显示分组列
+        self.grid.__columns.__sync_visible();
 
         if (rows.length > 0)
         {
-            ungroup_rows(rows, exports = []);
-            exports.push.apply(self, exports);
+            ungroup_rows(rows, any = []);
+            any.push.apply(self, any);
         }
     };
 
@@ -1110,10 +1139,48 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
 
 
 
+    //同步展开视图
+    this.__sync_view = function () {
+
+        var view = this.view;
+
+        if (view === this)
+        {
+            view = this.view = [];
+        }
+        else
+        {
+            view.splice(0);
+        }
+
+        this.__dirty = false;
+        sync_view(view, this);
+
+        return view;
+    };
+
+
+    function sync_view(view, rows) {
+
+        for (var i = 0, l = rows.length; i < l; i++)
+        {
+            var row = rows[i];
+
+            view.push(row);
+
+            if (row.expanded && row.length > 0)
+            {
+                sync_view(view, row);
+            }
+        }
+    };
+
+
+
     //展开指定行(仅供界面操作用)
     this.__expand_row = function (row) {
 
-        if (row && !row.expanded)
+        if (row && !row.expanded && this.grid.trigger('expand', 'row', row) !== false)
         {
             row.expanded = true;
 
@@ -1130,7 +1197,11 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
                 expand_rows(row, rows);
                 rows.splice.apply(view, rows);
 
-                this.grid.update(false);
+                this.grid.update();
+            }
+            else
+            {
+                return false; //告知展开后无子节点
             }
         }
     };
@@ -1139,20 +1210,12 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
     //收拢指定行(仅供界面操作用)
     this.__collapse_row = function (row) {
 
-        if (row && row.expanded)
+        if (row && row.expanded && row.length > 0 && this.grid.trigger('collapse') !== false)
         {
             row.expanded = false;
 
-            if (row.length > 0)
-            {
-                var view = this.view;
-
-                if (view !== this)
-                {
-                    view.splice(row.__show_index + 1, expand_count(row));
-                    this.grid.update(false);
-                }
-            }
+            this.view.splice(row.__show_index + 1, expand_count(row));
+            this.grid.update();
         }
     };
 
@@ -1297,7 +1360,7 @@ flyingon.Control.extend('Grid', function (base) {
             if (this.rendered)
             {
                 this.renderer.set(this, 'header', 1);
-                this.update(false);
+                this.update();
             }
         }
     });
@@ -1311,7 +1374,7 @@ flyingon.Control.extend('Grid', function (base) {
             if (this.rendered)
             {
                 this.renderer.set(this, 'header', 2);
-                this.update(false);
+                this.update();
             }
         }
     });
@@ -1325,7 +1388,7 @@ flyingon.Control.extend('Grid', function (base) {
             if (this.rendered)
             {
                 this.renderer.set(this, 'filter', value);
-                this.update(false);
+                this.update();
             }
         }
     });
@@ -1372,12 +1435,17 @@ flyingon.Control.extend('Grid', function (base) {
 
     this.__set_groups = function (value) {
 
-        //清空视图
-        this.__view.view = null;
+        var view = this.__view;
 
         this.__groups = value = value && value.match(/\w+/g) || null;
         this.__group_size = value ? value.length * 20 : 0;
 
+        if (view.length > 0)
+        {
+            view.__change_group(value);
+        }
+
+        this.trigger(value ? 'group' : 'ungroup');
         this.renderer.set(this, '__render_group');
     };
 
@@ -1403,17 +1471,12 @@ flyingon.Control.extend('Grid', function (base) {
 
             var any = this.__dataset || null;
 
-            if (any === void 0)
+            if (value === void 0)
             {
                 return any;
             }
 
-            if (any === value)
-            {
-                return this;
-            }
-
-            if (this.__watch_list && flyingon.__do_watch(this, 'dataset', value) === false)
+            if (any === value && this.__watch_list && flyingon.__do_watch(this, 'dataset', value) === false)
             {
                 return this;
             }
@@ -1431,6 +1494,7 @@ flyingon.Control.extend('Grid', function (base) {
             }
 
             this.__view.dataset(value);
+            this.rendered && this.update();
 
             return this;
         }
@@ -1443,8 +1507,6 @@ flyingon.Control.extend('Grid', function (base) {
         
         var view = this.__view;
 
-        view = view.view || view.__init_view();
-
         if (index === void 0)
         {
             return view;
@@ -1454,69 +1516,164 @@ flyingon.Control.extend('Grid', function (base) {
     };
 
 
+
+    //获取当前渲染视图
+    this.currentView = function () {
+    
+        var view = this.__view;
+        return view.__dirty ? view.__sync_view() : view.view;
+    };
+
+
+
     //在指定行前或后插入新表格行
     this.insert = function (row, after) {
 
+        return this;
     };
 
 
-    //展开表格行至指定级别
-     this.expand = function (row, level) {
 
-        var view = this.view;
+    //展开行
+    this.expand = function (row) {
 
-        if (row >= -1)
+        var view = this.__view,
+            dirty;
+
+        if (row)
         {
-            level = row | 0;
+            if (!row.expanded && this.trigger('expand', 'row', row) !== false)
+            {
+                dirty = 1;
+                row.expanded = true;
+            }
+        }
+        else
+        {
+            for (var i = 0, l = view.length; i < l; i++)
+            {
+                if ((row = view[i]) && !row.expanded && this.trigger('expand', 'row', row) !== false)
+                {
+                    dirty = 1;
+                    row.expanded = true;
+                }
+            }
+        }
+
+        if (dirty)
+        {
+            view.__dirty = true;
+            this.rendered && this.update();
+        }
+
+        return this;
+    };
+
+
+    //展开行到指定级别
+    this.expandTo = function (row, level) {
+
+        if (arguments.length < 2)
+        {
+            level = row;
             row = null;
         }
-        else
+
+        if (this.__expand_to(row || this.__view, level | 0))
         {
-            level |= 0;
+            this.__view.__dirty = true;
+            this.rendered && this.update();
         }
 
-        if (row)
+        return this;
+    };
+
+    
+    this.__expand_to = function (rows, level) {
+
+        var dirty;
+
+        level--;
+
+        for (var i = rows.length - 1; i >= 0; i--)
         {
-            if (row.length > 0 && !row.expanded)
+            var row = rows[i];
+
+            if (!row.expanded)
             {
-                view.__expand_row(row, level);
-            }
-        }
-        else
-        {
-            for (var i = 0, l = view.length; i < l; i++)
-            {
-                if ((row = view[i]) && row.length > 0 && !row.expanded)
+                if (this.trigger('expand', 'row', row) === false)
                 {
-                    view.__expand_row(row, level);
+                    continue;
+                }
+
+                row.expanded = true;
+                dirty = 1;
+            }
+
+            if (row.length > 0)
+            {
+                if (level)
+                {
+                    if (this.__expand_to(row, level))
+                    {
+                        dirty = 1;
+                    }
+                }
+                else
+                {
+                    //收拢最后一级
+                    for (var j = row.length - 1; j >= 0; j--)
+                    {
+                        var item = row[j];
+
+                        if (item.expanded && this.trigger('collapse', 'row', row) !== false)
+                        {
+                            item.expanded = false;
+                            dirty = 1;
+                        }
+                    }
                 }
             }
         }
+
+        return dirty;
     };
 
 
-    //收拢表格行
+    //收拢行
     this.collapse = function (row) {
 
-        var view = this.__view;
+        var view = this.__view,
+            dirty;
 
         if (row)
         {
-            if (row.length > 0 && row.expanded)
+            if (row.expanded && this.trigger('collapse', 'row', row) !== false)
             {
-                view.__collapse_row(row);
+                dirty = 1;
+                row.expanded = false;
             }
         }
         else
         {
+
             for (var i = 0, l = view.length; i < l; i++)
             {
-                if ((row = view[i]) && row.length > 0 && row.expanded)
+                if ((row = view[i]) && row.expanded && this.trigger('collapse', 'row', row) !== false)
                 {
-                    view.__collapse_row(row);
+                    dirty = 1;
+                    row.expanded = false;
                 }
             }
         }
+
+        if (dirty)
+        {
+            view.__dirty = true;
+            this.rendered && this.update();
+        }
+
+        return this;
     };
 
 

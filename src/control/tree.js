@@ -11,9 +11,13 @@ Object.extend('TreeNode', function () {
     this.isTreeNode = true;
 
 
+    //是否展开
+    this.expanded = false;
+
+
     //选中的子项数量
     this.checkedChildren = 0;
-
+    
 
 
     function define(self, name, defaltValue) {
@@ -63,18 +67,6 @@ Object.extend('TreeNode', function () {
         }
     });
 
-
-    //是否收拢
-    this.defineProperty('collapsed', true, {
-
-        set: function (value) {
-
-            if (this.rendered)
-            {
-                value ? this.collapse(false) : this.expand(false, false);
-            }
-        }
-    });
 
 
     //是否启用延时加载
@@ -129,68 +121,6 @@ Object.extend('TreeNode', function () {
         }
 
         return index;
-    };
-
-
-
-    //展开节点
-    this.expand = function (deep) {
-
-        var check = arguments[1] !== false;
-
-        if ((!check || this.collapsed()) && this.trigger('before-expand') !== false)
-        {
-            if (check)
-            {
-                this.collapsed(false);
-            }
-
-            this.trigger('after-expand');
-
-            if (deep)
-            {
-                for (var i = 0, l = this.length; i < l; i++)
-                {
-                    this[i].expand(true, true, false);
-                }
-            }
-
-            if (this.rendered && arguments[2] !== false)
-            {
-                this.renderer.expand(this);
-            }
-        }
-        else if (!check)
-        {
-            this.__storage.collapsed = true;
-        }
-
-        return this;
-    };
-
-
-    //收拢节点
-    this.collapse = function () {
-
-        var check = arguments[0] !== false;
-
-        if (!(check && this.collapsed()) && this.trigger('before-collapse') !== false)
-        {
-            if (check)
-            {
-                this.collapsed(true);
-            }
-
-            this.trigger('after-collapse');
-
-            this.rendered && this.renderer.collapse(this);
-        }
-        else if (!check)
-        {
-            this.__storage.collapsed = false;
-        }
-
-        return this;
     };
 
 
@@ -257,25 +187,120 @@ flyingon.Control.extend('Tree', function (base) {
 
 
 
-    this.expand = function (deep) {
+    //展开节点
+    this.expand = function (node) {
 
-        for (var i = 0, l = this.length; i < l; i++)
+        if (node)
         {
-            this[i].expand(deep);
+            this.__expand_node(node);
+        }
+        else
+        {
+            for (var i = 0, l = this.length; i < l; i++)
+            {
+                this.__expand_node(this[i]);
+            }
         }
 
         return this;
     };
 
 
-    this.collapse = function () {
+    this.__expand_node = function (node) {
 
-        for (var i = 0, l = this.length; i < l; i++)
+        if (!node.expanded && this.trigger('expand', 'node', node) !== false)
         {
-            this[i].collapse();
+            node.expanded = true;
+            node.rendered && node.renderer.set(node, 'expand');
+        }
+    };
+
+
+    //展开节点至指定级别
+    this.expandTo = function (node, level) {
+
+        if (arguments.length < 2)
+        {
+            level = node;
+            node = null;
+        }
+
+        this.__expand_to(node || this, level | 0);
+        return this;
+    };
+
+
+    this.__expand_to = function (nodes, level) {
+
+        level--;
+
+        for (var i = nodes.length - 1; i >= 0; i--)
+        {
+            var node = nodes[i];
+
+            if (!node.expanded)
+            {
+                if (this.trigger('expand', 'node', node) === false)
+                {
+                    continue;
+                }
+
+                node.expanded = true;
+                node.rendered && node.renderer.set(node, 'expand');
+            }
+
+            if (node.length > 0)
+            {
+                if (level)
+                {
+                    this.__expand_to(node, level);
+                }
+                else
+                {
+                    //收拢最后一级
+                    for (var j = node.length - 1; j >= 0; j--)
+                    {
+                        var item = node[j];
+
+                        if (item.expanded && this.trigger('collapse', 'node', node) !== false)
+                        {
+                            item.expanded = false;
+                            item.rendered && item.renderer.set(item, 'collapse');
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+
+    //收拢节点
+    this.collapse = function (node) {
+
+        if (node)
+        {
+            this.__collapse_node(node);
+        }
+        else
+        {
+            for (var i = 0, l = this.length; i < l; i++)
+            {
+                this.__collapse_node(this[i]);
+            }
         }
 
         return this;
+    };
+
+
+    //收拢节点
+    this.__collapse_node = function (node) {
+
+        if (node.expanded && node.length > 0 && this.trigger('collapse', 'node', node) !== false)
+        {
+            node.expanded = false;
+            node.rendered && node.renderer.set(node, 'collapse');
+        }
     };
 
 
