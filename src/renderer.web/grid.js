@@ -18,7 +18,7 @@ flyingon.renderer('GridColumn', function (base) {
         }
         else
         {
-            render_header(writer, column, cells[0], 0, column.__size, height);
+            render_header(writer, column, cells[0] || column.__set_title('')[0], 0, column.__size, height);
         }
     };
 
@@ -54,8 +54,8 @@ flyingon.renderer('GridColumn', function (base) {
         cell.column = column;
         cell.__as_html = true;
 
-        cell.renderer.render(writer, cell, 'f-grid-cell', 
-            'left:' + column.__start + 
+        cell.renderer.render(writer, cell, 'f-grid-cell' + column.fullClassName, 
+            'left:' + column.__start +
             'px;top:' + y +
             'px;width:' + width + 
             'px;height:' + height + 
@@ -171,6 +171,24 @@ flyingon.renderer('GridRow', function (base) {
 
             if (cell = cells[column.uniqueId])
             {
+                //处理树列
+                if (column.__tree_cell)
+                {
+                    fragment.appendChild(view = row.view);
+                    
+                    if (cell.__top !== y)
+                    {
+                        view.style.top = y + 'px';
+                    }
+
+                    if (cell.__show_tag !== tag)
+                    {
+                        style = view.style;
+                        style.left = column.__start +  'px';
+                        style.height = ((any = cell.rowSpan) ? ++any * height : height) + 'px';
+                    }
+                }
+
                 fragment.appendChild(view = cell.view);
 
                 if (cell.__top !== y)
@@ -205,7 +223,7 @@ flyingon.renderer('GridRow', function (base) {
 
     this.render = function (writer, row, column, y, height) {
 
-        var cell = column.__create_control(row),
+        var cell = column.createControl(row, column.__name),
             width = column.__size,
             span,
             any;
@@ -246,19 +264,23 @@ flyingon.renderer('GridRow', function (base) {
             }
         }
 
-        any = column.__storage;
-        any = any && (any = any.align) && any !== 'left' ? 'text-align:' + any + ';' : '';
+        cell.row = row;
+        cell.column = column;
+        cell.__as_html = true;
+
+        if (column.__tree_cell)
+        {
+            this.render_tree(writer, row, column, y, height, cell);
+        }
+
+        any = (any = column.__align) ? 'text-align:' + any + ';' : '';
 
         if (span)
         {
             any += 'z-index:1;';
         }
 
-        cell.row = row;
-        cell.column = column;
-        cell.__as_html = true;
-
-        cell.renderer.render(writer, cell, 'f-grid-cell',
+        cell.renderer.render(writer, cell, 'f-grid-cell' + column.fullClassName,
             'left:' + column.__start + 
             'px;top:' + y + 
             'px;width:' + width + 
@@ -270,16 +292,57 @@ flyingon.renderer('GridRow', function (base) {
     };
 
 
+    this.render_tree = function (writer, row, column, y, height, cell) {
+
+        var expand = row.length > 0 ? (row.expanded ? 'expand' : 'collapse') : 'file',
+            icon = column.__tree_icon,
+            width = 16;
+
+        if (icon)
+        {
+            width += 16;
+
+            if (icon = column.grid.onicon)
+            {
+                icon = icon.call(column.grid, row, column);
+            }
+
+            if (!icon)
+            {
+                icon = 'f-grid-icon-' + expand;
+            }
+        }
+
+        while (row = row.parent)
+        {
+            width += 16;
+        }
+
+        writer.push('<div class="f-grid-tree" style="',
+                'left:' + column.__start + 
+                'px;top:' + y + 
+                'px;width:' + width + 
+                'px;height:' + height + 
+                'px;line-height:' + height + 'px;">' +
+                '<span class="f-grid-', expand, '" tag="', expand, '"', '></span>',
+                '<span class="f-grid-icon', icon ? ' ' + icon : '" style="display:none;', '"></span>',
+            '</div>');
+
+        cell.padding('0 2 0 ' + (width + 2));
+    };
+
+
     this.mount = function (view, row, columns, start, end, fragment, tag) {
 
         var grid = row.grid,
             cells = row.__cells,
+            column,
             cell,
             node;
 
         while (start < end)
         {
-            if (cell = cells[columns[start++].uniqueId])
+            if ((column = columns[start++]) && (cell = cells[column.uniqueId]))
             {
                 if (node = cell.view)
                 {
@@ -287,6 +350,17 @@ flyingon.renderer('GridRow', function (base) {
                 }
                 else if (node = view.firstChild)
                 {
+                    if (column.__tree_cell)
+                    {
+                        fragment.insertBefore(node, tag);
+
+                        row.view = node;
+                        node.row = row;
+                        node.column = column;
+
+                        node = view.firstChild;
+                    }
+
                     fragment.insertBefore(node, tag);
 
                     cell.parent = grid;
@@ -488,22 +562,45 @@ flyingon.renderer('Grid', function (base) {
         else
         {
             var grid = flyingon.findControl(this),
-                dom = e.target || e.srcElement;
+                dom = e.target || e.srcElement,
+                row;
 
             switch (dom.getAttribute('tag'))
             {
                 case 'expand':
-                    dom.className = 'f-grid-collapse';
-                    dom.setAttribute('tag', 'collapse');
-                    grid.__view.__expand_row(dom.parentNode.row);
+                    change_expand(grid, row = dom.parentNode.row, dom, 'collapse');
+                    grid.__view.__collapse_row(row);
                     break;
 
                 case 'collapse':
-                    dom.className = 'f-grid-expand';
-                    dom.setAttribute('tag', 'expand');
-                    grid.__view.__collapse_row(dom.parentNode.row);
+                    change_expand(grid, row = dom.parentNode.row, dom, 'expand');
+                    grid.__view.__expand_row(row);
                     break;
             }
+        }
+    };
+
+
+    function change_expand(grid, row, dom, name) {
+
+        dom.className = 'f-grid-' + name;
+        dom.setAttribute('tag', name);
+
+        if ((dom = dom.nextSibling) && dom.className.indexOf('f-grid-icon') >= 0)
+        {
+            var icon = grid.onicon;
+
+            if (icon)
+            {
+                icon = icon.call(grid, row, dom.parentNode.column);
+            }
+
+            if (!icon)
+            {
+                icon = 'f-grid-icon-' + name;
+            }
+
+            dom.className = 'f-grid-icon ' + icon;
         }
     };
 
@@ -530,10 +627,10 @@ flyingon.renderer('Grid', function (base) {
 
             if (column && column.resizable())
             {
-                var dom = grid.view_head.lastChild,
-                    style = dom.style;
+                var head = grid.view_head.lastChild,
+                    style = head.style;
 
-                dom.column = column;
+                head.column = column;
 
                 style.left = dom.parentNode.offsetLeft + dom.offsetLeft + dom.offsetWidth - 3 + 'px';
                 style.top = dom.offsetTop + 'px';
@@ -708,7 +805,7 @@ flyingon.renderer('Grid', function (base) {
             any = grid.__groups;
             any.splice(any.indexOf(this.name), 1);
 
-            grid.__set_groups(storage.groups = any.join(' '));
+            grid.__set_groups(storage.groups = any.join(' '), false);
         }
         else //拖动列
         {
@@ -837,6 +934,8 @@ flyingon.renderer('Grid', function (base) {
             offset = -grid.scrollLeft | 0;
             x -= offset;
         }
+
+        console.log(columns[2].__visible);
 
         while (start < end)
         {
@@ -1315,9 +1414,17 @@ flyingon.renderer('Grid', function (base) {
             start = grid.__locked_top,
             end = rows.length,
             rowHeight = rows.__row_height = storage.rowHeight,
+            tree = storage.treeColumn,
             size = end * rowHeight,
             vscroll = size > height,
             any;
+
+        //记录是否树列
+        if (any = tree && grid.__columns.find(tree))
+        {
+            any.__tree_cell = true;
+            any.__tree_icon = storage.treeIcon;
+        }
 
         grid.view_scroll.firstChild.style.height = size + 'px';
         grid.view_body.style[flyingon.rtl ? 'left' : 'right'] = (vscroll ? flyingon.vscroll_width : 0) + 'px';
@@ -1560,7 +1667,7 @@ flyingon.renderer('Grid', function (base) {
                                 'px;line-height:', height, 
                                 'px;min-width:', size, 'px;',
                                 'px;text-align:left;">',
-                            '<span class="f-grid-', row.expanded ? 'collapse" tag="collapse"' : 'expand" tag="expand"',
+                            '<span class="f-grid-', row.expanded ? 'expand" tag="expand"' : 'collapse" tag="collapse"',
                             ' style="margin-left:', row.level * 20, 'px;"></span>',
                             '<span> ', row.__text = text, '</span>', 
                             '<div class="f-grid-group-line" style="top:0;bottom:auto;"></div>',

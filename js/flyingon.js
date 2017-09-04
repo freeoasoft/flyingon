@@ -2844,7 +2844,7 @@ flyingon.fragment('f-dataset', function () {
         
         var dataset = this.dataset;
         
-        (dataset || this).__load_data(dataset ? this : null, list, primaryKey, childrenName || 'children');        
+        (dataset || this).__load_data(dataset ? this : null, list, primaryKey, '', childrenName || 'children');        
         return this;
     };
 
@@ -11441,7 +11441,7 @@ flyingon.renderer('TextBox', function (base) {
 
     this.text = function (control, view, value) {
 
-        view.firstChild.value = value;
+        view.value = value;
     };
 
 
@@ -12679,7 +12679,7 @@ flyingon.renderer('GridColumn', function (base) {
         }
         else
         {
-            render_header(writer, column, cells[0], 0, column.__size, height);
+            render_header(writer, column, cells[0] || column.__set_title('')[0], 0, column.__size, height);
         }
     };
 
@@ -12715,8 +12715,8 @@ flyingon.renderer('GridColumn', function (base) {
         cell.column = column;
         cell.__as_html = true;
 
-        cell.renderer.render(writer, cell, 'f-grid-cell', 
-            'left:' + column.__start + 
+        cell.renderer.render(writer, cell, 'f-grid-cell' + column.fullClassName, 
+            'left:' + column.__start +
             'px;top:' + y +
             'px;width:' + width + 
             'px;height:' + height + 
@@ -12832,6 +12832,24 @@ flyingon.renderer('GridRow', function (base) {
 
             if (cell = cells[column.uniqueId])
             {
+                //处理树列
+                if (column.__tree_cell)
+                {
+                    fragment.appendChild(view = row.view);
+                    
+                    if (cell.__top !== y)
+                    {
+                        view.style.top = y + 'px';
+                    }
+
+                    if (cell.__show_tag !== tag)
+                    {
+                        style = view.style;
+                        style.left = column.__start +  'px';
+                        style.height = ((any = cell.rowSpan) ? ++any * height : height) + 'px';
+                    }
+                }
+
                 fragment.appendChild(view = cell.view);
 
                 if (cell.__top !== y)
@@ -12866,7 +12884,7 @@ flyingon.renderer('GridRow', function (base) {
 
     this.render = function (writer, row, column, y, height) {
 
-        var cell = column.__create_control(row),
+        var cell = column.createControl(row, column.__name),
             width = column.__size,
             span,
             any;
@@ -12907,19 +12925,23 @@ flyingon.renderer('GridRow', function (base) {
             }
         }
 
-        any = column.__storage;
-        any = any && (any = any.align) && any !== 'left' ? 'text-align:' + any + ';' : '';
+        cell.row = row;
+        cell.column = column;
+        cell.__as_html = true;
+
+        if (column.__tree_cell)
+        {
+            this.render_tree(writer, row, column, y, height, cell);
+        }
+
+        any = (any = column.__align) ? 'text-align:' + any + ';' : '';
 
         if (span)
         {
             any += 'z-index:1;';
         }
 
-        cell.row = row;
-        cell.column = column;
-        cell.__as_html = true;
-
-        cell.renderer.render(writer, cell, 'f-grid-cell',
+        cell.renderer.render(writer, cell, 'f-grid-cell' + column.fullClassName,
             'left:' + column.__start + 
             'px;top:' + y + 
             'px;width:' + width + 
@@ -12931,16 +12953,57 @@ flyingon.renderer('GridRow', function (base) {
     };
 
 
+    this.render_tree = function (writer, row, column, y, height, cell) {
+
+        var expand = row.length > 0 ? (row.expanded ? 'expand' : 'collapse') : 'file',
+            icon = column.__tree_icon,
+            width = 16;
+
+        if (icon)
+        {
+            width += 16;
+
+            if (icon = column.grid.onicon)
+            {
+                icon = icon.call(column.grid, row, column);
+            }
+
+            if (!icon)
+            {
+                icon = 'f-grid-icon-' + expand;
+            }
+        }
+
+        while (row = row.parent)
+        {
+            width += 16;
+        }
+
+        writer.push('<div class="f-grid-tree" style="',
+                'left:' + column.__start + 
+                'px;top:' + y + 
+                'px;width:' + width + 
+                'px;height:' + height + 
+                'px;line-height:' + height + 'px;">' +
+                '<span class="f-grid-', expand, '" tag="', expand, '"', '></span>',
+                '<span class="f-grid-icon', icon ? ' ' + icon : '" style="display:none;', '"></span>',
+            '</div>');
+
+        cell.padding('0 2 0 ' + (width + 2));
+    };
+
+
     this.mount = function (view, row, columns, start, end, fragment, tag) {
 
         var grid = row.grid,
             cells = row.__cells,
+            column,
             cell,
             node;
 
         while (start < end)
         {
-            if (cell = cells[columns[start++].uniqueId])
+            if ((column = columns[start++]) && (cell = cells[column.uniqueId]))
             {
                 if (node = cell.view)
                 {
@@ -12948,6 +13011,17 @@ flyingon.renderer('GridRow', function (base) {
                 }
                 else if (node = view.firstChild)
                 {
+                    if (column.__tree_cell)
+                    {
+                        fragment.insertBefore(node, tag);
+
+                        row.view = node;
+                        node.row = row;
+                        node.column = column;
+
+                        node = view.firstChild;
+                    }
+
                     fragment.insertBefore(node, tag);
 
                     cell.parent = grid;
@@ -13149,22 +13223,45 @@ flyingon.renderer('Grid', function (base) {
         else
         {
             var grid = flyingon.findControl(this),
-                dom = e.target || e.srcElement;
+                dom = e.target || e.srcElement,
+                row;
 
             switch (dom.getAttribute('tag'))
             {
                 case 'expand':
-                    dom.className = 'f-grid-collapse';
-                    dom.setAttribute('tag', 'collapse');
-                    grid.__view.__expand_row(dom.parentNode.row);
+                    change_expand(grid, row = dom.parentNode.row, dom, 'collapse');
+                    grid.__view.__collapse_row(row);
                     break;
 
                 case 'collapse':
-                    dom.className = 'f-grid-expand';
-                    dom.setAttribute('tag', 'expand');
-                    grid.__view.__collapse_row(dom.parentNode.row);
+                    change_expand(grid, row = dom.parentNode.row, dom, 'expand');
+                    grid.__view.__expand_row(row);
                     break;
             }
+        }
+    };
+
+
+    function change_expand(grid, row, dom, name) {
+
+        dom.className = 'f-grid-' + name;
+        dom.setAttribute('tag', name);
+
+        if ((dom = dom.nextSibling) && dom.className.indexOf('f-grid-icon') >= 0)
+        {
+            var icon = grid.onicon;
+
+            if (icon)
+            {
+                icon = icon.call(grid, row, dom.parentNode.column);
+            }
+
+            if (!icon)
+            {
+                icon = 'f-grid-icon-' + name;
+            }
+
+            dom.className = 'f-grid-icon ' + icon;
         }
     };
 
@@ -13191,10 +13288,10 @@ flyingon.renderer('Grid', function (base) {
 
             if (column && column.resizable())
             {
-                var dom = grid.view_head.lastChild,
-                    style = dom.style;
+                var head = grid.view_head.lastChild,
+                    style = head.style;
 
-                dom.column = column;
+                head.column = column;
 
                 style.left = dom.parentNode.offsetLeft + dom.offsetLeft + dom.offsetWidth - 3 + 'px';
                 style.top = dom.offsetTop + 'px';
@@ -13369,7 +13466,7 @@ flyingon.renderer('Grid', function (base) {
             any = grid.__groups;
             any.splice(any.indexOf(this.name), 1);
 
-            grid.__set_groups(storage.groups = any.join(' '));
+            grid.__set_groups(storage.groups = any.join(' '), false);
         }
         else //拖动列
         {
@@ -13498,6 +13595,8 @@ flyingon.renderer('Grid', function (base) {
             offset = -grid.scrollLeft | 0;
             x -= offset;
         }
+
+        console.log(columns[2].__visible);
 
         while (start < end)
         {
@@ -13976,9 +14075,17 @@ flyingon.renderer('Grid', function (base) {
             start = grid.__locked_top,
             end = rows.length,
             rowHeight = rows.__row_height = storage.rowHeight,
+            tree = storage.treeColumn,
             size = end * rowHeight,
             vscroll = size > height,
             any;
+
+        //记录是否树列
+        if (any = tree && grid.__columns.find(tree))
+        {
+            any.__tree_cell = true;
+            any.__tree_icon = storage.treeIcon;
+        }
 
         grid.view_scroll.firstChild.style.height = size + 'px';
         grid.view_body.style[flyingon.rtl ? 'left' : 'right'] = (vscroll ? flyingon.vscroll_width : 0) + 'px';
@@ -14221,7 +14328,7 @@ flyingon.renderer('Grid', function (base) {
                                 'px;line-height:', height, 
                                 'px;min-width:', size, 'px;',
                                 'px;text-align:left;">',
-                            '<span class="f-grid-', row.expanded ? 'collapse" tag="collapse"' : 'expand" tag="expand"',
+                            '<span class="f-grid-', row.expanded ? 'expand" tag="expand"' : 'collapse" tag="collapse"',
                             ' style="margin-left:', row.level * 20, 'px;"></span>',
                             '<span> ', row.__text = text, '</span>', 
                             '<div class="f-grid-group-line" style="top:0;bottom:auto;"></div>',
@@ -19153,7 +19260,7 @@ flyingon.Control.extend('Tree', function (base) {
 
 
 
-flyingon.GridColumn = Object.extend(function () {
+(flyingon.GridColumn = Object.extend(function () {
 
 
 
@@ -19189,19 +19296,6 @@ flyingon.GridColumn = Object.extend(function () {
 
 
 
-    function define(self, name, defaultValue) {
-
-        return self.defineProperty(name, defaultValue, {
-
-            set: function (value) {
-
-                this.view && this.renderer.set(this, name, value);
-            }
-        });
-    };
-
-
-
     //列类型
     this.type = '';
 
@@ -19209,9 +19303,11 @@ flyingon.GridColumn = Object.extend(function () {
     //绑定的字段名
     this.defineProperty('name', '', { 
         
-        set: function () {
+        set: function (value) {
 
             var grid = this.grid;
+
+            this.__name = value;
                
             if (grid && grid.rendered)
             {
@@ -19271,15 +19367,45 @@ flyingon.GridColumn = Object.extend(function () {
     });
 
 
+    this.fullClassName = this.defaultClassName = '';
+
+    //自定义class
+    this.defineProperty('className', '', {
+
+        set: function (value) {
+
+            if (value && this.defaultClassName)
+            {
+                value += ' ' + this.defaultClassName;
+            }
+
+            this.fullClassName = value ? ' ' + value : '';
+        }
+    });
+
+
     //对齐方式
     //left
     //center
     //right
-    define(this, 'align', 'left');
+    this.defineProperty('align', '', {
+
+        set: function (value) {
+
+            this.__align = value;
+        }
+    });
 
 
     //是否只读
-    define(this, 'readonly', false);
+    this.defineProperty('readonly', false, {
+
+        set: function (value) {
+
+            this.__readonly = value;
+            this.view && this.renderer.set(this, name, value);
+        }   
+    });
 
 
     this.__visible = true;
@@ -19353,17 +19479,19 @@ flyingon.GridColumn = Object.extend(function () {
         {
             for (var i = 0, l = title.length; i < l; i++)
             {
-                this.__create_header(cells, title[i]);
+                this.__create_header(Class, cells, title[i]);
             }
         }
         else
         {
-            this.__create_header(cells, title);
+            this.__create_header(Class, cells, title);
         }
+
+        return cells;
     };
 
 
-    this.__create_header = function (cells, title) {
+    this.__create_header = function (Class, cells, title) {
 
         var control, size, span;
 
@@ -19385,7 +19513,11 @@ flyingon.GridColumn = Object.extend(function () {
         if (!control)
         {
             control = new Class();
-            (control.__storage = create(control.__defaults)).text = '' + title;
+
+            if (title)
+            {
+                (control.__storage = create(control.__defaults)).text = '' + title;
+            }
         }
 
         if (size > 0)
@@ -19400,6 +19532,19 @@ flyingon.GridColumn = Object.extend(function () {
         }
 
         cells.push(control);
+    };
+
+
+    this.index = function () {
+
+        var columns = this.grid.__columns;
+
+        if (columns.__show_tag !== this.__show_tag)
+        {
+            return columns.indexOf(this);
+        }
+
+        return this.__index;
     };
 
 
@@ -19446,14 +19591,14 @@ flyingon.GridColumn = Object.extend(function () {
 
 
     //创建单元格控件
-    this.__create_control = function (row) {
+    this.createControl = function (row, name) {
 
-        var control = new Class(),
-            storage = this.__storage,
-            name = storage && storage.name;
-
-        storage = control.__storage = create(control.__defaults);
-        storage.text = name ? row.data[name] : '';
+       var control = new Class();
+        
+        if (name)
+        {
+            (control.__storage = create(control.__defaults)).text = row.data[name];
+        }
 
         return control;
     };
@@ -19465,7 +19610,20 @@ flyingon.GridColumn = Object.extend(function () {
 
 
 
-});
+    //列初始化处理
+    this.__class_init = function (Class, base) {
+     
+        var any;
+
+        if (any = this.defaultClassName)
+        {
+            this.fullClassName = ' ' + any;
+        }
+    };
+
+
+
+})).all = flyingon.create(null);
 
 
 
@@ -19474,8 +19632,11 @@ flyingon.GridColumn.extend = function (type, fn) {
 
     if (type && fn)
     {
-        var any = flyingon.GridColumn.all || (flyingon.GridColumn.all = flyingon.create(null));
-        return any[type] = flyingon.defineClass(this, fn);
+        var Class = flyingon.defineClass(this, fn);
+
+        Class.prototype.type = type;
+
+        return flyingon.GridColumn.all[type] = Class;
     }
 };
 
@@ -19484,6 +19645,19 @@ flyingon.GridColumn.extend = function (type, fn) {
 //行号列
 flyingon.GridColumn.extend('no', function (base) {
 
+
+    this.defaultClassName = 'f-grid-column-no';
+
+
+    this.defaultValue('size', 25);
+
+
+    this.defaultValue('draggable', false);
+
+
+    this.defaultValue('resizable', false);
+
+
 });
 
 
@@ -19491,12 +19665,37 @@ flyingon.GridColumn.extend('no', function (base) {
 //选择列
 flyingon.GridColumn.extend('check', function (base) {
 
-});
+
+    var Class = flyingon.CheckBox;
 
 
+    this.defaultClassName = 'f-grid-column-check';
 
-//树列
-flyingon.GridColumn.extend('tree', function (base) {
+
+    this.defaultValue('size', 30);
+
+
+    this.defaultValue('draggable', false);
+
+
+    this.defaultValue('resizable', false);
+
+
+    //创建单元格控件
+    this.createControl = function (row) {
+
+       var control = new Class();
+        
+        control.__column_check = true;
+
+        if (row.checked)
+        {
+            control.checked(true);
+        }
+
+        return control;
+    };
+
 
 });
 
@@ -20117,7 +20316,6 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
         var Class = flyingon.GridRow,
             keys = this.keys,
             grid = this.grid,
-            row,
             any;
 
         if (this.length > 0)
@@ -20130,20 +20328,34 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
             this.keys = flyingon.create(null);
         }
 
-        for (var i = 0, l = this.length = dataset.length; i < l; i++)
-        {            
-            any = dataset[i];
-
-            row = this[i] = new Class();
-            row.grid = grid;
-            row.data = any.data;
-
-            keys[row.rowId = any.uniqueId] = row; 
-        }
+        create_rows(Class, keys, grid, this, null, dataset);
 
         if (this.__group_view = !!(any = grid.__groups))
         {
             group_view(this, any);
+        }
+    };
+
+
+    function create_rows(Class, keys, grid, view, parent, rows) {
+
+        var row, any;
+
+        for (var i = 0, l = view.length = rows.length; i < l; i++)
+        {            
+            any = rows[i];
+
+            row = view[i] = new Class();
+            row.grid = grid;
+            row.parent = parent;
+            row.data = any.data;
+
+            keys[row.rowId = any.uniqueId] = row;
+
+            if (any.length > 0)
+            {
+                create_rows(Class, keys, grid, row, row, any);
+            }
         }
     };
 
@@ -20588,19 +20800,23 @@ flyingon.Control.extend('Grid', function (base) {
     });
 
 
-    this.__set_groups = function (value) {
+    this.__set_groups = function (value, change) {
 
         var view = this.__view;
 
         this.__groups = value = value && value.match(/\w+/g) || null;
         this.__group_size = value ? value.length * 20 : 0;
 
-        if (view.length > 0)
+        if (change !== false)
         {
-            view.__change_group(value);
+            if (view.length > 0)
+            {
+                view.__change_group(value);
+            }
+
+            this.trigger(value ? 'group' : 'ungroup');
         }
 
-        this.trigger(value ? 'group' : 'ungroup');
         this.renderer.set(this, '__render_group');
     };
 
@@ -20617,6 +20833,12 @@ flyingon.Control.extend('Grid', function (base) {
     this['selected-mode'] = this.defineProperty('selectedMode', 0);
 
 
+    //树列名
+    this['tree-column'] = this.defineProperty('treeColumn', '');
+
+
+    //树列是否显示图标
+    this['tree-icon'] = this.defineProperty('treeIcon', true);
 
 
     //数据集

@@ -36,7 +36,7 @@ flyingon.renderer('TextBox', function (base) {
 
     this.text = function (control, view, value) {
 
-        view.firstChild.value = value;
+        view.value = value;
     };
 
 

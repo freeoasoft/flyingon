@@ -31,7 +31,7 @@ flyingon.widget({
 
         function render(cell, row, column) {
 
-            if ((column.absoluteIndex & 1) === (row.data.index & 1))
+            if ((column.index() & 1) === (row.data.index & 1))
             {
                 cell.style('background-color:silver;color:blue');
             }

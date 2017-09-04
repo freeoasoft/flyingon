@@ -51,7 +51,10 @@ flyingon.widget({
 
         this[0].on('change', function (e) {
 
-            alert('change event  column-index:' + e.target.column.absoluteIndex + ' value:' + e.value);
+            var target = e.target,
+                column = target.column || target.parent.column;
+
+            alert('change event  column-index:' + column.index() + ' value:' + e.value);
         });
     }
 

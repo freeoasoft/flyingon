@@ -70,6 +70,7 @@ input[type="text"],
 .f-grid-column-head,
 .f-grid-group-cell,
 .f-grid-group,
+.f-grid-no,
 .f-tab-head,
 .f-message-foot {
     background-color: #EFF5FF;
@@ -79,6 +80,10 @@ input[type="text"],
 .f-grid-cell,
 .f-grid-group-row {
     background-color: white;
+}
+
+.f-grid-body .f-grid-column-no {
+    background-color: #EFF5FF;
 }
 
 .f-back, 
@@ -131,16 +136,12 @@ input[type="text"],
 .f-grid-top,
 .f-grid-bottom,
 .f-grid-right,
+.f-grid-top,
+.f-grid-bottom,
 .f-grid-group,
 .f-grid-cell {
     border-style: solid;
     border-color: #95B8E7;
-}
-
-.f-grid-top,
-.f-grid-bottom {
-    border-style: solid;
-    border-color: darkgray;
 }
 
 .f-tab-direction-top .f-tab-selected .f-tab-link {
@@ -764,11 +765,41 @@ input[type="text"],
     width: 16px;
     height: 16px;
     vertical-align: middle;
-    background: url(flyingon.png) no-repeat -13px -95px;
+}
+
+.f-grid-expand {
+    background: url(flyingon.png) no-repeat -34px -95px;
 }
 
 .f-grid-collapse {
-    background: url(flyingon.png) no-repeat -34px -95px;
+    background: url(flyingon.png) no-repeat -13px -95px;
+}
+
+.f-grid-tree {
+    position: absolute;
+    z-index: 1;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.f-grid-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+}
+
+.f-grid-icon-expand {
+    background: url(flyingon.png) no-repeat -115px -69px;
+}
+
+.f-grid-icon-collapse {
+    background: url(flyingon.png) no-repeat -90px -69px;
+}
+
+.f-grid-icon-file {
+    margin-top: -1px;
+    background: url(flyingon.png) no-repeat -139px -68px;
 }
 
 

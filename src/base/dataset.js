@@ -266,7 +266,7 @@ flyingon.fragment('f-dataset', function () {
         
         var dataset = this.dataset;
         
-        (dataset || this).__load_data(dataset ? this : null, list, primaryKey, childrenName || 'children');        
+        (dataset || this).__load_data(dataset ? this : null, list, primaryKey, '', childrenName || 'children');        
         return this;
     };
 
