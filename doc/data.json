@@ -1,0 +1,1507 @@
+{
+    "project": {
+        "name": "flyingon",
+        "description": "flyingon JavaScript Framework",
+        "version": "1.0.0",
+        "url": "https://github.com/freeoasoft/flyingon"
+    },
+    "files": {
+        "js\\flyingon.js": {
+            "name": "js\\flyingon.js",
+            "modules": {},
+            "classes": {
+                "flyingon": 1,
+                "Class": 1,
+                "flyingon.Event": 1,
+                "flyingon.Async": 1,
+                "f-collection": 1,
+                "f-bindable": 1,
+                "flyingon.Control": 1,
+                "flyingon.Panel": 1
+            },
+            "fors": {
+                "flyingon": 1,
+                "Class": 1
+            },
+            "namespaces": {}
+        }
+    },
+    "modules": {},
+    "classes": {
+        "flyingon": {
+            "name": "flyingon",
+            "shortname": "flyingon",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "js\\flyingon.js",
+            "line": 16,
+            "static": 1,
+            "description": "flyingon全局名字空间"
+        },
+        "Class": {
+            "name": "Class",
+            "shortname": "Class",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "js\\flyingon.js",
+            "line": 412,
+            "description": "通过flyingon.defineClass或{父类}.extend定义的类"
+        },
+        "flyingon.Event": {
+            "name": "flyingon.Event",
+            "shortname": "flyingon.Event",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "js\\flyingon.js",
+            "line": 1526,
+            "description": "事件基类"
+        },
+        "flyingon.Async": {
+            "name": "flyingon.Async",
+            "shortname": "flyingon.Async",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "js\\flyingon.js",
+            "line": 1769,
+            "description": "异步处理类"
+        },
+        "f-collection": {
+            "name": "f-collection",
+            "shortname": "f-collection",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [
+                "flyingon.Control"
+            ],
+            "file": "js\\flyingon.js",
+            "line": 2460,
+            "extension": "",
+            "description": "集合功能片段"
+        },
+        "f-bindable": {
+            "name": "f-bindable",
+            "shortname": "f-bindable",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [
+                "flyingon.Control"
+            ],
+            "file": "js\\flyingon.js",
+            "line": 4187,
+            "extension": "",
+            "description": "可绑定功能片段"
+        },
+        "flyingon.Control": {
+            "name": "flyingon.Control",
+            "shortname": "flyingon.Control",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "js\\flyingon.js",
+            "line": 16383,
+            "uses": [
+                "f-bindable",
+                "f-collection"
+            ],
+            "description": "控件基类"
+        },
+        "flyingon.Panel": {
+            "name": "flyingon.Panel",
+            "shortname": "flyingon.Panel",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "js\\flyingon.js",
+            "line": 18001,
+            "extends": "flyingon.Control",
+            "description": "面板容器类"
+        }
+    },
+    "elements": {},
+    "classitems": [
+        {
+            "file": "js\\flyingon.js",
+            "line": 50,
+            "itemtype": "property",
+            "name": "version",
+            "type": "string",
+            "description": "flyingon版本号",
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 64,
+            "itemtype": "method",
+            "name": "create",
+            "description": "以指定原型创建对象",
+            "params": [
+                {
+                    "name": "prototype",
+                    "description": "新创建对象的原型",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "新创建的对象",
+                "type": "Object"
+            },
+            "example": [
+                " \n//创建一个原型为null的对象\nflyingon.create(null);",
+                " \n//创建一个原型为数组的对象\nflyingon.create([]);"
+            ],
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 89,
+            "itemtype": "method",
+            "name": "extend",
+            "description": "复制源对象成员至目标对象",
+            "params": [
+                {
+                    "name": "target",
+                    "description": "目标对象",
+                    "type": "Object"
+                },
+                {
+                    "name": "source",
+                    "description": "源对象(可以有多个源对象)",
+                    "type": "Object"
+                },
+                {
+                    "name": "deep",
+                    "description": "是否深复制",
+                    "type": "Boolean"
+                }
+            ],
+            "return": {
+                "description": "目标对象",
+                "type": "Object"
+            },
+            "example": [
+                "\nflyingon.extend({}, { a: 1, b: [1, 2] }, { c: 3 }, true);"
+            ],
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 144,
+            "itemtype": "method",
+            "name": "each",
+            "description": "循环处理",
+            "params": [
+                {
+                    "name": "values",
+                    "description": "循环目标",
+                    "type": "String|any[]"
+                },
+                {
+                    "name": "fn",
+                    "description": "循环函数",
+                    "type": "Function"
+                },
+                {
+                    "name": "context",
+                    "description": "指定函数上下文(this)",
+                    "type": "Object",
+                    "optional": true
+                }
+            ],
+            "example": [
+                "\nflyingon.each('1,2,3,4,5', function (item, index) {\n\n     //...\n});",
+                "\nflyingon.each([1,2,3,4,5], function (item, index) {\n\n     //...\n});"
+            ],
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 226,
+            "itemtype": "method",
+            "name": "use",
+            "description": "使用指定模块",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "模块名称, 多级名称用\".\"分隔",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "模块对象",
+                "type": "Object"
+            },
+            "example": [
+                "\nflyingon.use('a.b');"
+            ],
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 250,
+            "itemtype": "method",
+            "name": "defineModule",
+            "description": "定义或切换当前模块",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "模块名称, 多级名称用\".\"分隔",
+                    "type": "String"
+                },
+                {
+                    "name": "callback",
+                    "description": "模块定义函数, 不传入表示切换当前模块",
+                    "type": "Function",
+                    "optional": true
+                }
+            ],
+            "return": {
+                "description": "模块对象",
+                "type": "Object"
+            },
+            "example": [
+                "\nflyingon.use('a.b');"
+            ],
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 304,
+            "itemtype": "method",
+            "name": "endModule",
+            "description": "结束当前切换当前模块",
+            "return": {
+                "description": "模块对象",
+                "type": "Object"
+            },
+            "example": [
+                "\nflyingon.endModule();"
+            ],
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 376,
+            "itemtype": "method",
+            "name": "fragment",
+            "description": "定义或扩展功能片段",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "片段名称",
+                    "type": "String"
+                },
+                {
+                    "name": "fn",
+                    "description": "类型是函数时表示功能实现, 类型是对象时表示对比对象扩展定义名称的片段",
+                    "type": "Function|object"
+                }
+            ],
+            "example": [
+                "\n//定义功能片段\nflyingon.fragment('test', function () {\n\n     this.fn = function () {};\n});",
+                "\n//给定义的类扩展功能片段\nObject.extend(function () {\n\n     flyingon.fragment('test', this);\n});"
+            ],
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 418,
+            "itemtype": "method",
+            "name": "defineClass",
+            "description": "定义类方法, 此方法大多数情况下可使用{父类}.extend替换, 比如Object.extend表示从Object继承定义子类",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "类名称, 只能包含英文字母及数字且首字母需大写",
+                    "type": "String",
+                    "optional": true
+                },
+                {
+                    "name": "superclass",
+                    "description": "父类, 省略时表示从Object继承",
+                    "type": "Function",
+                    "optional": true
+                },
+                {
+                    "name": "fn",
+                    "description": "类实现, 函数内this指向类原型, 参数(base:父类原型, self:当前类原型)",
+                    "type": "Function"
+                },
+                {
+                    "name": "property",
+                    "description": "是否支持属性, 默认支持, 可以从非属性类继承生成非属性类, 不能从属性类继承生成非属性类",
+                    "type": "Boolean",
+                    "optional": true
+                }
+            ],
+            "return": {
+                "description": "生成的类",
+                "type": "Class"
+            },
+            "example": [
+                "\n//从Object继承定义父类\nvar BaseClass = flyingon.defineClass(function () {\n\n     //定义字符串类型的name属性, 默认值为空字符串\n     this.defineProperty('name', '');\n\n     //定义方法\n     this.fn = function () {};\n});",
+                "\n//从BaseClass继承派生子类\nvar ChildClass = flyingon.defineClass(BaseClass, function (base) {\n\n     //重载父类方法\n     this.fn = function () {\n\n         //调用父类方法\n         base.fn.call(this);\n     };\n});"
+            ],
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 486,
+            "itemtype": "method",
+            "name": "extend",
+            "description": "从当前类派生生成子类",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "类名称, 只能包含英文字母及数字且首字母需大写",
+                    "type": "String",
+                    "optional": true
+                },
+                {
+                    "name": "fn",
+                    "description": "类实现, 函数内this指向类原型, 参数(base:父类原型, self:当前类原型)",
+                    "type": "Function"
+                },
+                {
+                    "name": "property",
+                    "description": "是否支持属性, 默认支持, 可以从非属性类继承生成非属性类, 不能从属性类继承生成非属性类",
+                    "type": "Boolean",
+                    "optional": true
+                }
+            ],
+            "return": {
+                "description": "生成的类",
+                "type": "Class"
+            },
+            "example": [
+                "\n//从Object继承定义父类\nvar BaseClass = Object.extend(function () {\n\n     //定义字符串类型的name属性, 默认值为空字符串\n     this.defineProperty('name', '');\n\n     //定义方法\n     this.fn = function () {};\n});",
+                "\n//从BaseClass继承派生子类\nvar ChildClass = BaseClass.extend(function (base) {\n\n     //重载父类方法\n     this.fn = function () {\n\n         //调用父类方法\n         base.fn.call(this);\n     };\n});"
+            ],
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 700,
+            "static": 1,
+            "itemtype": "method",
+            "name": "init",
+            "description": "类初始化方法, 默认情况下在第一次实例化类时会自动初始化, 如有特殊需要可手动调用此方法对类进行初始化",
+            "return": {
+                "description": "返回当前类",
+                "type": "Class"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 742,
+            "itemtype": "method",
+            "name": "is",
+            "description": "检测当前对象是否指定类型",
+            "params": [
+                {
+                    "name": "type",
+                    "description": "指定的类型",
+                    "type": "Function"
+                }
+            ],
+            "return": {
+                "description": "是否指定类型",
+                "type": "Boolean"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 755,
+            "itemtype": "method",
+            "name": "toString",
+            "description": "返回类的字符串表示",
+            "return": {
+                "description": "类字符串表示",
+                "type": "String"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 767,
+            "itemtype": "method",
+            "name": "defineProperty",
+            "description": "定义属性",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "属性名, 不能包含英文字母及数字且以英文字母开头",
+                    "type": "String"
+                },
+                {
+                    "name": "defaultValue",
+                    "description": "属性默认值, 如果attributes中未指定dataType, 会自动从此值推导出默认值",
+                    "type": "Any"
+                },
+                {
+                    "name": "attributes",
+                    "description": "属性参数 { dataType: string, check: function, set: function }",
+                    "type": "Object="
+                }
+            ],
+            "return": {
+                "description": "属性函数",
+                "type": "Function"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 926,
+            "itemtype": "method",
+            "name": "storage",
+            "description": "获取对象存储器",
+            "return": {
+                "description": "对象存储器或默认存储器",
+                "type": "Object"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 938,
+            "itemtype": "method",
+            "name": "get",
+            "description": "获取指定名称的属性值",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "属性名",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "属性值",
+                "type": "Any"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 961,
+            "itemtype": "method",
+            "name": "set",
+            "description": "设置指定名称的属性值",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "属性名",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "属性值",
+                    "type": "Any"
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 990,
+            "itemtype": "method",
+            "name": "defaultValue",
+            "description": "获取或设置属性默认值",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "属性名",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "默认值, 未传入此值时表示读取默认值, 否则表示设置默认值",
+                    "type": "Any="
+                }
+            ],
+            "return": {
+                "description": "读取默认值时返回默认值, 否则返回当前实例对象",
+                "type": "(any|object)"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1016,
+            "itemtype": "method",
+            "name": "properties",
+            "description": "获取属性值集合",
+            "params": [
+                {
+                    "name": "deep",
+                    "description": "是否返回父类的属性值",
+                    "type": "Boolean="
+                },
+                {
+                    "name": "filter",
+                    "description": "过滤条件",
+                    "type": "Function="
+                }
+            ],
+            "return": {
+                "description": "属性值集合",
+                "type": "Object[]"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1051,
+            "itemtype": "method",
+            "name": "notify",
+            "description": "通知对象属性值变更",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "属性名",
+                    "type": "String"
+                },
+                {
+                    "name": "newValue",
+                    "description": "新属性值",
+                    "type": "Any"
+                },
+                {
+                    "name": "oldValue",
+                    "description": "原属性值",
+                    "type": "Any"
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1099,
+            "itemtype": "method",
+            "name": "watch",
+            "description": "观测属性变更",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "属性名",
+                    "type": "String"
+                },
+                {
+                    "name": "fn",
+                    "description": "属性值变更后的回调方法",
+                    "type": "Function"
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1135,
+            "itemtype": "method",
+            "name": "unwatch",
+            "description": "取消属性变更观测",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "属性名, 传入\"*\"表示取消所有观测",
+                    "type": "String"
+                },
+                {
+                    "name": "fn",
+                    "description": "注册的属性变更方法",
+                    "type": "Function="
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1181,
+            "itemtype": "method",
+            "name": "on",
+            "description": "绑定事件处理 注:type不带on",
+            "params": [
+                {
+                    "name": "type",
+                    "description": "事件类型",
+                    "type": "String"
+                },
+                {
+                    "name": "fn",
+                    "description": "事件处理方法",
+                    "type": "Function="
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1207,
+            "itemtype": "method",
+            "name": "once",
+            "description": "绑定事件处理, 执行一次后自动移除绑定 注:type不带on",
+            "params": [
+                {
+                    "name": "type",
+                    "description": "事件类型",
+                    "type": "String"
+                },
+                {
+                    "name": "fn",
+                    "description": "事件处理方法",
+                    "type": "Function="
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1229,
+            "itemtype": "method",
+            "name": "off",
+            "description": "移除事件处理",
+            "params": [
+                {
+                    "name": "type",
+                    "description": "事件类型, 不传值时表示移除所有事件处理",
+                    "type": "String="
+                },
+                {
+                    "name": "fn",
+                    "description": "事件处理方法, 不传值时表示移除指定类型的所有事件处理",
+                    "type": "Function="
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1289,
+            "itemtype": "method",
+            "name": "trigger",
+            "description": "分发事件",
+            "params": [
+                {
+                    "name": "e",
+                    "description": "事件参数",
+                    "type": "(string|flyingon.Event)="
+                },
+                {
+                    "name": "自定义事件参数",
+                    "description": "按name, value的方式传入",
+                    "type": "...any="
+                }
+            ],
+            "return": {
+                "description": "是否阻止默认处理",
+                "type": "Boolean"
+            },
+            "example": [
+                "\n//分发类型为test的事件(有一个自定义的data参数, 值为1)\nflyingon.trigger('test', 'data', 1);"
+            ],
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1363,
+            "itemtype": "method",
+            "name": "getOwnPropertyNames",
+            "description": "获取自身属性名集合(不包含默认值)",
+            "return": {
+                "description": "属性名集合",
+                "type": "String[]"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1400,
+            "itemtype": "method",
+            "name": "dispose",
+            "description": "销毁对象",
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1418,
+            "static": 1,
+            "itemtype": "method",
+            "name": "register",
+            "description": "注册类",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "注册名称, 省略时默认以类名注册",
+                    "type": "String="
+                },
+                {
+                    "name": "force",
+                    "description": "名称已经注册过时是否强制覆盖",
+                    "type": "Boolean="
+                }
+            ],
+            "return": {
+                "description": "当前类",
+                "type": "Class"
+            },
+            "class": "Class"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1444,
+            "itemtype": "method",
+            "name": "defaultValue",
+            "description": "获取或修改指定类的默认值",
+            "params": [
+                {
+                    "name": "Class",
+                    "description": "指定的目标类",
+                    "type": "Class"
+                },
+                {
+                    "name": "name",
+                    "description": "属性名",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "默认值, 未传入时表示读取默认值, 否则表示设置默认值",
+                    "type": "Any="
+                }
+            ],
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1477,
+            "itemtype": "method",
+            "name": "on",
+            "description": "绑定事件处理 注:type不带on",
+            "params": [
+                {
+                    "name": "type",
+                    "description": "事件类型",
+                    "type": "String"
+                },
+                {
+                    "name": "fn",
+                    "description": "事件处理方法",
+                    "type": "Function="
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1487,
+            "itemtype": "method",
+            "name": "once",
+            "description": "绑定事件处理, 执行一次后自动移除绑定 注:type不带on",
+            "params": [
+                {
+                    "name": "type",
+                    "description": "事件类型",
+                    "type": "String"
+                },
+                {
+                    "name": "fn",
+                    "description": "事件处理方法",
+                    "type": "Function="
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1497,
+            "itemtype": "method",
+            "name": "off",
+            "description": "移除事件处理",
+            "params": [
+                {
+                    "name": "type",
+                    "description": "事件类型, 不传值时表示移除所有事件处理",
+                    "type": "String="
+                },
+                {
+                    "name": "fn",
+                    "description": "事件处理方法, 不传值时表示移除指定类型的所有事件处理",
+                    "type": "Function="
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1507,
+            "itemtype": "method",
+            "name": "trigger",
+            "description": "分发事件",
+            "params": [
+                {
+                    "name": "e",
+                    "description": "事件参数",
+                    "type": "(string|flyingon.Event)="
+                },
+                {
+                    "name": "自定义事件参数",
+                    "description": "按name, value的方式传入",
+                    "type": "...any="
+                }
+            ],
+            "return": {
+                "description": "是否阻止默认处理",
+                "type": "Boolean"
+            },
+            "example": [
+                "\n//分发类型为test的事件(有一个自定义的data参数, 值为1)\nflyingon.trigger('test', 'data', 1);"
+            ],
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1541,
+            "readonly": "",
+            "itemtype": "property",
+            "name": "type",
+            "type": "{string}",
+            "description": "事件类型",
+            "class": "flyingon.Event"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1550,
+            "readonly": "",
+            "itemtype": "property",
+            "name": "target",
+            "type": "{object}",
+            "description": "触发事件目标对象",
+            "class": "flyingon.Event"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1559,
+            "readonly": "",
+            "itemtype": "property",
+            "name": "cancelBubble",
+            "type": "{boolean}",
+            "description": "是否取消冒泡",
+            "class": "flyingon.Event"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1568,
+            "readonly": "",
+            "itemtype": "property",
+            "name": "defaultPrevented",
+            "type": "{boolean}",
+            "description": "是否阻止默认动作",
+            "class": "flyingon.Event"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1577,
+            "itemtype": "method",
+            "name": "stop",
+            "description": "停止事件冒泡",
+            "params": [
+                {
+                    "name": "prevent",
+                    "description": "是否同时禁止默认事件处理",
+                    "type": "Boolean"
+                }
+            ],
+            "return": {
+                "description": "当前对象实例",
+                "type": "Object"
+            },
+            "class": "flyingon.Event"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1597,
+            "itemtype": "method",
+            "name": "prevent",
+            "description": "禁止默认事件处理",
+            "return": {
+                "description": "当前对象实例",
+                "type": "Object"
+            },
+            "class": "flyingon.Event"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1777,
+            "itemtype": "method",
+            "name": "sleep",
+            "description": "延时",
+            "params": [
+                {
+                    "name": "time",
+                    "description": "延时时间",
+                    "type": "Int"
+                },
+                {
+                    "name": "done",
+                    "description": "延时成功后调用方法",
+                    "type": "Function",
+                    "optional": true
+                },
+                {
+                    "name": "fail",
+                    "description": "延时失败后调用方法",
+                    "type": "Function",
+                    "optional": true
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "flyingon.Async"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1817,
+            "itemtype": "method",
+            "name": "done",
+            "description": "注册成功执行函数或异步通知",
+            "params": [
+                {
+                    "name": "asyn",
+                    "description": "是否异步",
+                    "type": "Boolean",
+                    "optional": true
+                },
+                {
+                    "name": "fn",
+                    "description": "调用方法",
+                    "type": "Function"
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "flyingon.Async"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1830,
+            "itemtype": "method",
+            "name": "fail",
+            "description": "注册执行失败函数或异步通知",
+            "params": [
+                {
+                    "name": "asyn",
+                    "description": "是否异步",
+                    "type": "Boolean",
+                    "optional": true
+                },
+                {
+                    "name": "fn",
+                    "description": "调用方法",
+                    "type": "Function"
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "flyingon.Async"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1843,
+            "itemtype": "method",
+            "name": "complete",
+            "description": "注册执行完毕函数或异步通知",
+            "params": [
+                {
+                    "name": "asyn",
+                    "description": "是否异步",
+                    "type": "Boolean",
+                    "optional": true
+                },
+                {
+                    "name": "fn",
+                    "description": "调用方法",
+                    "type": "Function"
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "flyingon.Async"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1881,
+            "itemtype": "method",
+            "name": "resolve",
+            "description": "成功执行通知",
+            "params": [
+                {
+                    "name": "value",
+                    "description": "自定义通知参数",
+                    "type": "Any"
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "flyingon.Async"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 1893,
+            "itemtype": "method",
+            "name": "reject",
+            "description": "失败执行通知",
+            "params": [
+                {
+                    "name": "error",
+                    "description": "错误信息",
+                    "type": "String"
+                },
+                {
+                    "name": "bubble",
+                    "description": "是否向上冒泡",
+                    "type": "Boolean",
+                    "optional": true
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "flyingon.Async"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 2024,
+            "itemtype": "method",
+            "name": "progress",
+            "description": "注册执行进度函数",
+            "params": [
+                {
+                    "name": "fn",
+                    "description": "执行函数",
+                    "type": "Function"
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "flyingon.Async"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 2041,
+            "itemtype": "method",
+            "name": "notify",
+            "description": "执行进度通知",
+            "params": [
+                {
+                    "name": "value",
+                    "description": "自定义参数",
+                    "type": "Any"
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "flyingon.Async"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 2067,
+            "itemtype": "method",
+            "name": "delay",
+            "description": "异步延时处理",
+            "params": [
+                {
+                    "name": "delay",
+                    "description": "指定延时时间",
+                    "type": "Int",
+                    "optional": true
+                },
+                {
+                    "name": "fn",
+                    "description": "执行函数",
+                    "type": "Function"
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "flyingon"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 2473,
+            "itemtype": "property",
+            "name": "length",
+            "type": "{int}",
+            "description": "子项总数量",
+            "class": "f-collection"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 2481,
+            "itemtype": "method",
+            "name": "indexOf",
+            "description": "获取指定子项的索引号(与数组同名方法相同)",
+            "params": [
+                {
+                    "name": "item",
+                    "description": "子项",
+                    "type": "Any"
+                }
+            ],
+            "return": {
+                "description": "索引号, -1表示不存在",
+                "type": "Int"
+            },
+            "class": "f-collection"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 2488,
+            "itemtype": "method",
+            "name": "lastIndexOf",
+            "description": "从后向前获取指定子项的索引号(与数组同名方法相同)",
+            "params": [
+                {
+                    "name": "item",
+                    "description": "子项",
+                    "type": "Any"
+                }
+            ],
+            "return": {
+                "description": "索引号, -1表示不存在",
+                "type": "Int"
+            },
+            "class": "f-collection"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 2498,
+            "itemtype": "method",
+            "name": "push",
+            "description": "在集合的末尾添加一个或多个子项(与数组同名方法相同)",
+            "params": [
+                {
+                    "name": "item",
+                    "description": "子项",
+                    "type": "...*"
+                }
+            ],
+            "return": {
+                "description": "子项总数量",
+                "type": "Int"
+            },
+            "class": "f-collection"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 2516,
+            "itemtype": "method",
+            "name": "pop",
+            "description": "弹出最后一个子项(与数组同名方法相同)",
+            "return": {
+                "description": "弹出的子项",
+                "type": "Any"
+            },
+            "class": "f-collection"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 2534,
+            "itemtype": "method",
+            "name": "unshift",
+            "description": "在集合的开始位置插入一个或多个子项(与数组同名方法相同)",
+            "params": [
+                {
+                    "name": "item",
+                    "description": "子项",
+                    "type": "...any"
+                }
+            ],
+            "return": {
+                "description": "子项总数量",
+                "type": "Int"
+            },
+            "class": "f-collection"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 2552,
+            "itemtype": "method",
+            "name": "shift",
+            "description": "弹出第一个子项(与数组同名方法相同)",
+            "return": {
+                "description": "弹出的子项",
+                "type": "Any"
+            },
+            "class": "f-collection"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 2570,
+            "itemtype": "method",
+            "name": "splice",
+            "description": "在集合的指定位置移除或插入一个或多个子项(与数组同名方法相同)",
+            "params": [
+                {
+                    "name": "index",
+                    "description": "索引号",
+                    "type": "Int"
+                },
+                {
+                    "name": "length",
+                    "description": "要移除的子项数量",
+                    "type": "Int="
+                },
+                {
+                    "name": "item",
+                    "description": "要插入的子项",
+                    "type": "...*="
+                }
+            ],
+            "return": {
+                "description": "移除的子项集合",
+                "type": "Object[]"
+            },
+            "class": "f-collection"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 2624,
+            "itemtype": "method",
+            "name": "children",
+            "description": "获取子项集合",
+            "return": {
+                "description": "子项集合",
+                "type": "Object[]"
+            },
+            "class": "f-collection"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 4196,
+            "itemtype": "method",
+            "name": "dataset",
+            "description": "获取或设置关联的数据集",
+            "params": [
+                {
+                    "name": "value",
+                    "description": "未传入值时表示获取值, 否则表示设置值",
+                    "type": "?flyingon.DataSet="
+                }
+            ],
+            "return": {
+                "description": "获取值时返回数据集对象或null, 否则返回当前对象实例",
+                "type": "(?flyingon.DataSet|object)"
+            },
+            "class": "f-bindable"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 4240,
+            "itemtype": "method",
+            "name": "addBind",
+            "description": "添加属性绑定",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "属性名",
+                    "type": "String"
+                },
+                {
+                    "name": "fieldName",
+                    "description": "数据集字段名",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "f-bindable"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 4268,
+            "itemtype": "method",
+            "name": "removeBind",
+            "description": "移除属性绑定",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "属性名",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "f-bindable"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 4295,
+            "itemtype": "method",
+            "name": "subscribeBind",
+            "description": "接收数据集变更动作处理",
+            "params": [
+                {
+                    "name": "dataset",
+                    "description": "数据集",
+                    "type": "flyingon.DataSet"
+                },
+                {
+                    "name": "action",
+                    "description": "数据集动作 { name: string, row: DataRow }",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "f-bindable"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 4336,
+            "itemtype": "method",
+            "name": "pushBack",
+            "description": "回推数据至数据集",
+            "params": [
+                {
+                    "name": "name",
+                    "description": "属性名",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "属性值",
+                    "type": "Any"
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "f-bindable"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 16401,
+            "itemtype": "property",
+            "name": "defaultWidth",
+            "type": "{int}",
+            "description": "控件默认宽度(width === 'default'时的宽度)",
+            "class": "flyingon.Control"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 16456,
+            "itemtype": "method",
+            "name": "visible",
+            "description": "是否可见",
+            "params": [
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "Boolean"
+                }
+            ],
+            "class": "flyingon.Control"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 22753,
+            "description": "弹出层组件\n\n事件:\nopen: 打开事件\nautoclosing: 鼠标点击弹出层外区域时自动关闭前事件(可取消)\nclosing: 关闭前事件(可取消)\nclosed: 关闭后事件",
+            "class": "flyingon.Panel"
+        }
+    ],
+    "warnings": [
+        {
+            "message": "Missing item type\n弹出层组件\n\n事件:\nopen: 打开事件\nautoclosing: 鼠标点击弹出层外区域时自动关闭前事件(可取消)\nclosing: 关闭前事件(可取消)\nclosed: 关闭后事件",
+            "line": " js\\flyingon.js:22753"
+        }
+    ]
+}

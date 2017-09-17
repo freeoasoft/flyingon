@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>flyingon序列化及反序列化演示</title>
+    <link rel="stylesheet" type="text/css" href="../css/default/flyingon.css" />
+    <style type="text/css">
+
+    html, body {
+        margin:0;
+        border:0;
+        padding:0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    </style>
+    <script type="text/javascript" src="../js/flyingon.js"></script>
+</head>
+<body>
+    
+    <div style="margin:10px 0;">
+        <input type="button" value="上一条" onclick = "window.dataset.previous();" />
+        <input type="button" value="下一条" onclick = "window.dataset.next();" />
+        <input type="button" value="反序列化生成界面" onclick = "deserialize();" />
+        <input type="button" value="序列化生成json" onclick = "serialize();" />
+    </div>
+    <div>
+        <div id="json1" style="white-space:pre;float:left;border:1px solid black;overflow:auto;width:300px;height:400px;">
+{
+    "Class": "Panel",
+    "width": 500,
+    "height": 400,
+    "border": 1,
+    "padding": 8,
+    "resizable": "all",
+    "style": "border: 1px solid",
+    "layout": {
+        "type": "table",
+        "data": "*[* * *] *[* *{*[* * *] *[* * *] *[* * *]} *] *[* * *]"
+    },
+    "children": [
+        {
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field1}}"
+        },
+        {
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field2}}"
+        },
+        { 
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field3}}"
+        },
+        { 
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field4}}"
+        },
+        { 
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field5}}"
+        },
+        { 
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field6}}"
+        },
+        { 
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field7}}"
+        },
+        { 
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field8}}"
+        },
+        { 
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field9}}"
+        },
+        { 
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field10}}"
+        },
+        { 
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field11}}"
+        },
+        { 
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field12}}"
+        },
+        { 
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field13}}"
+        },
+        { 
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field14}}"
+        },
+        { 
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field15}}"
+        },
+        { 
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field16}}"
+        },
+        {
+            "Class": "Label",
+            "border": 1,
+            "style": "border: 1px solid",
+            "style:background-color": "{{field17}}"
+        }
+    ]
+}
+        </div>
+        <div id="host" style="float:left;margin:0 10px;"></div>
+        <div id="json2" style="display:none;white-space:pre;float:left;border:1px solid black;overflow:auto;width:300px;height:400px;">
+    </div>
+    
+    <script type="text/javascript">
+    
+
+        var dataset = new flyingon.DataSet();
+        
+        var data = [];
+        
+        var colors = ['gold', 'silver', 'skyblue', 'hotpink', 'violet', 'mistyrose', 'lightblue', 'lightgreen', 'linen'];
+        
+        for (var i = 0; i < 10; i++)
+        {
+            var item = {};
+            
+            colors.sort(function () {
+
+                return Math.random() > 0.5 ? 1 : -1;
+            });
+            
+            for (var j = 1; j < 18; j++)
+            {
+                item['field' + j] = colors[j % 9];
+            }
+            
+            data.push(item);
+        }
+        
+        dataset.load(data);
+                
+
+        var panel;
+ 
+        function deserialize() {
+        
+            var dom = document.getElementById('json1');
+
+            panel = new flyingon.SerializeReader().deserialize(dom.innerHTML);
+            panel.dataset(dataset);
+            dataset.bind();
+            
+            flyingon.show(panel, 'host');
+        };
+        
+        
+        function serialize() {
+            
+            var dom = document.getElementById('json2');
+
+            if (panel)
+            {
+                var text = new flyingon.SerializeWriter().serialize(panel);
+                
+                text = text.replace(/("[^"]+")|([,{}\[\]])/g, function (_, a, b) {
+                    
+                    return a ? a : b + '\n';
+                });
+                
+                dom.innerHTML = text;
+                dom.style.display = '';
+            }
+        };
+        
+        
+    
+    </script>
+
+</body>
+</html>

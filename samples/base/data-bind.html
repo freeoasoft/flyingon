@@ -1,0 +1,113 @@
+<template id="template">
+    <Plugin padding="8" layout="vertical-line">
+        <Panel height="30">
+            <input type="button" value="上一条" @click="previous()" />
+            <input type="button" value="下一条" @click="next()" />
+            <input type="button" value="获取的变更行的数据" width="150" @click="json1()" />
+            <input type="button" value="获取的变更行的数据(仅变化的字段)" width="250" @click="json2()" />
+            <input type="button" value="接受变更" @click="acceptChanges()" />
+            <input type="button" value="取消变更" @click="rejectChanges()" />
+        </Panel>
+        <Panel width="780" height="100" border="1" padding="8" class="f-border" :dataset="dataset">
+            <TextBox width="200" value="{{field1}}" style:background-color="{{color1}}" />
+            <TextBox width="200" value="{{field2}}" style:background-color="{{color2}}" />
+            <TextBox width="200" value="{{field3}}" style:background-color="{{color3}}" />
+            <TextBox width="200" value="{{field1}}" style:background-color="{{color1}}" />
+            <TextBox width="200" value="{{field2}}" style:background-color="{{color2}}" />
+            <TextBox width="200" value="{{field3}}" style:background-color="{{color3}}" />
+            <TextBox width="200" value="{{field1}}" style:background-color="{{color1}}" />
+            <TextBox width="200" value="{{field2}}" style:background-color="{{color2}}" />
+            <TextBox width="200" value="{{field3}}" style:background-color="{{color3}}" />
+        </Panel>
+        <Code language="html" />
+    </Plugin>
+</template>
+
+
+<script type="text/javascript">
+
+    
+    flyingon.widget({
+
+        template: '#template',
+
+        creating: function (vm) {
+
+            var dataset = vm.dataset = new flyingon.DataSet();
+            
+            var data = [];
+            
+            for (var i = 1; i <= 10; i++)
+            {
+                data.push({ 
+                    
+                    key: i, 
+                    field1: 'text 1 row:' + i, 
+                    field2: 'text 2 row:' + i, 
+                    field3: 'text 3 row:' + i,
+                    color1: 'yellow',
+                    color2: 'gold',
+                    color3: 'skyblue'
+                });
+            }
+            
+            dataset.load(data);
+
+
+            function to_json(change) {
+
+                var changes = dataset.getChanges();
+
+                if (changes.length > 0)
+                {
+                    alert(changes.toJSON(change));
+                }
+                else
+                {
+                    alert('无修改记录! 请先修改文本框内容! 可通过切换记录同时修改多条记录!');
+                }
+            };
+
+
+            vm.previous = function () {
+
+                this.dataset.previous();
+            };
+
+            vm.next = function () {
+
+                this.dataset.next();
+            };
+
+            vm.json1 = function () {
+
+                to_json();
+            };
+
+            vm.json2 = function () {
+
+                to_json(true);
+            };
+
+            vm.acceptChanges = function () {
+
+                this.dataset.acceptChanges();
+            };
+
+            vm.rejectChanges = function () {
+
+                this.dataset.rejectChanges();
+            };
+
+        },
+
+        created: function (vm) {
+              
+            vm.dataset.bind();
+            
+        }
+
+    });
+
+
+</script>

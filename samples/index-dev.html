@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>flyingon samples</title>
+    <link rel="stylesheet" type="text/css" href="../css/default/flyingon.css" />
+    <style type="text/css">
+
+    html, body {
+        margin:0;
+        border:0;
+        padding:0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .title {
+        font-size: 20px;
+        line-height: 40px;
+        margin-left: 8px;
+    }
+
+    pre code {
+        font: normal 10pt Consolas, Monaco, monospace;
+    }
+
+    </style>
+
+    <script type="text/javascript" src="../js/flyingon.js"></script>
+    <script type="text/javascript" src="../i18n/zh-CN.js"></script>
+</head>
+<body>
+
+    <div id="host" style="width:100%;height:100%;overflow:hidden;">
+    </div>
+
+    <script type="text/x-template" id="template">
+        <Panel :layout="dock" height="100%">
+            <Panel dock="top" height="50" class="f-back" border="1">
+                <span class="title" width="auto" height="100%">flyingon-samples</span>
+            </Panel>
+            <Panel dock="bottom" height="25" class="f-back" border="1">foot</Panel>
+            <Tree id="menu" dock="left" width="200" max-width="300" />
+            <Splitter dock="left" />
+            <Tab id="host" dock="fill" size="100" selected='0'>
+            </Tab>
+        </Panel>
+    </script>
+
+
+    <script type="text/javascript">
+
+
+        //代码插件(显示当前插件代码)
+        flyingon.GroupBox.extend('Code', function (base) {
+
+
+            this.init = function () {
+
+                this.margin('8 0 0 0').collapsable(2).layout('fill').text('插件代码');
+                this.push({ Class: 'Highlight' });
+                
+                load_code(this);
+            };
+
+
+            this.defaultValue('width', 780);
+
+            this.defaultHeight = 200;
+
+
+            this.defineProperty('language', 'javascript', {
+
+                set: function (value) {
+
+                    this[0].language(value);
+                }
+            });
+
+
+            function load_code(self) {
+
+                var path = location.hash.replace(/^[#!]*/, '');
+
+                path = flyingon.require.path(path);
+                
+                flyingon.ajax(path).done(function (text) {
+
+                    self[0].code(text);
+                });
+            };
+
+            
+        }).register();
+
+
+        
+        var url_base = 'flyingon/samples/base/';
+
+        var url_layout = 'flyingon/samples/layout/';
+
+        var url_controls = 'flyingon/samples/controls/';
+
+        var url_grid = 'flyingon/samples/grid/';
+
+
+        var menuList = [
+
+            {
+                text: 'flyingon基础', 
+                children: [
+                    { text: 'js插件', url: url_base + 'plugin-js.js' },
+                    { text: 'widget插件', url: url_base + 'plugin-widget.js' },
+                    { text: 'html插件', url: url_base + 'plugin.html' },
+                    { text: '序列化', url: url_base + 'serialize.html' },
+                    { text: '数据绑定', url: url_base + 'data-bind.html' },
+                    { text: '选择器', url: url_base + 'selector.js' },
+                    { text: 'widget', url: url_base + 'widget.html' },
+                    { text: '多级路由', url: url_base + 'route.js' }
+                ]
+            },
+
+            {
+                text: '布局', 
+                children: [
+                    { text: '线性布局', url: url_layout + 'line.js' },
+                    { text: '流式布局', url: url_layout + 'flow.js' },
+                    { text: '停靠布局', url: url_layout + 'dock.js' },
+                    { text: '表格布局', url: url_layout + 'table.js' },
+                    { text: '自适应', url: url_layout + 'adaption.js' },
+                    { text: '子布局', url: url_layout + 'sublayout.js' }
+                ]
+            },
+
+            {
+                text: '控件', 
+                children: [
+                    { text: '标签', url: url_controls + 'label.js' },
+                    { text: '按钮', url: url_controls + 'button.js' },
+                    { text: '链接', url: url_controls + 'linkbutton.js' },
+                    { text: '图片', url: url_controls + 'image.js' },
+                    { text: '滑块', url: url_controls + 'slider.js' },
+                    { text: '进度条', url: url_controls + 'progressbar.js' },
+                    { text: '单选框', url: url_controls + 'radiobutton.js' },
+                    { text: '检查框', url: url_controls + 'checkbox.js' },
+                    { text: '文本框', url: url_controls + 'textbox.js' },
+                    { text: '文本按钮', url: url_controls + 'textbutton.js' },
+                    { text: '列表框', url: url_controls + 'listbox.js' },
+                    { text: '下拉框', url: url_controls + 'combobox.js' },
+                    { text: '数字编辑框', url: url_controls + 'numberpicker.js' },
+                    { text: '日历', url: url_controls + 'calendar.js' },
+                    { text: '日期选择', url: url_controls + 'datepicker.js' },
+                    { text: '时间选择', url: url_controls + 'timepicker.js' },
+                    { text: '年月选择', url: url_controls + 'monthpicker.js' },
+                    { text: '面板', url: url_controls + 'panel.js' },
+                    { text: '分组框', url: url_controls + 'groupbox.js' },
+                    { text: '页签', url: url_controls + 'tab.js' },
+                    { text: '树', url: url_controls + 'tree.js' },
+                    { text: '弹出层', url: url_controls + 'popup.js' },
+                    { text: '弹出窗口', url: url_controls + 'dialog.js' },
+                    { text: '消息框', url: url_controls + 'showmessage.js' }
+                ]
+            },
+
+            {
+                text: '表格控件', 
+                children: [
+                    { text: '多行列头', url: url_grid + 'multi-title.js' },
+                    { text: '自定义列头', url: url_grid + 'custom-title.js' },
+                    { text: '自定义渲染', url: url_grid + 'custom-render.js' },
+                    { text: '单元格合并', url: url_grid + 'cell-merge.js' },
+                    { text: '锁定', url: url_grid + 'locked.js' },
+                    { text: '分组', url: url_grid + 'group.js' },
+                    { text: '树表', url: url_grid + 'tree-grid.js' },
+                    { text: '一万列测试', url: url_grid + 'demo1.js' },
+                    { text: '十万行测试', url: url_grid + 'demo2.js' },
+                    { text: '行号列', url: url_grid + 'column-no.js' },
+                    { text: '选择列', url: url_grid + 'column-check.js' },
+                    { text: '编辑列', url: url_grid + 'column-edit.js' }
+                ]
+            }
+
+        ];
+
+
+
+        var host = flyingon.view({
+            
+            host: 'host',
+
+            template: '#template',
+
+            defaults: {
+                
+                dock: { type: 'dock', spacingX: 0, spacingY: -2 }
+            },
+
+            created: function (vm) {
+
+
+                var menu = this.findById('menu')[0];
+
+                var host = this.findById('host')[0];
+
+
+                //加载树数据
+                menu.push.apply(menu, menuList);
+
+                menu.theme('line');
+                menu.expandTo(1); //展开第一级
+
+                menu.on('node-click', function (event) {
+
+                    var node = event.node;
+                    open_plugin(node, node.get('url'), false);
+                });
+
+
+                //侦听路由地址变化
+                flyingon.route.listen(function (url) {
+
+                    //根据url查找树节点
+                    var node = menu.findNode(function (node) {
+
+                        var any = node.get('url');
+
+                        if (any === url)
+                        {
+                            return node;
+                        }
+
+                        if (url.indexOf(any) === 0)
+                        {
+                            //节点url与原始url不同则同步(多级路由时可能会不同)
+                            node.set('url', url);
+                            return node;
+                        }
+                    });
+
+                    if (node)
+                    {
+                        open_plugin(node, url);
+                    }
+                    else
+                    {
+                        menu.current(null);
+                    }
+                });
+
+
+                //打开指定节点对应的插件页
+                function open_plugin(node, url, current) {
+
+                    var any;
+
+                    if (node && node.length <= 0)
+                    {
+                        //路由到节点对应的插件
+                        flyingon.route(host, url, {
+        
+                            text: any = node.text(),
+                            target: any //text作为打开的key,用户可根据实际情况设置
+                        });
+
+                        //设置当前树节点
+                        if (current !== false)
+                        {
+                            menu.current(node);
+                            menu.scrollTo(node);
+                        }
+                    }
+                };
+
+
+            }
+
+
+        });
+
+
+        //窗口变化时自动调整内容
+        flyingon.dom_on(window, 'resize', function () {
+
+            host.invalidate();
+        });
+  
+
+    </script>
+
+</body>
+</html>

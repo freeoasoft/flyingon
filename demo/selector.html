@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>flyingon选择器演示</title>
+    <link rel="stylesheet" type="text/css" href="../css/default/flyingon.css" />
+    <style type="text/css">
+
+    html, body {
+        margin:0;
+        border:0;
+        padding:0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    </style>
+    <script type="text/javascript" src="../js/flyingon.js"></script>
+</head>
+<body style="padding:10px;">
+
+    <div style="padding:8px;">
+        选择器:<input id="selector" type="text" value="TextBox:first" />
+        样式名:<input id="style-name" type="text" value="background-color" />
+        样式值:<input id="style-value" type="text" value="silver" />
+        <input type="button" value="执行" onclick="execute()" />
+    </div>
+    <div id="host"></div>
+
+    <script type="text/javascript">
+        
+
+
+        var panel = flyingon.ui({
+
+            Class: 'ScrollPanel',
+            width: 1000,
+            height: 600,
+            border: 1,
+            padding: 8,
+            layout: {
+             
+                type: 'flow',
+                spacingX: 8,
+                spacingY: 8
+            },
+            style: 'border: 1px solid',
+
+            children: function (list) {
+
+                for (var i = 0; i < 150; i++)
+                {
+                    list.push({
+
+                        Class: 'Panel',
+                        border: 1,
+                        padding: 2,
+                        width: 300,
+                        height: 200,
+                        layout: 'vertical-line',
+                        style: 'border: 1px solid',
+
+                        children: function (list) {
+
+                            for (var j = 0; j < 20; j++)
+                            {
+                                list.push({
+
+                                    Class: 'TextBox',
+                                    id: i * 1000 + j,
+                                    value: i + ':' + j
+                                });
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
+        
+        flyingon.show(panel, 'host');
+
+
+
+        function execute() {
+
+            var selector = document.getElementById('selector').value,
+                name = document.getElementById('style-name').value,
+                value = document.getElementById('style-value').value;
+
+            panel.find(selector).style(name, value);
+        };
+        
+        
+    </script>
+
+</body>
+</html>

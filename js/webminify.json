@@ -1,0 +1,137 @@
+
+[
+    
+    {
+        source: [
+
+			'../src/base/oo.js',
+            '../src/base/utils.js',
+            '../src/base/async.js',
+            '../src/base/extend.js',
+            '../src/base/collection.js',
+            '../src/base/serialize.js',
+            '../src/base/dataset.js',
+            '../src/base/bindable.js',
+            '../src/base/visual.js',
+
+            '../src/web/utils.js',
+            '../src/web/event.js',
+
+            '../src/web/ajax.js',
+
+            '../src/require/require.js',
+            '../src/require/web.js',
+
+            '../src/route/urlroute.js',
+            '../src/route/web.js',
+
+            '../src/selector/selector.js',
+
+            '../src/renderer.web/renderer.js',
+            '../src/renderer.web/htmlelement.js',
+            '../src/renderer.web/label.js',
+            '../src/renderer.web/button.js',
+            '../src/renderer.web/linkbutton.js',
+            '../src/renderer.web/image.js',
+            '../src/renderer.web/slider.js',
+            '../src/renderer.web/progressbar.js',
+            '../src/renderer.web/panel.js',
+            '../src/renderer.web/groupbox.js',
+            '../src/renderer.web/scrollpanel.js',
+            '../src/renderer.web/splitter.js',
+
+            '../src/renderer.web/listbox.js',
+            '../src/renderer.web/radiobutton.js',
+            '../src/renderer.web/checkbox.js',
+            '../src/renderer.web/textbox.js',
+            '../src/renderer.web/textbutton.js',
+            '../src/renderer.web/calendar.js',
+
+            '../src/renderer.web/tree.js',
+            '../src/renderer.web/grid.js',
+            '../src/renderer.web/tab.js',
+            '../src/renderer.web/popup.js',
+            '../src/renderer.web/dialog.js',
+
+			'../src/control/control.js',
+            '../src/control/htmlelement.js',
+            '../src/control/label.js',
+            '../src/control/button.js',
+            '../src/control/linkbutton.js',
+            '../src/control/image.js',
+            '../src/control/slider.js',
+            '../src/control/progressbar.js',
+            '../src/control/container.js',
+			'../src/control/panel.js',
+            '../src/control/groupbox.js',
+            '../src/control/scrollpanel.js',
+            '../src/control/splitter.js',
+
+            '../src/control/plugin.js',
+
+            '../src/control/listbox.js',
+            '../src/control/radiobutton.js',
+            '../src/control/checkbox.js',
+            '../src/control/textbox.js',
+            '../src/control/textbutton.js',
+            '../src/control/numberpicker.js',
+            '../src/control/combobox.js',
+            '../src/control/calendar.js',
+            '../src/control/datepicker.js',
+            '../src/control/timepicker.js',
+            '../src/control/monthpicker.js',
+
+            '../src/control/tree.js',
+            '../src/control/grid.js',
+            '../src/control/tab.js',
+            '../src/control/popup.js',
+            '../src/control/dialog.js',
+
+            '../src/layout/sublayout.js',
+            '../src/layout/layout.js',
+            '../src/layout/table.js',
+
+            '../src/viewmodel/viewmodel.js',
+            '../src/viewmodel/viewtemplate.js',
+
+            '../src/web/host.js',
+
+            '../src/third/highlight.js'
+
+		],
+
+        output: 'flyingon.js',
+        cache: '@flyingon'
+    },
+
+	
+	{
+        source: [
+            [
+                '/*',
+                '* flyingon javascript library v0.0.1.0',
+                '* https://github.com/freeoasoft/flyingon',
+                '*',
+                '* Copyright 2014, yaozhengyang',
+                '* licensed under the LGPL Version 3 licenses',
+                '*/'
+            ],
+            '@flyingon'
+        ],
+
+        output: 'flyingon.min.js',
+
+        plugins: [
+            {
+                name: './webminify_js',
+                options: {
+                    //mangle: false,
+                    //mangleProperties: { vars: [ "define" ... ], props: [ "length" ... ]},
+                    //compress: false,
+                    //advanced: true
+                }
+            }
+        ]
+    }
+
+]

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>flyingon拖拉测试</title>
+    <script type="text/javascript" src="../js/flyingon.js"></script>
+    <style type="text/css">
+    
+        #controls {
+            overflow: auto;
+            float: left;
+            border: 1px solid black;
+            width: 120px;
+            height: 400px;
+        }
+        
+        .control {
+            border: 1px solid black;
+            height: 35px;
+            line-height: 35px;
+            text-align: center;
+            margin: 1px;
+            cursor: pointer;
+        }
+        
+        #host {
+            position: relative;
+            overflow: scroll;
+            float: left;
+            border: 1px solid black;
+            margin: 0 2px;
+            width: 600px;
+            height: 400px;
+        }
+    
+    </style>
+</head>
+<body>
+
+    <div id="controls">
+        <div class="control">TextBox</div>
+        <div class="control">TextButton</div>
+    </div>
+    <div id="host">
+    </div>
+    
+    
+    <script type="text/javascript">
+            
+        
+        var rect;
+        
+        flyingon.dom_on(controls, 'mousedown', function (e) {
+            
+            if (e.target !== controls)
+            {
+                e.dom = drag_dom(e);
+                flyingon.dom_drag(this, e, null, null, drag_end, null, false);
+            }
+        });
+
+        function drag_dom(e) {
+            
+            var body = document.body,
+                dom = e.target.cloneNode(true),
+                style = dom.style;
+            
+            style.position = 'absolute';
+            style.left = (e.clientX + body.scrollLeft) + 'px';
+            style.top = (e.clientY + body.scrollTop) + 'px';
+            style.width = '100px';
+            
+            body.push(dom);
+            
+            rect = host.getBoundingClientRect();
+            
+            return dom;
+        };
+        
+        function drag_end(e) {
+            
+            if (e.target === host)
+            {
+                change_position(e.dom, e);
+                host.push(e.dom);
+            }
+            else
+            {
+                e.dom.parentNode.removeChild(e.dom);
+            }
+        };
+        
+        function change_position(dom, e) {
+          
+            var style = dom.style;
+
+            style.left = (e.clientX - rect.left + host.scrollLeft) + 'px';
+            style.top = (e.clientY - rect.top + host.scrollTop) + 'px';
+        };
+        
+        
+        flyingon.dom_on(host, 'mousedown', function (e) {
+            
+            if (e.target !== host)
+            {
+                flyingon.dom_drag(this, e);
+            }
+        });
+    
+        
+    </script>
+
+</body>
+</html>

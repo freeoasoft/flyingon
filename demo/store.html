@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>flyingon视图模型演示</title>
+    <link rel="stylesheet" type="text/css" href="../css/default/flyingon.css" />
+    <style type="text/css">
+
+    html, body {
+        margin:0;
+        border:0;
+        padding:0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .silver {
+        background-color: silver;
+    }
+
+    </style>
+    <script type="text/javascript" src="../js/flyingon.js"></script>
+</head>
+<body>
+
+    <div id="host" style="width:100%;height:100%;overflow:hidden;">
+    </div>
+
+    <script type="text/x-template" id="template">
+        <Panel :layout="layout" height="100%" :class:silver="silver" :style:background-color="color" padding="10">
+            <div arrange="false" width="auto" height="65" #loop="items(index)" @click="operate_click(index)">
+                <Label width="90" :text="item_label(index)" style="display:inline-block;" />
+                <TextBox width="120" :value="items.index.text" #model="items.index.text" />
+                <Button tag="add" :text="operate.add" margin="0 5" />
+                <Button tag="edit" :text="operate.edit" />
+                <Button tag="remove" :text="operate.remove" margin="0 5" />
+                <div width="auto" height="50" padding="4 0 4 90" style="overflow:hidden;">
+                    <div #loop="items.index.items(subindex)" :width="subitem_width(index, subindex)" style="margin:2px 0;background-color:silver;height:5px;" />
+                </div>
+            </div>
+            <Label :text="text" />
+        </Panel>
+    </script>
+
+    <script type="text/javascript">
+
+
+        var host = flyingon.view({
+            
+            host: 'host',
+
+            template: '#template',
+
+            store: function (store) {
+
+
+                //初始化items
+                var data = [];
+
+                for (var i = 0; i < 100; i++)
+                {
+                    data.push({ text: 'text ' + i, items: ('' + (Math.random() * 100000 | 0)).split('') });
+                }
+
+                store.data = {
+
+                    layout: 'vertical-line',
+                    items: data,
+                    text: 'text ...',
+                    operate: {
+                        add: 'add',
+                        edit: 'edit',
+                        remove: 'remove'
+                    }
+                };
+
+
+                store.item_label = function (index) {
+
+                    return ++index + '. ' + this.get('items.' + index + '.text');
+                };
+
+                store.subitem_width = function (index, subindex) {
+
+                    return this.get('items.' + index + '.items.' + subindex) * 10 + 20;
+                };
+
+  
+                store.add = function () {
+
+                    this.push('items', { text: Math.random() * 10000000 | 0, items: ('' + (Math.random() * 100000 | 0)).split('') });
+                };
+
+                store.edit = function (index) {
+
+                    this.set('items.' + index, { 'text': Math.random() * 10000000 | 0, items: ('' + (Math.random() * 100000 | 0)).split('') });
+                };
+
+                store.remove = function (index) {
+
+                    this.splice('items.' + index, 1);
+                };
+
+
+                //如果这个store可被其它地方引用,可注册store
+                store.register('test');
+            },
+
+            creating: function () {
+                
+            },
+
+            created: function ()  {
+
+            }
+
+
+        });
+
+
+        flyingon.dom_on(window, 'resize', function () {
+
+            host.invalidate();
+        });
+
+
+    </script>
+
+</body>
+</html>

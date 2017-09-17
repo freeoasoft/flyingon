@@ -1,0 +1,107 @@
+<template id="template">
+    <Plugin padding="8" layout="vertical-line">
+        <Panel layout="dock" height="350">
+            <Panel height="30" dock="top">
+                <input type="button" value="反序列化生成界面" width="150" @click = "deserialize()" />
+                <input type="button" value="上一条" @click = "previous()" />
+                <input type="button" value="下一条" @click = "next()" />
+                <input type="button" value="序列化生成json" width="120" @click = "serialize()" />
+            </Panel>
+            <Highlight width="225" dock="left" class="f-border" language="json" :code="content1" />
+        </Panel>
+        <Code language="html" />
+    </Plugin>
+</template>
+
+
+<script type="text/javascript">
+
+    
+    flyingon.widget({
+
+        template: '#template',
+
+        creating: function (vm) {
+
+            var dataset = vm.dataset = new flyingon.DataSet();
+            
+            var data = [];
+            
+            var colors = ['gold', 'silver', 'skyblue', 'hotpink', 'violet', 'mistyrose', 'lightblue', 'lightgreen', 'linen'];
+            
+            for (var i = 0; i < 10; i++)
+            {
+                var item = {};
+                
+                colors.sort(function () {
+
+                    return Math.random() > 0.5 ? 1 : -1;
+                });
+                
+                for (var j = 1; j < 18; j++)
+                {
+                    item['field' + j] = colors[j % 9];
+                }
+                
+                data.push(item);
+            }
+            
+            dataset.load(data);
+        },
+
+        created: function (vm) {
+              
+
+            var host = this[0],
+                panel;
+
+
+            flyingon.ajax('base/serialize.txt').done(function (text) {
+
+                vm.$set('content1', text);
+            });
+
+
+            vm.previous = function () {
+
+                this.dataset.previous();
+            };
+
+            vm.next = function () {
+
+                this.dataset.next();
+            };
+
+            vm.deserialize = function () {
+
+                panel = new flyingon.SerializeReader().deserialize(vm.content1);
+                panel.dataset(this.dataset);
+
+                this.dataset.bind();
+                host.push(panel);
+            };
+
+            vm.serialize = function () {
+
+                if (panel)
+                {
+                    var code = new flyingon.Highlight(),
+                        text = new flyingon.SerializeWriter().serialize(panel);
+
+                    text = text.replace(/("[^"]+")|([,{}\[\]])/g, function (_, a, b) {
+                        
+                        return a ? a : b + '\n';
+                    });
+
+                    code.language('json');
+                    code.code(text).className('f-border').width(225);
+
+                    host.push(code);
+                }
+            };
+        }
+
+    });
+
+
+</script>

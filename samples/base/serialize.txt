@@ -1,0 +1,118 @@
+{
+    "Class": "Panel",
+    "className": "f-border",
+    "dock": "left",
+    "width": 320,
+    "margin": "0 3",
+    "border": 1,
+    "padding": 8,
+    "resizable": "all",
+    "layout": {
+        "type": "table",
+        "data": "*[* * *] *[* *{*[* * *] *[* * *] *[* * *]} *] *[* * *]"
+    },
+    "children": [
+        {
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field1}}"
+        },
+        {
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field2}}"
+        },
+        { 
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field3}}"
+        },
+        { 
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field4}}"
+        },
+        { 
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field5}}"
+        },
+        { 
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field6}}"
+        },
+        { 
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field7}}"
+        },
+        { 
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field8}}"
+        },
+        { 
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field9}}"
+        },
+        { 
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field10}}"
+        },
+        { 
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field11}}"
+        },
+        { 
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field12}}"
+        },
+        { 
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field13}}"
+        },
+        { 
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field14}}"
+        },
+        { 
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field15}}"
+        },
+        { 
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field16}}"
+        },
+        {
+            "Class": "Label",
+            "className": "f-border",
+            "border": 1,
+            "style:background-color": "{{field17}}"
+        }
+    ]
+}

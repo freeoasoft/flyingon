@@ -1,0 +1,18 @@
+
+[
+    
+    {
+        source: [
+            'flyingon.css'
+        ],
+
+        output: 'flyingon.min.css',
+        
+        plugins: [
+            {
+                name: './webminify_css'
+            }
+        ]
+    }
+
+]

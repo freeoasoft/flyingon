@@ -1,0 +1,115 @@
+<template id="template">
+    <Plugin :layout="layout" height="100%" padding="8">
+        <demo-item #loop="items(item, index)" 
+            :item-text="item.text" 
+            :item-index="index" 
+            :subitems="item.items"
+            @click="operate_click(item, index)"/>
+        <Label :text="text" />
+        <Code language="html" />
+    </Plugin>
+</template>
+
+
+<script type="text/javascript">
+
+
+    flyingon.widget('demo-item', {
+
+        template: {
+            Class: 'div',
+            height: 65,
+            children: [
+                { Class: 'Label', width: 90, ':text': 'item_label(item-index)', style: 'display:inline-block;' },
+                { Class: 'TextBox', ':value': 'item-text', width: 120, '#model': 'item-text' },
+                { Class: 'Button', ':text': 'operate.add', tag: 'add', margin: '0 5' },
+                { Class: 'Button', ':text': 'operate.edit', tag: 'edit' },
+                { Class: 'Button', ':text': 'operate.remove', tag: 'remove', margin: '0 5' },
+                { Class: 'Panel', layout: 'vertical-line', width: 'auto', height: 50, padding: '4 0 4 90', style:'overflow:hidden;', 
+                    children: [
+                        { Class: 'div', '#loop': 'subitems(subitem)', height: 5, ':width': 'subitem_width(subitem)', style: 'margin:2px 0;height:5px;background-color:silver;' }
+                    ]
+                }
+            ]
+        },
+
+        defaults: {
+
+            operate: {
+                add: 'add',
+                edit: 'edit',
+                remove: 'remove'
+            }
+        },
+
+        extend: function (vm) {
+
+
+            vm.item_label = function (index) {
+
+                return ++index + '. ' + this.$get('item-text');
+            };
+
+
+            vm.subitem_width = function (value) {
+
+                return value * 10 + 20;
+            };
+
+        }
+
+    });
+
+
+    var data = [];
+
+    for (var i = 0; i < 1; i++)
+    {
+        data.push({ text: 'text ' + i, items: ('' + (Math.random() * 100000 | 0)).split('') });
+    }
+
+
+
+    flyingon.widget({
+        
+        template: '#template',
+
+        defaults: {
+
+            layout: 'vertical-line',
+
+            text: 'text ...',
+
+            items: data
+        },
+
+        extend: function (vm) {
+
+
+            vm.operate_click = function (item, index, control, event) {
+                    
+                switch (event.target.tag())
+                {
+                    case 'add':
+                        this.items.push({ text: Math.random() * 10000000 | 0, items: ('' + (Math.random() * 100000 | 0)).split('') });
+                        break;
+
+                    case 'edit':
+                        this.items.$set(index, { 'text': Math.random() * 10000000 | 0, items: ('' + (Math.random() * 100000 | 0)).split('') });
+                        break;
+
+                    case 'remove':
+                        this.items.splice(index, 1);
+                        break;
+                }
+            };
+
+
+        }
+
+
+    });
+
+
+
+</script>

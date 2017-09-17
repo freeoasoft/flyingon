@@ -1,0 +1,17 @@
+[
+    
+	{
+        source: ['../src/module/main.js'],
+        output: 'module/main.min.js'
+	},
+	
+    {
+        source: [
+			'../src/module/module3.js',
+            '../src/module/module2.js',
+            '../src/module/module1.js'			
+		],
+        output: 'module/module.min.js'
+    }
+	
+]

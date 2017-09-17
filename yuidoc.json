@@ -1,0 +1,14 @@
+{
+    "name": "flyingon",
+    "description": "flyingon JavaScript Framework",
+    "version": "1.0.0",
+    "url": "https://github.com/freeoasoft/flyingon",
+    "options": {
+        "linkNatives": "true",        
+        "attributesEmit": "true",
+        "selleck": "true",
+        "ignorePaths": [],
+        "paths": "./js",
+        "outdir": "./doc"
+    }
+}

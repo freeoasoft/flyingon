@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="icon" href="../images/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="../images/favicon.ico" type="image/x-icon" />
+    <title>flyingon名字空间及类演示</title>
+    <style type="text/css">
+
+    html, body {
+        margin:0;
+        border:0;
+        padding:0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    </style>
+    <script type="text/javascript" src="../js/flyingon.js"></script>
+</head>
+<body>
+
+    请使用网络跟踪工具查看网络请求, 可通过修改main.js中的引入资源设置控制js合并及版本
+
+    <script type="text/javascript">
+
+
+    //指定引入资源版本
+    flyingon.require.version('2.0', {
+
+        //'flyingon/demo/src/module/module1.js': '1.0.1',
+        //'flyingon/demo/js/module/module.min.js': '2.0.1'
+    });
+
+
+    //指定引入资源合并关系
+    flyingon.require.merge({
+        /*
+        'flyingon/demo/js/module/main.min.js': 'flyingon/demo/src/module/main.js',
+        'flyingon/demo/js/module/module.min.js': [
+            'flyingon/demo/src/module/module1.js',
+            'flyingon/demo/src/module/module2.js',
+            'flyingon/demo/src/module/module3.js'
+        ]
+        */
+    });
+
+
+    //自定义初始化(等待main.js加载完毕才执行)
+    flyingon.require([
+        'flyingon/demo/src/module/main.js',
+        'flyingon/demo/i18n/{i18n}.js',
+        'flyingon/demo/css/{skin}.css'
+    ], function () {
+
+        new flyingon.use('main').MainPage();
+    });
+
+    
+    </script>
+
+</body>
+</html>
