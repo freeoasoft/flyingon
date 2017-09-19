@@ -253,25 +253,81 @@ flyingon.fragment('f-dataset', function () {
     
     
         
-    //加载数据
-    this.load = function (list, primaryKey) {
+    /**
+     * 加载数据
+     * @param {object[]} list 数据列表
+     * @param {string} [primaryKey] 主键
+     * @param {string} [children] 树型数据的子项属性名, 传入此值则当作树型数据解析
+     * @return {object} 当前实例对象
+     */
+    this.load = function (list, primaryKey, children) {
         
-        var dataset = this.dataset;
+        if (list && list.length > 0)
+        {
+            var dataset = this.dataset,
+                parent = dataset ? this : null;
+
+            dataset = dataset || this;
         
-        (dataset || this).__load_data(dataset ? this : null, list, primaryKey);        
+            dataset.__new_id = load_data(dataset, 
+                parent, 
+                list, 
+                dataset.primaryKey = primaryKey, 
+                children, 
+                dataset.__new_id++);
+            
+            dataset.trigger('load', 'parent', parent);
+        }
+        
         return this;
     };
     
     
-    //加载树型数据
-    this.loadTreeList = function (list, primaryKey, childrenName) {
+    function load_data(dataset, parent, list, primaryKey, children, uniqueId) {
         
-        var dataset = this.dataset;
+        var target = parent || dataset,
+            rowType = flyingon.DataRow,
+            keys1 = dataset.__keys1,
+            keys2 = dataset.__keys2,
+            index = target.length,
+            length = list.length,
+            data,
+            row,
+            id;
+            
+        for (var i = 0; i < length; i++)
+        {
+            row = new rowType();
+            row.dataset = dataset;
+            
+            if (parent)
+            {
+                row.parent = parent;
+            }
+            
+            row.data = data = list[i] || {};
+            
+            keys1[row.uniqueId = uniqueId++] = row;
+            
+            if (primaryKey)
+            {
+                keys2[row.id = data[primaryKey]] = row;
+            }
+                        
+            target[index++] = row;
+            
+            if (children && (data = data[children]) && data.length > 0)
+            {
+                uniqueId = load_data(dataset, row, data, primaryKey, null, children, uniqueId)
+            }
+        }
+
+        target.length = index;
         
-        (dataset || this).__load_data(dataset ? this : null, list, primaryKey, '', childrenName || 'children');        
-        return this;
+        return uniqueId;
     };
 
+            
 
     //扩展集合操作功能
     flyingon.fragment('f-collection', this);
@@ -639,101 +695,6 @@ flyingon.DataSet = flyingon.defineClass(flyingon.RowCollection, function () {
     //扩展数据集功能
     flyingon.fragment('f-dataset', this);
     
-    
-    
-        
-    //从二维关系表加载树型数据
-    this.loadTreeFromList = function (list, primaryKey, parentKey) {
-        
-        return this.__load_data(null, list, this.primaryKey = primaryKey || 'id', parentKey || 'parentId');
-    };
-    
-    
-    //加载数据内部方法
-    this.__load_data = function (parent, list, primaryKey, parentKey, childrenName) {
-
-        if (list && list.length > 0)
-        {
-            this.__new_id = load_data(this, 
-                parent, 
-                list, 
-                this.primaryKey = primaryKey, 
-                parentKey, 
-                childrenName, 
-                this.__new_id++);
-            
-            this.trigger('load', 'parent', parent);
-        }
-        
-        return this;
-    };
-    
-    
-    function load_data(dataset, parent, list, primaryKey, parentKey, childrenName, uniqueId) {
-      
-        var target = parent || dataset,
-            rowType = flyingon.DataRow,
-            keys1 = dataset.__keys1,
-            keys2 = dataset.__keys2,
-            index = target.length,
-            length = list.length,
-            data,
-            row,
-            id;
-            
-        for (var i = 0; i < length; i++)
-        {
-            row = new rowType();
-            row.dataset = dataset;
-            
-            if (parent)
-            {
-                row.parent = parent;
-            }
-            
-            row.data = data = list[i] || {};
-            
-            keys1[row.uniqueId = uniqueId++] = row;
-            
-            if (primaryKey)
-            {
-                keys2[row.id = data[primaryKey]] = row;
-            }
-                        
-            if (!parentKey)
-            {
-                target[index++] = row;
-                
-                if (childrenName && (data = data[childrenName]) && data.length > 0)
-                {
-                    uniqueId = load_data(dataset, row, data, primaryKey, null, childrenName, uniqueId)
-                }
-            }
-        }
-
-        if (parentKey)
-        {
-            for (var i = 0; i < length; i++)
-            {
-                data = list[i];
-                row = keys2[data[primaryKey]];
-                
-                if (parent = keys2[data[parentKey]])
-                {
-                    row.parent = parent;
-                    parent[parent.length++] = row;
-                }
-                else
-                {
-                    dataset[index++] = row;
-                }
-            }
-        }
-
-        target.length = index;
-        
-        return uniqueId;
-    };
     
     
     //获取或设置当前行

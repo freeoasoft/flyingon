@@ -62,7 +62,7 @@ flyingon.widget({
         var dataset = new flyingon.DataSet();
         var data = create_data([100, 10, 10], 0, 1, Math.random);
 
-        dataset.loadTreeList(data, 'id', 'children');
+        dataset.loadTree(data, 'id', 'children');
 
         grid.dataset(dataset);
 

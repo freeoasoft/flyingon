@@ -15,7 +15,7 @@ flyingon.widget({
                 children: [
                     {
                         Class: 'NumberPicker'
-                    },
+                    }
                 ]
             },
 

@@ -10,11 +10,11 @@ flyingon.Control.extend('RadioButton', function (base) {
     });
 
 
-    this.defineProperty('value', false, {
+    this.value = this.defineProperty('checked', false, {
 
         set: function (value) {
 
-            this.rendered && this.renderer.set(this, 'value', value);
+            this.rendered && this.renderer.set(this, 'checked', value);
         }
     });
 

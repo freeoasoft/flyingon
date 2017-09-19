@@ -10,6 +10,7 @@
             '../src/base/extend.js',
             '../src/base/collection.js',
             '../src/base/serialize.js',
+            '../src/base/datalist.js',
             '../src/base/dataset.js',
             '../src/base/bindable.js',
             '../src/base/visual.js',
@@ -44,6 +45,7 @@
             '../src/renderer.web/radiobutton.js',
             '../src/renderer.web/checkbox.js',
             '../src/renderer.web/textbox.js',
+            '../src/renderer.web/numberpicker.js',
             '../src/renderer.web/textbutton.js',
             '../src/renderer.web/calendar.js',
 
@@ -73,8 +75,8 @@
             '../src/control/radiobutton.js',
             '../src/control/checkbox.js',
             '../src/control/textbox.js',
-            '../src/control/textbutton.js',
             '../src/control/numberpicker.js',
+            '../src/control/textbutton.js',
             '../src/control/combobox.js',
             '../src/control/calendar.js',
             '../src/control/datepicker.js',
@@ -113,7 +115,7 @@
                 '* https://github.com/freeoasoft/flyingon',
                 '*',
                 '* Copyright 2014, yaozhengyang',
-                '* licensed under the LGPL Version 3 licenses',
+                '* licensed under the MIT license',
                 '*/'
             ],
             '@flyingon'

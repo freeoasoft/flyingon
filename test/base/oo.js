@@ -63,7 +63,7 @@ describe('oo:', function () {
             //定义整数型属性,默认值为0
             this.defineProperty('p_int', 0, {
     
-                dataType: 'integer'
+                dataType: 'int'
             });
     
     

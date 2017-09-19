@@ -548,7 +548,11 @@ var flyingon;
         
         function Class() {};
 
-        fn.call(Class.prototype = create(superclass.prototype));
+        var base = superclass.prototype,
+            prototype = Class.prototype = create(base);
+
+        prototype.Class = Class;
+        fn.call(prototype, base, prototype);
 
         return Class;
     };
@@ -847,7 +851,7 @@ var flyingon;
                     value = !!value && value !== 'false';
                     break;
 
-                case 'integer':
+                case 'int':
                     value = value | 0;
                     break;
 

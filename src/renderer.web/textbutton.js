@@ -19,16 +19,25 @@ flyingon.renderer('TextButton', function (base) {
 
         writer.push('>',
                 '<div class="f-textbutton-body" style="right:', size, 'px;">',
-                    '<input type="text" class="f-textbutton-text" value="', text, '" onchange="flyingon.TextButton.onchange.call(this)"/>',
+                    '<input type="text" class="f-textbutton-text" value="', text, 
+                    storage.inputable ? '' : '" readonly="readonly',
+                    '" onchange="flyingon.TextButton.onchange.call(this)"/>',
                 '</div>',
-                '<div class="f-textbutton-button ', storage.button, '" style="width:', size, 'px;" onclick="flyingon.TextButton.onclick.call(this)"></div>',
+                '<div class="f-textbutton-button ', storage.button, 
+                    '" style="width:', size, 'px;" onclick="flyingon.TextButton.onclick.call(this)"></div>',
             '</div>');
     };
 
 
     flyingon.TextButton.onclick = function () {
 
-        flyingon.findControl(this).__on_click();
+        var control = flyingon.findControl(this),
+            storage = control.__storage;
+
+        if (!storage || !(storage.disabled || storage.readonly))
+        {
+            control.__on_click();
+        }
     };
 
 
@@ -63,6 +72,22 @@ flyingon.renderer('TextButton', function (base) {
 
         view.firstChild.firstChild.value = control.text();
     };
+
+
+    this.inputable = function (control, view, value) {
+
+        view = view.firstChild.firstChild;
+
+        if (value)
+        {
+            view.removeAttribute('readonly');
+        }
+        else
+        {
+            view.setAttribute('readonly', 'readonly');
+        }
+    };
+
 
 
 });

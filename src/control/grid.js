@@ -451,9 +451,9 @@ flyingon.GridColumn.extend(function (base) {
         
         control.__column_check = true;
 
-        if (row.checked)
+        if (row.__checked)
         {
-            control.value(true);
+            control.checked(true);
         }
 
         return control;
@@ -478,7 +478,7 @@ flyingon.GridColumn.extend(function (base) {
         
         if (name && row.data[name])
         {
-            control.value(true);
+            control.checked(true);
         }
 
         return control;
@@ -570,11 +570,63 @@ flyingon.GridColumn.extend(function (base) {
 
     var Class = flyingon.ComboBox;
 
+    var keys = 'inputable,checked,columns,clear,template,itemHeight,separator,popupWidth,maxItems'.split(',').pair();
+
+
+    //是否可输入
+    this.defineProperty('inputable', false);
+
+
+    //扩展下拉框定义
+    flyingon.fragment('f-ComboBox', this);
+
+
+    this.__set_items = function (list) {
+
+        var controls = this.__wait;
+
+        this.__list = list;
+
+        if (controls)
+        {
+            this.__wait = null;
+
+            for (var i = controls.length - 1; i >= 0; i--)
+            {
+                controls[i].items(list);
+            }
+        }
+    };
+
 
     //创建单元格控件
     this.createControl = function (row, name) {
 
-       var control = new Class();
+        var control = new Class(),
+            names,
+            any;
+
+        if (any = this.__list)
+        {
+            control.items(any);
+        }
+        else
+        {
+            (this.__wait || (this.__wait = [])).push(control);
+        }
+        
+        if (any = this.__storage)
+        {
+            names = keys;
+
+            for (var key in any)
+            {
+                if (names[key])
+                {
+                    control[key](any[key]);
+                }
+            }
+        }
         
         if (name)
         {
@@ -583,6 +635,7 @@ flyingon.GridColumn.extend(function (base) {
 
         return control;
     };
+
 
 
 }).register('combobox');

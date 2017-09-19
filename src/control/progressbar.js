@@ -10,7 +10,7 @@ flyingon.Control.extend('ProgressBar', function (base) {
 
     this.defineProperty('value', 0, {
 
-        dataType: 'integer',
+        dataType: 'int',
 
         check: function (value) {
 

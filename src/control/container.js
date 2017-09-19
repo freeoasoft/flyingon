@@ -57,14 +57,11 @@ flyingon.fragment('f-container', function (childrenClass, arrange) {
         var Class = this.childrenClass,
             html = this instanceof flyingon.HtmlElement,
             patch = this.__content_render && [],
-            length = items.length,
             item,
             any;
 
-        while (start < length)
+        while (item = items[start])
         {
-            item = items[start];
-
             if (item.__flyingon_class)
             {
                 if (item instanceof Class)

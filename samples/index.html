@@ -3,6 +3,8 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>flyingon samples</title>
+    <link rel="shortcut icon" href="../favicon.ico"/>
+    <link rel="shortcut" href="../favicon.ico"/>
     <link rel="stylesheet" type="text/css" href="../css/default/flyingon.css" />
     <style type="text/css">
 
@@ -221,7 +223,7 @@
                 flyingon.route.listen(function (url) {
 
                     //根据url查找树节点
-                    var node = menu.findNode(function (node) {
+                    var node = url && menu.findNode(function (node) {
 
                         var any = node.get('url');
                         
@@ -241,6 +243,10 @@
                     if (node)
                     {
                         open_plugin(node, url);
+                    }
+                    else if (url)
+                    {
+                        alert('url: ' + url + ' not exist!');
                     }
                     else
                     {

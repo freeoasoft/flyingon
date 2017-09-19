@@ -19,7 +19,7 @@ flyingon.widget({
                     { name: 'F3', title: 'F3', type: 'number' },
                     { name: 'F4', title: 'F4', type: 'date' },
                     { name: 'F5', title: 'F5', type: 'time' },
-                    { name: 'F6', title: 'F6', type: 'combobox' },
+                    { name: 'F6', title: 'F6', type: 'combobox', checked: 'checkbox', popupWidth: 100 },
                     { name: 'F7', title: 'F7', type: 'textbox' },
                     { name: 'F8', title: 'F8', type: 'textbox' },
                     { name: 'F9', title: 'F9', type: 'textbox' },
@@ -39,6 +39,14 @@ flyingon.widget({
         var random = Math.random;
         var date = new Date();
 
+        grid.columns(5).items([
+            { value: 'R1', text: 'text 1' }, 
+            { value: 'R2', text: 'text 2' }, 
+            { value: 'R3', text: 'text 3' },
+            { value: 'R4', text: 'text 4' },
+            { value: 'R5', text: 'text 5' }
+        ]);
+
         for (var i = 0; i < 100; i++)
         {
             var item = {};
@@ -47,7 +55,7 @@ flyingon.widget({
             item.F2 = 'R' + (i + 1);
             item.F3 = random() * 10000 | 0;
             item.F4 = date;
-            item.F5 = '';
+            item.F6 = 'R' + ((i % 5) + 1);
 
             data.push(item);
         }

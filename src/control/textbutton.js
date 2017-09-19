@@ -26,6 +26,11 @@ flyingon.Control.extend('TextButton', function (base) {
     define(this, 'format', '', 'text');
 
 
+    //是否可输入
+    define(this, 'inputable', false);
+
+
+
     this.text = function () {
 
         var storage = this.__storage || this.__defaults,

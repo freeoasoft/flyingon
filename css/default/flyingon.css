@@ -84,15 +84,15 @@ input[type="text"],
     background-color: white;
 }
 
+.f-grid-body .f-grid-checked,
+.f-grid-body .f-grid-checked input {
+    background-color: #F5F5FF;
+}
+
 .f-grid-body .f-grid-current,
 .f-grid-body .f-grid-current input,
 .f-grid-body .f-grid-column-no {
     background-color: #EFF5FF;
-}
-
-.f-grid-body .f-grid-checked,
-.f-grid-body .f-grid-checked input {
-    background-color: #F5F5FF;
 }
 
 .f-back, 
@@ -218,7 +218,8 @@ input[type="text"],
 }
 
 
-.f-checkbox-input {
+.f-checkbox-input,
+.f-radio-input {
     position: absolute;
     padding: 0;
     width: 16px;

@@ -6,7 +6,7 @@ flyingon.Control.extend('Slider', function (base) {
 
         return self.defineProperty(name, defaultValue, {
 
-            dataType: 'integer',
+            dataType: 'int',
 
             check: function (value) {
 

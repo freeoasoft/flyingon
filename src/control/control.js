@@ -730,6 +730,17 @@ Object.extend('Control', function () {
     };
     
 
+    // this.clientWidth = function () {
+    
+    //     return this.offsetWidth - this.borderLeft - this.borderRight - this.paddingLeft - this.paddingRight;
+    // };
+
+
+    // this.clientHeight = function () {
+
+    //     return this.offsetHeight - this.borderTop - this.borderBottom - this.paddingTop - this.paddingBottom;
+    // };
+
     
 
     //是否可获取焦点
@@ -895,7 +906,7 @@ Object.extend('Control', function () {
             this.off();
         }
         
-        this.parent = this.__loop_vm = null;
+        this.parent = this.__loop_vm = this.__list = null;
 
         return this;
     };

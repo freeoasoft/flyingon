@@ -36,7 +36,13 @@ flyingon.renderer('Highlight', function (base) {
             view.className = control.language();
             view[this.__text_name] = value;
 
-            hljs.highlightBlock(view);
+            try
+            {
+                hljs.highlightBlock(view); //不支持IE8以下浏览器
+            }
+            catch (e)
+            {
+            }
         }
         else if (any = cache)
         {

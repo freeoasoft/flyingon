@@ -22,41 +22,44 @@ flyingon.widget({
 
                     {
                         Class: 'ListBox',
-                        items: [{ value: '1', text: '1' }, { value: '2', text: '2' }, { value: '3', text: '3' }],
-                        valueField: 'value',
-                        displayField: 'text',
+                        items: [{ value: '1', text: 'text 1' }, { value: '2', text: 'text 2' }, { value: '3', text: 'text 3' }],
                         value: '2'
                     },
 
                     {
-                        Class: 'RadioListBox',
+                        Class: 'ListBox',
+                        checked: 'radio',
                         items: '123456789'.split(''),
                         value: '2'
                     },
 
                     {
-                        Class: 'CheckListBox',
+                        Class: 'ListBox',
+                        checked: 'checkbox',
                         items: '123456789'.split(''),
                         value: '1,2'
                     },
 
                     {
-                        Class: 'CheckListBox',
-                        template: '<span class="f-tree-icon-file" style="display:inline-block;width:16px;height:16px;"></span><span :text="index"></span><span :text="item"></span>',
+                        Class: 'ListBox',
+                        checked: 'checkbox',
+                        template: '<span class="f-tree-icon-file" style="display:inline-block;width:16px;height:16px;"></span><span :text="{{index}}"></span><span :text="{{item}}"></span>',
                         items: 'ABCDEFG'.split('')
                     },
 
                     {
-                        Class: 'CheckListBox',
+                        Class: 'ListBox',
+                        checked: 'checkbox',
                         columns: 2,
                         items: '123456789'.split(''),
                         value: '1,2'
                     },
 
                     {
-                        Class: 'RadioListBox',
+                        Class: 'ListBox',
+                        checked: 'radio',
                         columns: 0,
-                        width: 300,
+                        width: 604,
                         items: '123456789'.split(''),
                         value: '2'
                     }

@@ -650,7 +650,7 @@ flyingon.Layout.extend(function (base) {
     //行高
     this.defineProperty('lineHeight', '0', {
      
-        dataType: 'integer',
+        dataType: 'int',
         check: function (value) {
 
             return value > 0 ? value : 0;
@@ -710,7 +710,7 @@ flyingon.Layout.extend(function (base) {
     //行宽
     this.defineProperty('lineWidth', '0', {
      
-        dataType: 'integer',
+        dataType: 'int',
         check: function (value) {
 
             return value > 0 ? value : 0;

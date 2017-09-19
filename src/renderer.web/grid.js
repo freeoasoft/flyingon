@@ -714,7 +714,7 @@ flyingon.renderer('Grid', function (base) {
                     break;
 
                 default:
-                    if (any = flyingon.findControl(dom))
+                    if ((any = flyingon.findControl(dom)) && !any.__column_check)
                     {
                         if (any.row) //数据行
                         {
