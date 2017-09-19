@@ -1,26 +1,7 @@
-flyingon.TextButton.extend('DatePicker', function (base) {
+flyingon.fragment('f-DatePicker', function () {
 
 
-    //日历控件
-    var calendar_cache;
-
-
-    this.defaultValue('button', 'f-datepicker-button');
-
-
-    //日期值
-    this.defineProperty('value', null, {
-        
-        dataType: 'date',
-
-        set: function () {
-
-            this.rendered && this.renderer.set(this, 'text');
-        }
-    });
-
-
-    this.defineProperty('format', 'locale-date', {
+    this.defineProperty('format', 'yyyy/M/dd', {
         
         set: function () {
 
@@ -49,13 +30,44 @@ flyingon.TextButton.extend('DatePicker', function (base) {
     this.defineProperty('clear', false);
 
 
+});
+
+
+
+
+flyingon.TextButton.extend('DatePicker', function (base) {
+
+
+    //日历控件
+    var calendar_cache;
+
+
+    this.defaultValue('button', 'f-datepicker-button');
+
+
+    //日期值
+    this.defineProperty('value', null, {
+        
+        dataType: 'date',
+
+        set: function () {
+
+            this.rendered && this.renderer.set(this, 'text');
+        }
+    });
+
+
+
+    flyingon.fragment('f-DatePicker', this);
+
+
 
     this.text = function () {
 
         var storage = this.__storage || this.__defaults,
             value = storage.value;
 
-        return value ? value.format(storage.format) : ''
+        return value ? value.format(storage.format) : '';
     };
 
 

@@ -42,6 +42,7 @@ flyingon.fragment('f-container', function (childrenClass, arrange) {
             {
                 if (item = items[i])
                 {
+                    item.parent = null;
                     item.autoDispose = false;
                 }
             }

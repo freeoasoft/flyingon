@@ -14,7 +14,7 @@ flyingon.widget({
                 children: [
                     {
                         Class: 'DatePicker', 
-                        format: 'locale',
+                        // format: 'locale',
                         width: 200,
                         today: true, 
                         clear: true, 

@@ -648,12 +648,32 @@ flyingon.GridColumn.extend(function (base) {
 
     var Class = flyingon.DatePicker;
 
+    var keys = 'format,min,max,time,today,clear'.split(',').pair();
+
+
+    flyingon.fragment('f-DatePicker', this);
+    
 
     //创建单元格控件
     this.createControl = function (row, name) {
 
-       var control = new Class();
-        
+        var control = new Class(),
+            names,
+            any;
+                
+        if (any = this.__storage)
+        {
+            names = keys;
+
+            for (var key in any)
+            {
+                if (names[key])
+                {
+                    control[key](any[key]);
+                }
+            }
+        }
+
         if (name)
         {
             control.value(row.data[name]);

@@ -117,11 +117,11 @@ flyingon.fragment('f-collection', function () {
      * @return {object[]} 移除的子项集合
      */
     this.splice = function (index, length) {
+            
+        var any = this.length;
 
         if (arguments.length > 2)
         {
-            var any = this.length;
-
             if ((index |= 0) < 0)
             {
                 index += any;
@@ -137,16 +137,20 @@ flyingon.fragment('f-collection', function () {
             }
 
             this.__check_items(index, arguments, 2);
+            
+            any = array.splice.apply(this, arguments);
         }
-
-        var items = array.splice.apply(this, arguments);
-
-        if (items.length > 0)
+        else //注:IE8不支持 array.splice(0)清空所有项,必须指明长度
         {
-            this.__remove_items(index, items);
+            any = array.splice.call(this, 0, length === void 0 ? any : length);
         }
 
-        return items;
+        if (any.length > 0)
+        {
+            this.__remove_items(index, any);
+        }
+
+        return any;
     };
 
         

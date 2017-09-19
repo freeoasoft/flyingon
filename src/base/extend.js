@@ -343,7 +343,7 @@ Function.prototype.bind || (Function.prototype.bind = function (context) {
             if (typeof value === 'string' && (value = value.match(/\d+/g)))
             {
                 any = value[1] | 0;
-                date = new Date(value[0], any > 0 ? any - 1 : 0, value[2] | 0, value[3] | 0, value[4] | 0, value[5] | 0);
+                return new Date(value[0], any > 0 ? any - 1 : 0, value[2] | 0, value[3] | 0, value[4] | 0, value[5] | 0);
             }
         }
 

@@ -2447,7 +2447,7 @@ Function.prototype.bind || (Function.prototype.bind = function (context) {
             if (typeof value === 'string' && (value = value.match(/\d+/g)))
             {
                 any = value[1] | 0;
-                date = new Date(value[0], any > 0 ? any - 1 : 0, value[2] | 0, value[3] | 0, value[4] | 0, value[5] | 0);
+                return new Date(value[0], any > 0 ? any - 1 : 0, value[2] | 0, value[3] | 0, value[4] | 0, value[5] | 0);
             }
         }
 
@@ -2580,11 +2580,11 @@ flyingon.fragment('f-collection', function () {
      * @return {object[]} 移除的子项集合
      */
     this.splice = function (index, length) {
+            
+        var any = this.length;
 
         if (arguments.length > 2)
         {
-            var any = this.length;
-
             if ((index |= 0) < 0)
             {
                 index += any;
@@ -2600,16 +2600,20 @@ flyingon.fragment('f-collection', function () {
             }
 
             this.__check_items(index, arguments, 2);
+            
+            any = array.splice.apply(this, arguments);
         }
-
-        var items = array.splice.apply(this, arguments);
-
-        if (items.length > 0)
+        else //注:IE8不支持 array.splice(0)清空所有项,必须指明长度
         {
-            this.__remove_items(index, items);
+            any = array.splice.call(this, 0, length === void 0 ? any : length);
         }
 
-        return items;
+        if (any.length > 0)
+        {
+            this.__remove_items(index, any);
+        }
+
+        return any;
     };
 
         
@@ -12551,7 +12555,7 @@ flyingon.renderer('Calendar', function (base) {
         }
         else
         {
-            value = data[0] + '-' + data[1] + '-' + data[2];
+            value = data[0] + '/' + data[1] + '/' + data[2];
 
             if (storage.time)
             {
@@ -12559,7 +12563,7 @@ flyingon.renderer('Calendar', function (base) {
                 value += ' ' + any[0] + ':' + any[1] + ':' + any[2];
             }
 
-            value = new Date(value);
+            value = Date.create(value);
         }
 
         if (raise_change(control, value))
@@ -18043,6 +18047,7 @@ flyingon.fragment('f-container', function (childrenClass, arrange) {
             {
                 if (item = items[i])
                 {
+                    item.parent = null;
                     item.autoDispose = false;
                 }
             }
@@ -19351,29 +19356,10 @@ flyingon.Control.extend('Calendar', function (base) {
 
 
 
-flyingon.TextButton.extend('DatePicker', function (base) {
+flyingon.fragment('f-DatePicker', function () {
 
 
-    //日历控件
-    var calendar_cache;
-
-
-    this.defaultValue('button', 'f-datepicker-button');
-
-
-    //日期值
-    this.defineProperty('value', null, {
-        
-        dataType: 'date',
-
-        set: function () {
-
-            this.rendered && this.renderer.set(this, 'text');
-        }
-    });
-
-
-    this.defineProperty('format', 'locale-date', {
+    this.defineProperty('format', 'yyyy/M/dd', {
         
         set: function () {
 
@@ -19402,13 +19388,44 @@ flyingon.TextButton.extend('DatePicker', function (base) {
     this.defineProperty('clear', false);
 
 
+});
+
+
+
+
+flyingon.TextButton.extend('DatePicker', function (base) {
+
+
+    //日历控件
+    var calendar_cache;
+
+
+    this.defaultValue('button', 'f-datepicker-button');
+
+
+    //日期值
+    this.defineProperty('value', null, {
+        
+        dataType: 'date',
+
+        set: function () {
+
+            this.rendered && this.renderer.set(this, 'text');
+        }
+    });
+
+
+
+    flyingon.fragment('f-DatePicker', this);
+
+
 
     this.text = function () {
 
         var storage = this.__storage || this.__defaults,
             value = storage.value;
 
-        return value ? value.format(storage.format) : ''
+        return value ? value.format(storage.format) : '';
     };
 
 
@@ -20654,12 +20671,32 @@ flyingon.GridColumn.extend(function (base) {
 
     var Class = flyingon.DatePicker;
 
+    var keys = 'format,min,max,time,today,clear'.split(',').pair();
+
+
+    flyingon.fragment('f-DatePicker', this);
+    
 
     //创建单元格控件
     this.createControl = function (row, name) {
 
-       var control = new Class();
-        
+        var control = new Class(),
+            names,
+            any;
+                
+        if (any = this.__storage)
+        {
+            names = keys;
+
+            for (var key in any)
+            {
+                if (names[key])
+                {
+                    control[key](any[key]);
+                }
+            }
+        }
+
         if (name)
         {
             control.value(row.data[name]);

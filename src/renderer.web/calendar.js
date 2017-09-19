@@ -200,7 +200,7 @@ flyingon.renderer('Calendar', function (base) {
         }
         else
         {
-            value = data[0] + '-' + data[1] + '-' + data[2];
+            value = data[0] + '/' + data[1] + '/' + data[2];
 
             if (storage.time)
             {
@@ -208,7 +208,7 @@ flyingon.renderer('Calendar', function (base) {
                 value += ' ' + any[0] + ':' + any[1] + ':' + any[2];
             }
 
-            value = new Date(value);
+            value = Date.create(value);
         }
 
         if (raise_change(control, value))
