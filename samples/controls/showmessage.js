@@ -19,7 +19,6 @@ flyingon.widget({
                     { Class: 'Button', text: 'error', tag: 'ok,cancel' }
                 ]
             },
-
             { Class: 'Code' }
         ]
     },

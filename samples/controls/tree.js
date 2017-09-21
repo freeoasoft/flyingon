@@ -7,29 +7,25 @@ flyingon.widget({
         layout: 'vertical-line',
 
         children: [
-            
             { 
                 Class: 'Panel',
                 height: 300,
-                children: [
 
+                children: [
                     {
                         Class: 'Tree',
                         width: 200
                     },
-                    
                     {
                         Class: 'Tree',
                         width: 200,
                         theme: 'plus',
                     },
-                    
                     {
                         Class: 'Tree',
                         width: 200,
                         theme: 'line'
                     },
-
                     {
                         Class: 'Tree',
                         width: 200,
@@ -37,9 +33,7 @@ flyingon.widget({
                     }
                 ]
             },
-
             { Class: 'Code' }
-
         ]
     },
 

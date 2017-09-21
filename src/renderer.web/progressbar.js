@@ -18,14 +18,7 @@ flyingon.renderer('ProgressBar', function (base) {
 
     this.value = function (control, view, value) {
 
-        view.firstChild.style.width = value + 'px';
-        view.lastChild.firstChild[this.__text_name] = value + '%';
-    };
-
-
-    this.text = function (control, view, value) {
-
-        view.lastChild.style.display = value ? '' : 'none';
+        view.firstChild.style.width = view.lastChild.firstChild[this.__text_name] = value + '%';
     };
 
 

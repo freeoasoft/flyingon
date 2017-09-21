@@ -24,6 +24,9 @@ flyingon.fragment('f-textbox', function () {
     };
 
 
+    //校验器
+    flyingon.fragment('f-validate', this);
+
 
 });
 
@@ -50,9 +53,6 @@ flyingon.Control.extend('TextBox', function (base) {
 
     flyingon.fragment('f-textbox', this);
     
-
-    this['max-length'] = this.defineProperty('maxLength', 0);
-
 
 
 }).register();

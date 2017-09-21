@@ -1,4 +1,4 @@
-flyingon.TextBox.extend('TimePicker', function (base) {
+flyingon.TextBox.extend('Time', function (base) {
 
 
     //值

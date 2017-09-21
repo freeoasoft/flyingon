@@ -7,7 +7,6 @@ flyingon.widget({
         layout: 'vertical-line',
 
         children: [
-
             {
                 Class: 'Panel',
                 height: 60,
@@ -17,19 +16,16 @@ flyingon.widget({
                         Class: 'Button',
                         text: 'button'
                     },
-
                     {
                         Class: 'Button',
                         text: '<span style="color:red;">button</span>',
                         html: true
                     },
-
                     {
                         Class: 'Button',
                         icon: 'f-tree-icon-file',
                         text: 'button'
                     },
-
                     {
                         Class: 'Button',
                         height: 40,
@@ -39,9 +35,7 @@ flyingon.widget({
                     }
                 ]
             },
-
             { Class: 'Code' }
-
         ]
     },
 

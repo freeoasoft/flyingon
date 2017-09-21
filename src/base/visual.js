@@ -222,7 +222,7 @@ flyingon.fragment('f-visual', function () {
     //id
     this.defineProperty('id', '', {
      
-        set: function (value, oldValue) {
+        set: function (value) {
 
             var any;
 

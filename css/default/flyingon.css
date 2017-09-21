@@ -38,6 +38,11 @@ input[type="text"],
     color: darkgray;
 }
 
+.f-required,
+.f-error {
+    color: red;
+}
+
 .f-listbox-selected,
 .f-calendar-selected,
 .f-tree-node-current {
@@ -212,6 +217,16 @@ input[type="text"],
     padding: 0 2px;
 }
 
+.f-title {
+    text-align: right;
+    padding: 0 2px;
+}
+
+.f-required {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 14px;
+}
+
 
 .f-button span {
     display: inline-block;
@@ -358,8 +373,8 @@ input[type="text"],
     background: url(flyingon.png) no-repeat -225px -12px;
 }
 
-.f-datepicker-button,
-.f-monthpicker-button {
+.f-date-button,
+.f-month-button {
     background: url(flyingon.png) no-repeat -255px -13px;
 }
 

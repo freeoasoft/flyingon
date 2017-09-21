@@ -7,6 +7,7 @@ YUI.add("yuidoc-meta", function(Y) {
         "flyingon",
         "flyingon.Async",
         "flyingon.Control",
+        "flyingon.Dropdown",
         "flyingon.Event",
         "flyingon.Panel"
     ],

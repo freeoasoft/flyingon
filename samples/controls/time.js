@@ -5,34 +5,29 @@ flyingon.widget({
         Class: 'Plugin',
         padding: 8,
         children: [
-
             {
                 Class: 'Panel',
                 width: 600,
                 height: 40,
-                
+
                 children: [
                     {
-                        Class: 'TimePicker',
+                        Class: 'Time',
                         value: '10:10:10'
                     },
-
                     {
-                        Class: 'TimePicker',
+                        Class: 'Time',
                         format: 'locale-time',
                         value: '10:10:10'
                     },
-
                     {
-                        Class: 'TimePicker',
+                        Class: 'Time',
                         format: 'hh:mm',
                         value: '10:10:10'
                     }
                 ]
             },
-
             { Class: 'Code' }
-
         ]
     },
 

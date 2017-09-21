@@ -48,7 +48,7 @@ flyingon.Control.extend('Panel', function (base) {
     
 
     //扩展容器功能
-    flyingon.fragment('f-container', this, true);
+    flyingon.fragment('f-container', this, base, true);
 
 
 
@@ -107,32 +107,6 @@ flyingon.Control.extend('Panel', function (base) {
 
         return layout.controlAt(this, x, y);
     };    
-
-
- 
-    this.serialize = function (writer) {
-        
-        base.serialize.call(this, writer);
-        
-        if (this.length > 0)
-        {
-            writer.writeProperty('children', this, true);
-        }
-        
-        return this;
-    };
-    
-
-    this.dispose = function () {
-
-        for (var i = this.length - 1; i >= 0; i--)
-        {
-            this[i].dispose(false);
-        }
-
-        base.dispose.apply(this, arguments);
-        return this;
-    };
 
 
 

@@ -7,7 +7,6 @@ flyingon.widget({
         layout: 'vertical-line',
 
         children: [
-
             {
                 Class: 'Panel',
                 height: 250,
@@ -19,13 +18,11 @@ flyingon.widget({
                         clear: true, 
                         time: true 
                     },
-
                     { 
                         Class: 'Calendar', 
                         min: new Date(new Date().getFullYear(), new Date().getMonth(), 10).format('yyyy-MM-dd'), 
                         max: new Date(new Date().getFullYear(), new Date().getMonth(), 20).format('yyyy-MM-dd')
                     },
-
                     {
                         id: 'check',
                         Class: 'Calendar',
@@ -34,7 +31,6 @@ flyingon.widget({
                     }
                 ]
             },
-
             { Class: 'Code' }
         ]
     },

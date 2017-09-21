@@ -543,7 +543,7 @@ flyingon.GridColumn.extend(function (base) {
 flyingon.GridColumn.extend(function (base) {
 
 
-    var Class = flyingon.NumberPicker;
+    var Class = flyingon.Number;
 
 
     //创建单元格控件
@@ -646,12 +646,12 @@ flyingon.GridColumn.extend(function (base) {
 flyingon.GridColumn.extend(function (base) {
 
 
-    var Class = flyingon.DatePicker;
+    var Class = flyingon.Date;
 
     var keys = 'format,min,max,time,today,clear'.split(',').pair();
 
 
-    flyingon.fragment('f-DatePicker', this);
+    flyingon.fragment('f-Date', this);
     
 
     //创建单元格控件
@@ -691,7 +691,7 @@ flyingon.GridColumn.extend(function (base) {
 flyingon.GridColumn.extend(function (base) {
 
 
-    var Class = flyingon.TimePicker;
+    var Class = flyingon.Time;
 
 
     //创建单元格控件

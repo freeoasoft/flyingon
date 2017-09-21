@@ -7,9 +7,7 @@ flyingon.widget({
         layout: 'vertical-line',
         
         children: [
-
             { Class: 'Code' },
-
             {
                 Class: 'Image',
                 width: 300,
@@ -17,7 +15,6 @@ flyingon.widget({
                 src: '../css/default/flyingon.png',
                 alt: 'alt ...'
             }
-
         ]
     },
 

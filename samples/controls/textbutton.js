@@ -5,17 +5,21 @@ flyingon.widget({
         Class: 'Plugin',
         padding: 8,
         layout: 'vertical-line',
-        
+
         children: [
+            { 
+                Class: 'Panel',
+                height: 40,
 
-            {
-                Class: 'TextButton',
-                width: 200,
-                value: 'text'
+                children: [
+                    {
+                        Class: 'TextButton',
+                        width: 200,
+                        value: 'text'
+                    }
+                ]
             },
-
             { Class: 'Code' }
-
         ]
     },
 

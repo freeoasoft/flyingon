@@ -815,7 +815,8 @@ Object.extend('Control', function () {
         
     };
 
-    
+
+
     
     //扩展可序列化功能
     flyingon.fragment('f-serialize', this);

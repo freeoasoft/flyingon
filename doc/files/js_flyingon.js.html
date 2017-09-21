@@ -44,6 +44,7 @@
                                 <li><a href="../classes/flyingon.html">flyingon</a></li>
                                 <li><a href="../classes/flyingon.Async.html">flyingon.Async</a></li>
                                 <li><a href="../classes/flyingon.Control.html">flyingon.Control</a></li>
+                                <li><a href="../classes/flyingon.Dropdown.html">flyingon.Dropdown</a></li>
                                 <li><a href="../classes/flyingon.Event.html">flyingon.Event</a></li>
                                 <li><a href="../classes/flyingon.Panel.html">flyingon.Panel</a></li>
                             </ul>
@@ -637,7 +638,11 @@ var flyingon;
         
         function Class() {};
 
-        fn.call(Class.prototype = create(superclass.prototype));
+        var base = superclass.prototype,
+            prototype = Class.prototype = create(base);
+
+        prototype.Class = Class;
+        fn.call(prototype, base, prototype);
 
         return Class;
     };
@@ -936,7 +941,7 @@ var flyingon;
                     value = !!value &amp;&amp; value !== &#x27;false&#x27;;
                     break;
 
-                case &#x27;integer&#x27;:
+                case &#x27;int&#x27;:
                     value = value | 0;
                     break;
 
@@ -2532,7 +2537,7 @@ Function.prototype.bind || (Function.prototype.bind = function (context) {
             if (typeof value === &#x27;string&#x27; &amp;&amp; (value = value.match(/\d+/g)))
             {
                 any = value[1] | 0;
-                date = new Date(value[0], any &gt; 0 ? any - 1 : 0, value[2] | 0, value[3] | 0, value[4] | 0, value[5] | 0);
+                return new Date(value[0], any &gt; 0 ? any - 1 : 0, value[2] | 0, value[3] | 0, value[4] | 0, value[5] | 0);
             }
         }
 
@@ -2665,11 +2670,11 @@ flyingon.fragment(&#x27;f-collection&#x27;, function () {
      * @return {object[]} 移除的子项集合
      */
     this.splice = function (index, length) {
+            
+        var any = this.length;
 
         if (arguments.length &gt; 2)
         {
-            var any = this.length;
-
             if ((index |= 0) &lt; 0)
             {
                 index += any;
@@ -2685,16 +2690,20 @@ flyingon.fragment(&#x27;f-collection&#x27;, function () {
             }
 
             this.__check_items(index, arguments, 2);
+            
+            any = array.splice.apply(this, arguments);
         }
-
-        var items = array.splice.apply(this, arguments);
-
-        if (items.length &gt; 0)
+        else //注:IE8不支持 array.splice(0)清空所有项,必须指明长度
         {
-            this.__remove_items(index, items);
+            any = array.splice.call(this, 0, length === void 0 ? any : length);
         }
 
-        return items;
+        if (any.length &gt; 0)
+        {
+            this.__remove_items(index, any);
+        }
+
+        return any;
     };
 
         
@@ -3171,6 +3180,288 @@ flyingon.SerializeWriter = Object.extend(function () {
 
 
 
+/**
+ * @class flyingon.Dropdown
+ * @description 数据列表, 主要给列表框, 下拉框及下拉树或需要翻译的地方等使用
+ */
+(function (Class) {
+
+
+    //等待注册集合
+    var wait = Class.wait = flyingon.create(null);
+
+    
+    //注册的所有数据列表集合
+    Class.all = flyingon.create(null);
+
+
+    //根据列表创建DataList
+    Class.create = function (list, callback, context) {
+
+        if (list)
+        {
+            var any;
+
+            if (list instanceof Class)
+            {
+                callback &amp;&amp; callback.call(context, list);
+                return list;
+            }
+
+            if (typeof list === &#x27;string&#x27;)
+            {
+                if (any = Class.all[list])
+                {
+                    callback &amp;&amp; callback.call(context, any);
+                }
+                else if (callback)
+                {
+                    (wait[name] || (wait[name] = [])).push(callback, context);
+                }
+
+                return any;
+            }
+
+            list = list instanceof Array ? list : (list == null ? [] : [list]);
+
+            if ((any = list[0]) &amp;&amp; typeof any === &#x27;object&#x27;)
+            {
+                any = create(any);
+            }
+            else
+            {
+                any = new flyingon.DataList();
+            }
+
+            any.load(list);
+
+            callback &amp;&amp; callback.call(context, any);
+            return any;
+        }
+    };
+
+
+    function create(item) {
+
+        var keys = [];
+
+        if (&#x27;value&#x27; in item)
+        {
+            keys.push(&#x27;value&#x27;);
+
+            if (&#x27;text&#x27; in item)
+            {
+                keys.push(&#x27;text&#x27;);
+            }
+        }
+
+        for (var name in item)
+        {
+            keys.push(name);
+
+            if (keys.length &gt; 1)
+            {
+                break;
+            }
+        }
+
+        return new flyingon.DataList(name = keys[0] || &#x27;value&#x27;, keys[1] || name);
+    };
+
+
+
+})(flyingon.DataList = Object.extend(function () {
+    
+
+    
+    var wait = this.Class.wait;
+
+    var array = Array.prototype;
+
+
+
+    this.init = function (valueField, displayField) {
+
+        if (this.valueField = valueField || &#x27;&#x27;)
+        {
+            this.displayField = displayField || valueField;
+            this.keys = flyingon.create(null);
+        }
+        else
+        {
+            this.displayField = &#x27;&#x27;;
+        }
+    };
+
+
+
+    this.length = 0;
+    
+
+    this.load = function (list, childrenName) {
+
+        var keys;
+
+        if (list &amp;&amp; list.length &gt; 0)
+        {
+            array.push.apply(this, list);
+
+            if (keys = this.keys)
+            {
+                append_keys(keys, this.valueField, list, childrenName);
+            }
+
+            this.trigger(&#x27;load&#x27;);
+        }
+
+        return this;
+    };
+
+
+
+    function append_keys(keys, field, list, children) {
+
+        for (var i = 0, l = list.length; i &lt; l; i++)
+        {
+            var item = list[i],
+                any;
+
+            if (item &amp;&amp; (any = item[field]) != null)
+            {
+                keys[any] = item;
+
+                if (children &amp;&amp; (any = item[children]) &amp;&amp; any.length &gt; 0)
+                {
+                    append_keys(keys, field, any, children);
+                }
+            }
+        }
+    };
+
+
+
+    this.clear = function () {
+
+        if (this.keys)
+        {
+            this.keys = flyingon.create(null);
+        }
+
+        array.splice.call(this, 0);
+        return this;
+    };
+
+
+    //获取指定项的值
+    this.value = function (item) {
+
+        var field = this.valueField;
+        return field ? (item ? item[field] : &#x27;&#x27;) : item;
+    };
+
+
+    //获取指定值对应的显示文本
+    this.text = function (value, separator, separator2) {
+
+        var keys = this.keys;
+        
+        if (keys)
+        {
+            var field = this.displayField,
+                any;
+
+            if (separator)
+            {
+                value = value ? value.split(separator) : [value];
+
+                for (var i = 0, l = value.length; i &lt; l; i++)
+                {
+                    value[i] = (any = keys[value[i]]) &amp;&amp; any[field] || &#x27;&#x27;;
+                }
+
+                return value.join(separator2 || separator);
+            }
+
+            if (any = keys[value])
+            {
+                return field ? any[field] : any;
+            }
+        }
+
+        return value;
+    };
+
+
+    //根据值指定值查找下拉项
+    this.find = function (value) {
+
+        var keys = this.keys;
+        return keys ? keys[value] : value;
+    };
+
+
+    //根据指定值查询多个下拉项
+    this.select = function (value, separator) {
+
+        var keys = this.keys;
+
+        value = keys ? value.split(separator || &#x27;,&#x27;) : [value];
+
+        if (keys)
+        {
+            for (var i = 0, l = value.length; i &lt; l; i++)
+            {
+                value[i] = keys[value[i]];
+            }
+        }
+
+        return value;
+    };
+
+
+    /**
+     * 注册
+     */
+    this.register = function (name, force) {
+        
+        if (name)
+        {
+            var any = Class.all;
+    
+            if (!force &amp;&amp; any[name])
+            {
+                throw &#x27;register name &quot;&#x27; + name + &#x27;&quot; has exist!&#x27;;
+            }
+    
+            any[name] = this;
+
+            if (any = wait[name])
+            {
+                delete wait[name];
+
+                for (var i = any.length - 1; i &gt;= 0; i--)
+                {
+                    wait[i++].call(wait[i], this);
+                }
+            }
+        }
+
+        return this;
+    };
+
+
+    this.dispose = function () {
+
+        this.keys = null;
+        array.splice.call(this, 0);
+    };
+    
+
+}, false));
+
+
+
+
 //行集合类
 flyingon.RowCollection = Object.extend._(function () {
     
@@ -3426,25 +3717,81 @@ flyingon.fragment(&#x27;f-dataset&#x27;, function () {
     
     
         
-    //加载数据
-    this.load = function (list, primaryKey) {
+    /**
+     * 加载数据
+     * @param {object[]} list 数据列表
+     * @param {string} [primaryKey] 主键
+     * @param {string} [children] 树型数据的子项属性名, 传入此值则当作树型数据解析
+     * @return {object} 当前实例对象
+     */
+    this.load = function (list, primaryKey, children) {
         
-        var dataset = this.dataset;
+        if (list &amp;&amp; list.length &gt; 0)
+        {
+            var dataset = this.dataset,
+                parent = dataset ? this : null;
+
+            dataset = dataset || this;
         
-        (dataset || this).__load_data(dataset ? this : null, list, primaryKey);        
+            dataset.__new_id = load_data(dataset, 
+                parent, 
+                list, 
+                dataset.primaryKey = primaryKey, 
+                children, 
+                dataset.__new_id++);
+            
+            dataset.trigger(&#x27;load&#x27;, &#x27;parent&#x27;, parent);
+        }
+        
         return this;
     };
     
     
-    //加载树型数据
-    this.loadTreeList = function (list, primaryKey, childrenName) {
+    function load_data(dataset, parent, list, primaryKey, children, uniqueId) {
         
-        var dataset = this.dataset;
+        var target = parent || dataset,
+            rowType = flyingon.DataRow,
+            keys1 = dataset.__keys1,
+            keys2 = dataset.__keys2,
+            index = target.length,
+            length = list.length,
+            data,
+            row,
+            id;
+            
+        for (var i = 0; i &lt; length; i++)
+        {
+            row = new rowType();
+            row.dataset = dataset;
+            
+            if (parent)
+            {
+                row.parent = parent;
+            }
+            
+            row.data = data = list[i] || {};
+            
+            keys1[row.uniqueId = uniqueId++] = row;
+            
+            if (primaryKey)
+            {
+                keys2[row.id = data[primaryKey]] = row;
+            }
+                        
+            target[index++] = row;
+            
+            if (children &amp;&amp; (data = data[children]) &amp;&amp; data.length &gt; 0)
+            {
+                uniqueId = load_data(dataset, row, data, primaryKey, null, children, uniqueId)
+            }
+        }
+
+        target.length = index;
         
-        (dataset || this).__load_data(dataset ? this : null, list, primaryKey, &#x27;&#x27;, childrenName || &#x27;children&#x27;);        
-        return this;
+        return uniqueId;
     };
 
+            
 
     //扩展集合操作功能
     flyingon.fragment(&#x27;f-collection&#x27;, this);
@@ -3812,101 +4159,6 @@ flyingon.DataSet = flyingon.defineClass(flyingon.RowCollection, function () {
     //扩展数据集功能
     flyingon.fragment(&#x27;f-dataset&#x27;, this);
     
-    
-    
-        
-    //从二维关系表加载树型数据
-    this.loadTreeFromList = function (list, primaryKey, parentKey) {
-        
-        return this.__load_data(null, list, this.primaryKey = primaryKey || &#x27;id&#x27;, parentKey || &#x27;parentId&#x27;);
-    };
-    
-    
-    //加载数据内部方法
-    this.__load_data = function (parent, list, primaryKey, parentKey, childrenName) {
-
-        if (list &amp;&amp; list.length &gt; 0)
-        {
-            this.__new_id = load_data(this, 
-                parent, 
-                list, 
-                this.primaryKey = primaryKey, 
-                parentKey, 
-                childrenName, 
-                this.__new_id++);
-            
-            this.trigger(&#x27;load&#x27;, &#x27;parent&#x27;, parent);
-        }
-        
-        return this;
-    };
-    
-    
-    function load_data(dataset, parent, list, primaryKey, parentKey, childrenName, uniqueId) {
-      
-        var target = parent || dataset,
-            rowType = flyingon.DataRow,
-            keys1 = dataset.__keys1,
-            keys2 = dataset.__keys2,
-            index = target.length,
-            length = list.length,
-            data,
-            row,
-            id;
-            
-        for (var i = 0; i &lt; length; i++)
-        {
-            row = new rowType();
-            row.dataset = dataset;
-            
-            if (parent)
-            {
-                row.parent = parent;
-            }
-            
-            row.data = data = list[i] || {};
-            
-            keys1[row.uniqueId = uniqueId++] = row;
-            
-            if (primaryKey)
-            {
-                keys2[row.id = data[primaryKey]] = row;
-            }
-                        
-            if (!parentKey)
-            {
-                target[index++] = row;
-                
-                if (childrenName &amp;&amp; (data = data[childrenName]) &amp;&amp; data.length &gt; 0)
-                {
-                    uniqueId = load_data(dataset, row, data, primaryKey, null, childrenName, uniqueId)
-                }
-            }
-        }
-
-        if (parentKey)
-        {
-            for (var i = 0; i &lt; length; i++)
-            {
-                data = list[i];
-                row = keys2[data[primaryKey]];
-                
-                if (parent = keys2[data[parentKey]])
-                {
-                    row.parent = parent;
-                    parent[parent.length++] = row;
-                }
-                else
-                {
-                    dataset[index++] = row;
-                }
-            }
-        }
-
-        target.length = index;
-        
-        return uniqueId;
-    };
     
     
     //获取或设置当前行
@@ -7594,58 +7846,40 @@ flyingon.jsonpPost = function (url, options) {
 
 
 
-    //options.url:      url, 包含插件地址及多级hash控制
+    //url:              url, 包含插件地址及多级hash控制
     //options.text:     页头文字
     //options.icon:     页头图标
     //options.closable: 页签是否可关闭
     //options.target:   打开页面方式 _blank:在新页面打开 _self:在当前页面打开 other:在指定key为指定值的页面中打开
-    function route(options) {
+    function route(tab, url, options) {
 
-        var host = route.host,
-            selected = host &amp;&amp; host.selectedPage(),
-            url = selected &amp;&amp; selected.url, 
-            page,
-            any;
-
-        if (!host)
+        var page, url, any;
+        
+        if (!tab || !(tab instanceof flyingon.Tab))
         {
-            throw &#x27;must use flyingon.route.init set route host!&#x27;;
+            throw &#x27;rout tab must be a flyingon.Tab!&#x27;;
         }
 
-        if (typeof options === &#x27;string&#x27;)
+        if (!url || !(url = url.replace(/^[#!]+/g, &#x27;&#x27;)))
         {
-            url = options.replace(/^[#!]+/g, &#x27;&#x27;);
+            throw &#x27;route options.url can not be empty!&#x27;;
+        }
 
-            if (any = route.find)
-            {
-                if (!(options = any(url)))
-                {
-                    return;
-                }
-            }
-            else
-            {
-                options = {};
-            }
-        }
-        else if (url = options &amp;&amp; options.url)
+        if (!tab.__on_route)
         {
-            url = url.replace(/^[#!]+/g, &#x27;&#x27;);
-        }
-        else
-        {
-            throw &#x27;route url can not empty!&#x27;;
+            tab.on(&#x27;tab-change&#x27;, route.__tab_change);
+            tab.__on_route = true;
         }
 
         //打开页面方式(未设置页头时永远在当前页面打开)
-        switch (any = host.header() ? options.target : &#x27;_self&#x27;)
+        switch (any = tab.header() ? options.target : &#x27;_self&#x27;)
         {
             case &#x27;_blank&#x27;: //在新页面打开
                 any = null;
                 break;
 
             case &#x27;_self&#x27;: //在当前页面打开
-                if ((page = host.selectedPage()) &amp;&amp; page.url === url)
+                if ((page = tab.selectedPage()) &amp;&amp; page.url === url)
                 {
                     return;
                 }
@@ -7654,11 +7888,11 @@ flyingon.jsonpPost = function (url, options) {
                 break;
 
             default: //在指定的target名称中打开
-                if ((page = host.findByKey(any)) &amp;&amp; page.url === url)
+                if ((page = tab.findByKey(any)) &amp;&amp; page.url === url)
                 {
                     if (!page.selected())
                     {
-                        host.selectedPage(page);
+                        tab.selectedPage(page, &#x27;route&#x27;);
                         
                         page.route.update();
                         page[0].openPlugin(page.route.next(), false);
@@ -7672,11 +7906,11 @@ flyingon.jsonpPost = function (url, options) {
         if (page)
         {
             page[0].closePlugin();
-            page.clear();
+            page.splice(0);
         }
         else
         {
-            host.push(page = new flyingon.TabPage().layout(&#x27;fill&#x27;));
+            tab.push(page = new flyingon.TabPage().layout(&#x27;fill&#x27;));
         }
 
         //设置页面key
@@ -7698,21 +7932,6 @@ flyingon.jsonpPost = function (url, options) {
         }
     };
 
-
-    //初始化路由参数
-    route.init = function (host, find) {
-
-        if (host instanceof flyingon.Tab)
-        {
-            route.host = host;
-            route.find = find;
-            route.__init(host);
-        }
-        else
-        {
-            throw &#x27;route host must be a flyingon.Tab control!&#x27;;
-        }
-    };
     
 
     //路由
@@ -7761,8 +7980,8 @@ flyingon.jsonpPost = function (url, options) {
                 }
 
                 page.closable(options.closable !== false);
-                page.parent.selectedPage(page);
-
+                page.parent.selectedPage(page, &#x27;route&#x27;);
+ 
                 any = this;
 
                 load_plugin(this.plugin, function (Class) {
@@ -7905,47 +8124,53 @@ flyingon.jsonpPost = function (url, options) {
 
 
 
-    var hash = location.hash;
+    var callback = [];
 
+    var hash = location.hash.replace(/^[#!]+/, &#x27;&#x27;);
 
-    if (hash)
+    
+    //打开页面有hash时需处理
+    if (callback.hash = hash)
     {
+        //预加载插件资源
         flyingon.route.preload(hash);
     }
 
 
-    //初始化路由
-    this.__init = function (tab) {
+    //侦听路由变化
+    this.listen = function (fn) {
 
-        if (hash)
+        if (typeof fn === &#x27;function&#x27;)
         {
-            flyingon.route(hash);
-        }
+            var hash = callback.hash;
 
-        tab.on(&#x27;tab-change&#x27;, function (e) {
+            callback.push(fn);
 
-            if (e.target === this)
+            if (hash)
             {
-                var page = flyingon.route.current = e.current;
-
-                if (page)
-                {
-                    page.route.update();
-                }
-                else
-                {
-                    location.hash = hash = &#x27;&#x27;;
-                }
+                callback.hash = &#x27;&#x27;;
+                execute(hash, false);
             }
-        });
-
-        if (&#x27;onhashchange&#x27; in window)
-        {
-            flyingon.dom_on(window, &#x27;hashchange&#x27;, route);
         }
-        else
+    };
+
+
+    //定制页面变更事件
+    this.__tab_change = function (e) {
+        
+        if (e.target === this)
         {
-            setTimeout(check, 200);
+            var page = flyingon.route.current = e.current;
+
+            if (page)
+            {
+                page.route.update();
+                e.tag !== &#x27;route&#x27; &amp;&amp; execute(page.url, true);
+            }
+            else
+            {
+                execute(location.hash = hash = &#x27;&#x27;, true);
+            }
         }
     };
 
@@ -7957,12 +8182,23 @@ flyingon.jsonpPost = function (url, options) {
     };
 
 
+    function execute(hash, route) {
+
+        var list = callback;
+
+        for (var i = 0, l = list.length; i &lt; l; i++)
+        {
+            list[i](hash, route); //第二个参数标记是路由还是切换
+        }
+    };
+
+
     //执行路由
     function route() {
 
         if (location.hash !== hash)
         {
-            flyingon.route(hash = location.hash);
+            execute(location.hash.replace(/^[#!]+/g, &#x27;&#x27;), false);
         }
     };
 
@@ -7974,6 +8210,15 @@ flyingon.jsonpPost = function (url, options) {
         setTimeout(check, 200);
     };
 
+
+    if (&#x27;onhashchange&#x27; in window)
+    {
+        flyingon.dom_on(window, &#x27;hashchange&#x27;, route);
+    }
+    else
+    {
+        setTimeout(check, 200);
+    }
 
 
 }).call(flyingon.route);
@@ -11040,10 +11285,9 @@ flyingon.renderer(&#x27;Panel&#x27;, function (base) {
 
         base.mount.call(this, control, view);
 
-        view = control.view_content || view;
-
         if (control.__content_render)
         {
+            view = control.view_content || view;
             this.__mount_children(control, view, control, 0, control.length, view.firstChild);
         }
     };
@@ -11182,6 +11426,12 @@ flyingon.renderer(&#x27;GroupBox&#x27;, &#x27;Panel&#x27;, function (base) {
         writer.push(this.__scroll_html, &#x27;&lt;/div&gt;&lt;/div&gt;&#x27;);
     };
     
+
+    this.mount = function (control, view) {
+
+        control.view_content = view.lastChild;
+        base.mount.call(this, control, view);
+    };
 
 
     flyingon.GroupBox.onclick = function (e) {
@@ -11593,7 +11843,7 @@ flyingon.renderer(&#x27;ListBox&#x27;, function (base) {
 
             if (index)
             {
-                change(flyingon.findControl(this), this, 0, index | 0, true);
+                change(flyingon.findControl(this), this, index | 0);
                 return;
             }
 
@@ -11602,96 +11852,70 @@ flyingon.renderer(&#x27;ListBox&#x27;, function (base) {
     };
 
 
-    function change(control, view, oldIndex, newIndex, change) {
+    function change(control, view, index) {
 
-        var type = control.__list_type,
+        var storage = control.storage(),
+            checked = storage.checked,
+            selected = control.__selected,
+            value = index &gt;= 0 ? (value = control.__list).value(value[index]) : &#x27;&#x27;,
             any;
 
-        if (change)
-        {
-            oldIndex = control.__selectedIndex;
-        }
-
         //多选
-        if (type === &#x27;checkbox&#x27;)
+        if (checked === &#x27;checkbox&#x27;)
         {
-            if (change) //通过界面操作变更
+            if (selected &amp;&amp; (any = selected.indexOf(index)) &gt;= 0)
             {
-                if (oldIndex &amp;&amp; (any = oldIndex.indexOf(newIndex)) &gt;= 0)
+                selected.splice(any, 1);
+                change_selected(view, index, false, checked);
+
+                any = storage.value.split(storage.separator);
+                any.splice(any.indexOf(value), 1);
+
+                storage.value = any.join(storage.separator);
+            }
+            else
+            {
+                change_selected(view, index, true, checked);
+
+                if (selected)
                 {
-                    oldIndex.splice(any, 1);
-                    change_selected(view, newIndex, false, type);
+                    selected.push(index);
                 }
                 else
                 {
-                    change_selected(view, newIndex, true, type);
-
-                    if (oldIndex)
-                    {
-                        oldIndex.push(newIndex);
-                    }
-                    else
-                    {
-                        oldIndex = [newIndex];
-                    }
+                    selected = [index];
                 }
 
-                newIndex = oldIndex;
+                storage.value = (any = storage.value) ? any + storage.separator + value : value;
             }
-            else //批量修改
-            {
-                if (oldIndex) //清除原来选中
-                {
-                    for (var i = oldIndex.length - 1; i &gt;= 0; i--)
-                    {
-                        if (!newIndex || newIndex.indexOf(oldIndex[i]) &lt; 0)
-                        {
-                            change_selected(view, oldIndex[i], false, type);
-                        }
-                    }
-                }
 
-                if (newIndex) //增加新选中
-                {
-                    for (var i = newIndex.length - 1; i &gt;= 0; i--)
-                    {
-                        if (!oldIndex || oldIndex.indexOf(newIndex[i]) &lt; 0)
-                        {
-                            change_selected(view, newIndex[i], true, type);
-                        }
-                    }
-                }
-            }
+            index = selected;
         }
-        else //单选
+        else if (index === selected)
         {
-            if (newIndex === oldIndex)
-            {
-                return;
-            }
-
-            if (oldIndex &gt;= 0) //清除原选中
-            {
-                change_selected(view, oldIndex, false, type);
-            }
-
-            if (newIndex &gt;= 0)
-            {
-                change_selected(view, newIndex, true, type);
-            }
+            return;
         }
-
-        if (change)
+        else
         {
-            control.__use_index = true;
-            control.__selectedIndex = newIndex;
+            if (selected &gt;= 0) //清除原选中
+            {
+                change_selected(view, selected, false, checked);
+            }
 
-            control.trigger(&#x27;change&#x27;, &#x27;value&#x27;, control.selectedValue());
+            if (index &gt;= 0)
+            {
+                change_selected(view, index, true, checked);
+            }
+
+            storage.value = value;
         }
+
+        control.__selected = index;
+        control.trigger(&#x27;change&#x27;, &#x27;value&#x27;, storage.value);
     };
 
 
-    function change_selected(view, index, selected, type) {
+    function change_selected(view, index, selected, checked) {
 
         if (view = view.children[index])
         {
@@ -11703,21 +11927,20 @@ flyingon.renderer(&#x27;ListBox&#x27;, function (base) {
                 if (index &lt; 0)
                 {
                     view.className += name;
-
-                    if (type &amp;&amp; (view = view.firstChild))
-                    {
-                        view.checked = true;
-                    }
                 }
             }
             else if (index &gt;= 0)
             {
                 view.className = view.className.replace(name, &#x27;&#x27;);
+            }
+            else
+            {
+                return;
+            }
 
-                if (type &amp;&amp; (view = view.firstChild))
-                {
-                    view.checked = false;
-                }
+            if (checked !== &#x27;none&#x27; &amp;&amp; (view = view.firstChild))
+            {
+                view.checked = selected;
             }
         }
     };
@@ -11726,44 +11949,46 @@ flyingon.renderer(&#x27;ListBox&#x27;, function (base) {
     this.locate = function (control) {
 
         base.locate.call(this, control);
-        this.content(control);
+        control.__list &amp;&amp; this.content(control);
     };
 
 
     this.content = function (control) {
 
-        var storage = control.__storage || control.__defaults,
-            items = storage.items;
-            
-        if (!items)
-        {
-            return &#x27;&#x27;;
-        }
-
         var writer = [],
-            encode = flyingon.html_encode,
+            list = control.__list,
+            valueField = list.valueField,
+            displayField = list.displayField,
             template = control.__template,
-            type = control.__list_type,
-            selected = control.selectedIndex(),
-            clear = !type &amp;&amp; storage.clear ? 1 : 0,
+            encode = flyingon.html_encode,
+            storage = control.__storage || control.__defaults,
+            value = storage.value,
+            checked = storage.checked,
+            checkbox = checked === &#x27;checkbox&#x27;,
+            selected = checkbox ? (control.__selected = []) : 0,
+            clear = !checkbox &amp;&amp; storage.clear ? 1 : 0,
             columns = storage.columns,
             itemHeight = storage.itemHeight,
-            display = storage.displayField,
             style = &#x27; style=&quot;height:&#x27; + itemHeight + &#x27;px;line-height:&#x27; + itemHeight + &#x27;px;&#x27;,
             left = flyingon.rtl ? &#x27;right:&#x27; : &#x27;left:&#x27;,
             top = 0,
             index = 0,
-            length = items.length,
+            length = list.length,
             width,
-            checked,
             item,
+            key,
             x,
             y,
             any;
 
+        if (checkbox)
+        {
+            value = value.split(storage.separator || &#x27;,&#x27;).pair();
+        }
+
         if (columns &lt;= 0)
         {
-            columns = items.length;
+            columns = length;
         }
 
         if (columns &gt; 1)
@@ -11771,7 +11996,7 @@ flyingon.renderer(&#x27;ListBox&#x27;, function (base) {
             any = control.offsetWidth - control.borderLeft - control.borderRight - control.paddingLeft - control.paddingRight;
 
             if (control.offsetHeight - control.borderTop - control.borderBottom - control.paddingTop - control.paddingBottom &lt;
-                Math.ceil(items.length / columns) * itemHeight)
+                Math.ceil(length / columns) * itemHeight)
             {
                 any -= flyingon.vscroll_width;
             }
@@ -11785,20 +12010,6 @@ flyingon.renderer(&#x27;ListBox&#x27;, function (base) {
             style += flyingon.rtl ? &#x27;left:0;&#x27; : &#x27;right:0;&#x27;; //单列时充满可用空间
         }
 
-        switch (type)
-        {
-            case &#x27;radio&#x27;:
-                break;
-
-            case &#x27;checkbox&#x27;:
-                checked = selected.length &gt; 0 &amp;&amp; selected.pair();
-                break;
-
-            default:
-                type = null;
-                break;
-        }
-
         if (!template &amp;&amp; (template = storage.template))
         {
             if (typeof template === &#x27;string&#x27;)
@@ -11809,14 +12020,9 @@ flyingon.renderer(&#x27;ListBox&#x27;, function (base) {
             control.__template = template = template instanceof Array ? template : [template];
         }
 
-        if (template)
-        {
-            length = template.length;
-        }
-
         while (index &lt; length)
         {
-            item = items[index];
+            item = list[index];
             any = index + clear;
 
             if (columns &gt; 1)
@@ -11830,30 +12036,44 @@ flyingon.renderer(&#x27;ListBox&#x27;, function (base) {
                 y = any * itemHeight;
             }
 
-            any = checked ? checked[index] : selected === index;
+            key = valueField ? (item ? item[valueField] : &#x27;&#x27;) : item;
 
+            if (checkbox)
+            {
+                if (any = value[key])
+                {
+                    selected.push(index);
+                }
+            }
+            else if (any = value === key)
+            {
+                control.__selected = index;
+            }
+            
             writer.push(&#x27;&lt;div class=&quot;f-listbox-item&#x27;, any ? &#x27; f-listbox-selected&quot;&#x27; : &#x27;&quot;&#x27;, 
                 style, &#x27;top:&#x27;, y, &#x27;px;&#x27;, left, x, &#x27;px;&quot; index=&quot;&#x27;, index++, &#x27;&quot;&gt;&#x27;);
 
-            if (type)
+            if (checked !== &#x27;none&#x27;)
             {
-                writer.push(&#x27;&lt;input type=&quot;&#x27;, type, &#x27;&quot;&#x27;, any ? &#x27; checked=&quot;checked&quot;&#x27; : &#x27;&#x27;, &#x27;/&gt;&#x27;);
+                writer.push(&#x27;&lt;input type=&quot;&#x27;, checked, &#x27;&quot;&#x27;, any ? &#x27; checked=&quot;checked&quot;&#x27; : &#x27;&#x27;, &#x27;/&gt;&#x27;);
             }
 
             if (template)
             {
-                for (var j = 0, l = template.length; j &lt; l; j++)
+                any = template.length;
+
+                for (var j = 0; j &lt; any; j++)
                 {
-                    render_template(writer, item, index, template[j], display, encode);
+                    render_template(writer, item, index, template[j], encode);
                 }
             }
             else
             {
                 any = item;
 
-                if (display)
+                if (displayField)
                 {
-                    any = any &amp;&amp; any[display] || &#x27;&#x27;;
+                    any = any &amp;&amp; any[displayField] || &#x27;&#x27;;
                 }
 
                 if (any &amp;&amp; typeof any === &#x27;string&#x27;)
@@ -11878,7 +12098,7 @@ flyingon.renderer(&#x27;ListBox&#x27;, function (base) {
     };
 
 
-    function render_template(writer, item, index, template, display, encode) {
+    function render_template(writer, item, index, template, encode) {
 
         var tag = template.Class || &#x27;div&#x27;,
             text,
@@ -11901,21 +12121,17 @@ flyingon.renderer(&#x27;ListBox&#x27;, function (base) {
                         {
                             name = name.substring(1);
 
-                            if (any === &#x27;index&#x27;)
+                            if (any === &#x27;{{index}}&#x27;)
                             {
                                 any = index;
                             }
-                            else if (display)
-                            {
-                                any = item ? item[display] : &#x27;&#x27;;
-                            }
-                            else if (any === &#x27;item&#x27;)
+                            else if (any === &#x27;{{item}}&#x27;)
                             {
                                 any = item;
                             }
                             else
                             {
-                                any = &#x27;&#x27;;
+                                any = item ? item[any] : &#x27;&#x27;;
                             }
                         }
 
@@ -11949,12 +12165,12 @@ flyingon.renderer(&#x27;ListBox&#x27;, function (base) {
             {
                 for (var i = 0, l = any.length; i &lt; l; i++)
                 {
-                    render_item(writer, item, any[i]);
+                    render_template(writer, item, index, any[i], encode);
                 }
             }
             else
             {
-                render_item(writer, item, any);
+                render_template(writer, item, index, any, encode);
             }
         }
 
@@ -11968,17 +12184,18 @@ flyingon.renderer(&#x27;ListBox&#x27;, function (base) {
 
 
 
-flyingon.renderer(&#x27;CheckBox&#x27;, function (base) {
+flyingon.renderer(&#x27;RadioButton&#x27;, function (base) {
 
 
 
     this.render = function (writer, control, className, cssText) {
 
-        writer.push(&#x27;&lt;input type=&quot;radio&quot; name=&quot;&#x27;, control.name(), &#x27;&quot;&#x27;);
+        writer.push(&#x27;&lt;div&#x27;);
         
         this.renderDefault(writer, control, className, cssText);
         
-        writer.push(&#x27; onchange=&quot;flyingon.RadioButton.onchange.call(this)&quot;/&gt;&#x27;);
+        writer.push(&#x27;&gt;&lt;input type=&quot;radio&quot; name=&quot;&#x27;, control.name(), control.checked() ? &#x27;&quot; checked=&quot;checked&#x27; : &#x27;&#x27;,
+            &#x27;&quot; class=&quot;f-radio-input&quot; onchange=&quot;flyingon.RadioButton.onchange.call(this)&quot; /&gt;&lt;/div&gt;&#x27;);
     };
 
 
@@ -11988,14 +12205,14 @@ flyingon.renderer(&#x27;CheckBox&#x27;, function (base) {
         var control = flyingon.findControl(this);
 
         control.rendered = false;
-        control.value(this.checked);
+        control.checked(this.checked);
         control.rendered = true;
 
         control.trigger(&#x27;change&#x27;, &#x27;value&#x27;, this.checked);
     };
 
 
-    this.value = function (control, view, value) {
+    this.checked = function (control, view, value) {
 
         view.firstChild.checked = value;
     };
@@ -12016,7 +12233,7 @@ flyingon.renderer(&#x27;CheckBox&#x27;, function (base) {
         
         this.renderDefault(writer, control, className, cssText);
         
-        writer.push(&#x27;&gt;&lt;input type=&quot;checkbox&quot; name=&quot;&#x27;, control.name(), 
+        writer.push(&#x27;&gt;&lt;input type=&quot;checkbox&quot; name=&quot;&#x27;, control.name(), control.checked() ? &#x27;&quot; checked=&quot;checked&#x27; : &#x27;&#x27;,
             &#x27;&quot; class=&quot;f-checkbox-input&quot; onchange=&quot;flyingon.CheckBox.onchange.call(this)&quot; /&gt;&lt;/div&gt;&#x27;);
     };
 
@@ -12027,14 +12244,14 @@ flyingon.renderer(&#x27;CheckBox&#x27;, function (base) {
         var control = flyingon.findControl(this);
 
         control.rendered = false;
-        control.value(this.checked);
+        control.checked(this.checked);
         control.rendered = true;
 
         control.trigger(&#x27;change&#x27;, &#x27;value&#x27;, this.checked);
     };
 
 
-    this.value = function (control, view, value) {
+    this.checked = function (control, view, value) {
 
         view.firstChild.checked = value;
     };
@@ -12051,7 +12268,7 @@ flyingon.renderer(&#x27;TextBox&#x27;, function (base) {
 
     this.render = function (writer, control, className, cssText) {
 
-        var text = control.text();
+        var text = control.__text = control.text();
 
         if (text)
         {
@@ -12062,7 +12279,16 @@ flyingon.renderer(&#x27;TextBox&#x27;, function (base) {
         
         this.renderDefault(writer, control, className, cssText);
         
-        writer.push(&#x27; type=&quot;text&quot; value=&quot;&#x27;, text, &#x27;&quot; onchange=&quot;flyingon.TextBox.onchange.call(this)&quot;/&gt;&#x27;);
+        writer.push(&#x27; type=&quot;text&quot; value=&quot;&#x27;, text, 
+            &#x27;&quot; oninput=&quot;flyingon.TextBox.oninput.call(this)&quot;&#x27;,
+            &#x27; onchange=&quot;flyingon.TextBox.onchange.call(this)&quot;/&gt;&#x27;);
+    };
+
+
+    flyingon.TextBox.oninput = function (e) {
+
+        var control = flyingon.findControl(this);
+        control.renderer.oninput(control, this, e);
     };
 
 
@@ -12070,22 +12296,49 @@ flyingon.renderer(&#x27;TextBox&#x27;, function (base) {
 
         var control = flyingon.findControl(this);
 
-        control.rendered = false;
-        control.value(this.value);
-        control.rendered = true;
-
+        try
+        {
+            control.rendered = false;
+            control.value(this.value);
+        }
+        finally
+        {
+            control.rendered = true;
+        }
+        
         this.value = control.text();
 
-        control.trigger(&#x27;change&#x27;, &#x27;value&#x27;, this.value);
+        control.trigger(&#x27;change&#x27;, &#x27;value&#x27;, control.value());
     };
-
 
 
     this.text = function (control, view, value) {
 
-        view.value = value;
+        view.value = control.text();
     };
 
+
+});
+
+
+
+
+flyingon.renderer(&#x27;Number&#x27;, &#x27;TextBox&#x27;, function (base) {
+
+
+    this.oninput = function (control, view) {
+
+        var value = +view.value;
+
+        if (value !== value)
+        {
+            view.value = control.__text;
+        }
+        else
+        {
+            control.__text = value;
+        }
+    };
 
 
 });
@@ -12114,16 +12367,25 @@ flyingon.renderer(&#x27;TextButton&#x27;, function (base) {
 
         writer.push(&#x27;&gt;&#x27;,
                 &#x27;&lt;div class=&quot;f-textbutton-body&quot; style=&quot;right:&#x27;, size, &#x27;px;&quot;&gt;&#x27;,
-                    &#x27;&lt;input type=&quot;text&quot; class=&quot;f-textbutton-text&quot; value=&quot;&#x27;, text, &#x27;&quot; onchange=&quot;flyingon.TextButton.onchange.call(this)&quot;/&gt;&#x27;,
+                    &#x27;&lt;input type=&quot;text&quot; class=&quot;f-textbutton-text&quot; value=&quot;&#x27;, text, 
+                    storage.inputable ? &#x27;&#x27; : &#x27;&quot; readonly=&quot;readonly&#x27;,
+                    &#x27;&quot; onchange=&quot;flyingon.TextButton.onchange.call(this)&quot;/&gt;&#x27;,
                 &#x27;&lt;/div&gt;&#x27;,
-                &#x27;&lt;div class=&quot;f-textbutton-button &#x27;, storage.button, &#x27;&quot; style=&quot;width:&#x27;, size, &#x27;px;&quot; onclick=&quot;flyingon.TextButton.onclick.call(this)&quot;&gt;&lt;/div&gt;&#x27;,
+                &#x27;&lt;div class=&quot;f-textbutton-button &#x27;, storage.button, 
+                    &#x27;&quot; style=&quot;width:&#x27;, size, &#x27;px;&quot; onclick=&quot;flyingon.TextButton.onclick.call(this)&quot;&gt;&lt;/div&gt;&#x27;,
             &#x27;&lt;/div&gt;&#x27;);
     };
 
 
     flyingon.TextButton.onclick = function () {
 
-        flyingon.findControl(this).__on_click();
+        var control = flyingon.findControl(this),
+            storage = control.__storage;
+
+        if (!storage || !(storage.disabled || storage.readonly))
+        {
+            control.__on_click();
+        }
     };
 
 
@@ -12142,9 +12404,36 @@ flyingon.renderer(&#x27;TextButton&#x27;, function (base) {
 
 
 
+    this.button = function (control, view, value) {
+
+        view.lastChild.className = &#x27;f-textbutton-button &#x27; + value;
+    };
+
+
+    this.buttonSize = function (control, view, value) {
+
+        view.firstChild.style.right = view.lastChild.style.width = value + &#x27;px&#x27;;
+    };
+
+
     this.text = function (control, view) {
 
         view.firstChild.firstChild.value = control.text();
+    };
+
+
+    this.inputable = function (control, view, value) {
+
+        view = view.firstChild.firstChild;
+
+        if (value)
+        {
+            view.removeAttribute(&#x27;readonly&#x27;);
+        }
+        else
+        {
+            view.setAttribute(&#x27;readonly&#x27;, &#x27;readonly&#x27;);
+        }
     };
 
 
@@ -12356,7 +12645,7 @@ flyingon.renderer(&#x27;Calendar&#x27;, function (base) {
         }
         else
         {
-            value = data[0] + &#x27;-&#x27; + data[1] + &#x27;-&#x27; + data[2];
+            value = data[0] + &#x27;/&#x27; + data[1] + &#x27;/&#x27; + data[2];
 
             if (storage.time)
             {
@@ -12364,7 +12653,7 @@ flyingon.renderer(&#x27;Calendar&#x27;, function (base) {
                 value += &#x27; &#x27; + any[0] + &#x27;:&#x27; + any[1] + &#x27;:&#x27; + any[2];
             }
 
-            value = new Date(value);
+            value = Date.create(value);
         }
 
         if (raise_change(control, value))
@@ -12965,6 +13254,7 @@ flyingon.renderer(&#x27;Tree&#x27;, function (base) {
 
                 case &#x27;node&#x27;:
                     tree.trigger(&#x27;node-click&#x27;, &#x27;node&#x27;, node);
+                    tree.current(node);
                     return;
 
                 default:
@@ -12981,12 +13271,20 @@ flyingon.renderer(&#x27;Tree&#x27;, function (base) {
 
     this.mount = function (control, view) {
 
+        var node = control.__current;
+
         base.mount.call(this, control, view);
 
         if (control.__content_render)
         {
             this.__mount_children(control, view, control, 0, control.length, view.firstChild);
         }
+
+        node &amp;&amp; node.view &amp;&amp; setTimeout(function () {
+
+            control.renderer.scrollTo(control, node);
+            
+        }, 500);
     };
     
 
@@ -13030,6 +13328,25 @@ flyingon.renderer(&#x27;Tree&#x27;, function (base) {
     };
 
 
+    this.scrollTo = function (control, node) {
+
+        var view = control.view,
+            dom = node.view,
+            y = view.scrollTop,
+            top = dom.offsetTop,
+            height;
+
+        if (top &lt; y)
+        {
+            view.scrollTop = top;
+        }
+        else if (top &gt; y + (height = view.clientHeight))
+        {
+            view.scrollTop = top + dom.offsetHeight - height;
+        }
+    };
+
+
 });
 
 
@@ -13049,8 +13366,10 @@ flyingon.renderer(&#x27;TreeNode&#x27;, function (base) {
         node.rendered = true;
 
         writer.push(&#x27;&lt;div class=&quot;&#x27;, encode(node.fullClassName), &#x27;&quot;&gt;&#x27;,
-            &#x27;&lt;div class=&quot;f-tree-node&#x27;, last &amp;&amp; line ? &#x27; f-tree-node-last&#x27; : &#x27;&#x27;,
-            (any = storage.className) ? &#x27; class=&quot;&#x27; + encode(any) + &#x27;&quot;&#x27; : &#x27;&#x27;,  
+            &#x27;&lt;div class=&quot;f-tree-node&#x27;, 
+                last &amp;&amp; line ? &#x27; f-tree-node-last&#x27; : &#x27;&#x27;,
+                node.__current ? &#x27; f-tree-node-current&#x27;: &#x27;&#x27;,
+                (any = storage.className) ? &#x27; &#x27; + encode(any) : &#x27;&#x27;,
             (any = storage.id) ? &#x27;&quot; id=&quot;&#x27; + encode(any) + &#x27;&quot;&#x27; : &#x27;&#x27;, &#x27;&quot; tag=&quot;node&quot;&gt;&#x27;);
 
         if (space)
@@ -13293,6 +13612,27 @@ flyingon.renderer(&#x27;TreeNode&#x27;, function (base) {
             }
 
             node = node.previousSibling;
+        }
+    };
+
+
+
+    this.current = function (node, current) {
+
+        var dom = node.view.firstChild,
+            name = dom.className,
+            key = &#x27; f-tree-node-current&#x27;;
+
+        if (current)
+        {
+            if (name.indexOf(key) &lt; 0)
+            {
+                dom.className += key;
+            }
+        }
+        else
+        {
+            dom.className = name.replace(key, &#x27;&#x27;);
         }
     };
 
@@ -14019,7 +14359,7 @@ flyingon.renderer(&#x27;Grid&#x27;, function (base) {
                     break;
 
                 default:
-                    if (any = flyingon.findControl(dom))
+                    if ((any = flyingon.findControl(dom)) &amp;&amp; !any.__column_check)
                     {
                         if (any.row) //数据行
                         {
@@ -14916,7 +15256,7 @@ flyingon.renderer(&#x27;Grid&#x27;, function (base) {
             any.__tree_icon = storage.treeIcon;
         }
 
-        grid.view_scroll.firstChild.style.height = size + &#x27;px&#x27;;
+        grid.view_scroll.firstChild.style.height = (size || 1) + &#x27;px&#x27;;
         grid.view_body.style[flyingon.rtl ? &#x27;left&#x27; : &#x27;right&#x27;] = (vscroll ? flyingon.vscroll_width : 0) + &#x27;px&#x27;;
 
         //显示顶部锁定
@@ -15884,7 +16224,7 @@ flyingon.renderer(&#x27;TabPage&#x27;, &#x27;Panel&#x27;, function (base) {
             target = target.parentNode;
         }
 
-        page.parent.selectedPage(page);
+        page.parent.selectedPage(page, &#x27;click&#x27;);
     };
 
 
@@ -17200,6 +17540,17 @@ Object.extend(&#x27;Control&#x27;, function () {
     };
     
 
+    // this.clientWidth = function () {
+    
+    //     return this.offsetWidth - this.borderLeft - this.borderRight - this.paddingLeft - this.paddingRight;
+    // };
+
+
+    // this.clientHeight = function () {
+
+    //     return this.offsetHeight - this.borderTop - this.borderBottom - this.paddingTop - this.paddingBottom;
+    // };
+
     
 
     //是否可获取焦点
@@ -17365,7 +17716,7 @@ Object.extend(&#x27;Control&#x27;, function () {
             this.off();
         }
         
-        this.parent = this.__loop_vm = null;
+        this.parent = this.__loop_vm = this.__list = null;
 
         return this;
     };
@@ -17660,7 +18011,7 @@ flyingon.Control.extend(&#x27;Slider&#x27;, function (base) {
 
         return self.defineProperty(name, defaultValue, {
 
-            dataType: &#x27;integer&#x27;,
+            dataType: &#x27;int&#x27;,
 
             check: function (value) {
 
@@ -17709,7 +18060,7 @@ flyingon.Control.extend(&#x27;ProgressBar&#x27;, function (base) {
 
     this.defineProperty(&#x27;value&#x27;, 0, {
 
-        dataType: &#x27;integer&#x27;,
+        dataType: &#x27;int&#x27;,
 
         check: function (value) {
 
@@ -17759,7 +18110,7 @@ flyingon.fragment(&#x27;f-container&#x27;, function (childrenClass, arrange) {
 
 
     //是否需要排列
-    this.__arrange_dirty = 2;
+    this.__arrange_dirty = arrange ? 2 : 0;
 
     
 
@@ -17786,6 +18137,7 @@ flyingon.fragment(&#x27;f-container&#x27;, function (childrenClass, arrange) {
             {
                 if (item = items[i])
                 {
+                    item.parent = null;
                     item.autoDispose = false;
                 }
             }
@@ -17801,14 +18153,11 @@ flyingon.fragment(&#x27;f-container&#x27;, function (childrenClass, arrange) {
         var Class = this.childrenClass,
             html = this instanceof flyingon.HtmlElement,
             patch = this.__content_render &amp;&amp; [],
-            length = items.length,
             item,
             any;
 
-        while (start &lt; length)
+        while (item = items[start])
         {
-            item = items[start];
-
             if (item.__flyingon_class)
             {
                 if (item instanceof Class)
@@ -18528,11 +18877,18 @@ flyingon.Control.extend(&#x27;ListBox&#x27;, function (base) {
             set: function () {
 
                 this.__template = null;
-                this.rendered &amp;&amp; this.renderer.set(this, &#x27;content&#x27;);
+                this.__list &amp;&amp; this.renderer.set(this, &#x27;content&#x27;);
             }
         });
     };
 
+
+
+    //选中类型
+    //none
+    //radio
+    //checkbox
+    define(this, &#x27;checked&#x27;, &#x27;none&#x27;);
 
 
     //指定渲染列数
@@ -18553,387 +18909,37 @@ flyingon.Control.extend(&#x27;ListBox&#x27;, function (base) {
     this[&#x27;item-height&#x27;] = define(this, &#x27;itemHeight&#x27;, 21);
 
 
-    //值字字段名
-    this[&#x27;value-field&#x27;] = this.defineProperty(&#x27;valueField&#x27;, &#x27;&#x27;, {
-
-        set: function () {
-
-            this.__template = null;
-
-            if (!this.__use_index)
-            {
-                this.__selectedIndex = void 0;
-            }
-
-            this.rendered &amp;&amp; this.renderer.set(this, &#x27;content&#x27;);
-        }
-    });
-
-
-    //显示字段名
-    this[&#x27;display-field&#x27;] = define(this, &#x27;displayField&#x27;, &#x27;&#x27;);
-
-
 
     //列表项集合
     this.defineProperty(&#x27;items&#x27;, null, {
 
-        check: function (value) {
-
-            if (value)
-            {
-                if (typeof value === &#x27;string&#x27;)
-                {
-                    value = flyingon.parseJSON(value);
-                }
-
-                return value instanceof Array ? value : [value];
-            }
-
-            return null;
-        },
-
-        set: function () {
-
-            this.rendered &amp;&amp; this.renderer.set(this, &#x27;content&#x27;);
-        }
-    });
-
-
-    //默认选中索引
-    this.defineProperty(&#x27;index&#x27;, -1, {
-
-        dataType: &#x27;integer&#x27;,
-
         set: function (value) {
 
-            //标记使用索引定位
-            this.__use_index = true;
-
-            this.__selectedIndex = value;
-            this.rendered &amp;&amp; this.renderer.set(this, &#x27;change&#x27;);
+            //转换成flyingon.DataList
+            flyingon.DataList.create(value, set_list, this);
         }
     });
 
 
-    //值类型
-    //boolean   布尔类型
-    //integer   整数类型
-    //number    数字类型
-    //string    字符类型
-    this.defineProperty(&#x27;type&#x27;, &#x27;string&#x27;, {
+    function set_list(list) {
 
-        set: function () {
-
-            if (!this.__use_index)
-            {
-                this.__selectedIndex = void 0;
-            }
-
-            this.rendered &amp;&amp; this.renderer.set(this, &#x27;change&#x27;);
-        }
-    });
+        this.__list = list;
+        this.rendered &amp;&amp; this.renderer.set(this, &#x27;content&#x27;);
+    };
 
 
     //默认选中值
     this.defineProperty(&#x27;value&#x27;, &#x27;&#x27;, {
 
-        set: function () {
-
-            //标记不使用索引定位
-            this.__use_index = false;
-            this.__selectedIndex = void 0;
+        set: function (value) {
 
             this.rendered &amp;&amp; this.renderer.set(this, &#x27;change&#x27;);
         }
     });
 
-
-
-    //获取选中索引
-    this.selectedIndex = function () {
-
-        var index = this.__selectedIndex;
-
-        if (index === void 0)
-        {
-            var storage = this.__storage,
-                items,
-                name,
-                value;
-
-            if (storage &amp;&amp; (items = storage.items) &amp;&amp; items.length &gt; 0)
-            {
-                value = storage.value;
-
-                switch (storage.type)
-                {
-                    case &#x27;boolean&#x27;:
-                        value = !!value &amp;&amp; value !== false;
-                        break;
-                    
-                    case &#x27;integer&#x27;:
-                        value |= 0;
-                        break;
-
-                    case &#x27;number&#x27;:
-                        value = +value;
-                        break;
-                }
-
-                if (name = storage.valueField)
-                {
-                    for (var i = 0, l = items.length; i &lt; l; i++)
-                    {
-                        if ((storage = items[i]) &amp;&amp; storage[name] === value)
-                        {
-                            return this.__selectedIndex = i;
-                        }
-                    }
-
-                    return this.__selectedIndex = -1;
-                }
-
-                return this.__selectedIndex = items.indexOf(value);
-            }
-
-            return -1;
-        }
-
-        return index;
-    };
-
-
-    //获取选中项
-    this.selectedItem = function (field) {
-
-        var storage = this.__storage,
-            item = storage &amp;&amp; (item = storage.items) &amp;&amp; item[this.selectedIndex()];
-        
-        if (field)
-        {
-            if (field = storage &amp;&amp; storage[field])
-            {
-                item = item ? item[field] : &#x27;&#x27;;
-            }
-
-            return item !== void 0 ? &#x27;&#x27; + item : &#x27;&#x27;;
-        }
-
-        return item;
-    };
-
-
-    //获取选中值
-    this.selectedValue = function () {
-
-        return this.selectedItem(&#x27;valueField&#x27;);
-    };
-
-
-    this.selectedText = function () {
-
-        return this.selectedItem(&#x27;displayField&#x27;);
-    };
-
-
-
-}).register();
-
-
-
-
-flyingon.ListBox.extend(&#x27;RadioListBox&#x27;, function (base) {
-
-
-    this.__list_type = &#x27;radio&#x27;;
-
-
-}).register();
-
-
-
-
-flyingon.ListBox.extend(&#x27;CheckListBox&#x27;, function (base) {
-
-
-
-    this.__list_type = &#x27;checkbox&#x27;;
-
-
-
-    //默认选中索引
-    this.defineProperty(&#x27;index&#x27;, null, {
-
-        check: function (value) {
-
-            if (value)
-            {
-                if (value &gt; 0)
-                {
-                    return [vlaue | 0];
-                }
-
-                if (value instanceof Array)
-                {
-                    return value;
-                }
-
-                if (typeof value === &#x27;string&#x27; &amp;&amp; (value = value.match(/\d+/g)))
-                {
-                    for (var i = value.length - 1; i &gt;= 0; i--)
-                    {
-                        value[i] |= 0;
-                    }
-                }
-            }
-            else if (value === 0)
-            {
-                return [0];
-            }
-            
-            return null;
-        },
-
-        set: function (value) {
-
-            //标记使用索引定位
-            this.__use_index = true;
-
-            this.__selectedIndex = value;
-            this.rendered &amp;&amp; this.renderer.set(this, &#x27;content&#x27;);
-        }
-    });
-
-
+    
     //多值时的分隔符
-    this.defineProperty(&#x27;separator&#x27;, &#x27;,&#x27;, {
-
-        set: function () {
-
-            if (!this.__use_index)
-            {
-                this.__selectedIndex = void 0;
-                this.rendered &amp;&amp; this.renderer.set(this, &#x27;change&#x27;);
-            }
-        }
-    });
-
-
-
-    this.selectedIndex = function () {
-        
-        var list = this.__selectedIndex;
-
-        if (list === void 0)
-        {
-            var storage = this.__storage,
-                items,
-                value,
-                any;
-
-            this.__selectedIndex = list = [];
-
-            if (storage &amp;&amp; (items = storage.items) &amp;&amp; items.length &gt; 0 &amp;&amp; (value = storage.value))
-            {
-                value = storage.value.split(storage.separator);
-
-                any = storage.type;
-
-                if (any !== &#x27;string&#x27;)
-                {
-                    for (var i = value.length - 1; i &gt;= 0; i--)
-                    {
-                        switch (any)
-                        {
-                            case &#x27;boolean&#x27;:
-                                value[i] = !!value[i] &amp;&amp; value[i] !== false;
-                                break;
-
-                            case &#x27;integer&#x27;:
-                                value[i] |= 0;
-                                break;
-
-                            case &#x27;number&#x27;:
-                                value[i] = +value[i];
-                                break;
-                        }
-                    }
-                }
-
-                storage.selected = list;
-
-                if (any = storage.valueField)
-                {
-                    for (var i = 0, l = items.length; i &lt; l; i++)
-                    {
-                        if ((storage = items[i]) &amp;&amp; value.indexOf(storage[any]) &gt;= 0)
-                        {
-                            list.push(i);
-                        }
-                    }
-                }
-                else
-                {
-                    for (var i = 0, l = items.length; i &lt; l; i++)
-                    {
-                        if (value.indexOf(items[i]) &gt;= 0)
-                        {
-                            list.push(i);
-                        }
-                    }
-                }
-            }
-        }
-
-        return list;
-    };
-
-
-    //获取选中项集合
-    this.selectedItem = function (field) {
-
-        var list = [],
-            storage = this.__storage,
-            name = field &amp;&amp; storage[field],
-            items,
-            item,
-            selected,
-            length;
-
-        if (storage &amp;&amp; (items = storage.items) &amp;&amp; (selected = this.selectedIndex()) &amp;&amp; (length = selected.length) &gt; 0)
-        {
-            for (var i = 0; i &lt; length; i++)
-            {
-                item = items[selected[i]];
-
-                if (name)
-                {
-                    item &amp;&amp; list.push(item[name]);
-                }
-                else
-                {
-                    list.push(item);
-                }
-            }
-        }
-
-        return field ? list.join() : list;
-    };
-
-
-    //获取选中项集合
-    this.selectedValue = function () {
-
-        return this.selectedItem(&#x27;valueField&#x27;);
-    };
-
-
-    //获取选中项集合
-    this.selectedText = function () {
-
-        return this.selectedItem(&#x27;displayField&#x27;);
-    };
+    this.defineProperty(&#x27;separator&#x27;, &#x27;,&#x27;);
 
 
 
@@ -18954,11 +18960,11 @@ flyingon.Control.extend(&#x27;RadioButton&#x27;, function (base) {
     });
 
 
-    this.defineProperty(&#x27;value&#x27;, false, {
+    this.value = this.defineProperty(&#x27;checked&#x27;, false, {
 
         set: function (value) {
 
-            this.rendered &amp;&amp; this.renderer.set(this, &#x27;value&#x27;, value);
+            this.rendered &amp;&amp; this.renderer.set(this, &#x27;checked&#x27;, value);
         }
     });
 
@@ -18981,11 +18987,11 @@ flyingon.Control.extend(&#x27;CheckBox&#x27;, function (base) {
     });
 
 
-    this.defineProperty(&#x27;value&#x27;, false, {
+    this.value = this.defineProperty(&#x27;checked&#x27;, false, {
 
         set: function (value) {
 
-            this.rendered &amp;&amp; this.renderer.set(this, &#x27;value&#x27;, value);
+            this.rendered &amp;&amp; this.renderer.set(this, &#x27;checked&#x27;, value);
         }
     });
 
@@ -19057,6 +19063,44 @@ flyingon.Control.extend(&#x27;TextBox&#x27;, function (base) {
 
 
 
+flyingon.TextBox.extend(&#x27;Number&#x27;, function (base) {
+
+
+    this.__scale = this.__value = 0;
+
+
+    this.defineProperty(&#x27;value&#x27;, 0, {
+
+        set: function (value) {
+
+            this.__value = value;
+            this.rendered &amp;&amp; this.renderer.set(this, &#x27;text&#x27;, value);
+        }
+    });
+
+
+    //小数位数
+    this.defineProperty(&#x27;scale&#x27;, 0, {
+
+        check: function (value) {
+
+            return this.__scale = (value |= 0) &gt; 0 ? value : 0;
+        }
+    });
+
+
+    this.text = function () {
+
+        return this.__value.toFixed(this.__scale);
+    };
+
+
+
+}).register();
+
+
+
+
 flyingon.Control.extend(&#x27;TextButton&#x27;, function (base) {
 
 
@@ -19065,18 +19109,29 @@ flyingon.Control.extend(&#x27;TextButton&#x27;, function (base) {
     var popup_cache;
 
 
+    function define(self, name, defaultValue, key) {
+
+        return self.defineProperty(name, defaultValue, {
+
+            set: function (value) {
+    
+                this.rendered &amp;&amp; this.renderer.set(this, key || name, value);
+            }
+        });
+    };
+
+
     //值
-    this.defineProperty(&#x27;value&#x27;, null);
+    define(this, &#x27;value&#x27;, null, &#x27;text&#x27;);
 
 
     //格式化
-    this.defineProperty(&#x27;format&#x27;, &#x27;&#x27;, {
-        
-        set: function (value) {
+    define(this, &#x27;format&#x27;, &#x27;&#x27;, &#x27;text&#x27;);
 
-            this.rendered &amp;&amp; this.renderer.set(this, &#x27;text&#x27;);
-        }
-    });
+
+    //是否可输入
+    define(this, &#x27;inputable&#x27;, false);
+
 
 
     this.text = function () {
@@ -19090,11 +19145,11 @@ flyingon.Control.extend(&#x27;TextButton&#x27;, function (base) {
 
 
     //按钮图片
-    this.defineProperty(&#x27;button&#x27;, &#x27;&#x27;);
+    define(this, &#x27;button&#x27;, &#x27;&#x27;);
 
 
     //按钮大小
-    this[&#x27;button-size&#x27;] = this.defineProperty(&#x27;buttonSize&#x27;, 16);
+    this[&#x27;button-size&#x27;] = define(this, &#x27;buttonSize&#x27;, 16);
 
 
 
@@ -19140,33 +19195,17 @@ flyingon.Control.extend(&#x27;TextButton&#x27;, function (base) {
 
 
 
-flyingon.Control.extend(&#x27;NumberPicker&#x27;, function (base) {
+/**
+ * 下拉框定义
+ */
+flyingon.fragment(&#x27;f-ComboBox&#x27;, function () {
 
 
-    this.defineProperty(&#x27;value&#x27;, &#x27;&#x27;, {
-
-        set: function (value) {
-
-            this.rendered &amp;&amp; this.renderer.set(this, &#x27;text&#x27;, value);
-        }
-    });
-
-
-}).register();
-
-
-
-
-flyingon.TextButton.extend(&#x27;ComboBox&#x27;, function (base) {
-
-
-    
-    //缓存的列表控件
-    var listbox_cache; 
-
-
-
-    this.defaultValue(&#x27;button&#x27;, &#x27;f-combobox-button&#x27;);
+    //选中类型
+    //none
+    //radio
+    //checkbox
+    this.defineProperty(&#x27;checked&#x27;, &#x27;none&#x27;);
 
 
 
@@ -19188,41 +19227,57 @@ flyingon.TextButton.extend(&#x27;ComboBox&#x27;, function (base) {
     this[&#x27;item-height&#x27;] = this.defineProperty(&#x27;itemHeight&#x27;, 21);
 
 
-    //值字字段名
-    this[&#x27;value-field&#x27;] = this.defineProperty(&#x27;valueField&#x27;, &#x27;&#x27;);
+    //下拉框宽度
+    this[&#x27;popup-width&#x27;] = this.defineProperty(&#x27;popupWidth&#x27;, &#x27;default&#x27;);
 
 
-    //显示字段名
-    this[&#x27;display-field&#x27;] = this.defineProperty(&#x27;displayField&#x27;, &#x27;&#x27;);
+    //最大显示项数量
+    this[&#x27;max-items&#x27;] = this.defineProperty(&#x27;maxItems&#x27;, 10);
 
 
-    //列表项集合
+
+    //下拉列表
     this.defineProperty(&#x27;items&#x27;, null, {
 
-        check: function (value) {
+        set: function (value) {
 
-            if (value)
-            {
-                if (typeof value === &#x27;string&#x27;)
-                {
-                    value = flyingon.parseJSON(value);
-                }
-
-                return value instanceof Array ? value : [value];
-            }
-
-            return null;
+            //转换成flyingon.DataList
+            flyingon.DataList.create(value, this.__set_items, this);
         }
     });
 
 
+    //设置下拉列表
+    this.__set_items = function (list) {
 
-    //值类型
-    //boolean   布尔类型
-    //integer   整数类型
-    //number    数字类型
-    //string    字符类型
-    this.defineProperty(&#x27;type&#x27;, &#x27;string&#x27;);
+        this.__list = list;
+        this.rendered &amp;&amp; this.renderer.set(this, &#x27;text&#x27;);
+    };
+
+
+    //多值时的分隔符
+    this.defineProperty(&#x27;separator&#x27;, &#x27;,&#x27;);
+
+
+});
+
+
+
+flyingon.TextButton.extend(&#x27;ComboBox&#x27;, function (base) {
+
+
+    
+    //缓存的列表控件
+    var listbox_cache; 
+
+
+
+    this.defaultValue(&#x27;button&#x27;, &#x27;f-combobox-button&#x27;);
+
+
+
+    //扩展下拉框定义
+    flyingon.fragment(&#x27;f-ComboBox&#x27;, this);
 
 
     //默认选中值
@@ -19230,89 +19285,23 @@ flyingon.TextButton.extend(&#x27;ComboBox&#x27;, function (base) {
 
         set: function () {
 
-            this.rendered &amp;&amp; this.renderer.set(this, &#x27;text&#x27;);
+            this.__list &amp;&amp; this.renderer.set(this, &#x27;text&#x27;);
         }
     });
 
 
 
-    //获取选中索引
-    this.selectedIndex = function () {
-
-        var storage = this.__storage,
-            items,
-            name,
-            value;
-
-        if (storage &amp;&amp; (items = storage.items) &amp;&amp; items.length &gt; 0)
-        {
-            value = storage.value;
-
-            switch (storage.type)
-            {
-                case &#x27;boolean&#x27;:
-                    value = !!value &amp;&amp; value !== false;
-                    break;
-                
-                case &#x27;integer&#x27;:
-                    value |= 0;
-                    break;
-
-                case &#x27;number&#x27;:
-                    value = +value;
-                    break;
-            }
-
-            if (name = storage.valueField)
-            {
-                for (var i = 0, l = items.length; i &lt; l; i++)
-                {
-                    if ((storage = items[i]) &amp;&amp; storage[name] === value)
-                    {
-                        return i;
-                    }
-                }
-
-                return -1;
-            }
-
-            return items.indexOf(value);
-        }
-
-        return -1;
-    };
-
-
-    //获取选中项
-    this.selectedItem = function (field) {
-
-        var storage = this.__storage,
-            item = storage &amp;&amp; (item = storage.items) &amp;&amp; item[this.selectedIndex()];
-        
-        if (field)
-        {
-            if (field = storage &amp;&amp; storage[field])
-            {
-                item = item ? item[field] : &#x27;&#x27;;
-            }
-
-            return item !== void 0 ? &#x27;&#x27; + item : &#x27;&#x27;;
-        }
-
-        return item;
-    };
-
-
-    //获取选中值
-    this.selectedValue = function () {
-
-        return this.selectedItem(&#x27;valueField&#x27;);
-    };
-
-
     this.text = function () {
 
-        return this.selectedItem(&#x27;displayField&#x27;);
+        var list = this.__list;
+
+        if (list)
+        {
+            var storage = this.__storage || this.__defaults;
+            return list.text(storage.value, storage.checked === &#x27;checkbox&#x27; ? storage.separator || &#x27;,&#x27; : &#x27;&#x27;);
+        }
+
+        return &#x27;&#x27;;
     };
 
 
@@ -19322,20 +19311,44 @@ flyingon.TextButton.extend(&#x27;ComboBox&#x27;, function (base) {
 
         var popup = this.__get_popup(),
             storage = this.__storage || this.__defaults,
-            listbox = this.__get_listbox();
+            listbox = this.__get_listbox(),
+            length,
+            height,
+            any;
 
         this.__before_popup(popup, listbox, storage);
 
         listbox.border(0)
-            .columns(storage.columns)
+            .checked(listbox.__checked = storage.checked)
+            .columns(any = storage.columns)
             .clear(storage.clear)
             .template(storage.template)
-            .itemHeight(storage.itemHeight)
-            .valueField(storage.valueField)
-            .displayField(storage.displayField)
-            .type(storage.type)
+            .itemHeight(height = storage.itemHeight)
+            .width(storage.popupWidth)
+            .separator(storage.separator)
             .items(storage.items)
             .value(storage.value);
+
+        if (any &gt; 0)
+        {
+            length = this.__list ? this.__list.length : 0;
+
+            if (storage.clear)
+            {
+                length++;
+            }
+
+            length = Math.min(length, storage.maxItems);
+
+            if (any &gt; 1)
+            {
+                length = (length + any - 1) / any | 0;
+            }
+
+            height *= length;
+        }
+
+        listbox.height(height + 2);
 
         listbox.target = this;
         listbox.popup = popup;
@@ -19354,170 +19367,12 @@ flyingon.TextButton.extend(&#x27;ComboBox&#x27;, function (base) {
         return listbox_cache = new flyingon.ListBox().on(&#x27;change&#x27;, function (e) {
             
             this.target.value(e.value);
-            this.popup.close();
+
+            if (this.__checked !== &#x27;checkbox&#x27;)
+            {
+                this.popup.close();
+            }
         });
-    };
-
-
-
-}).register();
-
-
-
-flyingon.ComboBox.extend(&#x27;RadioComboBox&#x27;, function (base) {
-
-
-    var listbox_cache;
-
-
-    this.__get_listbox = function () {
-
-        return listbox_cache = new flyingon.RadioListBox().on(&#x27;change&#x27;, function (e) {
-            
-            this.target.value(e.value);
-            this.popup.close();
-        });
-    };
-
-
-}).register();
-
-
-
-flyingon.ComboBox.extend(&#x27;CheckComboBox&#x27;, function (base) {
-
-
-
-    var listbox_cache;
-    
-
-    //多值时的分隔符
-    this.defineProperty(&#x27;separator&#x27;, &#x27;,&#x27;);
-
-
-
-
-    this.selectedIndex = function () {
-        
-        var list = [],
-            storage = this.__storage,
-            items,
-            value,
-            any;
-
-        if (storage &amp;&amp; (items = storage.items) &amp;&amp; items.length &gt; 0 &amp;&amp; (value = storage.value))
-        {
-            value = storage.value.split(storage.separator);
-
-            any = storage.type;
-
-            if (any !== &#x27;string&#x27;)
-            {
-                for (var i = value.length - 1; i &gt;= 0; i--)
-                {
-                    switch (any)
-                    {
-                        case &#x27;boolean&#x27;:
-                            value[i] = !!value[i] &amp;&amp; value[i] !== false;
-                            break;
-
-                        case &#x27;integer&#x27;:
-                            value[i] |= 0;
-                            break;
-
-                        case &#x27;number&#x27;:
-                            value[i] = +value[i];
-                            break;
-                    }
-                }
-            }
-
-            if (any = storage.valueField)
-            {
-                for (var i = 0, l = items.length; i &lt; l; i++)
-                {
-                    if ((storage = items[i]) &amp;&amp; value.indexOf(storage[any]) &gt;= 0)
-                    {
-                        list.push(i);
-                    }
-                }
-            }
-            else
-            {
-                for (var i = 0, l = items.length; i &lt; l; i++)
-                {
-                    if (value.indexOf(items[i]) &gt;= 0)
-                    {
-                        list.push(i);
-                    }
-                }
-            }
-        }
-
-        return list;
-    };
-
-
-    //获取选中项集合
-    this.selectedItem = function (field) {
-
-        var list = [],
-            storage = this.__storage,
-            name = field &amp;&amp; storage[field],
-            items,
-            item,
-            selected,
-            length;
-
-        if (storage &amp;&amp; (items = storage.items) &amp;&amp; (selected = this.selectedIndex()) &amp;&amp; (length = selected.length) &gt; 0)
-        {
-            for (var i = 0; i &lt; length; i++)
-            {
-                item = items[selected[i]];
-
-                if (name)
-                {
-                    item &amp;&amp; list.push(item[name]);
-                }
-                else
-                {
-                    list.push(item);
-                }
-            }
-        }
-
-        return field ? list.join() : list;
-    };
-
-
-    //获取选中项集合
-    this.selectedValue = function () {
-
-        return this.selectedItem(&#x27;valueField&#x27;);
-    };
-
-
-    //获取选中项集合
-    this.text = function () {
-
-        return this.selectedItem(&#x27;displayField&#x27;);
-    };
-
-
-
-
-    this.__get_listbox = function () {
-
-        return listbox_cache = new flyingon.CheckListBox().on(&#x27;change&#x27;, function (e) {
-            
-            this.target.value(e.value);
-        });
-    };
-
-
-    this.__before_popup = function (popup, listbox, storage) {
-
-        listbox.separator(storage.separator);
     };
 
 
@@ -19591,29 +19446,10 @@ flyingon.Control.extend(&#x27;Calendar&#x27;, function (base) {
 
 
 
-flyingon.TextButton.extend(&#x27;DatePicker&#x27;, function (base) {
+flyingon.fragment(&#x27;f-Date&#x27;, function () {
 
 
-    //日历控件
-    var calendar_cache;
-
-
-    this.defaultValue(&#x27;button&#x27;, &#x27;f-datepicker-button&#x27;);
-
-
-    //日期值
-    this.defineProperty(&#x27;value&#x27;, null, {
-        
-        dataType: &#x27;date&#x27;,
-
-        set: function () {
-
-            this.rendered &amp;&amp; this.renderer.set(this, &#x27;text&#x27;);
-        }
-    });
-
-
-    this.defineProperty(&#x27;format&#x27;, &#x27;locale-date&#x27;, {
+    this.defineProperty(&#x27;format&#x27;, &#x27;yyyy/M/dd&#x27;, {
         
         set: function () {
 
@@ -19642,13 +19478,44 @@ flyingon.TextButton.extend(&#x27;DatePicker&#x27;, function (base) {
     this.defineProperty(&#x27;clear&#x27;, false);
 
 
+});
+
+
+
+
+flyingon.TextButton.extend(&#x27;Date&#x27;, function (base) {
+
+
+    //日历控件
+    var calendar_cache;
+
+
+    this.defaultValue(&#x27;button&#x27;, &#x27;f-date-button&#x27;);
+
+
+    //日期值
+    this.defineProperty(&#x27;value&#x27;, null, {
+        
+        dataType: &#x27;date&#x27;,
+
+        set: function () {
+
+            this.rendered &amp;&amp; this.renderer.set(this, &#x27;text&#x27;);
+        }
+    });
+
+
+
+    flyingon.fragment(&#x27;f-Date&#x27;, this);
+
+
 
     this.text = function () {
 
         var storage = this.__storage || this.__defaults,
             value = storage.value;
 
-        return value ? value.format(storage.format) : &#x27;&#x27;
+        return value ? value.format(storage.format) : &#x27;&#x27;;
     };
 
 
@@ -19691,7 +19558,7 @@ flyingon.TextButton.extend(&#x27;DatePicker&#x27;, function (base) {
 
 
 
-flyingon.TextBox.extend(&#x27;TimePicker&#x27;, function (base) {
+flyingon.TextBox.extend(&#x27;Time&#x27;, function (base) {
 
 
     //值
@@ -19752,7 +19619,7 @@ flyingon.TextBox.extend(&#x27;TimePicker&#x27;, function (base) {
 
 
 
-flyingon.TextButton.extend(&#x27;MonthPicker&#x27;, function (base) {
+flyingon.TextButton.extend(&#x27;Month&#x27;, function (base) {
 
 
 
@@ -19760,7 +19627,7 @@ flyingon.TextButton.extend(&#x27;MonthPicker&#x27;, function (base) {
     var calendar_cache;
 
 
-    this.defaultValue(&#x27;button&#x27;, &#x27;f-datepicker-button&#x27;);
+    this.defaultValue(&#x27;button&#x27;, &#x27;f-date-button&#x27;);
 
 
 
@@ -19927,9 +19794,20 @@ Object.extend(&#x27;TreeNode&#x27;, function () {
         {
             switch (name)
             {
+                case &#x27;text&#x27;:
+                case &#x27;icon&#x27;:
+                    storage[name] = &#x27;&#x27; + options[name];
+                    break;
+
                 case &#x27;checked&#x27;:
-                case &#x27;collapsed&#x27;:
                     storage[name] = !!options[name];
+                    break;
+
+                case &#x27;expanded&#x27;:
+                    if (options[name])
+                    {
+                        node.expanded = true;
+                    }
                     break;
 
                 case &#x27;children&#x27;:
@@ -19938,7 +19816,7 @@ Object.extend(&#x27;TreeNode&#x27;, function () {
                     break;
 
                 default:
-                    storage[name] = &#x27;&#x27; + options[name];
+                    storage[name] = options[name];
                     break;
             }
         }
@@ -19973,6 +19851,11 @@ flyingon.Control.extend(&#x27;Tree&#x27;, function (base) {
 
 
 
+    this.defaultWidth = 200;
+    
+    this.defaultHeight = 300;
+
+        
     this.defaultValue(&#x27;border&#x27;, 1);
     
 
@@ -20153,6 +20036,61 @@ flyingon.Control.extend(&#x27;Tree&#x27;, function (base) {
 
     };
 
+
+    this.findNode = function (fn) {
+
+        if (typeof fn === &#x27;function&#x27;)
+        {
+            return find(this, fn);
+        }
+    };
+
+
+    function find(nodes, fn) {
+
+        for (var i = 0, l = nodes.length; i &lt; l; i++)
+        {
+            var node = nodes[i];
+
+            if (fn(node))
+            {
+                return node;
+            }
+
+            if (node.length &gt; 0 &amp;&amp; (node = find(node, fn)))
+            {
+                return node;
+            }
+        }
+    };
+
+
+    this.current = function (node) {
+
+        var any = this.__current;
+        
+        if (any)
+        {
+            any.__current = false;
+        }
+
+        if (this.__current = node)
+        {
+            node.__current = true;
+        }
+
+        if (this.rendered)
+        {
+            any &amp;&amp; any.renderer.current(any, false);
+            node &amp;&amp; node.renderer.current(node, true);
+        }
+    };
+
+
+    this.scrollTo = function (node) {
+
+        this.rendered &amp;&amp; this.renderer.scrollTo(this, node);
+    };
 
 
     this.dispose = function () {
@@ -20626,9 +20564,9 @@ flyingon.GridColumn.extend(function (base) {
         
         control.__column_check = true;
 
-        if (row.checked)
+        if (row.__checked)
         {
-            control.value(true);
+            control.checked(true);
         }
 
         return control;
@@ -20653,7 +20591,7 @@ flyingon.GridColumn.extend(function (base) {
         
         if (name &amp;&amp; row.data[name])
         {
-            control.value(true);
+            control.checked(true);
         }
 
         return control;
@@ -20718,7 +20656,7 @@ flyingon.GridColumn.extend(function (base) {
 flyingon.GridColumn.extend(function (base) {
 
 
-    var Class = flyingon.NumberPicker;
+    var Class = flyingon.Number;
 
 
     //创建单元格控件
@@ -20745,11 +20683,63 @@ flyingon.GridColumn.extend(function (base) {
 
     var Class = flyingon.ComboBox;
 
+    var keys = &#x27;inputable,checked,columns,clear,template,itemHeight,separator,popupWidth,maxItems&#x27;.split(&#x27;,&#x27;).pair();
+
+
+    //是否可输入
+    this.defineProperty(&#x27;inputable&#x27;, false);
+
+
+    //扩展下拉框定义
+    flyingon.fragment(&#x27;f-ComboBox&#x27;, this);
+
+
+    this.__set_items = function (list) {
+
+        var controls = this.__wait;
+
+        this.__list = list;
+
+        if (controls)
+        {
+            this.__wait = null;
+
+            for (var i = controls.length - 1; i &gt;= 0; i--)
+            {
+                controls[i].items(list);
+            }
+        }
+    };
+
 
     //创建单元格控件
     this.createControl = function (row, name) {
 
-       var control = new Class();
+        var control = new Class(),
+            names,
+            any;
+
+        if (any = this.__list)
+        {
+            control.items(any);
+        }
+        else
+        {
+            (this.__wait || (this.__wait = [])).push(control);
+        }
+        
+        if (any = this.__storage)
+        {
+            names = keys;
+
+            for (var key in any)
+            {
+                if (names[key])
+                {
+                    control[key](any[key]);
+                }
+            }
+        }
         
         if (name)
         {
@@ -20760,6 +20750,7 @@ flyingon.GridColumn.extend(function (base) {
     };
 
 
+
 }).register(&#x27;combobox&#x27;);
 
 
@@ -20768,14 +20759,34 @@ flyingon.GridColumn.extend(function (base) {
 flyingon.GridColumn.extend(function (base) {
 
 
-    var Class = flyingon.DatePicker;
+    var Class = flyingon.Date;
 
+    var keys = &#x27;format,min,max,time,today,clear&#x27;.split(&#x27;,&#x27;).pair();
+
+
+    flyingon.fragment(&#x27;f-Date&#x27;, this);
+    
 
     //创建单元格控件
     this.createControl = function (row, name) {
 
-       var control = new Class();
-        
+        var control = new Class(),
+            names,
+            any;
+                
+        if (any = this.__storage)
+        {
+            names = keys;
+
+            for (var key in any)
+            {
+                if (names[key])
+                {
+                    control[key](any[key]);
+                }
+            }
+        }
+
         if (name)
         {
             control.value(row.data[name]);
@@ -20793,7 +20804,7 @@ flyingon.GridColumn.extend(function (base) {
 flyingon.GridColumn.extend(function (base) {
 
 
-    var Class = flyingon.TimePicker;
+    var Class = flyingon.Time;
 
 
     //创建单元格控件
@@ -22741,7 +22752,7 @@ flyingon.Control.extend(&#x27;Tab&#x27;, function (base) {
 
 
     //获取或设置选中页面
-    this.selectedPage = function (page) {
+    this.selectedPage = function (page, tag) {
 
         var selected = this.__selectedPage,
             any;
@@ -22765,7 +22776,7 @@ flyingon.Control.extend(&#x27;Tab&#x27;, function (base) {
                     page.renderer.selected(page, true);
                 }
 
-                this.rendered &amp;&amp; this.renderer.set(this, &#x27;selected&#x27;, page);
+                this.rendered &amp;&amp; this.renderer.set(this, &#x27;selected&#x27;, page, &#x27;tag&#x27;, tag);
 
                 any = this.indexOf(page);
             }
@@ -22782,7 +22793,7 @@ flyingon.Control.extend(&#x27;Tab&#x27;, function (base) {
             }
 
             this.__selectedPage = page;
-            this.trigger(&#x27;tab-change&#x27;, &#x27;newValue&#x27;, page, &#x27;oldValue&#x27;, selected);
+            this.trigger(&#x27;tab-change&#x27;, &#x27;current&#x27;, page, &#x27;last&#x27;, selected, &#x27;tag&#x27;, tag);
         }
 
         return this;
@@ -22803,7 +22814,7 @@ flyingon.Control.extend(&#x27;Tab&#x27;, function (base) {
 
         remove_items.apply(this, arguments);
 
-        this.selectedPage(this[selected] || this[--selected] || null);
+        this.selectedPage(this[selected] || this[--selected] || null, &#x27;remove&#x27;);
     };
 
 
@@ -23886,7 +23897,7 @@ flyingon.Layout.extend(function (base) {
     //行高
     this.defineProperty(&#x27;lineHeight&#x27;, &#x27;0&#x27;, {
      
-        dataType: &#x27;integer&#x27;,
+        dataType: &#x27;int&#x27;,
         check: function (value) {
 
             return value &gt; 0 ? value : 0;
@@ -23946,7 +23957,7 @@ flyingon.Layout.extend(function (base) {
     //行宽
     this.defineProperty(&#x27;lineWidth&#x27;, &#x27;0&#x27;, {
      
-        dataType: &#x27;integer&#x27;,
+        dataType: &#x27;int&#x27;,
         check: function (value) {
 
             return value &gt; 0 ? value : 0;
@@ -27288,6 +27299,8 @@ flyingon.view.Template = Object.extend(function () {
         {
             this.width(data.width + data.distanceX);
         }
+
+        clear_selection();
     };
     
     
@@ -27659,6 +27672,128 @@ flyingon.view.Template = Object.extend(function () {
 
     
 })(flyingon, document);
+
+
+
+
+flyingon.renderer(&#x27;Highlight&#x27;, function (base) {
+
+
+    var styles = flyingon.create(null),
+        cache;
+
+
+    this.render = function (writer, control, className, cssText) {
+        
+        writer.push(&#x27;&lt;div&#x27;);
+        
+        this.renderDefault(writer, control, className, (cssText || &#x27;&#x27;) + &#x27;overflow:auto&#x27;);
+        
+        writer.push(&#x27;&gt;&lt;pre style=&quot;margin:0;width:auto;height:auto;&quot;&gt;&lt;code style=&quot;overflow:visible;&quot;&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&#x27;);
+    };
+
+
+
+    this.theme = function (control, view, value) {
+
+        if (!styles[value])
+        {
+            flyingon.link(flyingon.require.path(&#x27;flyingon/third/highlight/styles/&#x27; + value + &#x27;.css&#x27;));
+        }
+    };
+
+
+    this.code = function (control, view, value) {
+
+        var hljs = window.hljs,
+            any;
+
+        if (hljs)
+        {
+            view = view.firstChild.firstChild;
+            view.className = control.language();
+            view[this.__text_name] = value;
+
+            try
+            {
+                hljs.highlightBlock(view); //不支持IE8以下浏览器
+            }
+            catch (e)
+            {
+            }
+        }
+        else if (any = cache)
+        {
+            any.push(control);
+        }
+        else
+        {
+            cache = [control];
+
+            this.theme(control, view, control.theme());
+            flyingon.script(flyingon.require.path(&#x27;flyingon/third/highlight/highlight.js&#x27;), init);
+        }
+    };
+        
+
+    function init() {
+        
+        var list = cache,
+            index = 0,
+            control;
+
+        while (control = list[index++])
+        {
+            control.renderer.code(control, control.view, control.code());
+        }
+
+        cache = null;
+    };
+
+        
+});
+
+
+
+flyingon.Control.extend(&#x27;Highlight&#x27;, function (base) {
+
+
+    this.defaultWidth = 400;
+
+    this.defaultHeight = 200;
+
+
+    //当前语言
+    this.defineProperty(&#x27;language&#x27;, &#x27;javascript&#x27;, {
+        
+        set: function (value) {
+
+            this.rendered &amp;&amp; this.renderer.set(this, &#x27;code&#x27;, this.code());
+        }
+    });
+
+
+    //当前主题
+    this.defineProperty(&#x27;theme&#x27;, &#x27;vs&#x27;, {
+     
+        set: function (value) {
+
+            this.rendered &amp;&amp; this.renderer.set(this, &#x27;theme&#x27;, value);
+        }
+    });
+
+
+    //代码内容
+    this.defineProperty(&#x27;code&#x27;, &#x27;&#x27;, {
+        
+        set: function (value) {
+
+            this.renderer.set(this, &#x27;code&#x27;, value);
+        }
+    });
+
+
+}).register();
 
 
 

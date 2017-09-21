@@ -15,6 +15,7 @@
                 "flyingon.Event": 1,
                 "flyingon.Async": 1,
                 "f-collection": 1,
+                "flyingon.Dropdown": 1,
                 "f-bindable": 1,
                 "flyingon.Control": 1,
                 "flyingon.Panel": 1
@@ -62,7 +63,7 @@
             "plugin_for": [],
             "extension_for": [],
             "file": "js\\flyingon.js",
-            "line": 1526,
+            "line": 1530,
             "description": "事件基类"
         },
         "flyingon.Async": {
@@ -74,7 +75,7 @@
             "plugin_for": [],
             "extension_for": [],
             "file": "js\\flyingon.js",
-            "line": 1769,
+            "line": 1773,
             "description": "异步处理类"
         },
         "f-collection": {
@@ -88,9 +89,21 @@
                 "flyingon.Control"
             ],
             "file": "js\\flyingon.js",
-            "line": 2460,
+            "line": 2464,
             "extension": "",
             "description": "集合功能片段"
+        },
+        "flyingon.Dropdown": {
+            "name": "flyingon.Dropdown",
+            "shortname": "flyingon.Dropdown",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "js\\flyingon.js",
+            "line": 3093,
+            "description": "数据列表, 主要给列表框, 下拉框及下拉树或需要翻译的地方等使用"
         },
         "f-bindable": {
             "name": "f-bindable",
@@ -103,7 +116,7 @@
                 "flyingon.Control"
             ],
             "file": "js\\flyingon.js",
-            "line": 4187,
+            "line": 4438,
             "extension": "",
             "description": "可绑定功能片段"
         },
@@ -116,7 +129,7 @@
             "plugin_for": [],
             "extension_for": [],
             "file": "js\\flyingon.js",
-            "line": 16383,
+            "line": 16722,
             "uses": [
                 "f-bindable",
                 "f-collection"
@@ -132,7 +145,7 @@
             "plugin_for": [],
             "extension_for": [],
             "file": "js\\flyingon.js",
-            "line": 18001,
+            "line": 18349,
             "extends": "flyingon.Control",
             "description": "面板容器类"
         }
@@ -400,7 +413,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 700,
+            "line": 704,
             "static": 1,
             "itemtype": "method",
             "name": "init",
@@ -413,7 +426,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 742,
+            "line": 746,
             "itemtype": "method",
             "name": "is",
             "description": "检测当前对象是否指定类型",
@@ -432,7 +445,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 755,
+            "line": 759,
             "itemtype": "method",
             "name": "toString",
             "description": "返回类的字符串表示",
@@ -444,7 +457,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 767,
+            "line": 771,
             "itemtype": "method",
             "name": "defineProperty",
             "description": "定义属性",
@@ -473,7 +486,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 926,
+            "line": 930,
             "itemtype": "method",
             "name": "storage",
             "description": "获取对象存储器",
@@ -485,7 +498,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 938,
+            "line": 942,
             "itemtype": "method",
             "name": "get",
             "description": "获取指定名称的属性值",
@@ -504,7 +517,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 961,
+            "line": 965,
             "itemtype": "method",
             "name": "set",
             "description": "设置指定名称的属性值",
@@ -528,7 +541,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 990,
+            "line": 994,
             "itemtype": "method",
             "name": "defaultValue",
             "description": "获取或设置属性默认值",
@@ -552,7 +565,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1016,
+            "line": 1020,
             "itemtype": "method",
             "name": "properties",
             "description": "获取属性值集合",
@@ -576,7 +589,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1051,
+            "line": 1055,
             "itemtype": "method",
             "name": "notify",
             "description": "通知对象属性值变更",
@@ -605,7 +618,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1099,
+            "line": 1103,
             "itemtype": "method",
             "name": "watch",
             "description": "观测属性变更",
@@ -629,7 +642,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1135,
+            "line": 1139,
             "itemtype": "method",
             "name": "unwatch",
             "description": "取消属性变更观测",
@@ -653,7 +666,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1181,
+            "line": 1185,
             "itemtype": "method",
             "name": "on",
             "description": "绑定事件处理 注:type不带on",
@@ -677,7 +690,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1207,
+            "line": 1211,
             "itemtype": "method",
             "name": "once",
             "description": "绑定事件处理, 执行一次后自动移除绑定 注:type不带on",
@@ -701,7 +714,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1229,
+            "line": 1233,
             "itemtype": "method",
             "name": "off",
             "description": "移除事件处理",
@@ -725,7 +738,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1289,
+            "line": 1293,
             "itemtype": "method",
             "name": "trigger",
             "description": "分发事件",
@@ -752,7 +765,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1363,
+            "line": 1367,
             "itemtype": "method",
             "name": "getOwnPropertyNames",
             "description": "获取自身属性名集合(不包含默认值)",
@@ -764,7 +777,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1400,
+            "line": 1404,
             "itemtype": "method",
             "name": "dispose",
             "description": "销毁对象",
@@ -776,7 +789,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1418,
+            "line": 1422,
             "static": 1,
             "itemtype": "method",
             "name": "register",
@@ -801,7 +814,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1444,
+            "line": 1448,
             "itemtype": "method",
             "name": "defaultValue",
             "description": "获取或修改指定类的默认值",
@@ -826,7 +839,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1477,
+            "line": 1481,
             "itemtype": "method",
             "name": "on",
             "description": "绑定事件处理 注:type不带on",
@@ -850,7 +863,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1487,
+            "line": 1491,
             "itemtype": "method",
             "name": "once",
             "description": "绑定事件处理, 执行一次后自动移除绑定 注:type不带on",
@@ -874,7 +887,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1497,
+            "line": 1501,
             "itemtype": "method",
             "name": "off",
             "description": "移除事件处理",
@@ -898,7 +911,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1507,
+            "line": 1511,
             "itemtype": "method",
             "name": "trigger",
             "description": "分发事件",
@@ -925,7 +938,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1541,
+            "line": 1545,
             "readonly": "",
             "itemtype": "property",
             "name": "type",
@@ -935,7 +948,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1550,
+            "line": 1554,
             "readonly": "",
             "itemtype": "property",
             "name": "target",
@@ -945,7 +958,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1559,
+            "line": 1563,
             "readonly": "",
             "itemtype": "property",
             "name": "cancelBubble",
@@ -955,7 +968,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1568,
+            "line": 1572,
             "readonly": "",
             "itemtype": "property",
             "name": "defaultPrevented",
@@ -965,7 +978,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1577,
+            "line": 1581,
             "itemtype": "method",
             "name": "stop",
             "description": "停止事件冒泡",
@@ -984,7 +997,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1597,
+            "line": 1601,
             "itemtype": "method",
             "name": "prevent",
             "description": "禁止默认事件处理",
@@ -996,7 +1009,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1777,
+            "line": 1781,
             "itemtype": "method",
             "name": "sleep",
             "description": "延时",
@@ -1027,7 +1040,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1817,
+            "line": 1821,
             "itemtype": "method",
             "name": "done",
             "description": "注册成功执行函数或异步通知",
@@ -1052,7 +1065,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1830,
+            "line": 1834,
             "itemtype": "method",
             "name": "fail",
             "description": "注册执行失败函数或异步通知",
@@ -1077,7 +1090,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1843,
+            "line": 1847,
             "itemtype": "method",
             "name": "complete",
             "description": "注册执行完毕函数或异步通知",
@@ -1102,7 +1115,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1881,
+            "line": 1885,
             "itemtype": "method",
             "name": "resolve",
             "description": "成功执行通知",
@@ -1121,7 +1134,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 1893,
+            "line": 1897,
             "itemtype": "method",
             "name": "reject",
             "description": "失败执行通知",
@@ -1146,7 +1159,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 2024,
+            "line": 2028,
             "itemtype": "method",
             "name": "progress",
             "description": "注册执行进度函数",
@@ -1165,7 +1178,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 2041,
+            "line": 2045,
             "itemtype": "method",
             "name": "notify",
             "description": "执行进度通知",
@@ -1184,7 +1197,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 2067,
+            "line": 2071,
             "itemtype": "method",
             "name": "delay",
             "description": "异步延时处理",
@@ -1209,7 +1222,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 2473,
+            "line": 2477,
             "itemtype": "property",
             "name": "length",
             "type": "{int}",
@@ -1218,7 +1231,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 2481,
+            "line": 2485,
             "itemtype": "method",
             "name": "indexOf",
             "description": "获取指定子项的索引号(与数组同名方法相同)",
@@ -1237,7 +1250,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 2488,
+            "line": 2492,
             "itemtype": "method",
             "name": "lastIndexOf",
             "description": "从后向前获取指定子项的索引号(与数组同名方法相同)",
@@ -1256,7 +1269,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 2498,
+            "line": 2502,
             "itemtype": "method",
             "name": "push",
             "description": "在集合的末尾添加一个或多个子项(与数组同名方法相同)",
@@ -1275,7 +1288,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 2516,
+            "line": 2520,
             "itemtype": "method",
             "name": "pop",
             "description": "弹出最后一个子项(与数组同名方法相同)",
@@ -1287,7 +1300,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 2534,
+            "line": 2538,
             "itemtype": "method",
             "name": "unshift",
             "description": "在集合的开始位置插入一个或多个子项(与数组同名方法相同)",
@@ -1306,7 +1319,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 2552,
+            "line": 2556,
             "itemtype": "method",
             "name": "shift",
             "description": "弹出第一个子项(与数组同名方法相同)",
@@ -1318,7 +1331,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 2570,
+            "line": 2574,
             "itemtype": "method",
             "name": "splice",
             "description": "在集合的指定位置移除或插入一个或多个子项(与数组同名方法相同)",
@@ -1347,7 +1360,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 2624,
+            "line": 2632,
             "itemtype": "method",
             "name": "children",
             "description": "获取子项集合",
@@ -1359,7 +1372,42 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 4196,
+            "line": 3332,
+            "description": "注册",
+            "class": "flyingon.Dropdown"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 3630,
+            "description": "加载数据",
+            "params": [
+                {
+                    "name": "list",
+                    "description": "数据列表",
+                    "type": "Object[]"
+                },
+                {
+                    "name": "primaryKey",
+                    "description": "主键",
+                    "type": "String",
+                    "optional": true
+                },
+                {
+                    "name": "children",
+                    "description": "树型数据的子项属性名, 传入此值则当作树型数据解析",
+                    "type": "String",
+                    "optional": true
+                }
+            ],
+            "return": {
+                "description": "当前实例对象",
+                "type": "Object"
+            },
+            "class": "flyingon.Dropdown"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 4447,
             "itemtype": "method",
             "name": "dataset",
             "description": "获取或设置关联的数据集",
@@ -1378,7 +1426,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 4240,
+            "line": 4491,
             "itemtype": "method",
             "name": "addBind",
             "description": "添加属性绑定",
@@ -1402,7 +1450,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 4268,
+            "line": 4519,
             "itemtype": "method",
             "name": "removeBind",
             "description": "移除属性绑定",
@@ -1421,7 +1469,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 4295,
+            "line": 4546,
             "itemtype": "method",
             "name": "subscribeBind",
             "description": "接收数据集变更动作处理",
@@ -1445,7 +1493,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 4336,
+            "line": 4587,
             "itemtype": "method",
             "name": "pushBack",
             "description": "回推数据至数据集",
@@ -1469,7 +1517,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 16401,
+            "line": 16740,
             "itemtype": "property",
             "name": "defaultWidth",
             "type": "{int}",
@@ -1478,7 +1526,7 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 16456,
+            "line": 16795,
             "itemtype": "method",
             "name": "visible",
             "description": "是否可见",
@@ -1493,15 +1541,33 @@
         },
         {
             "file": "js\\flyingon.js",
-            "line": 22753,
+            "line": 19108,
+            "description": "下拉框定义",
+            "class": "flyingon.Panel"
+        },
+        {
+            "file": "js\\flyingon.js",
+            "line": 22763,
             "description": "弹出层组件\n\n事件:\nopen: 打开事件\nautoclosing: 鼠标点击弹出层外区域时自动关闭前事件(可取消)\nclosing: 关闭前事件(可取消)\nclosed: 关闭后事件",
             "class": "flyingon.Panel"
         }
     ],
     "warnings": [
         {
+            "message": "Missing item type\n注册",
+            "line": " js\\flyingon.js:3332"
+        },
+        {
+            "message": "Missing item type\n加载数据",
+            "line": " js\\flyingon.js:3630"
+        },
+        {
+            "message": "Missing item type\n下拉框定义",
+            "line": " js\\flyingon.js:19108"
+        },
+        {
             "message": "Missing item type\n弹出层组件\n\n事件:\nopen: 打开事件\nautoclosing: 鼠标点击弹出层外区域时自动关闭前事件(可取消)\nclosing: 关闭前事件(可取消)\nclosed: 关闭后事件",
-            "line": " js\\flyingon.js:22753"
+            "line": " js\\flyingon.js:22763"
         }
     ]
 }

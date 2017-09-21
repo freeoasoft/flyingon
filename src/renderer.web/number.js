@@ -1,4 +1,4 @@
-flyingon.renderer('NumberPicker', 'TextBox', function (base) {
+flyingon.renderer('Number', 'TextBox', function (base) {
 
 
     this.oninput = function (control, view) {

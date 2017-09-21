@@ -7,8 +7,7 @@ flyingon.widget({
         layout: 'vertical-line',
 
         children: [
-
-            { 
+            {
                 Class: 'Panel',
                 height: 40,
 
@@ -17,7 +16,6 @@ flyingon.widget({
                     { Class: 'RadioButton', height: 18, value: false }
                 ]
             },
-            
             { Class: 'Code' }
         ]
     },

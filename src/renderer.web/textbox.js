@@ -48,6 +48,11 @@ flyingon.renderer('TextBox', function (base) {
     };
 
 
+    this.oninput = function (control, view, event) {
+
+    };
+
+
     this.text = function (control, view, value) {
 
         view.value = control.text();

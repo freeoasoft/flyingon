@@ -1,4 +1,4 @@
-flyingon.fragment('f-DatePicker', function () {
+flyingon.fragment('f-Date', function () {
 
 
     this.defineProperty('format', 'yyyy/M/dd', {
@@ -35,14 +35,14 @@ flyingon.fragment('f-DatePicker', function () {
 
 
 
-flyingon.TextButton.extend('DatePicker', function (base) {
+flyingon.TextButton.extend('Date', function (base) {
 
 
     //日历控件
     var calendar_cache;
 
 
-    this.defaultValue('button', 'f-datepicker-button');
+    this.defaultValue('button', 'f-date-button');
 
 
     //日期值
@@ -58,7 +58,7 @@ flyingon.TextButton.extend('DatePicker', function (base) {
 
 
 
-    flyingon.fragment('f-DatePicker', this);
+    flyingon.fragment('f-Date', this);
 
 
 

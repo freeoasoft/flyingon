@@ -11,11 +11,11 @@ flyingon是一个100%使用原生javascript开发的前端开发库
 
 开发方式多样, 支持面向对象开发, 选择器, 视图模型及数据绑定, 可选择多种开发方式同时使用
 
-功能强大, 用户使用flyingon标准库即可觉见web应用开发, 标准库包含功能如下：
+功能强大, 用户使用flyingon标准库即可开发常见web应用, 标准库包含功能如下：
 
 1. 核心库(类及继承, 属性, 事件, 序列化及反序列化, 选择器, 视图模型, 数据绑定, ajax, 模块及依赖, 路由...)
 2. 布局系统(Panel, Splitter, GroupBox, Tab...)
-3. 基础控件(Button, TextBox, ComboBox, DatePicker...)
+3. 基础控件(Button, TextBox, ComboBox, Date...)
 4. 高级控件(Tree, Grid, TreeGrid...)
 
 

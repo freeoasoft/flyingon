@@ -1,4 +1,4 @@
-flyingon.TextBox.extend('NumberPicker', function (base) {
+flyingon.TextBox.extend('Number', function (base) {
 
 
     this.__scale = this.__value = 0;

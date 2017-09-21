@@ -14,6 +14,7 @@
             '../src/base/dataset.js',
             '../src/base/bindable.js',
             '../src/base/visual.js',
+            '../src/base/validator.js',
 
             '../src/web/utils.js',
             '../src/web/event.js',
@@ -25,7 +26,6 @@
 
             '../src/route/urlroute.js',
             '../src/route/web.js',
-
             '../src/selector/selector.js',
 
             '../src/renderer.web/renderer.js',
@@ -45,9 +45,13 @@
             '../src/renderer.web/radiobutton.js',
             '../src/renderer.web/checkbox.js',
             '../src/renderer.web/textbox.js',
-            '../src/renderer.web/numberpicker.js',
+            '../src/renderer.web/password.js',
+            '../src/renderer.web/number.js',
             '../src/renderer.web/textbutton.js',
             '../src/renderer.web/calendar.js',
+
+            '../src/renderer.web/title.js',
+            '../src/renderer.web/error.js',
 
             '../src/renderer.web/tree.js',
             '../src/renderer.web/grid.js',
@@ -75,13 +79,17 @@
             '../src/control/radiobutton.js',
             '../src/control/checkbox.js',
             '../src/control/textbox.js',
-            '../src/control/numberpicker.js',
+            '../src/control/password.js',
+            '../src/control/number.js',
             '../src/control/textbutton.js',
             '../src/control/combobox.js',
             '../src/control/calendar.js',
-            '../src/control/datepicker.js',
-            '../src/control/timepicker.js',
-            '../src/control/monthpicker.js',
+            '../src/control/date.js',
+            '../src/control/time.js',
+            '../src/control/month.js',
+
+            '../src/control/title.js',
+            '../src/control/error.js',
 
             '../src/control/tree.js',
             '../src/control/grid.js',

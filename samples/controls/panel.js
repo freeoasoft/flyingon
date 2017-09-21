@@ -94,7 +94,6 @@ flyingon.widget({
         layout: 'vertical-line',
 
         children: [
-
             {
                 Class: 'Panel',
                 width: 780,
@@ -105,15 +104,12 @@ flyingon.widget({
                 resizable: true,
                 layout: 'panel'
             },
-
             {
                 Class: 'Label',
                 margin: '4 0',
                 text: '提醒:可拖动调整面板大小观看自适应效果'
             },
-
             { Class: 'Code' }
-
         ]
     },
 

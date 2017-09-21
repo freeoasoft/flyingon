@@ -7,15 +7,12 @@ flyingon.widget({
         layout: 'vertical-line',
         
         children: [
-
             {
                 Class: 'Slider',
                 width: 400,
                 value: 50
             },
-
             { Class: 'Code' }
-
         ]
     },
 

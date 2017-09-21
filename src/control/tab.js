@@ -217,7 +217,7 @@ flyingon.Control.extend('Tab', function (base) {
 
 
     //扩展容器功能
-    flyingon.fragment('f-container', this, flyingon.TabPage, true);
+    flyingon.fragment('f-container', this, base, flyingon.TabPage, true);
 
 
     var remove_items = this.__remove_items;
@@ -257,6 +257,7 @@ flyingon.Control.extend('Tab', function (base) {
             }
         }
     };
+
 
 
 

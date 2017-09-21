@@ -4840,7 +4840,7 @@ flyingon.fragment('f-visual', function () {
     //id
     this.defineProperty('id', '', {
      
-        set: function (value, oldValue) {
+        set: function (value) {
 
             var any;
 
@@ -5074,6 +5074,220 @@ flyingon.fragment('f-visual', function () {
         }
     };
     
+
+
+});
+
+
+
+
+flyingon.validator = (function () {
+
+
+    var all = flyingon.create(null);
+
+
+    all.required = function (text) {
+
+        return text.length > 0;
+    };
+
+
+    all.min = function (text, length) {
+
+        return text >= length;
+    };
+
+
+    all.max = function (text, length) {
+
+        return text <= length;
+    };
+
+
+    all.minLength = function (text, length) {
+
+        return text.length >= length;
+    };
+
+
+    all.maxLength = function (text, length) {
+
+        return text.length <= length;
+    };
+
+
+    all.length = function (text, min, max) {
+
+        return text.length >= min && text.length <= max;
+    };
+
+
+    all.email = function (text) {
+
+        return /^(\w)+(\.\w+)*@(\w)+((\.\w+)+)$/.test(text);
+    };
+
+
+    all.url = function (text) {
+
+        return /(https?|ftp|file):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]/.test(text);
+    };
+
+
+    all.date = function (text) {
+
+        return /^\d{4}(\-|\/|\.)\d{1,2}\1\d{1,2}$/.test(text);
+    };
+
+
+    all.int = function(text) {
+
+        text = +text;
+        return (text | 0) === text;
+    };
+
+
+    all.number = function (text) {
+
+        text = +text;
+        return text === text;
+    };
+
+
+
+    function validate(control, errors) {
+
+        var validator = control.__validator,
+            length;
+
+        if (validator && (length = validator.length))
+        {
+            validate_control(control, validator, length, errors);
+        }
+        
+        if ((length = control.length) > 0)
+        {
+            for (var i = 0; i < length; i++)
+            {
+                validate(control[i], errors);
+            }
+        }
+    };
+
+
+    function validate_control(control, validator, length, errors) {
+
+        var text, args, any;
+
+        if (any = control.__errors)
+        {
+            for (var i = any.length - 1; i >= 0; i--)
+            {
+                any[i].visible(false);
+            }
+
+            any.length = 0;
+        }
+
+        for (var i = 0; i < length; i++)
+        {
+            if (text = control.value || control.text)
+            {
+                text = text.call(control);
+
+                for (var j = 0, l = validator.length; j < l; j++)
+                {
+                    if (!(any = all[validator[j++]]) || 
+                        !any.apply(control, (args = validator[j].slice(0), args[0] = text, args)))
+                    {
+                        any = validator[j].slice(0);
+                        any.control = control;
+
+                        errors.push(any);
+                        return;
+                    }
+                }
+            }
+        }
+    };
+
+
+    function show_errors(errors) {
+
+        var controls = flyingon.validator.errors;
+
+        for (var i = 0, l = errors.length; i < l; i++)
+        {
+            var error = errors[i],
+                control = error.control,
+                index = 0,
+                list,
+                any;
+
+            if ((any = control.id()) && (list = controls[any]))
+            {
+                while (control = list[index++])
+                {
+                    if (!(any = control.__storage) || !(any = any.validator) || any.indexOf(error[0]) >= 0)
+                    {
+                        control.show(error);
+                    }
+                }
+            }
+        }
+    };
+
+
+    flyingon.validate = function (control) {
+
+        var errors = [];
+
+        validate(control, errors);
+
+        errors[0] && show_errors(errors);
+
+        return errors;
+    };
+
+    
+    return function (key, fn) {
+
+        all[key] = fn;
+    };
+
+
+})();
+
+
+
+flyingon.fragment('f-validate', function () {
+
+
+    this.defineProperty('validator', '', {
+        
+        set: function (value) {
+
+            var list = [],
+                item;
+
+            if (value)
+            {
+                value = value.split('|');
+
+                for (var i = 0, l = value.length; i < l; i++)
+                {
+                    if ((item = value[i]) && (item = item.split(':'))[0])
+                    {
+                        list.push(item[0], item);
+                    }
+                }
+            }
+
+            this.__validator = list.length > 0 ? list : null;
+        }
+    });
+
 
 
 });
@@ -10305,7 +10519,7 @@ flyingon.Query = Object.extend(function () {
         //筛选出非隐藏控件
         for (var i = 0, l = control.length; i < l; i++)
         {
-            if ((any = control[i]) && (any.__storage || any.__defaults).visible)
+            if ((any = control[i]) && any.__visible)
             {
                 list.push(any);
             }
@@ -11122,14 +11336,7 @@ flyingon.renderer('ProgressBar', function (base) {
 
     this.value = function (control, view, value) {
 
-        view.firstChild.style.width = value + 'px';
-        view.lastChild.firstChild[this.__text_name] = value + '%';
-    };
-
-
-    this.text = function (control, view, value) {
-
-        view.lastChild.style.display = value ? '' : 'none';
+        view.firstChild.style.width = view.lastChild.firstChild[this.__text_name] = value + '%';
     };
 
 
@@ -12222,6 +12429,11 @@ flyingon.renderer('TextBox', function (base) {
     };
 
 
+    this.oninput = function (control, view, event) {
+
+    };
+
+
     this.text = function (control, view, value) {
 
         view.value = control.text();
@@ -12233,7 +12445,57 @@ flyingon.renderer('TextBox', function (base) {
 
 
 
-flyingon.renderer('NumberPicker', 'TextBox', function (base) {
+flyingon.renderer('Password', function () {
+
+
+    this.render = function (writer, control, className, cssText) {
+
+        var text = control.text();
+
+        if (text)
+        {
+            text = flyingon.html_encode(text);
+        }
+
+        writer.push('<input');
+        
+        this.renderDefault(writer, control, className, cssText);
+        
+        writer.push(' type="password" value="', text, 
+            '" onchange="flyingon.TextBox.onchange.call(this)"/>');
+    };
+
+
+    flyingon.TextBox.onchange = function () {
+
+        var control = flyingon.findControl(this);
+
+        try
+        {
+            control.rendered = false;
+            control.value(this.value);
+        }
+        finally
+        {
+            control.rendered = true;
+        }
+
+        control.trigger('change', 'value', this.value);
+    };
+
+
+    this.text = function (control, view, value) {
+
+        view.value = value;
+    };
+
+
+});
+
+
+
+
+flyingon.renderer('Number', 'TextBox', function (base) {
 
 
     this.oninput = function (control, view) {
@@ -13017,6 +13279,66 @@ flyingon.renderer('Calendar', function (base) {
         render(control);
     };
     
+
+});
+
+
+
+
+flyingon.renderer('Title', 'Label', function (base) {
+
+
+
+    this.render = function (writer, control, className, cssText) {
+
+        var storage = control.__storage || control.__defaults,
+            text = storage.text;
+
+        if (text)
+        {
+            text = flyingon.html_encode(text);
+        }
+
+        writer.push('<span');
+        
+        this.renderDefault(writer, control, className, cssText);
+        
+        writer.push('>', storage.required ? '<span class="f-required">*</span>' : '', text, '</span>');
+    };
+
+
+
+});
+
+
+
+
+flyingon.renderer('Error', 'Label', function (base) {
+
+
+
+    this.render = function (writer, control, className, cssText) {
+
+        writer.push('<span');
+        
+        this.renderDefault(writer, control, className, cssText);
+        
+        writer.push('></span>');
+    };
+
+
+    this.text = function (control, view, value) {
+
+        if (control.html())
+        {
+            view.innerHTML = value;
+        }
+        else
+        {
+            view[this.__text_name] = value;
+        }
+    };
+
 
 });
 
@@ -17535,7 +17857,8 @@ Object.extend('Control', function () {
         
     };
 
-    
+
+
     
     //扩展可序列化功能
     flyingon.fragment('f-serialize', this);
@@ -17665,7 +17988,7 @@ flyingon.Control.extend('HtmlElement', function (base) {
     
 
     //扩展容器功能
-    flyingon.fragment('f-container', this, true);
+    flyingon.fragment('f-container', this, base, true);
 
 
 
@@ -17688,32 +18011,6 @@ flyingon.Control.extend('HtmlElement', function (base) {
         {
             return false;
         }
-    };
-
-
-
-    this.serialize = function (writer) {
-        
-        base.serialize.call(this, writer);
-        
-        if (this.length > 0)
-        {
-            writer.writeProperty('children', this, true);
-        }
-        
-        return this;
-    };
-    
-
-    this.dispose = function () {
-
-        for (var i = this.length - 1; i >= 0; i--)
-        {
-            this[i].dispose(false);
-        }
-
-        base.dispose.apply(this, arguments);
-        return this;
     };
 
 
@@ -17989,14 +18286,6 @@ flyingon.Control.extend('ProgressBar', function (base) {
     });
 
 
-    this.defineProperty('text', true, {
-
-        set: function (value) {
-
-            this.rendered && this.renderer.set(this, 'text', value);
-        }
-    });
-
 
 }).register();
 
@@ -18004,7 +18293,7 @@ flyingon.Control.extend('ProgressBar', function (base) {
 
 
 //集合功能扩展
-flyingon.fragment('f-container', function (childrenClass, arrange) {
+flyingon.fragment('f-container', function (base, childrenClass, arrange) {
 
 
 
@@ -18022,7 +18311,7 @@ flyingon.fragment('f-container', function (childrenClass, arrange) {
     //是否需要排列
     this.__arrange_dirty = arrange ? 2 : 0;
 
-    
+
 
     flyingon.fragment('f-collection', this);
 
@@ -18305,7 +18594,41 @@ flyingon.fragment('f-container', function (childrenClass, arrange) {
     };
     
   
+
+    //接收数据集变更动作处理
+    this.subscribeBind = function (dataset, action) {
+        
+        var item;
+        
+        base && base.subscribeBind.call(this, dataset, action);
+
+        //向下派发
+        for (var i = 0, l = this.length; i < l; i++)
+        {
+            if ((item = this[i]) && !item.__dataset)
+            {
+                item.subscribeBind(dataset, action);
+            }
+        }
+        
+        return this;
+    };
+
+
+
+    this.serialize = function (writer) {
+        
+        base && base.serialize.call(this, writer);
+        
+        if (this.length > 0)
+        {
+            writer.writeProperty('children', this, true);
+        }
+        
+        return this;
+    };
     
+
     this.deserialize_children = function (reader, values) {
       
         if (typeof values === 'function')
@@ -18320,23 +18643,22 @@ flyingon.fragment('f-container', function (childrenClass, arrange) {
     };
 
 
+    this.dispose = function () {
 
-    //接收数据集变更动作处理
-    this.subscribeBind = function (dataset, action) {
-        
-        var item;
-        
-        this.base.subscribeBind.call(this, dataset, action);
-
-        //向下派发
-        for (var i = 0, l = this.length; i < l; i++)
+        for (var i = this.length - 1; i >= 0; i--)
         {
-            if ((item = this[i]) && !item.__dataset)
-            {
-                item.subscribeBind(dataset, action);
-            }
+            this[i].dispose(false);
         }
-        
+
+        if (base)
+        {
+            base.dispose.apply(this, arguments);
+        }
+        else if (this.__events)
+        {
+            this.off();
+        }
+
         return this;
     };
 
@@ -18396,7 +18718,7 @@ flyingon.Control.extend('Panel', function (base) {
     
 
     //扩展容器功能
-    flyingon.fragment('f-container', this, true);
+    flyingon.fragment('f-container', this, base, true);
 
 
 
@@ -18455,32 +18777,6 @@ flyingon.Control.extend('Panel', function (base) {
 
         return layout.controlAt(this, x, y);
     };    
-
-
- 
-    this.serialize = function (writer) {
-        
-        base.serialize.call(this, writer);
-        
-        if (this.length > 0)
-        {
-            writer.writeProperty('children', this, true);
-        }
-        
-        return this;
-    };
-    
-
-    this.dispose = function () {
-
-        for (var i = this.length - 1; i >= 0; i--)
-        {
-            this[i].dispose(false);
-        }
-
-        base.dispose.apply(this, arguments);
-        return this;
-    };
 
 
 
@@ -18937,6 +19233,9 @@ flyingon.fragment('f-textbox', function () {
     };
 
 
+    //校验器
+    flyingon.fragment('f-validate', this);
+
 
 });
 
@@ -18964,7 +19263,22 @@ flyingon.Control.extend('TextBox', function (base) {
     flyingon.fragment('f-textbox', this);
     
 
-    this['max-length'] = this.defineProperty('maxLength', 0);
+
+}).register();
+
+
+
+
+flyingon.TextBox.extend('Password', function (base) {
+
+
+    this.text = this.defineProperty('value', '', {
+
+        set: function (value) {
+
+            this.rendered && this.renderer.set(this, 'value', value);
+        }
+    });
 
 
 
@@ -18973,7 +19287,7 @@ flyingon.Control.extend('TextBox', function (base) {
 
 
 
-flyingon.TextBox.extend('NumberPicker', function (base) {
+flyingon.TextBox.extend('Number', function (base) {
 
 
     this.__scale = this.__value = 0;
@@ -19356,7 +19670,7 @@ flyingon.Control.extend('Calendar', function (base) {
 
 
 
-flyingon.fragment('f-DatePicker', function () {
+flyingon.fragment('f-Date', function () {
 
 
     this.defineProperty('format', 'yyyy/M/dd', {
@@ -19393,14 +19707,14 @@ flyingon.fragment('f-DatePicker', function () {
 
 
 
-flyingon.TextButton.extend('DatePicker', function (base) {
+flyingon.TextButton.extend('Date', function (base) {
 
 
     //日历控件
     var calendar_cache;
 
 
-    this.defaultValue('button', 'f-datepicker-button');
+    this.defaultValue('button', 'f-date-button');
 
 
     //日期值
@@ -19416,7 +19730,7 @@ flyingon.TextButton.extend('DatePicker', function (base) {
 
 
 
-    flyingon.fragment('f-DatePicker', this);
+    flyingon.fragment('f-Date', this);
 
 
 
@@ -19468,7 +19782,7 @@ flyingon.TextButton.extend('DatePicker', function (base) {
 
 
 
-flyingon.TextBox.extend('TimePicker', function (base) {
+flyingon.TextBox.extend('Time', function (base) {
 
 
     //值
@@ -19529,7 +19843,7 @@ flyingon.TextBox.extend('TimePicker', function (base) {
 
 
 
-flyingon.TextButton.extend('MonthPicker', function (base) {
+flyingon.TextButton.extend('Month', function (base) {
 
 
 
@@ -19537,7 +19851,7 @@ flyingon.TextButton.extend('MonthPicker', function (base) {
     var calendar_cache;
 
 
-    this.defaultValue('button', 'f-datepicker-button');
+    this.defaultValue('button', 'f-date-button');
 
 
 
@@ -19607,6 +19921,135 @@ flyingon.TextButton.extend('MonthPicker', function (base) {
         popup.show(this);
     };
 
+
+
+}).register();
+
+
+
+
+flyingon.Control.extend('Title', function (base) {
+   
+    
+
+    this.defaultWidth = 60;
+
+    
+    //标签文本
+    this.defineProperty('text', '', {
+            
+        set: function () {
+
+            this.rendered && this.renderer.set(this, 'text');
+        }
+    });
+
+
+    //是否必填
+    this.defineProperty('require', false);
+
+
+
+}).register();
+
+
+
+
+/**
+ * 校验结果显示
+ */
+flyingon.Control.extend('Error', function (base) {
+   
+
+
+    var all = flyingon.validator.errors = flyingon.create(null);
+
+
+
+    this.defaultValue('visible', this.__visible = false);
+
+
+    //校验目标控件id
+    this.defineProperty('target', '', {
+
+        set: function (value, oldValue) {
+
+            if (oldValue)
+            {
+                delete all[oldValue];
+            }
+
+            if (value)
+            {
+                (all[value] || (all[value] = [])).push(this);
+            }
+        }
+    });
+
+
+    //指定校验器名称
+    this.defineProperty('validator', '');
+
+
+    //显示方式
+    //!
+    //?
+    //text
+    this.defineProperty('type', 'text');
+
+    
+    //标签文本, 支持变量
+    //{{0}}     name
+    //{{1}}     第一个参数
+    //{{2}}     第二个参数
+    this.defineProperty('text', '');
+
+
+    //文本是否html
+    this.defineProperty('html', false);
+
+
+
+    this.show = function (error) {
+
+        var control = error.control;
+
+        (control.__errors || (control.__errors = [])).push(this);
+
+        this.visible(true);
+        this.renderer.set(this, 'text', this.showText(error));
+    };
+
+
+    this.showText = function (error) {
+
+        var storage = this.__storage || this.__defaults,
+            text;
+
+        if (text = storage.text)
+        {
+            text = text.replace(/\{\{([^{}]*)\}\}/g, function (text, key) {
+
+                return error[key];
+            });
+        }
+
+        return text || '';
+    };
+
+
+    this.despose = function () {
+
+        var id = this.__target;
+
+        base.dispose.call(this);
+
+        if (id)
+        {
+            delete all[id];
+        }
+    };
+    
 
 
 }).register();
@@ -19691,7 +20134,7 @@ Object.extend('TreeNode', function () {
 
 
     //扩展容器功能
-    flyingon.fragment('f-container', this, flyingon.TreeNode);
+    flyingon.fragment('f-container', this, null, flyingon.TreeNode);
 
 
     //创建子控件
@@ -19812,7 +20255,7 @@ flyingon.Control.extend('Tree', function (base) {
 
 
     //扩展容器功能
-    flyingon.fragment('f-container', this, flyingon.TreeNode.init());
+    flyingon.fragment('f-container', this, base, flyingon.TreeNode.init());
 
 
     this.__create_child = flyingon.TreeNode.prototype.__create_child;
@@ -20566,7 +21009,7 @@ flyingon.GridColumn.extend(function (base) {
 flyingon.GridColumn.extend(function (base) {
 
 
-    var Class = flyingon.NumberPicker;
+    var Class = flyingon.Number;
 
 
     //创建单元格控件
@@ -20669,12 +21112,12 @@ flyingon.GridColumn.extend(function (base) {
 flyingon.GridColumn.extend(function (base) {
 
 
-    var Class = flyingon.DatePicker;
+    var Class = flyingon.Date;
 
     var keys = 'format,min,max,time,today,clear'.split(',').pair();
 
 
-    flyingon.fragment('f-DatePicker', this);
+    flyingon.fragment('f-Date', this);
     
 
     //创建单元格控件
@@ -20714,7 +21157,7 @@ flyingon.GridColumn.extend(function (base) {
 flyingon.GridColumn.extend(function (base) {
 
 
-    var Class = flyingon.TimePicker;
+    var Class = flyingon.Time;
 
 
     //创建单元格控件
@@ -22712,7 +23155,7 @@ flyingon.Control.extend('Tab', function (base) {
 
 
     //扩展容器功能
-    flyingon.fragment('f-container', this, flyingon.TabPage, true);
+    flyingon.fragment('f-container', this, base, flyingon.TabPage, true);
 
 
     var remove_items = this.__remove_items;
@@ -22752,6 +23195,7 @@ flyingon.Control.extend('Tab', function (base) {
             }
         }
     };
+
 
 
 

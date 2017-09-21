@@ -913,7 +913,7 @@
         //筛选出非隐藏控件
         for (var i = 0, l = control.length; i < l; i++)
         {
-            if ((any = control[i]) && (any.__storage || any.__defaults).visible)
+            if ((any = control[i]) && any.__visible)
             {
                 list.push(any);
             }

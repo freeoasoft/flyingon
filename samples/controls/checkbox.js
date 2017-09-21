@@ -7,7 +7,6 @@ flyingon.widget({
         layout: 'vertical-line',
 
         children: [
-
             { 
                 Class: 'Panel',
                 height: 40,
@@ -17,7 +16,6 @@ flyingon.widget({
                     { Class: 'CheckBox', value: false }
                 ]
             },
-
             { Class: 'Code' }
         ]
     },

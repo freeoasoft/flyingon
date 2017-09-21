@@ -7,7 +7,6 @@ flyingon.widget({
         layout: 'vertical-line',
 
         children: [
-
             {
                 Class: 'Panel',
                 height: 50,
@@ -17,7 +16,6 @@ flyingon.widget({
                         Class: 'Label',
                         text: 'text'
                     },
-
                     {
                         Class: 'Label',
                         text: '<span style="color:red;">text</span>',
@@ -25,9 +23,7 @@ flyingon.widget({
                     }
                 ]
             },
-
             { Class: 'Code' }
-
         ]
     },
 

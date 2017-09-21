@@ -1,4 +1,4 @@
-flyingon.TextButton.extend('MonthPicker', function (base) {
+flyingon.TextButton.extend('Month', function (base) {
 
 
 
@@ -6,7 +6,7 @@ flyingon.TextButton.extend('MonthPicker', function (base) {
     var calendar_cache;
 
 
-    this.defaultValue('button', 'f-datepicker-button');
+    this.defaultValue('button', 'f-date-button');
 
 
 

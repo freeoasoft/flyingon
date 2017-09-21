@@ -7,7 +7,6 @@ flyingon.widget({
         layout: 'vertical-line',
 
         children: [
-
             {
                 Class: 'Panel',
                 height: 40,
@@ -17,14 +16,12 @@ flyingon.widget({
                         Class: 'ComboBox',
                         items: '123456789'.split('')
                     },
-
                     {
                         Class: 'ComboBox',
                         clear: true,
                         items: '123456789'.split(''),
                         value: '2'
                     },
-
                     {
                         Class: 'ComboBox',
                         checked: 'radio',
@@ -32,14 +29,12 @@ flyingon.widget({
                         items: '123456789'.split(''),
                         value: '2'
                     },
-
                     {
                         Class: 'ComboBox',
                         checked: 'checkbox',
                         items: '123456789'.split(''),
                         value: '1,2'
                     },
-
                     {
                         Class: 'ComboBox',
                         checked: 'checkbox',
@@ -49,9 +44,7 @@ flyingon.widget({
                     }
                 ]
             },
-
             { Class: 'Code' }
-
         ]
     },
 

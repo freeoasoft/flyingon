@@ -75,7 +75,7 @@ Object.extend('TreeNode', function () {
 
 
     //扩展容器功能
-    flyingon.fragment('f-container', this, flyingon.TreeNode);
+    flyingon.fragment('f-container', this, null, flyingon.TreeNode);
 
 
     //创建子控件
@@ -196,7 +196,7 @@ flyingon.Control.extend('Tree', function (base) {
 
 
     //扩展容器功能
-    flyingon.fragment('f-container', this, flyingon.TreeNode.init());
+    flyingon.fragment('f-container', this, base, flyingon.TreeNode.init());
 
 
     this.__create_child = flyingon.TreeNode.prototype.__create_child;

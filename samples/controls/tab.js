@@ -7,7 +7,6 @@ flyingon.widget({
             layout: 'vertical-line',
             
             children: [
-    
                 {
                     Class: 'Tab',
                     width: 780,
@@ -20,9 +19,7 @@ flyingon.widget({
                         { text: '页签4' }
                     ]
                 },
-    
                 { Class: 'Code' }
-    
             ]
         },
     

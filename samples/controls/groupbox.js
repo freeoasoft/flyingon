@@ -15,7 +15,6 @@ flyingon.widget({
                 mutex: '1',
                 width: 780
             },
-
             {
                 Class: 'GroupBox', 
                 icon: 'f-tree-icon-file',
@@ -26,7 +25,6 @@ flyingon.widget({
                 mutex: '1',
                 width: 780
             },
-
             {
                 Class: 'GroupBox', 
                 icon: 'f-tree-icon-file',
@@ -34,7 +32,6 @@ flyingon.widget({
                 collapsable: 2,
                 width: 780
             },
-
             { Class: 'Code', margin: 0 }
         ]
     },

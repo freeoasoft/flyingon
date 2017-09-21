@@ -7,35 +7,30 @@ flyingon.widget({
         layout: 'vertical-line',
         
         children: [
-
             {
                 Class: 'Panel',
                 height: 40,
 
                 children: [
-
                     {
-                        Class: 'MonthPicker',
+                        Class: 'Month',
                         width: 200
                     },
-
                     {
-                        Class: 'MonthPicker', 
+                        Class: 'Month', 
                         width: 200,
                         min: new Date().getFullYear() + '-' + 2, 
                         max: new Date().getFullYear() + '-' + 10
                     },
-
                     {
                         id: 'check',
-                        Class: 'MonthPicker',
+                        Class: 'Month',
                         width: 200,
                         min: new Date().getFullYear() + '-' + 2, 
                         max: new Date().getFullYear() + '-' + 10
                     }
                 ]
             },
-
             { Class: 'Code' }
         ]
     },

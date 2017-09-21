@@ -13,31 +13,28 @@ flyingon.widget({
 
                 children: [
                     {
-                        Class: 'DatePicker', 
+                        Class: 'Date', 
                         // format: 'locale',
                         width: 200,
                         today: true, 
                         clear: true, 
                         time: true 
                     },
-
                     {
-                        Class: 'DatePicker', 
+                        Class: 'Date', 
                         width: 200,
                         min: new Date().getFullYear() + '-' + (new Date().getMonth() + 1) + '-10', 
                         max: new Date().getFullYear() + '-' + (new Date().getMonth() + 1) + '-20'
                     },
-
                     {
                         id: 'check',
-                        Class: 'DatePicker',
+                        Class: 'Date',
                         width: 200,
                         min: new Date().getFullYear() + '-' + (new Date().getMonth() + 1) + '-10', 
                         max: new Date().getFullYear() + '-' + (new Date().getMonth() + 1) + '-20'
                     }
                 ]
             },
-
             { Class: 'Code' }
         ]
     },

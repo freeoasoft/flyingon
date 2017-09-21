@@ -1,5 +1,5 @@
 //集合功能扩展
-flyingon.fragment('f-container', function (childrenClass, arrange) {
+flyingon.fragment('f-container', function (base, childrenClass, arrange) {
 
 
 
@@ -17,7 +17,7 @@ flyingon.fragment('f-container', function (childrenClass, arrange) {
     //是否需要排列
     this.__arrange_dirty = arrange ? 2 : 0;
 
-    
+
 
     flyingon.fragment('f-collection', this);
 
@@ -300,7 +300,41 @@ flyingon.fragment('f-container', function (childrenClass, arrange) {
     };
     
   
+
+    //接收数据集变更动作处理
+    this.subscribeBind = function (dataset, action) {
+        
+        var item;
+        
+        base && base.subscribeBind.call(this, dataset, action);
+
+        //向下派发
+        for (var i = 0, l = this.length; i < l; i++)
+        {
+            if ((item = this[i]) && !item.__dataset)
+            {
+                item.subscribeBind(dataset, action);
+            }
+        }
+        
+        return this;
+    };
+
+
+
+    this.serialize = function (writer) {
+        
+        base && base.serialize.call(this, writer);
+        
+        if (this.length > 0)
+        {
+            writer.writeProperty('children', this, true);
+        }
+        
+        return this;
+    };
     
+
     this.deserialize_children = function (reader, values) {
       
         if (typeof values === 'function')
@@ -315,23 +349,22 @@ flyingon.fragment('f-container', function (childrenClass, arrange) {
     };
 
 
+    this.dispose = function () {
 
-    //接收数据集变更动作处理
-    this.subscribeBind = function (dataset, action) {
-        
-        var item;
-        
-        this.base.subscribeBind.call(this, dataset, action);
-
-        //向下派发
-        for (var i = 0, l = this.length; i < l; i++)
+        for (var i = this.length - 1; i >= 0; i--)
         {
-            if ((item = this[i]) && !item.__dataset)
-            {
-                item.subscribeBind(dataset, action);
-            }
+            this[i].dispose(false);
         }
-        
+
+        if (base)
+        {
+            base.dispose.apply(this, arguments);
+        }
+        else if (this.__events)
+        {
+            this.off();
+        }
+
         return this;
     };
 

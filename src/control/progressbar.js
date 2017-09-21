@@ -29,13 +29,5 @@ flyingon.Control.extend('ProgressBar', function (base) {
     });
 
 
-    this.defineProperty('text', true, {
-
-        set: function (value) {
-
-            this.rendered && this.renderer.set(this, 'text', value);
-        }
-    });
-
 
 }).register();
