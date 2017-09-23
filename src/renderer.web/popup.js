@@ -19,10 +19,10 @@ flyingon.renderer('Popup', 'Panel', function (base) {
     //处理全局点击事件,点击当前弹出层以外的区域则关闭当前弹出层
     on(document, 'mousedown', function (e) { 
 
-        var control;
+        var control = current;
 
-        if (control = current) {
-
+        if (control)
+        {
             var view = control.view,
                 reference = control.__view_reference,
                 any = e.target;
@@ -49,11 +49,9 @@ flyingon.renderer('Popup', 'Panel', function (base) {
     //处理全局键盘事件,点击Esc则退出当前窗口
     on(document, 'keydown', function (e) { 
 
-        var control;
-
-        if ((control = current) && e.which === 27)
+        if (current && e.which === 27)
         {
-            control.close('cancel');
+            current.close('cancel');
         }
     });
 

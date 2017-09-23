@@ -2,7 +2,7 @@ flyingon.renderer('TextBox', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var text = control.__text = control.text();
 
@@ -13,7 +13,7 @@ flyingon.renderer('TextBox', function (base) {
 
         writer.push('<input');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push(' type="text" value="', text, 
             '" oninput="flyingon.TextBox.oninput.call(this)"',

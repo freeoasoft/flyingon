@@ -288,10 +288,10 @@
 
     this.__find_text = function () {
 
-        var title = this.title(),
+        var title = this.__storage || '',
             any;
 
-        if (title && typeof title === 'object')
+        if (title && (title = title.title) && typeof title === 'object')
         {
             if (title instanceof Array)
             {
@@ -2056,6 +2056,15 @@ flyingon.Control.extend('Grid', function (base) {
     });
 
 
+
+    //获取错误标题信息(检验时用)
+    this.__error_title = function (control) {
+
+        var column = control.column;
+        return column ? column.__find_text() : '';
+    };
+
+
     
     //获取指定索引行或行集合
     this.rows = function (index) {
@@ -2356,13 +2365,84 @@ flyingon.Control.extend('Grid', function (base) {
                 this.__column_dirty = true;
             }
 
-            if (!patch || !patch.content)
+            if (!patch || !patch.show)
             {
-                this.renderer.set(this, 'content', true);
+                this.renderer.set(this, 'show', true);
             }
         }
-        
+
         return this;
+    };
+
+
+    //更新标记
+    var update_tag = 1;
+    
+    this.__compute_columns = function () {
+
+        var columns = this.__columns,
+            width = this.offsetWidth - this.borderLeft - this.borderRight,
+            dirty = this.__column_dirty,
+            change = columns.__arrange_size !== width;
+
+        if (change)
+        {
+            columns.__arrange_size = width;
+        }
+
+        if (dirty || change && columns.__persent)
+        {
+            this.__column_dirty = false;
+
+            columns.__show_tag = update_tag++;
+            columns.__compute_size(width);
+        }
+
+        if (dirty || change)
+        {
+            columns.__compute_visible(this.scrollLeft | 0);
+        }
+
+        return width;
+    };
+
+
+    //测量自动大小
+    this.onmeasure = function (auto) {
+        
+        if (auto)
+        {
+            var storage = this.__storage || this.__defaults,
+                x,
+                y;
+
+            this.__compute_columns();
+
+            x = this.__columns.__size + this.borderLeft + this.borderRight;
+
+            y = this.currentView().length * storage.rowHeight;
+            y += storage.header + storage.group;
+            y += this.borderTop + this.borderBottom;
+
+            if (auto & 2)
+            {
+                this.offsetHeight = y + (!(auto & 1) && this.offsetWidth < x ? flyingon.hscroll_height : 0);
+                y = false;
+            }
+            else
+            {
+                y = y > this.offsetHeight;
+            }
+
+            if (auto & 1)
+            {
+                this.offsetWidth = x + (y ? flyingon.vscroll_width : 0);
+            }
+        }
+        else
+        {
+            return false;
+        }
     };
 
 

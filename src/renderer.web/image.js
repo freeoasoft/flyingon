@@ -2,7 +2,7 @@ flyingon.renderer('Image', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var encode = flyingon.html_encode,
             storage = control.__storage || control.__defaults,
@@ -21,7 +21,7 @@ flyingon.renderer('Image', function (base) {
 
         writer.push('<img');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push(' src="', src, '" alt="', alt, '"></img>');
     };

@@ -9,11 +9,11 @@ flyingon.renderer('Calendar', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, (cssText || '') + 'padding:8px;');
+        this.renderDefault(writer, control, '', 'padding:8px;');
         
         writer.push(' onclick="flyingon.Calendar.onclick.call(this, event)"></div>');
     };

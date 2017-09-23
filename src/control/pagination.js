@@ -1,16 +1,31 @@
-flyingon.Control.extend('Pagination', function (base) {
+flyingon.HtmlElement.extend('Pagination', function (base) {
+
+
+    var template = [
+        { Class: 'span', className: 'f-page-button f-page-first' },
+        { Class: 'span', className: 'f-page-button f-page-previous' },
+        { Class: 'input', type: 'text', className: 'f-page-current' },
+        { Class: 'span', text: '/' },
+        { Class: 'span', className: 'f-page-pages' },
+        { Class: 'span', className: 'f-page-button f-page-next' },
+        { Class: 'span', className: 'f-page-button f-page-last' },
+        { Class: 'span', className: 'f-page-sep' },
+        { Class: 'span', className: 'f-page-button f-page-refresh' },
+        { Class: 'span', className: 'f-page-sep' },
+        { Class: 'ComboBox', className: 'f-page-records' }
+    ];
+
+
+    this.init = function () {
+
+        this.push.apply(this, template);
+    };
 
 
 
-    //分页类型
-    //common        普通类型
-    //number        数字
-    //custom        自定义布局
-    this.defineProperty('type', 'common');
+    this.defaultHeight = 30;
 
-
-    //自定义布局
-    this.defineProperty('layout', '');
+    this.defaultValue('border', 1);
 
 
     //每页显示记录数
@@ -26,13 +41,13 @@ flyingon.Control.extend('Pagination', function (base) {
 
         var storage = this.__storage || this.__defaults;
 
-        this.__count = Math.ceil(storage.total / storage.records);
+        this.__pages = Math.ceil(storage.total / storage.records);
         this.moveTo(this.__index);
     };
 
 
 
-    this.__index = this.__count = 0;
+    this.__index = this.__pages = 0;
 
 
     //获取当前页码
@@ -43,9 +58,9 @@ flyingon.Control.extend('Pagination', function (base) {
 
 
     //获取总的页数
-    this.count = function () {
+    this.pages = function () {
 
-        return this.__count;
+        return this.__pages;
     };
 
 
@@ -73,7 +88,7 @@ flyingon.Control.extend('Pagination', function (base) {
     //移动到最后一页
     this.last = function () {
 
-        this.moveTo(this.__count - 1);
+        this.moveTo(this.__pages - 1);
     };
 
 
@@ -84,9 +99,9 @@ flyingon.Control.extend('Pagination', function (base) {
         {
             index = 0;
         }
-        else if (index >= this.__count)
+        else if (index >= this.__pages)
         {
-            index = this.__count - 1;
+            index = this.__pages - 1;
         }
 
         if (this.__index !== index)

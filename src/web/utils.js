@@ -968,7 +968,7 @@ flyingon.dom_align = function (dom, rect, direction, align, reverse) {
         switch (align)
         {
             case 'center':
-                x = x1 - (x2 - x1 - width >> 1);
+                x = x1 + (x2 - x1 - width >> 1);
                 break;
 
             case 'right':

@@ -2,6 +2,10 @@ flyingon.Control.extend('Button', function (base) {
    
     
 
+    this.defaultWidth = 80;
+
+
+
     var define = function (self, name, defaultValue) {
 
         return self.defineProperty(name, defaultValue, {

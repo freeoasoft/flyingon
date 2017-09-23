@@ -17,7 +17,7 @@ flyingon.renderer('HtmlElement', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             tagName, 
@@ -35,7 +35,7 @@ flyingon.renderer('HtmlElement', function (base) {
 
         writer.push('<', tagName);
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push('>');
 

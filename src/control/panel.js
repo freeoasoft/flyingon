@@ -37,7 +37,7 @@ flyingon.Control.extend('Panel', function (base) {
         set: function (value) {
 
             this.__layout = null;
-            this.__arrent_dirty < 2 && this.__arrange_delay();
+            this.__arrent_dirty < 2 && this.__arrange_delay(2);
         }
     });
 

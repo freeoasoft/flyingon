@@ -13,15 +13,13 @@
 
         require_merge = create(null), //引入资源合并关系
         
-        i18n_cache = create(null), //本地化信息集合
-        
         change_files = create(null), //待切换资源文件集合
 
         require_keys = { //引入资源变量
             
             layout: 'default', //当前布局
             skin: 'default', //当前皮肤
-            i18n: navigator.language || 'zh-CN'    //当前本地化名称
+            language: navigator.language || 'zh-CN'    //当前本地化名称
         };
 
 
@@ -257,71 +255,21 @@
 
 
     //获取或设置当前皮肤
-    flyingon.skin = function (name) {
+    flyingon.skin = function (name, callback) {
 
-        return require.key('skin', name);
+        return require.key('skin', name, callback);
     };
     
     
-    //获取指定key的本地化信息
-    flyingon.i18ntext = function (key, text) {
-
-        return i18n_cache[key] || (text != null ? text : key);
-    };
-
 
     //获取或设置当前本地化名称
-    flyingon.i18n = function (name, values) {
+    flyingon.language = function (name, callback) {
 
-        if (values && typeof values === 'object')
-        {
-            i18n(name, values);
-        }
-        else if (typeof name === 'object')
-        {
-            i18n(null, name);
-        }
-        else
-        {
-            return require.key('i18n', name, null, function () {
-            
-                //国际化时先清空缓存
-                i18n_cache = create(null);
-
-                if (typeof values === 'function')
-                {
-                    values();
-                }
-            });
-        }
+        return require.key('language', name, callback);
     };
 
     
-    //定义国际化集合
-    function i18n(name, values) {
-
-        var keys = i18n_cache;
-        
-        if (name)
-        {
-            name += '.';
-
-            for (var key in values)
-            {
-                keys[name + key] = values[key];
-            }
-        }
-        else
-        {
-            for (name in values)
-            {
-                keys[name] = values[name];
-            }
-        }
-    };
     
-    
-
     //资源加载函数
     flyingon.require = require;
 

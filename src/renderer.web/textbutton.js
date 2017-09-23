@@ -2,7 +2,7 @@ flyingon.renderer('TextButton', function (base) {
 
     
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             text = control.text(),
@@ -13,19 +13,19 @@ flyingon.renderer('TextButton', function (base) {
             text = flyingon.html_encode(text);
         }
 
-        writer.push('<div');
+        writer.push('<span');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
 
         writer.push('>',
-                '<div class="f-textbutton-body" style="right:', size, 'px;">',
+                '<span class="f-textbutton-body" style="right:', size, 'px;">',
                     '<input type="text" class="f-textbutton-text" value="', text, 
                     storage.inputable ? '' : '" readonly="readonly',
                     '" onchange="flyingon.TextButton.onchange.call(this)"/>',
-                '</div>',
-                '<div class="f-textbutton-button ', storage.button, 
-                    '" style="width:', size, 'px;" onclick="flyingon.TextButton.onclick.call(this)"></div>',
-            '</div>');
+                '</span>',
+                '<span class="f-textbutton-button ', storage.button, 
+                    '" style="width:', size, 'px;" onclick="flyingon.TextButton.onclick.call(this)"></span>',
+            '</span>');
     };
 
 

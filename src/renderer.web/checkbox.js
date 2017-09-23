@@ -2,11 +2,11 @@ flyingon.renderer('CheckBox', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push('><input type="checkbox" name="', control.name(), control.checked() ? '" checked="checked' : '',
             '" class="f-checkbox-input" onchange="flyingon.CheckBox.onchange.call(this)" /></div>');

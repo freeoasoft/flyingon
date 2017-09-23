@@ -14,11 +14,11 @@ flyingon.renderer('Panel', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push(' onscroll="flyingon.__dom_scroll.call(this, event)">');
 
@@ -76,14 +76,11 @@ flyingon.renderer('Panel', function (base) {
     //作为html方式定位控件时需特殊处理
     this.locate_html = function (control) {
 
-        var any = control.__location_dirty,
-            width = 0,
-            height = 0;
+        var width = 0,
+            height = 0,
+            any;
         
-        if (any)
-        {
-            this.__locate_html(control);
-        }
+        base.__locate_html.call(this, control);
 
         control.__update_dirty = false;
 

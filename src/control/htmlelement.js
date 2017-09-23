@@ -1,4 +1,4 @@
-flyingon.Control.extend('HtmlElement', function (base) {
+flyingon.HtmlElement = flyingon.Control.extend(function (base) {
 
 
     this.tagName = 'div';
@@ -49,6 +49,10 @@ flyingon.Control.extend('HtmlElement', function (base) {
             return false;
         }
     };
+
+
+
+    flyingon.renderer.bind(this, 'HtmlElement');
 
 
 

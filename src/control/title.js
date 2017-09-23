@@ -4,19 +4,42 @@ flyingon.Control.extend('Title', function (base) {
 
     this.defaultWidth = 60;
 
+
+    //是否标题控件
+    this.__box_title = true;
+
     
-    //标签文本
-    this.defineProperty('text', '', {
-            
-        set: function () {
+    //文本内容
+    this.defineProperty('text', '', { set: set_text });
 
-            this.rendered && this.renderer.set(this, 'text');
+
+    //文本内容是否html格式
+    this.defineProperty('html', false, { set: set_text });
+
+
+    function set_text(value) {
+
+        this.rendered && this.renderer.set(this, 'text', value);
+    };
+
+
+
+    //检测是否必填
+    this.__check = function () {
+
+        var parent = this.parent;
+
+        if (parent)
+        {
+            for (var i = 0, l = parent.length; i < l; i++)
+            {
+                if (parent[i].__required)
+                {
+                    return true;
+                }
+            }
         }
-    });
-
-
-    //是否必填
-    this.defineProperty('require', false);
+    };
 
 
 

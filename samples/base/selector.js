@@ -19,11 +19,11 @@ flyingon.widget({
 
                 children: [
                     { Class: 'Label', width: 50, text: '选择器', style: 'text-align:right;' },
-                    { Class: 'TextBox', value: 'TextBox:even' },
+                    { Class: 'TextBox', width: 100, value: 'TextBox:even' },
                     { Class: 'Label', width: 50, text: '样式名', style: 'text-align:right;' },
-                    { Class: 'TextBox', value: 'background-color' },
+                    { Class: 'TextBox', width: 100, value: 'background-color' },
                     { Class: 'Label', width: 50, text: '样式值', style: 'text-align:right;' },
-                    { Class: 'TextBox', value: 'silver' },
+                    { Class: 'TextBox', width: 100, value: 'silver' },
                     { Class: 'Button', text: '执行', margin: '0 0 0 8' }
                 ]
             },

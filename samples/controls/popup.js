@@ -17,7 +17,7 @@ flyingon.widget({
 
             flyingon.each('left,top,right,bottom', function (item) {
 
-                parent.push(new flyingon.Button().text(item).on('click', onclick));
+                parent.push(new flyingon.Button().width(80).text(item).on('click', onclick));
             });
         };
 
@@ -34,6 +34,7 @@ flyingon.widget({
             else
             {
                 popup = button.popup = new flyingon.Popup()
+                    .width(180)
                     .direction(button.text())
                     //.closeLeave(true)
                     //.closeAway(true)

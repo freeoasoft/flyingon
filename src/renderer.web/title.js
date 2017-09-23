@@ -1,24 +1,47 @@
-flyingon.renderer('Title', 'Label', function (base) {
+flyingon.renderer('Title', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.__line_height = 1;
+
+
+
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             text = storage.text;
 
-        if (text)
+        if (text && !storage.html)
         {
             text = flyingon.html_encode(text);
         }
 
         writer.push('<span');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
-        writer.push('>', storage.required ? '<span class="f-required">*</span>' : '', text, '</span>');
+        writer.push('><span class="f-required"', control.__check() ? '' : ' style="display:none;"', '>*</span>',
+            '<span>', text, '</span></span>');
     };
 
+
+    this.text = function (control, view, value) {
+
+        if (storage.html)
+        {
+            view.lastChild.innerHTML = value;
+        }
+        else
+        {
+            view.lastChild[this.__text_name] = value;
+        }
+    };
+
+
+    this.required = function (control, view, value) {
+
+        view.firstChild.style.display = value ? '' : 'none';
+    };
 
 
 });

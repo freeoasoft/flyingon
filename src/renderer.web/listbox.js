@@ -2,11 +2,11 @@ flyingon.renderer('ListBox', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
 
         writer.push(' onclick="flyingon.ListBox.onclick.call(this, event)"></div>');
     };

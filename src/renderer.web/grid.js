@@ -46,15 +46,17 @@ flyingon.renderer('GridColumn', function (base) {
 
         cell.row = null;
         cell.column = column;
-        cell.__as_html = true;
 
-        cell.renderer.render(writer, cell, 'f-grid-cell' + column.fullClassName, 
-            'left:' + column.__start +
+        cell.__as_html = true;
+        cell.__cell_class = 'f-grid-cell' + column.fullClassName;
+        cell.__cell_style = 'left:' + column.__start +
             'px;top:' + y +
             'px;width:' + width + 
             'px;height:' + height + 
             'px;line-height:' + height + 'px;' + 
-            (cell.columnSpan ? 'z-index:1;' : ''));
+            (cell.columnSpan ? 'z-index:1;' : '');
+
+        cell.renderer.render(writer, cell);
     };
 
 
@@ -296,15 +298,18 @@ flyingon.renderer('GridRow', function (base) {
             any += 'z-index:1;';
         }
 
-        cell.renderer.render(writer, cell, 'f-grid-cell' + column.fullClassName 
-                + (row.__checked ? ' f-grid-checked' : '')
-                + (row.__current ? ' f-grid-current' : ''),
-            'left:' + column.__start + 
+        cell.__cell_class = 'f-grid-cell' + column.fullClassName 
+            + (row.__checked ? ' f-grid-checked' : '')
+            + (row.__current ? ' f-grid-current' : '');
+
+        cell.__cell_style = 'left:' + column.__start + 
             'px;top:' + y + 
             'px;width:' + width + 
             'px;height:' + height + 
             'px;line-height:' + height + 'px;' +
-            any);
+            any;
+
+        cell.renderer.render(writer, cell);
 
         return cell;
     };
@@ -483,12 +488,14 @@ flyingon.renderer('GroupGridRow', 'GridRow', function (base) {
             cell.text(any);
         }
 
-        cell.renderer.render(writer, cell, 'f-grid-group-row',
-            'left:' + column.__start + 
+        cell.__cell_class = 'f-grid-group-row';
+        cell.__cell_style = 'left:' + column.__start + 
             'px;top:' + y + 
             'px;width:' + column.__size + 
             'px;height:' + height + 
-            'px;line-height:' + height + 'px;');
+            'px;line-height:' + height + 'px;';
+
+        cell.renderer.render(writer, cell);
 
         return cell;
     };
@@ -531,8 +538,6 @@ flyingon.renderer('Grid', function (base) {
     //可输入标签
     var input_tag = 'input,select,textarea'.toUpperCase().split(',');
 
-    //更新标记
-    var update_tag = 1;
 
     //动态管理子节点的临时节点
     var dom_fragment = document.createDocumentFragment();
@@ -562,7 +567,7 @@ flyingon.renderer('Grid', function (base) {
 
 
 
-    this.render = function (writer, grid, className, cssText) {
+    this.render = function (writer, grid) {
 
         var storage = grid.__storage || grid.__defaults,
             group = storage.group,
@@ -572,7 +577,7 @@ flyingon.renderer('Grid', function (base) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, grid, className, cssText);
+        this.renderDefault(writer, grid);
 
         writer.push(' onclick="flyingon.Grid.onclick.call(this, event)" onkeydown="flyingon.Grid.onkeydown.call(this, event)">',
             '<div class="f-grid-head" onmousedown="flyingon.Grid.onmousedown.call(this, event)">',
@@ -670,6 +675,9 @@ flyingon.renderer('Grid', function (base) {
         {
             grid = cell.parent;
 
+            change_focus(grid, cell);
+            grid.__set_current(cell.row);
+
             dom = cell.view;
             any = dom.parentNode;
 
@@ -682,7 +690,7 @@ flyingon.renderer('Grid', function (base) {
 
             if (dom.offsetTop + dom.offsetHeight > any.offsetHeight)
             {
-                grid.view_scroll.scrollTop = dom.offsetTop;
+                grid.view_scroll.scrollTop = dom.offsetTop - 10;
             }
         }
     };
@@ -718,6 +726,7 @@ flyingon.renderer('Grid', function (base) {
                     {
                         if (any.row) //数据行
                         {
+                            change_focus(grid, any);
                             grid.__set_current(any.row);
                         }
                         else if (any.column && !any.columnSpan && any.column.name()) //列头且无跨列
@@ -751,6 +760,25 @@ flyingon.renderer('Grid', function (base) {
             }
 
             dom.className = 'f-grid-icon ' + icon;
+        }
+    };
+
+
+    function change_focus(grid, cell) {
+
+        var focus = grid.__focus_cell;
+
+        if (focus !== cell)
+        {
+            if (focus)
+            {
+                focus.view.className = focus.view.className.replace(' f-grid-cell-focus', '');
+            }
+
+            if (grid.__focus_cell = cell)
+            {
+                cell.view.className += ' f-grid-cell-focus';
+            }
         }
     };
 
@@ -1265,20 +1293,6 @@ flyingon.renderer('Grid', function (base) {
 
 
 
-    this.locate = function (grid) {
-
-        base.locate.call(this, grid);
-        this.content(grid, grid.view);
-    };
-
-
-    this.locate_html = function (grid) {
-
-
-    };
-
-
-
     //列头大小发生变化
     this.header = function (grid, view, value) {
 
@@ -1315,25 +1329,31 @@ flyingon.renderer('Grid', function (base) {
     };
 
 
-    //内容发生变化
-    this.content = function (grid, view) {
 
-        this.show(grid,
-            grid.scrollLeft | 0,
-            grid.scrollTop | 0,
-            grid.offsetWidth - grid.borderLeft - grid.borderRight,
-            grid.offsetHeight - grid.borderTop - grid.borderBottom);
+    this.locate = function (grid) {
+
+        base.locate.call(this, grid);
+        this.show(grid);
+    };
+
+
+    this.locate_html = function (grid) {
+
+        base.locate_html.call(this, grid);
+        this.show(grid);
     };
 
 
 
     //显示指定范围的表格内容
-    this.show = function (grid, x, y, width, height) {
+    this.show = function (grid) {
 
         var storage = grid.__storage || grid.__defaults,
             columns = grid.__columns,
             rows = grid.__rows,
+            width = grid.__compute_columns(), //计算表格列
             height = grid.offsetHeight - grid.borderTop - grid.borderBottom,
+            auto = grid.__auto_size,
             any;
 
         //显示分组
@@ -1342,36 +1362,18 @@ flyingon.renderer('Grid', function (base) {
             height -= any;
         }
 
-        //计算列宽度
-        any = columns.__arrange_size !== width;
-
-        if (grid.__column_dirty || any && columns.__persent)
-        {
-            grid.__column_dirty = false;
-
-            columns.__show_tag = update_tag++;
-            columns.__compute_size(width);
-            columns.__compute_visible(x);
-        }
-        else if (any || columns.__arrange_start !== x)
-        {
-            columns.__arrange_size = width;
-            columns.__compute_visible(x);
-        }
-
         //控制水平滚动条
-        if (columns.__size > width)
+        if (columns.__size > width && !(auto & 1))
         {
             any = flyingon.hscroll_height;
             height -= any;
         }
         else
         {
-            any = 1;
+            any = 0;
         }
 
         grid.view_body.style.bottom = any + 'px';
-        grid.view_scroll.firstChild.style.width = columns.__size + 'px';
 
         //显示列头
         if ((any = storage.header) > 0)
@@ -1388,10 +1390,27 @@ flyingon.renderer('Grid', function (base) {
         }
 
         //显示内容
-        any = this.__show_body(grid, grid.currentView(), height);
+        any = grid.currentView();
+        any = this.__show_body(grid, any, (auto & 2) ? any.length * storage.rowHeight : height);
 
         //排列横向锁定区域
         this.__layout_locked(grid, columns.__locked, any);
+        
+        //处理自动宽高
+        width = columns.__size;
+
+        if (auto & 1)
+        {
+            grid.view.style.width = grid.offsetWidth + 'px';
+            width = 1;
+        }
+
+        grid.view_scroll.firstChild.style.width = width + 'px';
+
+        if (auto & 2)
+        {
+            grid.view.style.height = grid.offsetHeight + 'px';
+        }
     };
 
 
@@ -1512,7 +1531,6 @@ flyingon.renderer('Grid', function (base) {
             index = start,
             column,
             node,
-            tag,
             style,
             cells,
             cell,
@@ -1601,7 +1619,7 @@ flyingon.renderer('Grid', function (base) {
             rowHeight = rows.__row_height = storage.rowHeight,
             tree = storage.treeColumn,
             size = end * rowHeight,
-            vscroll = size > height,
+            vscroll = size > height && !(grid.__auto_size & 2),
             any;
 
         //记录是否树列
@@ -1611,7 +1629,7 @@ flyingon.renderer('Grid', function (base) {
             any.__tree_icon = storage.treeIcon;
         }
 
-        grid.view_scroll.firstChild.style.height = (size || 1) + 'px';
+        grid.view_scroll.firstChild.style.height = (vscroll ? size || 1 : 1) + 'px';
         grid.view_body.style[flyingon.rtl ? 'left' : 'right'] = (vscroll ? flyingon.vscroll_width : 0) + 'px';
 
         //显示顶部锁定
@@ -1811,13 +1829,13 @@ flyingon.renderer('Grid', function (base) {
 
         var writer = [],
             fragment = dom_fragment,
-            tag = grid.__columns.__show_tag,
             size = grid.__group_size,
             fn = grid.ongroup,
             index = start,
             row,
             node,
             text,
+            tag,
             any;
 
         while (index < end)

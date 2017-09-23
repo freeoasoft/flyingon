@@ -2461,6 +2461,75 @@ Function.prototype.bind || (Function.prototype.bind = function (context) {
 
 
 
+(function () {
+
+
+
+    var cache = flyingon.create(null);
+
+
+
+    //定义国际化集合
+    function i18n(name, values) {
+
+        var keys = cache,
+            key;
+        
+        if (name)
+        {
+            name += '.';
+
+            for (key in values)
+            {
+                keys[name + key] = values[key];
+            }
+        }
+        else
+        {
+            for (key in values)
+            {
+                keys[key] = values[key];
+            }
+        }
+    };
+        
+
+
+    //获取指定key的本地化信息
+    flyingon.i18ntext = function (key, text) {
+
+        return cache[key] || (text != null ? text : key);
+    };
+
+
+    //获取或设置当前本地化名称
+    (flyingon.i18n = function (name, values) {
+
+        if (values && typeof values === 'object')
+        {
+            i18n(name, values);
+        }
+        else
+        {
+            i18n(null, name);
+        }
+
+    }).all = cache;
+    
+
+
+    flyingon.i18n.set = function (values) {
+
+        cache = flyingon.i18n.all = values || flyingon.create(null);
+    };
+
+    
+
+})();
+
+
+
+
 /**
  * @class f-collection
  * @extension
@@ -3687,12 +3756,12 @@ flyingon.fragment('f-dataset', function () {
             {
                 keys2[row.id = data[primaryKey]] = row;
             }
-                        
+
             target[index++] = row;
             
             if (children && (data = data[children]) && data.length > 0)
             {
-                uniqueId = load_data(dataset, row, data, primaryKey, null, children, uniqueId)
+                uniqueId = load_data(dataset, row, data, primaryKey, children, uniqueId)
             }
         }
 
@@ -4637,8 +4706,20 @@ flyingon.fragment('f-bindable', function () {
     //根据选项创建界面元素
     flyingon.ui = function (options) {
 
-        var control = new (components[options.Class] || arguments[1] || flyingon.HtmlElement)();
+        var type = options.Class,
+            control,
+            any;
 
+        if (any = type ? components[type] : arguments[1])
+        {
+            control= new any();
+        }
+        else
+        {
+            control = new flyingon.HtmlElement();
+            control.tagName = type;
+        }
+    
         control.deserialize(reader, options);
 
         return control;
@@ -4859,25 +4940,25 @@ flyingon.fragment('f-visual', function () {
     });
 
 
-    
+
     //指定class名 与html一样
     this['class'] = this.defineProperty('className', '', {
 
         set: function (value) {
 
-            var any;
+            var any = this.defaultClassName;
 
-            this.fullClassName = value = value ? this.defaultClassName + ' ' + value : this.defaultClassName;
+            this.fullClassName = value = value ? (any + ' ' + value) : any;
 
             if (this.rendered)
             {
                 if (any = this.__view_patch)
                 {
-                    any['class'] = value;
+                    any['className'] = value;
                 }
                 else
                 {
-                    this.renderer.set(this, 'class', value);
+                    this.renderer.set(this, 'className', value);
                 }
             }
         }
@@ -4935,7 +5016,7 @@ flyingon.fragment('f-visual', function () {
 
         var list, keys, index;
 
-        if (name && (list = name.match(/\w+/g)) && (keys = this.__class_keys))
+        if (name && (keys = this.__class_keys) && (list = name.match(/[\w-]+/g)))
         {
             index = list.length;
 
@@ -4943,7 +5024,7 @@ flyingon.fragment('f-visual', function () {
             {
                 if (keys[name = list[index]])
                 {
-                    keys[name] = false;
+                    delete keys[name];
                 }
                 else
                 {
@@ -4951,10 +5032,7 @@ flyingon.fragment('f-visual', function () {
                 }
             }
             
-            if (list.length > 0)
-            {
-                sync_class(this, keys, list);
-            }
+            sync_class(this, keys);
         }
 
         return this;
@@ -4966,7 +5044,7 @@ flyingon.fragment('f-visual', function () {
 
         var list, keys, index;
 
-        if (name && (list = name.match(/\w+/g)))
+        if (name && (list = name.match(/[\w-]+/g)))
         {
             if (keys = this.__class_keys)
             {
@@ -4974,10 +5052,17 @@ flyingon.fragment('f-visual', function () {
 
                 while (index--)
                 {
-                    keys[name = list[index]] = !keys[name];
+                    if (keys[name = list[index]])
+                    {
+                        delete keys[name];
+                    }
+                    else
+                    {
+                        keys[name] = true;
+                    }
                 }
                 
-                sync_class(this, keys, list);
+                sync_class(this, keys);
             }
             else
             {
@@ -5006,16 +5091,13 @@ flyingon.fragment('f-visual', function () {
 
 
     //同步class
-    function sync_class(self, keys, list) {
+    function sync_class(self, keys) {
 
         var any = [];
 
         for (var name in keys)
         {
-            if (keys[name])
-            {
-                any.push(name);
-            }
+            any.push(name);
         }
 
         self.className(any.join(' '));
@@ -5084,91 +5166,27 @@ flyingon.fragment('f-visual', function () {
 flyingon.validator = (function () {
 
 
+
+    var tooltip;
+
     var all = flyingon.create(null);
 
-
-    all.required = function (text) {
-
-        return text.length > 0;
-    };
-
-
-    all.min = function (text, length) {
-
-        return text >= length;
-    };
-
-
-    all.max = function (text, length) {
-
-        return text <= length;
-    };
-
-
-    all.minLength = function (text, length) {
-
-        return text.length >= length;
-    };
-
-
-    all.maxLength = function (text, length) {
-
-        return text.length <= length;
-    };
-
-
-    all.length = function (text, min, max) {
-
-        return text.length >= min && text.length <= max;
-    };
-
-
-    all.email = function (text) {
-
-        return /^(\w)+(\.\w+)*@(\w)+((\.\w+)+)$/.test(text);
-    };
-
-
-    all.url = function (text) {
-
-        return /(https?|ftp|file):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]/.test(text);
-    };
-
-
-    all.date = function (text) {
-
-        return /^\d{4}(\-|\/|\.)\d{1,2}\1\d{1,2}$/.test(text);
-    };
-
-
-    all.int = function(text) {
-
-        text = +text;
-        return (text | 0) === text;
-    };
-
-
-    all.number = function (text) {
-
-        text = +text;
-        return text === text;
-    };
+    var i18n = flyingon.i18ntext;
 
 
 
     function validate(control, errors) {
 
-        var validator = control.__validator,
-            length;
-
-        if (validator && (length = validator.length))
+        var any = control.__validator;
+         
+        if ((length = any && any.length) || control.__required)
         {
-            validate_control(control, validator, length, errors);
+            validate_control(control, any, length, errors);
         }
         
-        if ((length = control.length) > 0)
+        if ((any = control.length) > 0)
         {
-            for (var i = 0; i < length; i++)
+            for (var i = 0; i < any; i++)
             {
                 validate(control[i], errors);
             }
@@ -5180,63 +5198,79 @@ flyingon.validator = (function () {
 
         var text, args, any;
 
-        if (any = control.__errors)
+        if (text = control.value || control.text)
         {
-            for (var i = any.length - 1; i >= 0; i--)
+            text = text.call(control);
+
+            if (control.__required)
             {
-                any[i].visible(false);
+                if (!text.length)
+                {
+                    any = create_error(control, 'required', i18n('validator.required'));
+                    errors.push(any);
+                    return;
+                }
             }
 
-            any.length = 0;
-        }
-
-        for (var i = 0; i < length; i++)
-        {
-            if (text = control.value || control.text)
+            for (var i = 0; i < length; i++)
             {
-                text = text.call(control);
-
-                for (var j = 0, l = validator.length; j < l; j++)
+                if ((any = all[validator[i++]]) && 
+                    (any = any.apply(control, (args = validator[i].slice(0), args[0] = text, args))) &&
+                    (any = i18n(any, null)))
                 {
-                    if (!(any = all[validator[j++]]) || 
-                        !any.apply(control, (args = validator[j].slice(0), args[0] = text, args)))
-                    {
-                        any = validator[j].slice(0);
-                        any.control = control;
-
-                        errors.push(any);
-                        return;
-                    }
+                    any = create_error(control, '', any, validator[i]);
+                    errors.push(any);
+                    return;
                 }
             }
         }
+
+        //清空错误信息
+        set_error(control);
     };
 
 
-    function show_errors(errors) {
+    function create_error(control, name, text, args) {
 
-        var controls = flyingon.validator.errors;
+        var error = {
 
-        for (var i = 0, l = errors.length; i < l; i++)
-        {
-            var error = errors[i],
-                control = error.control,
-                index = 0,
-                list,
-                any;
+            control: control, 
+            name: name || (name = args[0]), 
+            text: text.replace(/\{\{([^{}]*)\}\}/g, function (text, key) {
 
-            if ((any = control.id()) && (list = controls[any]))
-            {
-                while (control = list[index++])
+                switch (key)
                 {
-                    if (!(any = control.__storage) || !(any = any.validator) || any.indexOf(error[0]) >= 0)
-                    {
-                        control.show(error);
-                    }
+                    case 'name':
+                        return name;
+
+                    case 'title':
+                        return (key = control.parent) ? key.__error_title() : text;
                 }
-            }
+
+                return args && args[key] || text;
+            })
+        };
+
+        set_error(control, error);
+
+        return error;
+    };
+
+
+    function set_error(control, error) {
+
+        var parent = control.parent;
+
+        if (parent && parent.__validate_box)
+        {
+            parent.__set_validate(error, control);
+        }
+        else
+        {
+            control.__set_validate(error);
         }
     };
+
 
 
     flyingon.validate = function (control) {
@@ -5245,9 +5279,121 @@ flyingon.validator = (function () {
 
         validate(control, errors);
 
-        errors[0] && show_errors(errors);
-
         return errors;
+    };
+
+
+    flyingon.validate.mouseover = function (e) {
+
+        var tip = tooltip || (tooltip = new flyingon.ToolTip().addClass('f-validate-tip'));
+
+        tip.html(true).text(this.__validate_text).show(this);
+    };
+
+
+    flyingon.validate.mouseout = function () {
+
+        tooltip && tooltip.close();
+    };
+
+
+
+    all.required = function (text) {
+
+        if (!text.length)
+        {
+            return i18n('validator.required');
+        }
+    };
+
+
+    all.min = function (text, value) {
+
+        if (text < value)
+        {
+            return i18n('validator.min');
+        }
+    };
+
+
+    all.max = function (text, value) {
+
+        if (text > value)
+        {
+            return i18n('validator.max');
+        }
+    };
+
+
+    all.minLength = function (text, length) {
+
+        if (text.length < length)
+        {
+            return i18n('validator.minLength');
+        }
+    };
+
+
+    all.maxLength = function (text, length) {
+
+        if (text.length > length)
+        {
+            return i18n('validator.maxLength');
+        }
+    };
+
+
+    all.length = function (text, min, max) {
+
+        if (text.length < min || text.length > max)
+        {
+            return i18n('validator.length');
+        }
+    };
+
+
+    all.email = function (text) {
+
+        if (!/^(\w)+(\.\w+)*@(\w)+((\.\w+)+)$/.test(text))
+        {
+            return i18n('validator.email');
+        }
+    };
+
+
+    all.url = function (text) {
+
+        if (!/(https?|ftp|file):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]/.test(text))
+        {
+            return i18n('validator.url');
+        }
+    };
+
+
+    all.date = function (text) {
+
+        if (!/^\d{4}(\-|\/|\.)\d{1,2}\1\d{1,2}$/.test(text))
+        {
+            return i18n('validator.date');
+        }
+    };
+
+
+    all.int = function(text) {
+
+        if (((text = +text) | 0) !== text)
+        {
+            return i18n('validator.int');
+        }
+    };
+
+
+    all.number = function (text) {
+
+        if ((text = +text) === text)
+        {
+            return i18n('validator.number');
+        }
     };
 
     
@@ -5264,6 +5410,29 @@ flyingon.validator = (function () {
 flyingon.fragment('f-validate', function () {
 
 
+
+    var validate = flyingon.validate;
+
+
+
+    //是否必填
+    this.defineProperty('required', false, {
+
+        set: function (value) {
+
+            var any = this.parent;
+
+            this.__required = value;
+
+            if (any && any.__validate_box && any.rendered && (any = any.__find_title()))
+            {
+                any.renderer.set(any, 'required', value);
+            }
+        }
+    });
+
+
+    //校验器
     this.defineProperty('validator', '', {
         
         set: function (value) {
@@ -5288,6 +5457,30 @@ flyingon.fragment('f-validate', function () {
         }
     });
 
+
+
+    //设置或清除检验信息
+    this.__set_validate = function (error) {
+
+        if (this.__validate_text = error && error.text)
+        {
+            this.addClass('f-validate-error');
+
+            if (!this.__validate_event)
+            {
+                this.__validate_event = true;
+                this.on('mouseover', validate.mouseover);
+                this.on('mouseout', validate.mouseout);
+            }
+        }
+        else if (this.__validate_event)
+        {
+            this.removeClass('f-validate-error');
+
+            this.off('mouseover', validate.mouseover);
+            this.off('mouseout', validate.mouseout);
+        }
+    };
 
 
 });
@@ -6265,7 +6458,7 @@ flyingon.dom_align = function (dom, rect, direction, align, reverse) {
         switch (align)
         {
             case 'center':
-                x = x1 - (x2 - x1 - width >> 1);
+                x = x1 + (x2 - x1 - width >> 1);
                 break;
 
             case 'right':
@@ -7110,15 +7303,13 @@ flyingon.jsonpPost = function (url, options) {
 
         require_merge = create(null), //引入资源合并关系
         
-        i18n_cache = create(null), //本地化信息集合
-        
         change_files = create(null), //待切换资源文件集合
 
         require_keys = { //引入资源变量
             
             layout: 'default', //当前布局
             skin: 'default', //当前皮肤
-            i18n: navigator.language || 'zh-CN'    //当前本地化名称
+            language: navigator.language || 'zh-CN'    //当前本地化名称
         };
 
 
@@ -7354,71 +7545,21 @@ flyingon.jsonpPost = function (url, options) {
 
 
     //获取或设置当前皮肤
-    flyingon.skin = function (name) {
+    flyingon.skin = function (name, callback) {
 
-        return require.key('skin', name);
+        return require.key('skin', name, callback);
     };
     
     
-    //获取指定key的本地化信息
-    flyingon.i18ntext = function (key, text) {
-
-        return i18n_cache[key] || (text != null ? text : key);
-    };
-
 
     //获取或设置当前本地化名称
-    flyingon.i18n = function (name, values) {
+    flyingon.language = function (name, callback) {
 
-        if (values && typeof values === 'object')
-        {
-            i18n(name, values);
-        }
-        else if (typeof name === 'object')
-        {
-            i18n(null, name);
-        }
-        else
-        {
-            return require.key('i18n', name, null, function () {
-            
-                //国际化时先清空缓存
-                i18n_cache = create(null);
-
-                if (typeof values === 'function')
-                {
-                    values();
-                }
-            });
-        }
+        return require.key('language', name, callback);
     };
 
     
-    //定义国际化集合
-    function i18n(name, values) {
-
-        var keys = i18n_cache;
-        
-        if (name)
-        {
-            name += '.';
-
-            for (var key in values)
-            {
-                keys[name + key] = values[key];
-            }
-        }
-        else
-        {
-            for (name in values)
-            {
-                keys[name] = values[name];
-            }
-        }
-    };
     
-    
-
     //资源加载函数
     flyingon.require = require;
 
@@ -9658,6 +9799,10 @@ flyingon.Query = Object.extend(function () {
     this.__auto_size = 1;
 
 
+    //是否需要设置lineHeight
+    this.__line_height = 0;
+
+
     //是否设置padding
     this.padding = 1;
     
@@ -9706,11 +9851,11 @@ flyingon.Query = Object.extend(function () {
 
 
     //渲染html
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
 
         writer.push('></div>');
     };
@@ -9731,14 +9876,33 @@ flyingon.Query = Object.extend(function () {
             writer.push(' id="', encode(any), '"');
         }
 
-        writer.push(' class="', encode(control.fullClassName), 
-            html ? ' f-html' : ' f-absolute', 
-            className ? ' ' + className : '',
-            '" style="');
+        any = html ? ' f-html' : ' f-absolute';
+
+        if (className)
+        {
+            any += ' ' + className;
+        }
+
+        //处理表格控件class
+        if (className = control.__cell_class)
+        {
+            any += ' ' + className;
+        }
+
+        //系统自动自动的class
+        control.__class_name = any;
+
+        writer.push(' class="', encode(control.fullClassName) + any, '" style="');
 
         if (cssText)
         {
             writer.push(cssText);
+        }
+
+        //添加表格控件样式
+        if (className)
+        {
+            writer.push(control.__cell_style);
         }
 
         if (any = control.__style)
@@ -10126,7 +10290,20 @@ flyingon.Query = Object.extend(function () {
         if (any || height !== cache.height)
         {
             cache.height = height;
-            style.height = (value & 2) ? height : height + 'px';
+
+            if (value & 2)
+            {
+                style.height = 'auto';
+            }
+            else
+            {
+                style.height = height + 'px';
+
+                if (this.__line_height)
+                {
+                    style.lineHeight = height + 'px';
+                }
+            }
         }
 
         if (any = control.__location_dirty)
@@ -10386,6 +10563,12 @@ flyingon.Query = Object.extend(function () {
         }
     };
 
+
+
+    this.className = function (control, view, value) {
+
+        view.className = value + control.__class_name;
+    };
 
 
     this.visible = function (control, view, value) {
@@ -10765,7 +10948,7 @@ flyingon.renderer('HtmlElement', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             tagName, 
@@ -10783,7 +10966,7 @@ flyingon.renderer('HtmlElement', function (base) {
 
         writer.push('<', tagName);
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push('>');
 
@@ -10914,7 +11097,7 @@ flyingon.renderer('Label', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             text = storage.text;
@@ -10926,7 +11109,7 @@ flyingon.renderer('Label', function (base) {
 
         writer.push('<span');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push('>', text, '</span>');
     };
@@ -10991,11 +11174,11 @@ flyingon.renderer('Button', function (base) {
 
     
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         writer.push('<button type="button"');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push('>');
 
@@ -11087,14 +11270,14 @@ flyingon.renderer('LinkButton', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             any;
         
         writer.push('<a type="button"');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
 
         if (any = storage.href)
         {
@@ -11166,7 +11349,7 @@ flyingon.renderer('Image', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var encode = flyingon.html_encode,
             storage = control.__storage || control.__defaults,
@@ -11185,7 +11368,7 @@ flyingon.renderer('Image', function (base) {
 
         writer.push('<img');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push(' src="', src, '" alt="', alt, '"></img>');
     };
@@ -11213,11 +11396,11 @@ flyingon.renderer('Image', function (base) {
 flyingon.renderer('Slider', function (base) {
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
 
         writer.push('>',
                 '<div class="f-slider-bar" onclick="flyingon.Slider.onclick.call(this, event)"><div></div></div>',
@@ -11319,13 +11502,13 @@ flyingon.renderer('Slider', function (base) {
 flyingon.renderer('ProgressBar', function (base) {
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var value = (control.__storage || control.__defaults).value;
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
 
         writer.push('>',
                 '<div class="f-progressbar-back" style="width:', value, '%;"></div>',
@@ -11361,11 +11544,11 @@ flyingon.renderer('Panel', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push(' onscroll="flyingon.__dom_scroll.call(this, event)">');
 
@@ -11423,14 +11606,11 @@ flyingon.renderer('Panel', function (base) {
     //作为html方式定位控件时需特殊处理
     this.locate_html = function (control) {
 
-        var any = control.__location_dirty,
-            width = 0,
-            height = 0;
+        var width = 0,
+            height = 0,
+            any;
         
-        if (any)
-        {
-            this.__locate_html(control);
-        }
+        base.__locate_html.call(this, control);
 
         control.__update_dirty = false;
 
@@ -11504,7 +11684,7 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             head = storage.header,
@@ -11513,7 +11693,7 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         if (text)
         {
@@ -11637,7 +11817,7 @@ flyingon.renderer('ScrollPanel', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var text = this.__scroll_html;
 
@@ -11646,7 +11826,7 @@ flyingon.renderer('ScrollPanel', function (base) {
         //此处只渲染一个空的壳,实现渲染内容在locate的时候根据需要渲染
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push('>',
             '<div class="f-scrollpanel-scroll" onscroll="flyingon.__dom_scroll.call(this, event)">',
@@ -11856,11 +12036,11 @@ flyingon.renderer('Splitter', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, control, className, (cssText || '') + 'cursor:ew-resize;');
+        this.renderDefault(writer, control, '', 'cursor:ew-resize;');
 
         writer.push(' onmousedown="flyingon.Splitter.onmousedown.call(this, event)"><div></div></div>');
     };
@@ -11939,11 +12119,11 @@ flyingon.renderer('ListBox', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
 
         writer.push(' onclick="flyingon.ListBox.onclick.call(this, event)"></div>');
     };
@@ -12305,11 +12485,11 @@ flyingon.renderer('RadioButton', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push('><input type="radio" name="', control.name(), control.checked() ? '" checked="checked' : '',
             '" class="f-radio-input" onchange="flyingon.RadioButton.onchange.call(this)" /></div>');
@@ -12344,11 +12524,11 @@ flyingon.renderer('CheckBox', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push('><input type="checkbox" name="', control.name(), control.checked() ? '" checked="checked' : '',
             '" class="f-checkbox-input" onchange="flyingon.CheckBox.onchange.call(this)" /></div>');
@@ -12383,7 +12563,7 @@ flyingon.renderer('TextBox', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var text = control.__text = control.text();
 
@@ -12394,7 +12574,7 @@ flyingon.renderer('TextBox', function (base) {
 
         writer.push('<input');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push(' type="text" value="', text, 
             '" oninput="flyingon.TextBox.oninput.call(this)"',
@@ -12448,7 +12628,7 @@ flyingon.renderer('TextBox', function (base) {
 flyingon.renderer('Password', function () {
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var text = control.text();
 
@@ -12459,7 +12639,7 @@ flyingon.renderer('Password', function () {
 
         writer.push('<input');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push(' type="password" value="', text, 
             '" onchange="flyingon.TextBox.onchange.call(this)"/>');
@@ -12522,7 +12702,7 @@ flyingon.renderer('TextButton', function (base) {
 
     
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             text = control.text(),
@@ -12533,19 +12713,19 @@ flyingon.renderer('TextButton', function (base) {
             text = flyingon.html_encode(text);
         }
 
-        writer.push('<div');
+        writer.push('<span');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
 
         writer.push('>',
-                '<div class="f-textbutton-body" style="right:', size, 'px;">',
+                '<span class="f-textbutton-body" style="right:', size, 'px;">',
                     '<input type="text" class="f-textbutton-text" value="', text, 
                     storage.inputable ? '' : '" readonly="readonly',
                     '" onchange="flyingon.TextButton.onchange.call(this)"/>',
-                '</div>',
-                '<div class="f-textbutton-button ', storage.button, 
-                    '" style="width:', size, 'px;" onclick="flyingon.TextButton.onclick.call(this)"></div>',
-            '</div>');
+                '</span>',
+                '<span class="f-textbutton-button ', storage.button, 
+                    '" style="width:', size, 'px;" onclick="flyingon.TextButton.onclick.call(this)"></span>',
+            '</span>');
     };
 
 
@@ -12626,11 +12806,11 @@ flyingon.renderer('Calendar', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, (cssText || '') + 'padding:8px;');
+        this.renderDefault(writer, control, '', 'padding:8px;');
         
         writer.push(' onclick="flyingon.Calendar.onclick.call(this, event)"></div>');
     };
@@ -13285,25 +13465,85 @@ flyingon.renderer('Calendar', function (base) {
 
 
 
-flyingon.renderer('Title', 'Label', function (base) {
+//容器控件渲染器
+flyingon.renderer('Box', function (base) {
+    
+    
+
+    this.__scroll_html = '';
+
+    this.__auto_size = 0;
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    //渲染html
+    this.render = function (writer, control) {
 
-        var storage = control.__storage || control.__defaults,
-            text = storage.text;
+        writer.push('<div');
+        
+        this.renderDefault(writer, control);
+        
+        writer.push('>');
 
-        if (text)
+        this.__render_children(writer, control, control, 0, control.length);
+
+        writer.push('</div>');
+    };
+
+
+
+    this.mount = function (control, view) {
+
+        base.mount.call(this, control, view);
+        this.__mount_children(control, view, control, 0, control.length, view.firstChild);
+    };
+
+
+    this.unmount = function (control) {
+
+        this.__unmount_children(control);
+        base.unmount.call(this, control);
+    };
+
+
+
+    //作为html方式定位控件时需特殊处理
+    this.locate_html = function (control) {
+
+        var width = 0,
+            height = 0,
+            any;
+        
+        base.__locate_html.call(this, control);
+
+        control.__update_dirty = false;
+
+        //如果需要适应容器,则计算容器大小(对性能有影响)
+        if ((any = control.view) && (any = any.parentNode) && control.adaption())
         {
-            text = flyingon.html_encode(text);
+            width = any.clientWidth;
+            height = any.clientHeight;
         }
+        
+        control.measure(width, height, width, height);
+        this.locate(control);
+    };
 
-        writer.push('<span');
-        
-        this.renderDefault(writer, control, className, cssText);
-        
-        writer.push('>', storage.required ? '<span class="f-required">*</span>' : '', text, '</span>');
+
+    this.locate = function (control) {
+
+        base.locate.call(this, control);
+
+        //定位子控件
+        for (var i = 0, l = control.length; i < l; i++)
+        {
+            var item = control[i];
+
+            if (item && item.view)
+            {
+                item.renderer.locate(item);
+            }
+        }
     };
 
 
@@ -13313,30 +13553,94 @@ flyingon.renderer('Title', 'Label', function (base) {
 
 
 
-flyingon.renderer('Error', 'Label', function (base) {
+flyingon.renderer('Title', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.__line_height = 1;
+
+
+
+    this.render = function (writer, control) {
+
+        var storage = control.__storage || control.__defaults,
+            text = storage.text;
+
+        if (text && !storage.html)
+        {
+            text = flyingon.html_encode(text);
+        }
 
         writer.push('<span');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
-        writer.push('></span>');
+        writer.push('><span class="f-required"', control.__check() ? '' : ' style="display:none;"', '>*</span>',
+            '<span>', text, '</span></span>');
     };
 
 
     this.text = function (control, view, value) {
 
-        if (control.html())
+        if (storage.html)
         {
-            view.innerHTML = value;
+            view.lastChild.innerHTML = value;
         }
         else
         {
-            view[this.__text_name] = value;
+            view.lastChild[this.__text_name] = value;
         }
+    };
+
+
+    this.required = function (control, view, value) {
+
+        view.firstChild.style.display = value ? '' : 'none';
+    };
+
+
+});
+
+
+
+
+flyingon.renderer('Error', 'Label', function (base) {
+
+    
+
+    this.__line_height = 1;
+    
+
+
+    this.render = function (writer, control) {
+
+        writer.push('<span');
+        
+        this.renderDefault(writer, control);
+        
+        writer.push('><span class="f-error-', control.type(), '"></span></span>');
+    };
+
+
+    this.type = function (control, view, value) {
+
+        var name = 'f-error-' + value;
+
+        view = view.firstChild;
+
+        if (value !== 'text')
+        {
+            name = 'f-error-icon ' + name;
+            view.innerHTML = '';
+        }
+
+        view.className = name;
+    };
+
+
+    this.text = function (control, view, value) {
+
+        view.firstChild.innerHTML = value;
     };
 
 
@@ -13422,7 +13726,7 @@ flyingon.renderer('Tree', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             length = control.length;
@@ -13430,9 +13734,9 @@ flyingon.renderer('Tree', function (base) {
         writer.push('<div');
         
         this.renderDefault(writer, control, 
-            (className || '') + 'f-tree-theme-' + storage.theme + 
-                (!storage.checked ? ' f-tree-no-check' : '') + 
-                (!storage.icon ? ' f-tree-no-icon' : ''));
+            'f-tree-theme-' + storage.theme + 
+            (!storage.checked ? ' f-tree-no-check' : '') + 
+            (!storage.icon ? ' f-tree-no-icon' : ''));
         
         writer.push(' onclick="flyingon.Tree.onclick.call(this, event)">');
 
@@ -13923,15 +14227,17 @@ flyingon.renderer('GridColumn', function (base) {
 
         cell.row = null;
         cell.column = column;
-        cell.__as_html = true;
 
-        cell.renderer.render(writer, cell, 'f-grid-cell' + column.fullClassName, 
-            'left:' + column.__start +
+        cell.__as_html = true;
+        cell.__cell_class = 'f-grid-cell' + column.fullClassName;
+        cell.__cell_style = 'left:' + column.__start +
             'px;top:' + y +
             'px;width:' + width + 
             'px;height:' + height + 
             'px;line-height:' + height + 'px;' + 
-            (cell.columnSpan ? 'z-index:1;' : ''));
+            (cell.columnSpan ? 'z-index:1;' : '');
+
+        cell.renderer.render(writer, cell);
     };
 
 
@@ -14173,15 +14479,18 @@ flyingon.renderer('GridRow', function (base) {
             any += 'z-index:1;';
         }
 
-        cell.renderer.render(writer, cell, 'f-grid-cell' + column.fullClassName 
-                + (row.__checked ? ' f-grid-checked' : '')
-                + (row.__current ? ' f-grid-current' : ''),
-            'left:' + column.__start + 
+        cell.__cell_class = 'f-grid-cell' + column.fullClassName 
+            + (row.__checked ? ' f-grid-checked' : '')
+            + (row.__current ? ' f-grid-current' : '');
+
+        cell.__cell_style = 'left:' + column.__start + 
             'px;top:' + y + 
             'px;width:' + width + 
             'px;height:' + height + 
             'px;line-height:' + height + 'px;' +
-            any);
+            any;
+
+        cell.renderer.render(writer, cell);
 
         return cell;
     };
@@ -14360,12 +14669,14 @@ flyingon.renderer('GroupGridRow', 'GridRow', function (base) {
             cell.text(any);
         }
 
-        cell.renderer.render(writer, cell, 'f-grid-group-row',
-            'left:' + column.__start + 
+        cell.__cell_class = 'f-grid-group-row';
+        cell.__cell_style = 'left:' + column.__start + 
             'px;top:' + y + 
             'px;width:' + column.__size + 
             'px;height:' + height + 
-            'px;line-height:' + height + 'px;');
+            'px;line-height:' + height + 'px;';
+
+        cell.renderer.render(writer, cell);
 
         return cell;
     };
@@ -14408,8 +14719,6 @@ flyingon.renderer('Grid', function (base) {
     //可输入标签
     var input_tag = 'input,select,textarea'.toUpperCase().split(',');
 
-    //更新标记
-    var update_tag = 1;
 
     //动态管理子节点的临时节点
     var dom_fragment = document.createDocumentFragment();
@@ -14439,7 +14748,7 @@ flyingon.renderer('Grid', function (base) {
 
 
 
-    this.render = function (writer, grid, className, cssText) {
+    this.render = function (writer, grid) {
 
         var storage = grid.__storage || grid.__defaults,
             group = storage.group,
@@ -14449,7 +14758,7 @@ flyingon.renderer('Grid', function (base) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, grid, className, cssText);
+        this.renderDefault(writer, grid);
 
         writer.push(' onclick="flyingon.Grid.onclick.call(this, event)" onkeydown="flyingon.Grid.onkeydown.call(this, event)">',
             '<div class="f-grid-head" onmousedown="flyingon.Grid.onmousedown.call(this, event)">',
@@ -14547,6 +14856,9 @@ flyingon.renderer('Grid', function (base) {
         {
             grid = cell.parent;
 
+            change_focus(grid, cell);
+            grid.__set_current(cell.row);
+
             dom = cell.view;
             any = dom.parentNode;
 
@@ -14559,7 +14871,7 @@ flyingon.renderer('Grid', function (base) {
 
             if (dom.offsetTop + dom.offsetHeight > any.offsetHeight)
             {
-                grid.view_scroll.scrollTop = dom.offsetTop;
+                grid.view_scroll.scrollTop = dom.offsetTop - 10;
             }
         }
     };
@@ -14595,6 +14907,7 @@ flyingon.renderer('Grid', function (base) {
                     {
                         if (any.row) //数据行
                         {
+                            change_focus(grid, any);
                             grid.__set_current(any.row);
                         }
                         else if (any.column && !any.columnSpan && any.column.name()) //列头且无跨列
@@ -14628,6 +14941,25 @@ flyingon.renderer('Grid', function (base) {
             }
 
             dom.className = 'f-grid-icon ' + icon;
+        }
+    };
+
+
+    function change_focus(grid, cell) {
+
+        var focus = grid.__focus_cell;
+
+        if (focus !== cell)
+        {
+            if (focus)
+            {
+                focus.view.className = focus.view.className.replace(' f-grid-cell-focus', '');
+            }
+
+            if (grid.__focus_cell = cell)
+            {
+                cell.view.className += ' f-grid-cell-focus';
+            }
         }
     };
 
@@ -15142,20 +15474,6 @@ flyingon.renderer('Grid', function (base) {
 
 
 
-    this.locate = function (grid) {
-
-        base.locate.call(this, grid);
-        this.content(grid, grid.view);
-    };
-
-
-    this.locate_html = function (grid) {
-
-
-    };
-
-
-
     //列头大小发生变化
     this.header = function (grid, view, value) {
 
@@ -15192,25 +15510,31 @@ flyingon.renderer('Grid', function (base) {
     };
 
 
-    //内容发生变化
-    this.content = function (grid, view) {
 
-        this.show(grid,
-            grid.scrollLeft | 0,
-            grid.scrollTop | 0,
-            grid.offsetWidth - grid.borderLeft - grid.borderRight,
-            grid.offsetHeight - grid.borderTop - grid.borderBottom);
+    this.locate = function (grid) {
+
+        base.locate.call(this, grid);
+        this.show(grid);
+    };
+
+
+    this.locate_html = function (grid) {
+
+        base.locate_html.call(this, grid);
+        this.show(grid);
     };
 
 
 
     //显示指定范围的表格内容
-    this.show = function (grid, x, y, width, height) {
+    this.show = function (grid) {
 
         var storage = grid.__storage || grid.__defaults,
             columns = grid.__columns,
             rows = grid.__rows,
+            width = grid.__compute_columns(), //计算表格列
             height = grid.offsetHeight - grid.borderTop - grid.borderBottom,
+            auto = grid.__auto_size,
             any;
 
         //显示分组
@@ -15219,36 +15543,18 @@ flyingon.renderer('Grid', function (base) {
             height -= any;
         }
 
-        //计算列宽度
-        any = columns.__arrange_size !== width;
-
-        if (grid.__column_dirty || any && columns.__persent)
-        {
-            grid.__column_dirty = false;
-
-            columns.__show_tag = update_tag++;
-            columns.__compute_size(width);
-            columns.__compute_visible(x);
-        }
-        else if (any || columns.__arrange_start !== x)
-        {
-            columns.__arrange_size = width;
-            columns.__compute_visible(x);
-        }
-
         //控制水平滚动条
-        if (columns.__size > width)
+        if (columns.__size > width && !(auto & 1))
         {
             any = flyingon.hscroll_height;
             height -= any;
         }
         else
         {
-            any = 1;
+            any = 0;
         }
 
         grid.view_body.style.bottom = any + 'px';
-        grid.view_scroll.firstChild.style.width = columns.__size + 'px';
 
         //显示列头
         if ((any = storage.header) > 0)
@@ -15265,10 +15571,27 @@ flyingon.renderer('Grid', function (base) {
         }
 
         //显示内容
-        any = this.__show_body(grid, grid.currentView(), height);
+        any = grid.currentView();
+        any = this.__show_body(grid, any, (auto & 2) ? any.length * storage.rowHeight : height);
 
         //排列横向锁定区域
         this.__layout_locked(grid, columns.__locked, any);
+        
+        //处理自动宽高
+        width = columns.__size;
+
+        if (auto & 1)
+        {
+            grid.view.style.width = grid.offsetWidth + 'px';
+            width = 1;
+        }
+
+        grid.view_scroll.firstChild.style.width = width + 'px';
+
+        if (auto & 2)
+        {
+            grid.view.style.height = grid.offsetHeight + 'px';
+        }
     };
 
 
@@ -15389,7 +15712,6 @@ flyingon.renderer('Grid', function (base) {
             index = start,
             column,
             node,
-            tag,
             style,
             cells,
             cell,
@@ -15478,7 +15800,7 @@ flyingon.renderer('Grid', function (base) {
             rowHeight = rows.__row_height = storage.rowHeight,
             tree = storage.treeColumn,
             size = end * rowHeight,
-            vscroll = size > height,
+            vscroll = size > height && !(grid.__auto_size & 2),
             any;
 
         //记录是否树列
@@ -15488,7 +15810,7 @@ flyingon.renderer('Grid', function (base) {
             any.__tree_icon = storage.treeIcon;
         }
 
-        grid.view_scroll.firstChild.style.height = (size || 1) + 'px';
+        grid.view_scroll.firstChild.style.height = (vscroll ? size || 1 : 1) + 'px';
         grid.view_body.style[flyingon.rtl ? 'left' : 'right'] = (vscroll ? flyingon.vscroll_width : 0) + 'px';
 
         //显示顶部锁定
@@ -15688,13 +16010,13 @@ flyingon.renderer('Grid', function (base) {
 
         var writer = [],
             fragment = dom_fragment,
-            tag = grid.__columns.__show_tag,
             size = grid.__group_size,
             fn = grid.ongroup,
             index = start,
             row,
             node,
             text,
+            tag,
             any;
 
         while (index < end)
@@ -15950,7 +16272,7 @@ flyingon.renderer('Tab', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             any;
@@ -15959,7 +16281,7 @@ flyingon.renderer('Tab', function (base) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, (className || '') + 'f-tab-direction-' + storage.direction, cssText);
+        this.renderDefault(writer, control, 'f-tab-direction-' + storage.direction);
         
         writer.push('><div class="f-tab-head f-tab-theme-', storage.theme, '">',
                     '<div class="f-tab-line"></div>',
@@ -16545,10 +16867,10 @@ flyingon.renderer('Popup', 'Panel', function (base) {
     //处理全局点击事件,点击当前弹出层以外的区域则关闭当前弹出层
     on(document, 'mousedown', function (e) { 
 
-        var control;
+        var control = current;
 
-        if (control = current) {
-
+        if (control)
+        {
             var view = control.view,
                 reference = control.__view_reference,
                 any = e.target;
@@ -16575,11 +16897,9 @@ flyingon.renderer('Popup', 'Panel', function (base) {
     //处理全局键盘事件,点击Esc则退出当前窗口
     on(document, 'keydown', function (e) { 
 
-        var control;
-
-        if ((control = current) && e.which === 27)
+        if (current && e.which === 27)
         {
-            control.close('cancel');
+            current.close('cancel');
         }
     });
 
@@ -16738,11 +17058,133 @@ flyingon.renderer('Popup', 'Panel', function (base) {
 
 
 
+flyingon.renderer('ToolTip', function (base) {
+
+
+    //当前弹出层
+    var current = null;
+
+    //注册事件函数
+    var on = flyingon.dom_on;
+
+    //注销事件函数
+    var off = flyingon.dom_off;
+
+    
+
+    //处理全局点击事件,点击当前弹出层以外的区域则关闭当前弹出层
+    on(document, 'mousedown', function (e) { 
+
+        if (current) 
+        {
+            var view = current.view,
+                any = e.target;
+
+            while (any)
+            {
+                if (any === view)
+                {
+                    return;
+                }
+
+                any = any.parentNode;
+            }
+
+            current.close();
+        }
+    });
+    
+
+    //处理全局键盘事件,点击Esc则退出当前窗口
+    on(document, 'keydown', function (e) {
+
+        if (current && e.which === 27)
+        {
+            current.close();
+        }
+    });
+
+
+
+    this.render = function (writer, control) {
+
+        writer.push('<div');
+
+        this.renderDefault(writer, control);
+        
+        writer.push('><div class="f-tooltip-body"></div><div class="f-tooltip-arrow1"></div><div class="f-tooltip-arrow2"></div></div>');
+    };
+
+
+
+    //打开弹出层
+    //reference: 停靠参考物
+    this.show = function (control, reference, direction, reverse) {
+
+        var view = control.view || this.createView(control, false),
+            any;
+
+        if (control.html())
+        {
+            view.firstChild.innerHTML = control.text();
+        }
+        else
+        {
+            view.firstChild[this.__text_name] = control.text();
+        }
+
+        document.body.appendChild(view);
+
+        control.measure(0, 0);
+        control.locate(0, 0);
+
+        flyingon.__update_patch();
+        
+        this.update(control);
+
+        any = flyingon.dom_align(
+            control.view, 
+            (reference.view || reference).getBoundingClientRect(), 
+            direction, direction === 'top' || direction === 'bottom' ? 'center' : 'middle', 
+            reverse);
+
+        control.offsetLeft = any.left;
+        control.offsetTop = any.top;
+        
+        if ((any = current) && any !== control)
+        {
+            any.close();
+        }
+
+        current = control;
+    };
+
+
+    //关闭弹出层(弹出多级窗口时只有最后一个可以成功关闭)
+    this.close = function (control) {
+
+        var view = control.view,
+            any;
+
+        current = null;
+
+        if (any = view && view.parentNode)
+        {
+            any.removeChild(view);
+        }
+    };
+
+
+});
+
+
+
+
 flyingon.renderer('Dialog', 'Panel', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             head = storage.header,
@@ -16751,7 +17193,7 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         if (text)
         {
@@ -17064,7 +17506,7 @@ Object.extend('Control', function () {
      * @type {int}
      * @description 控件默认宽度(width === 'default'时的宽度)
      */
-    this.defaultWidth = 100;
+    this.defaultWidth = 200;
 
     //控件默认高度(height === 'default'时的高度)
     this.defaultHeight = 25;
@@ -17817,7 +18259,10 @@ Object.extend('Control', function () {
 
         if (parent)
         {
-            parent.__arrange_delay(2);
+            if (parent.__arrange_dirty < 2)
+            {
+                parent.__arrange_delay(2);
+            }
         }
         else if (this.__top_control)
         {
@@ -17833,20 +18278,22 @@ Object.extend('Control', function () {
     //启用延时排列
     this.__arrange_delay = function (dirty) {
 
-        if (this.__arrange_dirty < dirty)
+        var parent = this.parent;
+
+        this.__arrange_dirty = dirty;
+
+        if (parent)
         {
-            var parent = this.parent;
+            dirty = this.__auto_size ? 2 : 1;
 
-            this.__arrange_dirty = dirty;
-
-            if (parent)
+            if (parent.__arrange_dirty < dirty)
             {
-                parent.__arrange_delay(1);
+                parent.__arrange_delay(dirty);
             }
-            else if (this.__top_control)
-            {
-                flyingon.__update_delay(this);
-            }
+        }
+        else if (this.__top_control)
+        {
+            flyingon.__update_delay(this);
         }
     };
 
@@ -17961,7 +18408,7 @@ Object.extend('Control', function () {
 
 
 
-flyingon.Control.extend('HtmlElement', function (base) {
+flyingon.HtmlElement = flyingon.Control.extend(function (base) {
 
 
     this.tagName = 'div';
@@ -18012,6 +18459,10 @@ flyingon.Control.extend('HtmlElement', function (base) {
             return false;
         }
     };
+
+
+
+    flyingon.renderer.bind(this, 'HtmlElement');
 
 
 
@@ -18073,6 +18524,10 @@ flyingon.Control.extend('Label', function (base) {
 flyingon.Control.extend('Button', function (base) {
    
     
+
+    this.defaultWidth = 80;
+
+
 
     var define = function (self, name, defaultValue) {
 
@@ -18707,7 +19162,7 @@ flyingon.Control.extend('Panel', function (base) {
         set: function (value) {
 
             this.__layout = null;
-            this.__arrent_dirty < 2 && this.__arrange_delay();
+            this.__arrent_dirty < 2 && this.__arrange_delay(2);
         }
     });
 
@@ -19928,25 +20383,267 @@ flyingon.TextButton.extend('Month', function (base) {
 
 
 
+flyingon.Control.extend('Box', function (base) {
+
+
+
+    this.defaultWidth = 300;
+
+
+    this.defaultHeight = 33;
+
+
+    this.defaultValue('padding', 4);
+
+
+    this.defaultValue('height', 'auto');
+
+
+
+    //标记是否检验容器
+    this.__validate_box = true;
+
+
+
+    //是否竖直排列
+    this.defineProperty('vertical', false);
+
+
+    //作为html布局时是否需要适应容器
+    this.defineProperty('adaption', false);
+
+    
+
+    //扩展容器功能
+    flyingon.fragment('f-container', this, base, true);
+
+
+
+    //设置或清除检验信息
+    this.__set_validate = function (error, control) {
+
+        var target = this.__find_error();
+
+        if (target)
+        {
+            target.__validate_text = error.text;
+            target.visible(error);
+
+            if (error && !target.__no_text)
+            {
+                target.renderer.set(target, 'text', error.text);
+            }
+        }
+        else if (control)
+        {
+            control.__set_validate(error);
+        }
+    };
+
+
+
+    //获取错误提醒控件
+    this.__find_error = function () {
+
+        for (var i = this.length - 1; i >= 0; i--)
+        {
+            if (this[i].__box_error)
+            {
+                return this[i];
+            }
+        }
+    };
+
+
+
+    //获取标题控件
+    this.__find_title = function () {
+
+        for (var i = 0, l = this.length; i < l; i++)
+        {
+            if (this[i].__box_title)
+            {
+                return this[i];
+            }
+        }
+    };
+
+
+    //获取错误标题信息
+    this.__error_title = function (control) {
+
+        var any;
+
+        control = this.__find_title();
+
+        return control && (any = control.__storage) ? any.text : '';
+    };
+
+
+
+    //测量自动大小
+    this.onmeasure = function (auto) {
+        
+        var tag = (this.offsetHeight << 16) + this.offsetWidth;
+
+        if (this.__size_tag !== tag)
+        {
+            this.__size_tag = tag;
+            tag = true;
+        }
+        else
+        {
+            tag = this.__arrange_dirty > 1;
+        }
+
+        if (tag)
+        {
+            this.__arrange_dirty = 0;
+            arrange(this);
+        }
+
+        if (auto)
+        {
+            if (auto & 1)
+            {
+                this.offsetWidth = this.arrangeRight + this.borderLeft + this.borderRight + this.paddingRight;
+            }
+            
+            if (auto & 2)
+            {
+                this.offsetHeight = this.arrangeBottom + this.borderTop + this.borderBottom + this.paddingBottom;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    };
+
+
+    function arrange(control) {
+
+        var x = control.paddingLeft,
+            y = control.paddingTop,
+            width = control.offsetWidth - x - control.borderLeft - control.borderRight - control.paddingRight,
+            height = control.offsetHeight - y - control.borderTop - control.borderBottom - control.paddingBottom;
+
+        control.arrangeRight = control.arrangeBottom = 0;
+
+        if (control.vertical())
+        {
+            control.__arrange_vertical(x, y, width, height);
+        }
+        else
+        {
+            control.__arrange(x, y, width, height);
+        }
+    };
+
+
+    this.__arrange = function (x, y, width, height) {
+
+        var left = x,
+            right = x + width,
+            control;
+        
+        //先按无滚动条的方式排列
+        for (var i = 0, l = this.length; i < l; i++)
+        {
+            control = this[i];
+
+            if (control.__visible)
+            {
+                if (control.__new_line)
+                {
+                    x = left;
+                    y = this.arrangeBottom;
+
+                    control.measure(width, height, width, height, 1);
+                    right = x + width;
+                }
+                else
+                {
+                    control.measure(width, height, right - x || -1, height);
+                }
+
+                control.locate(x, y, 0, height, this);
+
+                x = this.arrangeX;
+            }
+        }
+    };
+
+
+    this.__arrange_vertical = function () {
+
+        var bottom = y + height,
+            control;
+        
+        //先按无滚动条的方式排列
+        for (var i = 0, l = this.length; i < l; i++)
+        {
+            control = this[i];
+
+            if (control.__visible)
+            {
+                control.measure(width, height, width, bottom - height || -1, 1);
+                control.locate(x, y, width, 0, this);
+
+                y = this.arrangeY;
+            }
+        }
+    };
+
+
+
+}).register();
+
+
+
+
 flyingon.Control.extend('Title', function (base) {
    
     
 
     this.defaultWidth = 60;
 
+
+    //是否标题控件
+    this.__box_title = true;
+
     
-    //标签文本
-    this.defineProperty('text', '', {
-            
-        set: function () {
+    //文本内容
+    this.defineProperty('text', '', { set: set_text });
 
-            this.rendered && this.renderer.set(this, 'text');
+
+    //文本内容是否html格式
+    this.defineProperty('html', false, { set: set_text });
+
+
+    function set_text(value) {
+
+        this.rendered && this.renderer.set(this, 'text', value);
+    };
+
+
+
+    //检测是否必填
+    this.__check = function () {
+
+        var parent = this.parent;
+
+        if (parent)
+        {
+            for (var i = 0, l = parent.length; i < l; i++)
+            {
+                if (parent[i].__required)
+                {
+                    return true;
+                }
+            }
         }
-    });
-
-
-    //是否必填
-    this.defineProperty('require', false);
+    };
 
 
 
@@ -19956,103 +20653,187 @@ flyingon.Control.extend('Title', function (base) {
 
 
 /**
- * 校验结果显示
+ * 校验错误信息
  */
 flyingon.Control.extend('Error', function (base) {
    
 
 
-    var all = flyingon.validator.errors = flyingon.create(null);
+    var validate = flyingon.validate;
 
+
+
+    //标记为校验错误控件
+    this.__box_error = true;
+
+
+    this.defaultWidth = 30;
 
 
     this.defaultValue('visible', this.__visible = false);
 
 
-    //校验目标控件id
-    this.defineProperty('target', '', {
+    //显示方式
+    //info
+    //error
+    //warn
+    //question
+    //text
+    this.defineProperty('type', 'text', {
+        
+        set: function (value) {
 
-        set: function (value, oldValue) {
-
-            if (oldValue)
+            if (this.__no_text = value !== 'text')
             {
-                delete all[oldValue];
+                if (!this.__validate_event)
+                {
+                    this.__validate_event = true;
+                    this.on('mouseover', validate.mouseover);
+                    this.on('mouseout', validate.mouseout);
+                }
+            }
+            else if (this.__validate_event)
+            {
+                this.off('mouseover', validate.mouseover);
+                this.off('mouseout', validate.mouseout);
             }
 
-            if (value)
-            {
-                (all[value] || (all[value] = [])).push(this);
-            }
+            this.renderer.set(this, 'type', value);
         }
     });
 
 
-    //指定校验器名称
-    this.defineProperty('validator', '');
+    //在box中是否独占一行
+    this.defineProperty('line', false, {
 
+        set: function (value) {
 
-    //显示方式
-    //!
-    //?
-    //text
-    this.defineProperty('type', 'text');
-
-    
-    //标签文本, 支持变量
-    //{{0}}     name
-    //{{1}}     第一个参数
-    //{{2}}     第二个参数
-    this.defineProperty('text', '');
-
-
-    //文本是否html
-    this.defineProperty('html', false);
-
-
-
-    this.show = function (error) {
-
-        var control = error.control;
-
-        (control.__errors || (control.__errors = [])).push(this);
-
-        this.visible(true);
-        this.renderer.set(this, 'text', this.showText(error));
-    };
-
-
-    this.showText = function (error) {
-
-        var storage = this.__storage || this.__defaults,
-            text;
-
-        if (text = storage.text)
-        {
-            text = text.replace(/\{\{([^{}]*)\}\}/g, function (text, key) {
-
-                return error[key];
-            });
+            this.__new_line = value;
         }
+    });
 
-        return text || '';
-    };
-
-
-    this.despose = function () {
-
-        var id = this.__target;
-
-        base.dispose.call(this);
-
-        if (id)
-        {
-            delete all[id];
-        }
-    };
-    
 
 
 }).register();
+
+
+
+
+flyingon.HtmlElement.extend('Pagination', function (base) {
+
+
+    var template = [
+        { Class: 'span', className: 'f-page-button f-page-first' },
+        { Class: 'span', className: 'f-page-button f-page-previous' },
+        { Class: 'input', type: 'text', className: 'f-page-current' },
+        { Class: 'span', text: '/' },
+        { Class: 'span', className: 'f-page-pages' },
+        { Class: 'span', className: 'f-page-button f-page-next' },
+        { Class: 'span', className: 'f-page-button f-page-last' },
+        { Class: 'span', className: 'f-page-sep' },
+        { Class: 'span', className: 'f-page-button f-page-refresh' },
+        { Class: 'span', className: 'f-page-sep' },
+        { Class: 'ComboBox', className: 'f-page-records' }
+    ];
+
+
+    this.init = function () {
+
+        this.push.apply(this, template);
+    };
+
+
+
+    this.defaultHeight = 30;
+
+    this.defaultValue('border', 1);
+
+
+    //每页显示记录数
+    this.defineProperty('records', 20, { set: move });
+
+
+    //总记录数
+    this.defineProperty('total', 0, { set: move });
+
+
+
+    function move() {
+
+        var storage = this.__storage || this.__defaults;
+
+        this.__pages = Math.ceil(storage.total / storage.records);
+        this.moveTo(this.__index);
+    };
+
+
+
+    this.__index = this.__pages = 0;
+
+
+    //获取当前页码
+    this.current = function () {
+
+        return this.__index;
+    };
+
+
+    //获取总的页数
+    this.pages = function () {
+
+        return this.__pages;
+    };
+
+
+    //移动到第一页
+    this.first = function () {
+
+        this.moveTo(0);
+    };
+
+
+    //移动到上一页
+    this.previous = function () {
+
+        this.moveTo(this.__index - 1);
+    };
+
+
+    //移动到下一页
+    this.next = function () {
+
+        this.moveTo(this.__index + 1);
+    };
+
+
+    //移动到最后一页
+    this.last = function () {
+
+        this.moveTo(this.__pages - 1);
+    };
+
+
+    //移动到指定页
+    this.moveTo = function (index) {
+
+        if ((index |= 0) < 0)
+        {
+            index = 0;
+        }
+        else if (index >= this.__pages)
+        {
+            index = this.__pages - 1;
+        }
+
+        if (this.__index !== index)
+        {
+            this.trigger('change', 'index', this.__index = index);
+        }
+    };
+
+
+
+}).register(); 
 
 
 
@@ -20754,10 +21535,10 @@ flyingon.Control.extend('Tree', function (base) {
 
     this.__find_text = function () {
 
-        var title = this.title(),
+        var title = this.__storage || '',
             any;
 
-        if (title && typeof title === 'object')
+        if (title && (title = title.title) && typeof title === 'object')
         {
             if (title instanceof Array)
             {
@@ -22522,6 +23303,15 @@ flyingon.Control.extend('Grid', function (base) {
     });
 
 
+
+    //获取错误标题信息(检验时用)
+    this.__error_title = function (control) {
+
+        var column = control.column;
+        return column ? column.__find_text() : '';
+    };
+
+
     
     //获取指定索引行或行集合
     this.rows = function (index) {
@@ -22822,13 +23612,84 @@ flyingon.Control.extend('Grid', function (base) {
                 this.__column_dirty = true;
             }
 
-            if (!patch || !patch.content)
+            if (!patch || !patch.show)
             {
-                this.renderer.set(this, 'content', true);
+                this.renderer.set(this, 'show', true);
             }
         }
-        
+
         return this;
+    };
+
+
+    //更新标记
+    var update_tag = 1;
+    
+    this.__compute_columns = function () {
+
+        var columns = this.__columns,
+            width = this.offsetWidth - this.borderLeft - this.borderRight,
+            dirty = this.__column_dirty,
+            change = columns.__arrange_size !== width;
+
+        if (change)
+        {
+            columns.__arrange_size = width;
+        }
+
+        if (dirty || change && columns.__persent)
+        {
+            this.__column_dirty = false;
+
+            columns.__show_tag = update_tag++;
+            columns.__compute_size(width);
+        }
+
+        if (dirty || change)
+        {
+            columns.__compute_visible(this.scrollLeft | 0);
+        }
+
+        return width;
+    };
+
+
+    //测量自动大小
+    this.onmeasure = function (auto) {
+        
+        if (auto)
+        {
+            var storage = this.__storage || this.__defaults,
+                x,
+                y;
+
+            this.__compute_columns();
+
+            x = this.__columns.__size + this.borderLeft + this.borderRight;
+
+            y = this.currentView().length * storage.rowHeight;
+            y += storage.header + storage.group;
+            y += this.borderTop + this.borderBottom;
+
+            if (auto & 2)
+            {
+                this.offsetHeight = y + (!(auto & 1) && this.offsetWidth < x ? flyingon.hscroll_height : 0);
+                y = false;
+            }
+            else
+            {
+                y = y > this.offsetHeight;
+            }
+
+            if (auto & 1)
+            {
+                this.offsetWidth = x + (y ? flyingon.vscroll_width : 0);
+            }
+        }
+        else
+        {
+            return false;
+        }
     };
 
 
@@ -23289,6 +24150,77 @@ flyingon.Panel.extend('Popup', function () {
         this.shown = false;
 
         this.trigger('closed', 'closeType', closeType);
+
+        if (this.autoDispose)
+        {
+            this.dispose();
+        }
+
+        return this;
+    };
+    
+
+
+}).register();
+
+
+
+
+flyingon.Control.extend('ToolTip', function () {
+
+
+
+    this.init = function () {
+
+        this.addClass('f-tooltip-right');
+    };
+
+
+
+    this.defaultValue('border', 1);
+
+    this.defaultValue('width', 'auto');
+
+    this.defaultValue('height', 'auto');
+
+
+
+    //显示内容
+    this.defineProperty('text', '');
+
+
+    //文本是否html
+    this.defineProperty('html', false);
+
+
+    //停靠方向 bottom:下面 top:上面 right:右边 left:左边
+    this.defineProperty('direction', 'right', {
+
+        set: function (value, oldValue) {
+
+            oldValue && this.removeClass('f-tooltip-' + oldValue);
+            value && this.addClass('f-tooltip-' + value);
+        }
+    });
+    
+    
+    //空间不足时是否反转方向
+    this.defineProperty('reverse', true);
+
+
+
+    //显示
+    this.show = function (reference) {
+
+        this.renderer.show(this, reference, this.direction(), this.reverse());
+        return this;
+    };
+
+
+    //关闭
+    this.close = function () {
+
+        this.rendered && this.renderer.close(this);
 
         if (this.autoDispose)
         {
@@ -28037,11 +28969,11 @@ flyingon.renderer('Highlight', function (base) {
         cache;
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
         
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, (cssText || '') + 'overflow:auto');
+        this.renderDefault(writer, control, 'overflow:auto');
         
         writer.push('><pre style="margin:0;width:auto;height:auto;"><code style="overflow:visible;"></code></pre></div>');
     };

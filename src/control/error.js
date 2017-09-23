@@ -1,98 +1,63 @@
 /**
- * 校验结果显示
+ * 校验错误信息
  */
 flyingon.Control.extend('Error', function (base) {
    
 
 
-    var all = flyingon.validator.errors = flyingon.create(null);
+    var validate = flyingon.validate;
 
+
+
+    //标记为校验错误控件
+    this.__box_error = true;
+
+
+    this.defaultWidth = 30;
 
 
     this.defaultValue('visible', this.__visible = false);
 
 
-    //校验目标控件id
-    this.defineProperty('target', '', {
+    //显示方式
+    //info
+    //error
+    //warn
+    //question
+    //text
+    this.defineProperty('type', 'text', {
+        
+        set: function (value) {
 
-        set: function (value, oldValue) {
-
-            if (oldValue)
+            if (this.__no_text = value !== 'text')
             {
-                delete all[oldValue];
+                if (!this.__validate_event)
+                {
+                    this.__validate_event = true;
+                    this.on('mouseover', validate.mouseover);
+                    this.on('mouseout', validate.mouseout);
+                }
+            }
+            else if (this.__validate_event)
+            {
+                this.off('mouseover', validate.mouseover);
+                this.off('mouseout', validate.mouseout);
             }
 
-            if (value)
-            {
-                (all[value] || (all[value] = [])).push(this);
-            }
+            this.renderer.set(this, 'type', value);
         }
     });
 
 
-    //指定校验器名称
-    this.defineProperty('validator', '');
+    //在box中是否独占一行
+    this.defineProperty('line', false, {
 
+        set: function (value) {
 
-    //显示方式
-    //!
-    //?
-    //text
-    this.defineProperty('type', 'text');
-
-    
-    //标签文本, 支持变量
-    //{{0}}     name
-    //{{1}}     第一个参数
-    //{{2}}     第二个参数
-    this.defineProperty('text', '');
-
-
-    //文本是否html
-    this.defineProperty('html', false);
-
-
-
-    this.show = function (error) {
-
-        var control = error.control;
-
-        (control.__errors || (control.__errors = [])).push(this);
-
-        this.visible(true);
-        this.renderer.set(this, 'text', this.showText(error));
-    };
-
-
-    this.showText = function (error) {
-
-        var storage = this.__storage || this.__defaults,
-            text;
-
-        if (text = storage.text)
-        {
-            text = text.replace(/\{\{([^{}]*)\}\}/g, function (text, key) {
-
-                return error[key];
-            });
+            this.__new_line = value;
         }
+    });
 
-        return text || '';
-    };
-
-
-    this.despose = function () {
-
-        var id = this.__target;
-
-        base.dispose.call(this);
-
-        if (id)
-        {
-            delete all[id];
-        }
-    };
-    
 
 
 }).register();

@@ -22,7 +22,7 @@ Object.extend('Control', function () {
      * @type {int}
      * @description 控件默认宽度(width === 'default'时的宽度)
      */
-    this.defaultWidth = 100;
+    this.defaultWidth = 200;
 
     //控件默认高度(height === 'default'时的高度)
     this.defaultHeight = 25;
@@ -775,7 +775,10 @@ Object.extend('Control', function () {
 
         if (parent)
         {
-            parent.__arrange_delay(2);
+            if (parent.__arrange_dirty < 2)
+            {
+                parent.__arrange_delay(2);
+            }
         }
         else if (this.__top_control)
         {
@@ -791,20 +794,22 @@ Object.extend('Control', function () {
     //启用延时排列
     this.__arrange_delay = function (dirty) {
 
-        if (this.__arrange_dirty < dirty)
+        var parent = this.parent;
+
+        this.__arrange_dirty = dirty;
+
+        if (parent)
         {
-            var parent = this.parent;
+            dirty = this.__auto_size ? 2 : 1;
 
-            this.__arrange_dirty = dirty;
-
-            if (parent)
+            if (parent.__arrange_dirty < dirty)
             {
-                parent.__arrange_delay(1);
+                parent.__arrange_delay(dirty);
             }
-            else if (this.__top_control)
-            {
-                flyingon.__update_delay(this);
-            }
+        }
+        else if (this.__top_control)
+        {
+            flyingon.__update_delay(this);
         }
     };
 

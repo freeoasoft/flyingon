@@ -20,59 +20,83 @@ flyingon.widget({
                 Class: 'Panel',
                 className: 'f-border',
                 width: 780,
-                height: 200,
+                height: 'auto',
                 border: 1,
                 padding: 4,
                 layout: 'vertical-line',
 
                 children: [
-                    { 
-                        Class: 'Panel', 
-                        layout: 'line', 
-                        height: 30, 
-                        padding: 2, 
+                    {
+                        Class: 'Box', 
+                        width: 265,
                         children: [
-                            { Class: 'Title', text: '用户名', required: true },
-                            { 
+                            {
+                                Class: 'Title',
+                                text: '用户名'
+                            },
+                            {
                                 Class: 'TextBox', 
-                                id: 'user', 
-                                width: 200, 
-                                validator: 'required|length:6:20', value: '' 
+                                required: true,
+                                validator: 'length:6:20'
+                            },
+                            {
+                                Class: 'Error', 
+                                line: true,
+                                style: 'text-align:right;'
                             }
                         ]
                     },
                     { 
-                        Class: 'Error', 
-                        target: 'user', 
-                        width: 260, 
-                        style: 'text-align:right;', 
-                        validator: 'required', 
-                        text: '用户名不能为空'
-                    },
-                    {
-                        Class: 'Error', 
-                        target: 'user', 
-                        width: 260, 
-                        style: 'text-align:right;', 
-                        validator: 'length', 
-                        text: '用户名长度只能在{{1}}到{{2}}位之间' 
-                    },
-                    { 
-                        Class: 'Panel', 
-                        layout: 'line', 
-                        height: 30, 
-                        padding: 2, 
+                        Class: 'Box',
+                        width: 265,
                         children: [
-                            { Class: 'Title', text: '密码', required: true },
-                            { Class: 'Password', id: 'password', width: 200, validator: 'password', value: '' },
+                            {
+                                Class: 'Title',
+                                text: '密码'
+                            },
+                            {
+                                Class: 'Password', 
+                                required: true,
+                                validator: 'password'
+                            },
+                            {
+                                Class: 'Error', 
+                                line: true,
+                                style: 'text-align:right;'
+                            }
                         ]
                     },
-                    { 
-                        Class: 'Error', 
-                        target: 'password', 
-                        width: 260, 
-                        style: 'text-align:right;', 
-                        text: '密码必须是8-20位长度且同时包含字母及数字' 
+                    {
+                        Class: 'Box', 
+                        children: [
+                            {
+                                Class: 'Title',
+                                text: '邮件地址'
+                            },
+                            {
+                                Class: 'TextBox', 
+                                required: true,
+                                validator: 'email' 
+                            },
+                            {
+                                Class: 'Error', 
+                                type: 'warn'
+                            }
+                        ]
+                    },
+                    {
+                        Class: 'Box', 
+                        children: [
+                            {
+                                Class: 'Title',
+                                text: '说明'
+                            },
+                            {
+                                Class: 'TextBox', 
+                                required: true,
+                                validator: 'minLength:10' 
+                            }
+                        ]
                     }
                 ]
             },
@@ -87,7 +111,10 @@ flyingon.widget({
         //自定义密码校验器
         flyingon.validator('password', function (text) {
 
-            return text && text.length >= 8 && text.length <= 20 && /[a-zA-Z]/.test(text) && /\d/.test(text);
+            if (text.length < 8 || text.length > 20 || !/[a-zA-Z]/.test(text) && /\d/.test(text))
+            {
+                return '密码长度必须在8-20之间且同时包含字母及数字';
+            }
         });
 
 
@@ -99,7 +126,7 @@ flyingon.widget({
                 var error = errors[i];
 
                 //error.control  //control
-                //error[0]       //name
+                //errot.title    //标题
                 //error[1]       //第一个参数
                 //error[2]       //第二个参数
             }

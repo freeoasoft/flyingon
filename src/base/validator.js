@@ -1,91 +1,27 @@
 flyingon.validator = (function () {
 
 
+
+    var tooltip;
+
     var all = flyingon.create(null);
 
-
-    all.required = function (text) {
-
-        return text.length > 0;
-    };
-
-
-    all.min = function (text, length) {
-
-        return text >= length;
-    };
-
-
-    all.max = function (text, length) {
-
-        return text <= length;
-    };
-
-
-    all.minLength = function (text, length) {
-
-        return text.length >= length;
-    };
-
-
-    all.maxLength = function (text, length) {
-
-        return text.length <= length;
-    };
-
-
-    all.length = function (text, min, max) {
-
-        return text.length >= min && text.length <= max;
-    };
-
-
-    all.email = function (text) {
-
-        return /^(\w)+(\.\w+)*@(\w)+((\.\w+)+)$/.test(text);
-    };
-
-
-    all.url = function (text) {
-
-        return /(https?|ftp|file):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]/.test(text);
-    };
-
-
-    all.date = function (text) {
-
-        return /^\d{4}(\-|\/|\.)\d{1,2}\1\d{1,2}$/.test(text);
-    };
-
-
-    all.int = function(text) {
-
-        text = +text;
-        return (text | 0) === text;
-    };
-
-
-    all.number = function (text) {
-
-        text = +text;
-        return text === text;
-    };
+    var i18n = flyingon.i18ntext;
 
 
 
     function validate(control, errors) {
 
-        var validator = control.__validator,
-            length;
-
-        if (validator && (length = validator.length))
+        var any = control.__validator;
+         
+        if ((length = any && any.length) || control.__required)
         {
-            validate_control(control, validator, length, errors);
+            validate_control(control, any, length, errors);
         }
         
-        if ((length = control.length) > 0)
+        if ((any = control.length) > 0)
         {
-            for (var i = 0; i < length; i++)
+            for (var i = 0; i < any; i++)
             {
                 validate(control[i], errors);
             }
@@ -97,63 +33,79 @@ flyingon.validator = (function () {
 
         var text, args, any;
 
-        if (any = control.__errors)
+        if (text = control.value || control.text)
         {
-            for (var i = any.length - 1; i >= 0; i--)
+            text = text.call(control);
+
+            if (control.__required)
             {
-                any[i].visible(false);
+                if (!text.length)
+                {
+                    any = create_error(control, 'required', i18n('validator.required'));
+                    errors.push(any);
+                    return;
+                }
             }
 
-            any.length = 0;
-        }
-
-        for (var i = 0; i < length; i++)
-        {
-            if (text = control.value || control.text)
+            for (var i = 0; i < length; i++)
             {
-                text = text.call(control);
-
-                for (var j = 0, l = validator.length; j < l; j++)
+                if ((any = all[validator[i++]]) && 
+                    (any = any.apply(control, (args = validator[i].slice(0), args[0] = text, args))) &&
+                    (any = i18n(any, null)))
                 {
-                    if (!(any = all[validator[j++]]) || 
-                        !any.apply(control, (args = validator[j].slice(0), args[0] = text, args)))
-                    {
-                        any = validator[j].slice(0);
-                        any.control = control;
-
-                        errors.push(any);
-                        return;
-                    }
+                    any = create_error(control, '', any, validator[i]);
+                    errors.push(any);
+                    return;
                 }
             }
         }
+
+        //清空错误信息
+        set_error(control);
     };
 
 
-    function show_errors(errors) {
+    function create_error(control, name, text, args) {
 
-        var controls = flyingon.validator.errors;
+        var error = {
 
-        for (var i = 0, l = errors.length; i < l; i++)
-        {
-            var error = errors[i],
-                control = error.control,
-                index = 0,
-                list,
-                any;
+            control: control, 
+            name: name || (name = args[0]), 
+            text: text.replace(/\{\{([^{}]*)\}\}/g, function (text, key) {
 
-            if ((any = control.id()) && (list = controls[any]))
-            {
-                while (control = list[index++])
+                switch (key)
                 {
-                    if (!(any = control.__storage) || !(any = any.validator) || any.indexOf(error[0]) >= 0)
-                    {
-                        control.show(error);
-                    }
+                    case 'name':
+                        return name;
+
+                    case 'title':
+                        return (key = control.parent) ? key.__error_title() : text;
                 }
-            }
+
+                return args && args[key] || text;
+            })
+        };
+
+        set_error(control, error);
+
+        return error;
+    };
+
+
+    function set_error(control, error) {
+
+        var parent = control.parent;
+
+        if (parent && parent.__validate_box)
+        {
+            parent.__set_validate(error, control);
+        }
+        else
+        {
+            control.__set_validate(error);
         }
     };
+
 
 
     flyingon.validate = function (control) {
@@ -162,9 +114,121 @@ flyingon.validator = (function () {
 
         validate(control, errors);
 
-        errors[0] && show_errors(errors);
-
         return errors;
+    };
+
+
+    flyingon.validate.mouseover = function (e) {
+
+        var tip = tooltip || (tooltip = new flyingon.ToolTip().addClass('f-validate-tip'));
+
+        tip.html(true).text(this.__validate_text).show(this);
+    };
+
+
+    flyingon.validate.mouseout = function () {
+
+        tooltip && tooltip.close();
+    };
+
+
+
+    all.required = function (text) {
+
+        if (!text.length)
+        {
+            return i18n('validator.required');
+        }
+    };
+
+
+    all.min = function (text, value) {
+
+        if (text < value)
+        {
+            return i18n('validator.min');
+        }
+    };
+
+
+    all.max = function (text, value) {
+
+        if (text > value)
+        {
+            return i18n('validator.max');
+        }
+    };
+
+
+    all.minLength = function (text, length) {
+
+        if (text.length < length)
+        {
+            return i18n('validator.minLength');
+        }
+    };
+
+
+    all.maxLength = function (text, length) {
+
+        if (text.length > length)
+        {
+            return i18n('validator.maxLength');
+        }
+    };
+
+
+    all.length = function (text, min, max) {
+
+        if (text.length < min || text.length > max)
+        {
+            return i18n('validator.length');
+        }
+    };
+
+
+    all.email = function (text) {
+
+        if (!/^(\w)+(\.\w+)*@(\w)+((\.\w+)+)$/.test(text))
+        {
+            return i18n('validator.email');
+        }
+    };
+
+
+    all.url = function (text) {
+
+        if (!/(https?|ftp|file):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]/.test(text))
+        {
+            return i18n('validator.url');
+        }
+    };
+
+
+    all.date = function (text) {
+
+        if (!/^\d{4}(\-|\/|\.)\d{1,2}\1\d{1,2}$/.test(text))
+        {
+            return i18n('validator.date');
+        }
+    };
+
+
+    all.int = function(text) {
+
+        if (((text = +text) | 0) !== text)
+        {
+            return i18n('validator.int');
+        }
+    };
+
+
+    all.number = function (text) {
+
+        if ((text = +text) === text)
+        {
+            return i18n('validator.number');
+        }
     };
 
     
@@ -181,6 +245,29 @@ flyingon.validator = (function () {
 flyingon.fragment('f-validate', function () {
 
 
+
+    var validate = flyingon.validate;
+
+
+
+    //是否必填
+    this.defineProperty('required', false, {
+
+        set: function (value) {
+
+            var any = this.parent;
+
+            this.__required = value;
+
+            if (any && any.__validate_box && any.rendered && (any = any.__find_title()))
+            {
+                any.renderer.set(any, 'required', value);
+            }
+        }
+    });
+
+
+    //校验器
     this.defineProperty('validator', '', {
         
         set: function (value) {
@@ -205,6 +292,30 @@ flyingon.fragment('f-validate', function () {
         }
     });
 
+
+
+    //设置或清除检验信息
+    this.__set_validate = function (error) {
+
+        if (this.__validate_text = error && error.text)
+        {
+            this.addClass('f-validate-error');
+
+            if (!this.__validate_event)
+            {
+                this.__validate_event = true;
+                this.on('mouseover', validate.mouseover);
+                this.on('mouseout', validate.mouseout);
+            }
+        }
+        else if (this.__validate_event)
+        {
+            this.removeClass('f-validate-error');
+
+            this.off('mouseover', validate.mouseover);
+            this.off('mouseout', validate.mouseout);
+        }
+    };
 
 
 });

@@ -19,8 +19,20 @@
     //根据选项创建界面元素
     flyingon.ui = function (options) {
 
-        var control = new (components[options.Class] || arguments[1] || flyingon.HtmlElement)();
+        var type = options.Class,
+            control,
+            any;
 
+        if (any = type ? components[type] : arguments[1])
+        {
+            control= new any();
+        }
+        else
+        {
+            control = new flyingon.HtmlElement();
+            control.tagName = type;
+        }
+    
         control.deserialize(reader, options);
 
         return control;
@@ -241,25 +253,25 @@ flyingon.fragment('f-visual', function () {
     });
 
 
-    
+
     //指定class名 与html一样
     this['class'] = this.defineProperty('className', '', {
 
         set: function (value) {
 
-            var any;
+            var any = this.defaultClassName;
 
-            this.fullClassName = value = value ? this.defaultClassName + ' ' + value : this.defaultClassName;
+            this.fullClassName = value = value ? (any + ' ' + value) : any;
 
             if (this.rendered)
             {
                 if (any = this.__view_patch)
                 {
-                    any['class'] = value;
+                    any['className'] = value;
                 }
                 else
                 {
-                    this.renderer.set(this, 'class', value);
+                    this.renderer.set(this, 'className', value);
                 }
             }
         }
@@ -317,7 +329,7 @@ flyingon.fragment('f-visual', function () {
 
         var list, keys, index;
 
-        if (name && (list = name.match(/\w+/g)) && (keys = this.__class_keys))
+        if (name && (keys = this.__class_keys) && (list = name.match(/[\w-]+/g)))
         {
             index = list.length;
 
@@ -325,7 +337,7 @@ flyingon.fragment('f-visual', function () {
             {
                 if (keys[name = list[index]])
                 {
-                    keys[name] = false;
+                    delete keys[name];
                 }
                 else
                 {
@@ -333,10 +345,7 @@ flyingon.fragment('f-visual', function () {
                 }
             }
             
-            if (list.length > 0)
-            {
-                sync_class(this, keys, list);
-            }
+            sync_class(this, keys);
         }
 
         return this;
@@ -348,7 +357,7 @@ flyingon.fragment('f-visual', function () {
 
         var list, keys, index;
 
-        if (name && (list = name.match(/\w+/g)))
+        if (name && (list = name.match(/[\w-]+/g)))
         {
             if (keys = this.__class_keys)
             {
@@ -356,10 +365,17 @@ flyingon.fragment('f-visual', function () {
 
                 while (index--)
                 {
-                    keys[name = list[index]] = !keys[name];
+                    if (keys[name = list[index]])
+                    {
+                        delete keys[name];
+                    }
+                    else
+                    {
+                        keys[name] = true;
+                    }
                 }
                 
-                sync_class(this, keys, list);
+                sync_class(this, keys);
             }
             else
             {
@@ -388,16 +404,13 @@ flyingon.fragment('f-visual', function () {
 
 
     //同步class
-    function sync_class(self, keys, list) {
+    function sync_class(self, keys) {
 
         var any = [];
 
         for (var name in keys)
         {
-            if (keys[name])
-            {
-                any.push(name);
-            }
+            any.push(name);
         }
 
         self.className(any.join(' '));

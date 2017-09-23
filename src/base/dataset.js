@@ -313,12 +313,12 @@ flyingon.fragment('f-dataset', function () {
             {
                 keys2[row.id = data[primaryKey]] = row;
             }
-                        
+
             target[index++] = row;
             
             if (children && (data = data[children]) && data.length > 0)
             {
-                uniqueId = load_data(dataset, row, data, primaryKey, null, children, uniqueId)
+                uniqueId = load_data(dataset, row, data, primaryKey, children, uniqueId)
             }
         }
 

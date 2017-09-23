@@ -7,7 +7,7 @@ flyingon.widget({
         children: [
             {
                 Class: 'Panel',
-                width: 600,
+                width: 780,
                 height: 40,
 
                 children: [

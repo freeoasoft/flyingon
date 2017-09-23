@@ -5,11 +5,11 @@ flyingon.renderer('Highlight', function (base) {
         cache;
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
         
         writer.push('<div');
         
-        this.renderDefault(writer, control, className, (cssText || '') + 'overflow:auto');
+        this.renderDefault(writer, control, 'overflow:auto');
         
         writer.push('><pre style="margin:0;width:auto;height:auto;"><code style="overflow:visible;"></code></pre></div>');
     };

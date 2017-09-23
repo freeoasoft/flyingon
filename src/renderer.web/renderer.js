@@ -52,6 +52,10 @@
     this.__auto_size = 1;
 
 
+    //是否需要设置lineHeight
+    this.__line_height = 0;
+
+
     //是否设置padding
     this.padding = 1;
     
@@ -100,11 +104,11 @@
 
 
     //渲染html
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
 
         writer.push('></div>');
     };
@@ -125,14 +129,33 @@
             writer.push(' id="', encode(any), '"');
         }
 
-        writer.push(' class="', encode(control.fullClassName), 
-            html ? ' f-html' : ' f-absolute', 
-            className ? ' ' + className : '',
-            '" style="');
+        any = html ? ' f-html' : ' f-absolute';
+
+        if (className)
+        {
+            any += ' ' + className;
+        }
+
+        //处理表格控件class
+        if (className = control.__cell_class)
+        {
+            any += ' ' + className;
+        }
+
+        //系统自动自动的class
+        control.__class_name = any;
+
+        writer.push(' class="', encode(control.fullClassName) + any, '" style="');
 
         if (cssText)
         {
             writer.push(cssText);
+        }
+
+        //添加表格控件样式
+        if (className)
+        {
+            writer.push(control.__cell_style);
         }
 
         if (any = control.__style)
@@ -520,7 +543,20 @@
         if (any || height !== cache.height)
         {
             cache.height = height;
-            style.height = (value & 2) ? height : height + 'px';
+
+            if (value & 2)
+            {
+                style.height = 'auto';
+            }
+            else
+            {
+                style.height = height + 'px';
+
+                if (this.__line_height)
+                {
+                    style.lineHeight = height + 'px';
+                }
+            }
         }
 
         if (any = control.__location_dirty)
@@ -780,6 +816,12 @@
         }
     };
 
+
+
+    this.className = function (control, view, value) {
+
+        view.className = value + control.__class_name;
+    };
 
 
     this.visible = function (control, view, value) {

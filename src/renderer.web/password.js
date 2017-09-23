@@ -1,7 +1,7 @@
 flyingon.renderer('Password', function () {
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var text = control.text();
 
@@ -12,7 +12,7 @@ flyingon.renderer('Password', function () {
 
         writer.push('<input');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push(' type="password" value="', text, 
             '" onchange="flyingon.TextBox.onchange.call(this)"/>');

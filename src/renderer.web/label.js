@@ -2,7 +2,7 @@ flyingon.renderer('Label', function (base) {
 
 
 
-    this.render = function (writer, control, className, cssText) {
+    this.render = function (writer, control) {
 
         var storage = control.__storage || control.__defaults,
             text = storage.text;
@@ -14,7 +14,7 @@ flyingon.renderer('Label', function (base) {
 
         writer.push('<span');
         
-        this.renderDefault(writer, control, className, cssText);
+        this.renderDefault(writer, control);
         
         writer.push('>', text, '</span>');
     };

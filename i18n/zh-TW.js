@@ -24,3 +24,19 @@ flyingon.i18n('calendar', {
     clear: '清除',
     done: '选定'
 });
+
+
+flyingon.i18n('validator', {
+
+    required: '"{{title}}"不能为空!',
+    min: '"{{title}}"不能小于{{1}}!',
+    max: '"{{title}}"不能大小{{1}}!',
+    minLength: '"{{title}}"的长度不能小于{{1}}!',
+    maxLength: '"{{title}}"的长度不能大小{{1}}!',
+    length: '"{{title}}"的长度只能在{{1}}到{{2}}之间!',
+    email: '"{{title}}"不是一个有效的email格式!',
+    url: '"{{title}}"不是一个有效的url格式!',
+    date: '"{{title}}"不是一个有效的日期格式!',
+    int: '"{{title}}"必须是一个整数!',
+    number: '"{{title}}"必须是一个数字!'
+});
