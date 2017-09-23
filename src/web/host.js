@@ -85,7 +85,7 @@
         if (!control.__top_control)
         {
             control.__top_control = true;
-            control.fullClassName += ' f-host';
+            control.__class1 += ' f-host';
         }
 
         host.appendChild(control.view || control.renderer.createView(control));
@@ -108,7 +108,7 @@
                 any.removeChild(view);
             }
 
-            control.fullClassName = control.fullClassName.replace(' f-host', '');
+            control.__class1 = control.__class1.replace(' f-host', '');
 
             if (dispose !== false)
             {

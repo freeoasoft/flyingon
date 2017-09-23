@@ -2,7 +2,7 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             head = storage.header,
@@ -11,7 +11,7 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         if (text)
         {

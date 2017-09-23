@@ -75,17 +75,18 @@ flyingon.renderer('Tree', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             length = control.length;
         
         writer.push('<div');
         
-        this.renderDefault(writer, control, 
-            'f-tree-theme-' + storage.theme + 
+        control.__class2 = 'f-tree-theme-' + storage.theme +
             (!storage.checked ? ' f-tree-no-check' : '') + 
-            (!storage.icon ? ' f-tree-no-icon' : ''));
+            (!storage.icon ? ' f-tree-no-icon' : '');
+
+        render.call(this, writer, control);
         
         writer.push(' onclick="flyingon.Tree.onclick.call(this, event)">');
 
@@ -250,7 +251,19 @@ flyingon.renderer('TreeNode', function (base) {
 
         node.rendered = true;
 
-        writer.push('<div class="', encode(node.fullClassName), '">',
+        text = node.__class1;
+
+        if (any = node.__class2)
+        {
+            text += ' ' + any;
+        }
+
+        if (any = node.__class3)
+        {
+            text += encode(any);
+        }
+
+        writer.push('<div class="', text, '">',
             '<div class="f-tree-node', 
                 last && line ? ' f-tree-node-last' : '',
                 node.__current ? ' f-tree-node-current': '',

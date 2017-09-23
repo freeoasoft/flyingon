@@ -1,11 +1,11 @@
 flyingon.renderer('Slider', function (base) {
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
 
         writer.push('>',
                 '<div class="f-slider-bar" onclick="flyingon.Slider.onclick.call(this, event)"><div></div></div>',

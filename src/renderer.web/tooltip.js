@@ -46,11 +46,11 @@ flyingon.renderer('ToolTip', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('><div class="f-tooltip-body"></div><div class="f-tooltip-arrow1"></div><div class="f-tooltip-arrow2"></div></div>');
     };

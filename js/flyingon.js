@@ -4940,15 +4940,20 @@ flyingon.fragment('f-visual', function () {
     });
 
 
+    //class1: 默认class
+    //class2: 系统自动生成的class
+    //class3: 用户设置的class
+    this.__class1 = this.__class2 = this.__class3 = '';
+
 
     //指定class名 与html一样
     this['class'] = this.defineProperty('className', '', {
 
         set: function (value) {
 
-            var any = this.defaultClassName;
+            var any;
 
-            this.fullClassName = value = value ? (any + ' ' + value) : any;
+            this.__class3 = value;
 
             if (this.rendered)
             {
@@ -5147,12 +5152,12 @@ flyingon.fragment('f-visual', function () {
         {
             name = ((module.className || module.moduleName) + '-' + name).toLowerCase();
             
-            if (base = base.defaultClassName)
+            if (base = base.__class1)
             {
                  name = base + ' ' + name;
             }
             
-            this.fullClassName = this.defaultClassName = name;
+            this.__class1 = name;
         }
     };
     
@@ -9830,7 +9835,7 @@ flyingon.Query = Object.extend(function () {
             view,
             any;
 
-        this.render(any = [], control);
+        this.render(any = [], control, this.__render_default);
 
         host.innerHTML = any.join('');
 
@@ -9851,22 +9856,23 @@ flyingon.Query = Object.extend(function () {
 
 
     //渲染html
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
 
         writer.push('></div>');
     };
 
 
-    //渲染控件默认样式及属性
-    this.renderDefault = function (writer, control, className, cssText) {
+    //默认渲染方法
+    function render(writer, control) {
 
         var storage = control.__storage || control.__defaults,
             encode = flyingon.html_encode,
             html = control.__as_html,
+            text,
             any;
 
         control.rendered = true;
@@ -9878,31 +9884,19 @@ flyingon.Query = Object.extend(function () {
 
         any = html ? ' f-html' : ' f-absolute';
 
-        if (className)
+        text = (text = control.__class2) ? any + ' ' + text : any;
+
+        if (any = control.__class3)
         {
-            any += ' ' + className;
+            text += ' ' + encode(any);
         }
 
-        //处理表格控件class
-        if (className = control.__cell_class)
+        writer.push(' class="', control.__class1 + text, '" style="');
+
+        if (any = render.cssText)
         {
-            any += ' ' + className;
-        }
-
-        //系统自动自动的class
-        control.__class_name = any;
-
-        writer.push(' class="', encode(control.fullClassName) + any, '" style="');
-
-        if (cssText)
-        {
-            writer.push(cssText);
-        }
-
-        //添加表格控件样式
-        if (className)
-        {
-            writer.push(control.__cell_style);
+            render.cssText = ''
+            writer.push(any);
         }
 
         if (any = control.__style)
@@ -9937,6 +9931,11 @@ flyingon.Query = Object.extend(function () {
 
         writer.push('"');
     };
+
+
+    render.cssText = '';
+
+    this.__render_default = render;
 
 
     this.__render_style = function (writer, control, values, encode) {
@@ -10130,7 +10129,8 @@ flyingon.Query = Object.extend(function () {
     this.__update_top = function (control, width, height) {
 
         var view = control.view,
-            index = view.className.indexOf(' f-rtl');
+            key = ' f-rtl',
+            index = control.__class1.indexOf(key);
 
         control.__location_values = null;
         control.left = control.top = 0;
@@ -10141,12 +10141,14 @@ flyingon.Query = Object.extend(function () {
         {
             if (index < 0)
             {
-                view.className += ' f-rtl';
+                control.__class1 += key;
+                view.className += key;
             }
         }
         else if (index >= 0)
         {
-            view.className = view.className.replace(' f-rtl', '');
+            control.__class1 = control.__class1.replace(key, '');
+            view.className = view.className.replace(key, '');
         }
         
         if (control.__update_dirty || control.__arrange_dirty)
@@ -10567,7 +10569,8 @@ flyingon.Query = Object.extend(function () {
 
     this.className = function (control, view, value) {
 
-        view.className = value + control.__class_name;
+        var name = control.__class1 + (control.__as_html ? ' f-html' : ' f-absolute');
+        view.className = value ? (name + ' ' + value) : name;
     };
 
 
@@ -10593,13 +10596,14 @@ flyingon.Query = Object.extend(function () {
     //渲染子项
     this.__render_children = function (writer, control, items, start, end) {
 
-        var item;
+        var render = this.__render_default,
+            item;
 
         while (start < end)
         {
             if (item = items[start++])
             {
-                item.view || item.renderer.render(writer, item);
+                item.view || item.renderer.render(writer, item, render);
             }
         }
     };
@@ -10948,7 +10952,7 @@ flyingon.renderer('HtmlElement', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             tagName, 
@@ -10966,7 +10970,7 @@ flyingon.renderer('HtmlElement', function (base) {
 
         writer.push('<', tagName);
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('>');
 
@@ -11097,7 +11101,7 @@ flyingon.renderer('Label', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             text = storage.text;
@@ -11109,7 +11113,7 @@ flyingon.renderer('Label', function (base) {
 
         writer.push('<span');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('>', text, '</span>');
     };
@@ -11174,11 +11178,11 @@ flyingon.renderer('Button', function (base) {
 
     
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<button type="button"');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('>');
 
@@ -11270,14 +11274,14 @@ flyingon.renderer('LinkButton', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             any;
         
         writer.push('<a type="button"');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
 
         if (any = storage.href)
         {
@@ -11349,7 +11353,7 @@ flyingon.renderer('Image', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var encode = flyingon.html_encode,
             storage = control.__storage || control.__defaults,
@@ -11368,7 +11372,7 @@ flyingon.renderer('Image', function (base) {
 
         writer.push('<img');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push(' src="', src, '" alt="', alt, '"></img>');
     };
@@ -11396,11 +11400,11 @@ flyingon.renderer('Image', function (base) {
 flyingon.renderer('Slider', function (base) {
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
 
         writer.push('>',
                 '<div class="f-slider-bar" onclick="flyingon.Slider.onclick.call(this, event)"><div></div></div>',
@@ -11502,13 +11506,13 @@ flyingon.renderer('Slider', function (base) {
 flyingon.renderer('ProgressBar', function (base) {
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var value = (control.__storage || control.__defaults).value;
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
 
         writer.push('>',
                 '<div class="f-progressbar-back" style="width:', value, '%;"></div>',
@@ -11544,11 +11548,11 @@ flyingon.renderer('Panel', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push(' onscroll="flyingon.__dom_scroll.call(this, event)">');
 
@@ -11684,7 +11688,7 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             head = storage.header,
@@ -11693,7 +11697,7 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         if (text)
         {
@@ -11817,7 +11821,7 @@ flyingon.renderer('ScrollPanel', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var text = this.__scroll_html;
 
@@ -11826,7 +11830,7 @@ flyingon.renderer('ScrollPanel', function (base) {
         //此处只渲染一个空的壳,实现渲染内容在locate的时候根据需要渲染
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('>',
             '<div class="f-scrollpanel-scroll" onscroll="flyingon.__dom_scroll.call(this, event)">',
@@ -12036,11 +12040,12 @@ flyingon.renderer('Splitter', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, control, '', 'cursor:ew-resize;');
+        render.cssText += 'cursor:ew-resize;';
+        render.call(this, writer, control);
 
         writer.push(' onmousedown="flyingon.Splitter.onmousedown.call(this, event)"><div></div></div>');
     };
@@ -12119,11 +12124,11 @@ flyingon.renderer('ListBox', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
 
         writer.push(' onclick="flyingon.ListBox.onclick.call(this, event)"></div>');
     };
@@ -12485,11 +12490,11 @@ flyingon.renderer('RadioButton', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('><input type="radio" name="', control.name(), control.checked() ? '" checked="checked' : '',
             '" class="f-radio-input" onchange="flyingon.RadioButton.onchange.call(this)" /></div>');
@@ -12524,11 +12529,11 @@ flyingon.renderer('CheckBox', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('><input type="checkbox" name="', control.name(), control.checked() ? '" checked="checked' : '',
             '" class="f-checkbox-input" onchange="flyingon.CheckBox.onchange.call(this)" /></div>');
@@ -12563,7 +12568,7 @@ flyingon.renderer('TextBox', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var text = control.__text = control.text();
 
@@ -12574,7 +12579,7 @@ flyingon.renderer('TextBox', function (base) {
 
         writer.push('<input');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push(' type="text" value="', text, 
             '" oninput="flyingon.TextBox.oninput.call(this)"',
@@ -12628,7 +12633,7 @@ flyingon.renderer('TextBox', function (base) {
 flyingon.renderer('Password', function () {
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var text = control.text();
 
@@ -12639,7 +12644,7 @@ flyingon.renderer('Password', function () {
 
         writer.push('<input');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push(' type="password" value="', text, 
             '" onchange="flyingon.TextBox.onchange.call(this)"/>');
@@ -12702,7 +12707,7 @@ flyingon.renderer('TextButton', function (base) {
 
     
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             text = control.text(),
@@ -12715,7 +12720,7 @@ flyingon.renderer('TextButton', function (base) {
 
         writer.push('<span');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
 
         writer.push('>',
                 '<span class="f-textbutton-body" style="right:', size, 'px;">',
@@ -12806,11 +12811,12 @@ flyingon.renderer('Calendar', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, '', 'padding:8px;');
+        render.cssText += 'padding:8px;';
+        render.call(this, writer, control);
         
         writer.push(' onclick="flyingon.Calendar.onclick.call(this, event)"></div>');
     };
@@ -13477,11 +13483,11 @@ flyingon.renderer('Box', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('>');
 
@@ -13561,7 +13567,7 @@ flyingon.renderer('Title', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             text = storage.text;
@@ -13573,7 +13579,7 @@ flyingon.renderer('Title', function (base) {
 
         writer.push('<span');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('><span class="f-required"', control.__check() ? '' : ' style="display:none;"', '>*</span>',
             '<span>', text, '</span></span>');
@@ -13612,11 +13618,11 @@ flyingon.renderer('Error', 'Label', function (base) {
     
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<span');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('><span class="f-error-', control.type(), '"></span></span>');
     };
@@ -13726,17 +13732,18 @@ flyingon.renderer('Tree', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             length = control.length;
         
         writer.push('<div');
         
-        this.renderDefault(writer, control, 
-            'f-tree-theme-' + storage.theme + 
+        control.__class2 = 'f-tree-theme-' + storage.theme +
             (!storage.checked ? ' f-tree-no-check' : '') + 
-            (!storage.icon ? ' f-tree-no-icon' : ''));
+            (!storage.icon ? ' f-tree-no-icon' : '');
+
+        render.call(this, writer, control);
         
         writer.push(' onclick="flyingon.Tree.onclick.call(this, event)">');
 
@@ -13901,7 +13908,19 @@ flyingon.renderer('TreeNode', function (base) {
 
         node.rendered = true;
 
-        writer.push('<div class="', encode(node.fullClassName), '">',
+        text = node.__class1;
+
+        if (any = node.__class2)
+        {
+            text += ' ' + any;
+        }
+
+        if (any = node.__class3)
+        {
+            text += encode(any);
+        }
+
+        writer.push('<div class="', text, '">',
             '<div class="f-tree-node', 
                 last && line ? ' f-tree-node-last' : '',
                 node.__current ? ' f-tree-node-current': '',
@@ -14183,6 +14202,10 @@ flyingon.renderer('GridColumn', function (base) {
 
 
 
+    var render = this.__render_default;
+
+
+
     this.render = function (writer, column, height) {
 
         var cells = column.__cells;
@@ -14225,19 +14248,22 @@ flyingon.renderer('GridColumn', function (base) {
 
     function render_header(writer, column, cell, y, width, height) {
 
+        var any;
+
         cell.row = null;
         cell.column = column;
 
         cell.__as_html = true;
-        cell.__cell_class = 'f-grid-cell' + column.fullClassName;
-        cell.__cell_style = 'left:' + column.__start +
+        cell.__class1 += ' f-grid-cell';
+
+        render.cssText = 'left:' + column.__start +
             'px;top:' + y +
             'px;width:' + width + 
             'px;height:' + height + 
             'px;line-height:' + height + 'px;' + 
             (cell.columnSpan ? 'z-index:1;' : '');
 
-        cell.renderer.render(writer, cell);
+        cell.renderer.render(writer, cell, render);
     };
 
 
@@ -14334,6 +14360,8 @@ flyingon.renderer('GridRow', function (base) {
 
 
     var id = 1;
+
+    var render = this.__render_default;
 
 
     this.show = function (fragment, writer, row, columns, start, end, y, height, tag) {
@@ -14479,18 +14507,33 @@ flyingon.renderer('GridRow', function (base) {
             any += 'z-index:1;';
         }
 
-        cell.__cell_class = 'f-grid-cell' + column.fullClassName 
-            + (row.__checked ? ' f-grid-checked' : '')
-            + (row.__current ? ' f-grid-current' : '');
-
-        cell.__cell_style = 'left:' + column.__start + 
+        render.cssText = 'left:' + column.__start + 
             'px;top:' + y + 
             'px;width:' + width + 
             'px;height:' + height + 
             'px;line-height:' + height + 'px;' +
             any;
 
-        cell.renderer.render(writer, cell);
+        cell.__class1 = 'f-grid-cell';
+
+        any = '';
+
+        if (row.__checked)
+        {
+            any = ' f-grid-checked';
+        }
+
+        if (row.__current)
+        {
+            any += ' f-grid-current';
+        }
+
+        if (any)
+        {
+            cell.__class3 = any;
+        }
+
+        cell.renderer.render(writer, cell, render);
 
         return cell;
     };
@@ -14642,6 +14685,11 @@ flyingon.renderer('GridRow', function (base) {
 flyingon.renderer('GroupGridRow', 'GridRow', function (base) {
 
 
+
+    var render = this.__render_default;
+
+
+
     this.render = function (writer, row, column, y, height) {
 
         var cell = new flyingon.Label(),
@@ -14669,14 +14717,15 @@ flyingon.renderer('GroupGridRow', 'GridRow', function (base) {
             cell.text(any);
         }
 
-        cell.__cell_class = 'f-grid-group-row';
-        cell.__cell_style = 'left:' + column.__start + 
+        cell.__class1 += ' f-grid-group-row';
+
+        render.cssText = 'left:' + column.__start +
             'px;top:' + y + 
             'px;width:' + column.__size + 
             'px;height:' + height + 
             'px;line-height:' + height + 'px;';
 
-        cell.renderer.render(writer, cell);
+        cell.renderer.render(writer, cell, render);
 
         return cell;
     };
@@ -14748,7 +14797,7 @@ flyingon.renderer('Grid', function (base) {
 
 
 
-    this.render = function (writer, grid) {
+    this.render = function (writer, grid, render) {
 
         var storage = grid.__storage || grid.__defaults,
             group = storage.group,
@@ -14758,7 +14807,7 @@ flyingon.renderer('Grid', function (base) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, grid);
+        render.call(this, writer, grid);
 
         writer.push(' onclick="flyingon.Grid.onclick.call(this, event)" onkeydown="flyingon.Grid.onkeydown.call(this, event)">',
             '<div class="f-grid-head" onmousedown="flyingon.Grid.onmousedown.call(this, event)">',
@@ -16272,7 +16321,7 @@ flyingon.renderer('Tab', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             any;
@@ -16281,7 +16330,9 @@ flyingon.renderer('Tab', function (base) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, 'f-tab-direction-' + storage.direction);
+        control.__class2 += 'f-tab-direction-' + storage.direction;
+        
+        render.call(this, writer, control);
         
         writer.push('><div class="f-tab-head f-tab-theme-', storage.theme, '">',
                     '<div class="f-tab-line"></div>',
@@ -16293,7 +16344,7 @@ flyingon.renderer('Tab', function (base) {
 
         if (any = control.selectedPage())
         {
-            any.renderer.render(writer, any, false); 
+            any.renderer.render(writer, any, this.__render_default); 
         }
 
         writer.push('</div></div>');
@@ -17106,11 +17157,11 @@ flyingon.renderer('ToolTip', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('><div class="f-tooltip-body"></div><div class="f-tooltip-arrow1"></div><div class="f-tooltip-arrow2"></div></div>');
     };
@@ -17184,7 +17235,7 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             head = storage.header,
@@ -17193,7 +17244,7 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         if (text)
         {
@@ -21352,23 +21403,6 @@ flyingon.Control.extend('Tree', function (base) {
     });
 
 
-    this.fullClassName = this.defaultClassName = '';
-
-    //自定义class
-    this.defineProperty('className', '', {
-
-        set: function (value) {
-
-            if (value && this.defaultClassName)
-            {
-                value += ' ' + this.defaultClassName;
-            }
-
-            this.fullClassName = value ? ' ' + value : '';
-        }
-    });
-
-
     //对齐方式
     //left
     //center
@@ -21595,18 +21629,6 @@ flyingon.Control.extend('Tree', function (base) {
 
 
 
-    //列初始化处理
-    this.__class_init = function (Class, base) {
-     
-        var any;
-
-        if (any = this.defaultClassName)
-        {
-            this.fullClassName = ' ' + any;
-        }
-    };
-
-
 
 })).register = function (name, force) {
     
@@ -21631,7 +21653,8 @@ flyingon.Control.extend('Tree', function (base) {
 flyingon.GridColumn.extend(function (base) {
 
 
-    this.defaultClassName = 'f-grid-column-no';
+
+    var Class = flyingon.Label;
 
 
     this.__name = '__column_no';
@@ -21656,6 +21679,17 @@ flyingon.GridColumn.extend(function (base) {
     });
 
 
+    //创建单元格控件
+    this.createControl = function (row, name) {
+
+        var control = new Class();
+        
+        control.__class1 += ' f-grid-column-no';
+
+        return control;
+    };
+
+
     this.onshowing = function (cell, row) {
 
         if (this.__show_no)
@@ -21676,9 +21710,6 @@ flyingon.GridColumn.extend(function (base) {
     var Class = flyingon.CheckBox;
 
 
-    this.defaultClassName = 'f-grid-column-check';
-
-
     this.__name = '__column_check';
     
 
@@ -21697,6 +21728,7 @@ flyingon.GridColumn.extend(function (base) {
        var control = new Class();
         
         control.__column_check = true;
+        control.__class1 += ' f-grid-column-check';
 
         if (row.__checked)
         {
@@ -21721,7 +21753,7 @@ flyingon.GridColumn.extend(function (base) {
     //创建单元格控件
     this.createControl = function (row, name) {
 
-       var control = new Class();
+        var control = new Class();
         
         if (name && row.data[name])
         {
@@ -28421,7 +28453,7 @@ flyingon.view.Template = Object.extend(function () {
         if (!control.__top_control)
         {
             control.__top_control = true;
-            control.fullClassName += ' f-host';
+            control.__class1 += ' f-host';
         }
 
         host.appendChild(control.view || control.renderer.createView(control));
@@ -28444,7 +28476,7 @@ flyingon.view.Template = Object.extend(function () {
                 any.removeChild(view);
             }
 
-            control.fullClassName = control.fullClassName.replace(' f-host', '');
+            control.__class1 = control.__class1.replace(' f-host', '');
 
             if (dispose !== false)
             {
@@ -28969,11 +29001,12 @@ flyingon.renderer('Highlight', function (base) {
         cache;
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
         
         writer.push('<div');
         
-        this.renderDefault(writer, control, 'overflow:auto');
+        render.cssText = 'overflow:auto';
+        render.call(this, writer, control);
         
         writer.push('><pre style="margin:0;width:auto;height:auto;"><code style="overflow:visible;"></code></pre></div>');
     };
@@ -29036,7 +29069,7 @@ flyingon.renderer('Highlight', function (base) {
         cache = null;
     };
 
-        
+
 });
 
 

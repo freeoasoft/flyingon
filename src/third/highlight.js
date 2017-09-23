@@ -5,11 +5,12 @@ flyingon.renderer('Highlight', function (base) {
         cache;
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
         
         writer.push('<div');
         
-        this.renderDefault(writer, control, 'overflow:auto');
+        render.cssText = 'overflow:auto';
+        render.call(this, writer, control);
         
         writer.push('><pre style="margin:0;width:auto;height:auto;"><code style="overflow:visible;"></code></pre></div>');
     };
@@ -72,7 +73,7 @@ flyingon.renderer('Highlight', function (base) {
         cache = null;
     };
 
-        
+
 });
 
 

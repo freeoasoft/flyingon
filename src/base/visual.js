@@ -253,15 +253,20 @@ flyingon.fragment('f-visual', function () {
     });
 
 
+    //class1: 默认class
+    //class2: 系统自动生成的class
+    //class3: 用户设置的class
+    this.__class1 = this.__class2 = this.__class3 = '';
+
 
     //指定class名 与html一样
     this['class'] = this.defineProperty('className', '', {
 
         set: function (value) {
 
-            var any = this.defaultClassName;
+            var any;
 
-            this.fullClassName = value = value ? (any + ' ' + value) : any;
+            this.__class3 = value;
 
             if (this.rendered)
             {
@@ -460,12 +465,12 @@ flyingon.fragment('f-visual', function () {
         {
             name = ((module.className || module.moduleName) + '-' + name).toLowerCase();
             
-            if (base = base.defaultClassName)
+            if (base = base.__class1)
             {
                  name = base + ' ' + name;
             }
             
-            this.fullClassName = this.defaultClassName = name;
+            this.__class1 = name;
         }
     };
     

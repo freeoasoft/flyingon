@@ -2,11 +2,11 @@ flyingon.renderer('RadioButton', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('><input type="radio" name="', control.name(), control.checked() ? '" checked="checked' : '',
             '" class="f-radio-input" onchange="flyingon.RadioButton.onchange.call(this)" /></div>');

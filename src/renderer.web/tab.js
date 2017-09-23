@@ -8,7 +8,7 @@ flyingon.renderer('Tab', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             any;
@@ -17,7 +17,9 @@ flyingon.renderer('Tab', function (base) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control, 'f-tab-direction-' + storage.direction);
+        control.__class2 += 'f-tab-direction-' + storage.direction;
+        
+        render.call(this, writer, control);
         
         writer.push('><div class="f-tab-head f-tab-theme-', storage.theme, '">',
                     '<div class="f-tab-line"></div>',
@@ -29,7 +31,7 @@ flyingon.renderer('Tab', function (base) {
 
         if (any = control.selectedPage())
         {
-            any.renderer.render(writer, any, false); 
+            any.renderer.render(writer, any, this.__render_default); 
         }
 
         writer.push('</div></div>');

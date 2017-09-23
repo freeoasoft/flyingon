@@ -2,11 +2,11 @@ flyingon.renderer('Pagination1', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('>');
 

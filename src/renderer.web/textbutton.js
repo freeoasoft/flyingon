@@ -2,7 +2,7 @@ flyingon.renderer('TextButton', function (base) {
 
     
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             text = control.text(),
@@ -15,7 +15,7 @@ flyingon.renderer('TextButton', function (base) {
 
         writer.push('<span');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
 
         writer.push('>',
                 '<span class="f-textbutton-body" style="right:', size, 'px;">',

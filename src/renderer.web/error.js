@@ -6,11 +6,11 @@ flyingon.renderer('Error', 'Label', function (base) {
     
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<span');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('><span class="f-error-', control.type(), '"></span></span>');
     };

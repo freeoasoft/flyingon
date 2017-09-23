@@ -6,7 +6,7 @@ flyingon.renderer('Title', function (base) {
 
 
 
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             text = storage.text;
@@ -18,7 +18,7 @@ flyingon.renderer('Title', function (base) {
 
         writer.push('<span');
         
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
         
         writer.push('><span class="f-required"', control.__check() ? '' : ' style="display:none;"', '>*</span>',
             '<span>', text, '</span></span>');

@@ -83,7 +83,7 @@
             view,
             any;
 
-        this.render(any = [], control);
+        this.render(any = [], control, this.__render_default);
 
         host.innerHTML = any.join('');
 
@@ -104,22 +104,23 @@
 
 
     //渲染html
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, control);
+        render.call(this, writer, control);
 
         writer.push('></div>');
     };
 
 
-    //渲染控件默认样式及属性
-    this.renderDefault = function (writer, control, className, cssText) {
+    //默认渲染方法
+    function render(writer, control) {
 
         var storage = control.__storage || control.__defaults,
             encode = flyingon.html_encode,
             html = control.__as_html,
+            text,
             any;
 
         control.rendered = true;
@@ -131,31 +132,19 @@
 
         any = html ? ' f-html' : ' f-absolute';
 
-        if (className)
+        text = (text = control.__class2) ? any + ' ' + text : any;
+
+        if (any = control.__class3)
         {
-            any += ' ' + className;
+            text += ' ' + encode(any);
         }
 
-        //处理表格控件class
-        if (className = control.__cell_class)
+        writer.push(' class="', control.__class1 + text, '" style="');
+
+        if (any = render.cssText)
         {
-            any += ' ' + className;
-        }
-
-        //系统自动自动的class
-        control.__class_name = any;
-
-        writer.push(' class="', encode(control.fullClassName) + any, '" style="');
-
-        if (cssText)
-        {
-            writer.push(cssText);
-        }
-
-        //添加表格控件样式
-        if (className)
-        {
-            writer.push(control.__cell_style);
+            render.cssText = ''
+            writer.push(any);
         }
 
         if (any = control.__style)
@@ -190,6 +179,11 @@
 
         writer.push('"');
     };
+
+
+    render.cssText = '';
+
+    this.__render_default = render;
 
 
     this.__render_style = function (writer, control, values, encode) {
@@ -383,7 +377,8 @@
     this.__update_top = function (control, width, height) {
 
         var view = control.view,
-            index = view.className.indexOf(' f-rtl');
+            key = ' f-rtl',
+            index = control.__class1.indexOf(key);
 
         control.__location_values = null;
         control.left = control.top = 0;
@@ -394,12 +389,14 @@
         {
             if (index < 0)
             {
-                view.className += ' f-rtl';
+                control.__class1 += key;
+                view.className += key;
             }
         }
         else if (index >= 0)
         {
-            view.className = view.className.replace(' f-rtl', '');
+            control.__class1 = control.__class1.replace(key, '');
+            view.className = view.className.replace(key, '');
         }
         
         if (control.__update_dirty || control.__arrange_dirty)
@@ -820,7 +817,8 @@
 
     this.className = function (control, view, value) {
 
-        view.className = value + control.__class_name;
+        var name = control.__class1 + (control.__as_html ? ' f-html' : ' f-absolute');
+        view.className = value ? (name + ' ' + value) : name;
     };
 
 
@@ -846,13 +844,14 @@
     //渲染子项
     this.__render_children = function (writer, control, items, start, end) {
 
-        var item;
+        var render = this.__render_default,
+            item;
 
         while (start < end)
         {
             if (item = items[start++])
             {
-                item.view || item.renderer.render(writer, item);
+                item.view || item.renderer.render(writer, item, render);
             }
         }
     };

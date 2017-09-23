@@ -3,11 +3,12 @@ flyingon.renderer('Splitter', function (base) {
 
 
     //渲染html
-    this.render = function (writer, control) {
+    this.render = function (writer, control, render) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, control, '', 'cursor:ew-resize;');
+        render.cssText += 'cursor:ew-resize;';
+        render.call(this, writer, control);
 
         writer.push(' onmousedown="flyingon.Splitter.onmousedown.call(this, event)"><div></div></div>');
     };

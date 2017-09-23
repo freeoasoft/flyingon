@@ -105,23 +105,6 @@
     });
 
 
-    this.fullClassName = this.defaultClassName = '';
-
-    //自定义class
-    this.defineProperty('className', '', {
-
-        set: function (value) {
-
-            if (value && this.defaultClassName)
-            {
-                value += ' ' + this.defaultClassName;
-            }
-
-            this.fullClassName = value ? ' ' + value : '';
-        }
-    });
-
-
     //对齐方式
     //left
     //center
@@ -348,18 +331,6 @@
 
 
 
-    //列初始化处理
-    this.__class_init = function (Class, base) {
-     
-        var any;
-
-        if (any = this.defaultClassName)
-        {
-            this.fullClassName = ' ' + any;
-        }
-    };
-
-
 
 })).register = function (name, force) {
     
@@ -384,7 +355,8 @@
 flyingon.GridColumn.extend(function (base) {
 
 
-    this.defaultClassName = 'f-grid-column-no';
+
+    var Class = flyingon.Label;
 
 
     this.__name = '__column_no';
@@ -409,6 +381,17 @@ flyingon.GridColumn.extend(function (base) {
     });
 
 
+    //创建单元格控件
+    this.createControl = function (row, name) {
+
+        var control = new Class();
+        
+        control.__class1 += ' f-grid-column-no';
+
+        return control;
+    };
+
+
     this.onshowing = function (cell, row) {
 
         if (this.__show_no)
@@ -429,9 +412,6 @@ flyingon.GridColumn.extend(function (base) {
     var Class = flyingon.CheckBox;
 
 
-    this.defaultClassName = 'f-grid-column-check';
-
-
     this.__name = '__column_check';
     
 
@@ -450,6 +430,7 @@ flyingon.GridColumn.extend(function (base) {
        var control = new Class();
         
         control.__column_check = true;
+        control.__class1 += ' f-grid-column-check';
 
         if (row.__checked)
         {
@@ -474,7 +455,7 @@ flyingon.GridColumn.extend(function (base) {
     //创建单元格控件
     this.createControl = function (row, name) {
 
-       var control = new Class();
+        var control = new Class();
         
         if (name && row.data[name])
         {

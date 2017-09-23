@@ -2,6 +2,10 @@ flyingon.renderer('GridColumn', function (base) {
 
 
 
+    var render = this.__render_default;
+
+
+
     this.render = function (writer, column, height) {
 
         var cells = column.__cells;
@@ -44,19 +48,22 @@ flyingon.renderer('GridColumn', function (base) {
 
     function render_header(writer, column, cell, y, width, height) {
 
+        var any;
+
         cell.row = null;
         cell.column = column;
 
         cell.__as_html = true;
-        cell.__cell_class = 'f-grid-cell' + column.fullClassName;
-        cell.__cell_style = 'left:' + column.__start +
+        cell.__class1 += ' f-grid-cell';
+
+        render.cssText = 'left:' + column.__start +
             'px;top:' + y +
             'px;width:' + width + 
             'px;height:' + height + 
             'px;line-height:' + height + 'px;' + 
             (cell.columnSpan ? 'z-index:1;' : '');
 
-        cell.renderer.render(writer, cell);
+        cell.renderer.render(writer, cell, render);
     };
 
 
@@ -153,6 +160,8 @@ flyingon.renderer('GridRow', function (base) {
 
 
     var id = 1;
+
+    var render = this.__render_default;
 
 
     this.show = function (fragment, writer, row, columns, start, end, y, height, tag) {
@@ -298,18 +307,33 @@ flyingon.renderer('GridRow', function (base) {
             any += 'z-index:1;';
         }
 
-        cell.__cell_class = 'f-grid-cell' + column.fullClassName 
-            + (row.__checked ? ' f-grid-checked' : '')
-            + (row.__current ? ' f-grid-current' : '');
-
-        cell.__cell_style = 'left:' + column.__start + 
+        render.cssText = 'left:' + column.__start + 
             'px;top:' + y + 
             'px;width:' + width + 
             'px;height:' + height + 
             'px;line-height:' + height + 'px;' +
             any;
 
-        cell.renderer.render(writer, cell);
+        cell.__class1 = 'f-grid-cell';
+
+        any = '';
+
+        if (row.__checked)
+        {
+            any = ' f-grid-checked';
+        }
+
+        if (row.__current)
+        {
+            any += ' f-grid-current';
+        }
+
+        if (any)
+        {
+            cell.__class3 = any;
+        }
+
+        cell.renderer.render(writer, cell, render);
 
         return cell;
     };
@@ -461,6 +485,11 @@ flyingon.renderer('GridRow', function (base) {
 flyingon.renderer('GroupGridRow', 'GridRow', function (base) {
 
 
+
+    var render = this.__render_default;
+
+
+
     this.render = function (writer, row, column, y, height) {
 
         var cell = new flyingon.Label(),
@@ -488,14 +517,15 @@ flyingon.renderer('GroupGridRow', 'GridRow', function (base) {
             cell.text(any);
         }
 
-        cell.__cell_class = 'f-grid-group-row';
-        cell.__cell_style = 'left:' + column.__start + 
+        cell.__class1 += ' f-grid-group-row';
+
+        render.cssText = 'left:' + column.__start +
             'px;top:' + y + 
             'px;width:' + column.__size + 
             'px;height:' + height + 
             'px;line-height:' + height + 'px;';
 
-        cell.renderer.render(writer, cell);
+        cell.renderer.render(writer, cell, render);
 
         return cell;
     };
@@ -567,7 +597,7 @@ flyingon.renderer('Grid', function (base) {
 
 
 
-    this.render = function (writer, grid) {
+    this.render = function (writer, grid, render) {
 
         var storage = grid.__storage || grid.__defaults,
             group = storage.group,
@@ -577,7 +607,7 @@ flyingon.renderer('Grid', function (base) {
 
         writer.push('<div');
 
-        this.renderDefault(writer, grid);
+        render.call(this, writer, grid);
 
         writer.push(' onclick="flyingon.Grid.onclick.call(this, event)" onkeydown="flyingon.Grid.onkeydown.call(this, event)">',
             '<div class="f-grid-head" onmousedown="flyingon.Grid.onmousedown.call(this, event)">',
