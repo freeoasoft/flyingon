@@ -256,11 +256,9 @@ flyingon.fragment('f-dataset', function () {
     /**
      * 加载数据
      * @param {object[]} list 数据列表
-     * @param {string} [primaryKey] 主键
-     * @param {string} [children] 树型数据的子项属性名, 传入此值则当作树型数据解析
      * @return {object} 当前实例对象
      */
-    this.load = function (list, primaryKey, children) {
+    this.load = function (list) {
         
         if (list && list.length > 0)
         {
@@ -272,8 +270,8 @@ flyingon.fragment('f-dataset', function () {
             dataset.__new_id = load_data(dataset, 
                 parent, 
                 list, 
-                dataset.primaryKey = primaryKey, 
-                children, 
+                dataset.primaryKey, 
+                dataset.childrenName, 
                 dataset.__new_id++);
             
             dataset.trigger('load', 'parent', parent);
@@ -283,7 +281,7 @@ flyingon.fragment('f-dataset', function () {
     };
     
     
-    function load_data(dataset, parent, list, primaryKey, children, uniqueId) {
+    function load_data(dataset, parent, list, primaryKey, childrenName, uniqueId) {
         
         var target = parent || dataset,
             rowType = flyingon.DataRow,
@@ -316,9 +314,9 @@ flyingon.fragment('f-dataset', function () {
 
             target[index++] = row;
             
-            if (children && (data = data[children]) && data.length > 0)
+            if (childrenName && (data = data[childrenName]) && data.length > 0)
             {
-                uniqueId = load_data(dataset, row, data, primaryKey, children, uniqueId)
+                uniqueId = load_data(dataset, row, data, primaryKey, childrenName, uniqueId)
             }
         }
 
@@ -342,10 +340,11 @@ flyingon.fragment('f-dataset', function () {
             parent = null,
             keys1,
             keys2,
+            uniqueId,
             primaryKey,
             row,
             data;
-                
+
         if (dataset)
         {
             parent = this;
@@ -355,8 +354,11 @@ flyingon.fragment('f-dataset', function () {
             dataset = this;
         }
 
+        uniqueId = dataset.__new_id++;
+        primaryKey = dataset.primaryKey;
+
         keys1 = dataset.__keys1;
-        keys2 = (primaryKey = dataset.primaryKey) && dataset.__keys2;
+        keys2 = primaryKey && dataset.__keys2;
 
         for (var i = start, l = items.length; i < l; i++)
         {
@@ -371,20 +373,22 @@ flyingon.fragment('f-dataset', function () {
                 row.dataset = dataset;
                 row.parent = parent;
                 row.data = data = data || {};
-                row.state = 'add';
             }
+
+            row.state = 'add';
             
-            keys1[row.uniqueId = dataset.__new_id++] = row;
+            keys1[row.uniqueId = uniqueId++] = row;
             
             if (primaryKey)
             {
                 keys2[row.id = data[primaryKey]] = row;
             }
-        
+
             dataset.__change_rows.push(row);
             rows.push(row);
         }
 
+        dataset.__new_id = uniqueId;
         dataset.trigger('add', 'parent', parent, 'index', index, 'rows', rows);
     };
 
@@ -415,7 +419,7 @@ flyingon.fragment('f-dataset', function () {
 
         for (var i = 0, l = items.length; i < l; i++)
         {
-            row = this[i];
+            row = items[i];
  
             delete keys1[row.uniqueId];
 
@@ -670,8 +674,11 @@ flyingon.DataSet = flyingon.defineClass(flyingon.RowCollection, function () {
     
     
     
-    this.init = function () {
+    this.init = function (primaryKey, childrenName) {
        
+       this.primaryKey = primaryKey || '';
+       this.childrenName = childrenName || '';
+
         //id生成器
         this.__new_id = 1;
         
@@ -689,6 +696,10 @@ flyingon.DataSet = flyingon.defineClass(flyingon.RowCollection, function () {
 
     //主键
     this.primaryKey = '';
+
+
+    //子节点属性名
+    this.childrenName = '';
 
     
         

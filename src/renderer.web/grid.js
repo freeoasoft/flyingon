@@ -54,7 +54,7 @@ flyingon.renderer('GridColumn', function (base) {
         cell.column = column;
 
         cell.__as_html = true;
-        cell.__class1 += ' f-grid-cell';
+        cell.defaultClass += ' f-grid-cell';
 
         render.cssText = 'left:' + column.__start +
             'px;top:' + y +
@@ -314,13 +314,11 @@ flyingon.renderer('GridRow', function (base) {
             'px;line-height:' + height + 'px;' +
             any;
 
-        cell.__class1 = 'f-grid-cell';
-
-        any = '';
+        any = ' f-grid-cell';
 
         if (row.__checked)
         {
-            any = ' f-grid-checked';
+            any += ' f-grid-checked';
         }
 
         if (row.__current)
@@ -328,11 +326,7 @@ flyingon.renderer('GridRow', function (base) {
             any += ' f-grid-current';
         }
 
-        if (any)
-        {
-            cell.__class3 = any;
-        }
-
+        cell.defaultClass += any;
         cell.renderer.render(writer, cell, render);
 
         return cell;
@@ -517,7 +511,7 @@ flyingon.renderer('GroupGridRow', 'GridRow', function (base) {
             cell.text(any);
         }
 
-        cell.__class1 += ' f-grid-group-row';
+        cell.defaultClass += ' f-grid-group-row';
 
         render.cssText = 'left:' + column.__start +
             'px;top:' + y + 

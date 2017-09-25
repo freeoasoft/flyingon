@@ -298,6 +298,22 @@ flyingon.fragment('f-container', function (base, childrenClass, arrange) {
       
         return this;
     };
+
+
+
+    //排列时生成校验方法
+    arrange && (this.__validate = function (errors, show) {
+
+        var item, fn;
+
+        for (var i = 0, l = this.length; i < l; i++)
+        {
+            if ((item = this[i]) && (fn = item.__validate))
+            {
+                fn.call(item, errors, show);
+            }
+        }
+    });
     
   
 

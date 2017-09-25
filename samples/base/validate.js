@@ -126,9 +126,8 @@ flyingon.widget({
                 var error = errors[i];
 
                 //error.control  //control
-                //errot.title    //标题
-                //error[1]       //第一个参数
-                //error[2]       //第二个参数
+                //error.name     //规则名称
+                //error.text     //错误信息
             }
         };
 

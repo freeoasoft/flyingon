@@ -9,16 +9,19 @@ flyingon.widget({
         children: [
             {
                 Class: 'Pagination',
-                width: 780
+                width: 780,
+                total: 1000
             },
             {
                 Class: 'Grid',
                 width: 780,
-                height: 'auto'
+                //height: 'auto',
+                maxHeight: 300
             },
             {
                 Class: 'Pagination',
-                width: 780
+                width: 780,
+                total: 1000
             },
             {
                 Class: 'Code' 
@@ -27,10 +30,12 @@ flyingon.widget({
     },
 
     created: function () {
-
+        
+        var page1 = this[0];
+        var page2 = this[2];
+        var dataset = window.dataset = new flyingon.DataSet();
         var grid = this[1];
         var columns = []
-        var data = [];
 
         for (var j = 1; j <= 10; j++)
         {
@@ -38,24 +43,45 @@ flyingon.widget({
         }
 
         grid.columns(columns);
+        grid.dataset(dataset);
 
-        for (var i = 0; i < 10; i++)
-        {
-            var item = {};
+        function create_data(length) {
 
-            for (var j = 1; j <= 10; j++)
+            var data = [];
+
+            for (var i = 0; i < length; i++)
             {
-                item['F' + j] = 'R:' + (i + 1) + ' C:' + j;
+                var item = {},
+                    random = Math.random;
+
+                item['F1'] = 'R:' + (i + 1);
+
+                for (var j = 2; j <= 10; j++)
+                {
+                    item['F' + j] = random() * 100000 | 0;
+                }
+
+                data.push(item);
             }
 
-            data.push(item);
-        }
+            dataset.splice(0);
+            dataset.push.apply(dataset, data);
+        };
 
-        var dataset = new flyingon.DataSet();
+        create_data(page1.records());
 
-        dataset.load(data);
+        function refresh(e) {
 
-        grid.dataset(dataset);
+            //dataset.splice(0);
+            create_data(this.records());
+
+            //同步分页控件
+            this.sync(page1);
+            this.sync(page2);
+        };
+
+        page1.on('refresh', refresh);
+        page2.on('refresh', refresh);
     }
 
 

@@ -118,7 +118,6 @@
     function render(writer, control) {
 
         var storage = control.__storage || control.__defaults,
-            encode = flyingon.html_encode,
             html = control.__as_html,
             text,
             any;
@@ -127,19 +126,17 @@
         
         if (any = control.__id || storage.id)
         {
-            writer.push(' id="', encode(any), '"');
+            writer.push(' id="', any, '"');
         }
 
-        any = html ? ' f-html' : ' f-absolute';
+        text = control.defaultClass + (html ? ' f-html' : ' f-absolute');
 
-        text = (text = control.__class2) ? any + ' ' + text : any;
-
-        if (any = control.__class3)
+        if (any = control.__className)
         {
-            text += ' ' + encode(any);
+            text += ' ' + any;
         }
 
-        writer.push(' class="', control.__class1 + text, '" style="');
+        writer.push(' class="', text, '" style="');
 
         if (any = render.cssText)
         {
@@ -149,7 +146,7 @@
 
         if (any = control.__style)
         {
-            this.__render_style(writer, control, any, encode);
+            this.__render_style(writer, control, any);
         }
 
         if (any = control.__location_dirty)
@@ -186,7 +183,7 @@
     this.__render_default = render;
 
 
-    this.__render_style = function (writer, control, values, encode) {
+    this.__render_style = function (writer, control, values) {
 
         var map = css_map,
             value, 
@@ -202,11 +199,11 @@
             switch (any = this[name])
             {
                 case 1: //直接设置样式
-                    writer.push(name, ':', encode(value), ';');
+                    writer.push(name, ':', value, ';');
                     break;
 
                 case 2: //需要检测前缀
-                    writer.push(map[name], ':', encode(value), ';');
+                    writer.push(map[name], ':', value, ';');
                     break;
 
                 case 9: //特殊样式
@@ -218,7 +215,7 @@
                     {
                         if (any = map[name])
                         {
-                            writer.push(any, ':', encode(value), ';');
+                            writer.push(any, ':', value, ';');
                             self[name] = any === name ? 1 : 2; //直接设置样式标记为1,需要加前缀标记为2
                             break;
                         }
@@ -378,7 +375,7 @@
 
         var view = control.view,
             key = ' f-rtl',
-            index = control.__class1.indexOf(key);
+            index = control.defaultClass.indexOf(key);
 
         control.__location_values = null;
         control.left = control.top = 0;
@@ -389,13 +386,13 @@
         {
             if (index < 0)
             {
-                control.__class1 += key;
+                control.defaultClass += key;
                 view.className += key;
             }
         }
         else if (index >= 0)
         {
-            control.__class1 = control.__class1.replace(key, '');
+            control.defaultClass = control.defaultClass.replace(key, '');
             view.className = view.className.replace(key, '');
         }
         
@@ -817,14 +814,38 @@
 
     this.className = function (control, view, value) {
 
-        var name = control.__class1 + (control.__as_html ? ' f-html' : ' f-absolute');
-        view.className = value ? (name + ' ' + value) : name;
+        var name = control.defaultClass + (control.__as_html ? ' f-html' : ' f-absolute');
+
+        if (control.__disabled)
+        {
+            name += ' f-disabled';
+        }
+
+        if (value)
+        {
+            name += ' ' + value;
+        }
+
+        view.className = name;
     };
 
 
     this.visible = function (control, view, value) {
 
         view.style.display = value ? '' : 'none';
+    };
+
+
+    this.disabled = function (control, view, value) {
+
+        if (value)
+        {
+            view.className += ' f-disabled';
+        }
+        else
+        {
+            view.className = view.className.replace(' f-disabled', '');
+        }
     };
 
 

@@ -386,7 +386,7 @@ flyingon.GridColumn.extend(function (base) {
 
         var control = new Class();
         
-        control.__class1 += ' f-grid-column-no';
+        control.defaultClass += ' f-grid-column-no';
 
         return control;
     };
@@ -430,7 +430,7 @@ flyingon.GridColumn.extend(function (base) {
        var control = new Class();
         
         control.__column_check = true;
-        control.__class1 += ' f-grid-column-check';
+        control.defaultClass += ' f-grid-column-check';
 
         if (row.__checked)
         {
@@ -1697,7 +1697,6 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
         }
 
         this.__dirty = true;
-        this.grid.update(false);
     };
 
 
@@ -1763,7 +1762,6 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
         }
 
         this.__dirty = true;
-        this.grid.update(false);
     };
 
 

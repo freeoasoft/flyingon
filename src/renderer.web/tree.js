@@ -78,22 +78,30 @@ flyingon.renderer('Tree', function (base) {
     this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
-            length = control.length;
+            any = ' f-tree-theme-' + storage.theme;
         
         writer.push('<div');
         
-        control.__class2 = 'f-tree-theme-' + storage.theme +
-            (!storage.checked ? ' f-tree-no-check' : '') + 
-            (!storage.icon ? ' f-tree-no-icon' : '');
+        if (!storage.checked)
+        {
+            any += ' f-tree-no-check';
+        }
+
+        if (!storage.icon)
+        {
+            any += ' f-tree-no-icon'
+        }
+
+        control.defaultClass += any;
 
         render.call(this, writer, control);
         
         writer.push(' onclick="flyingon.Tree.onclick.call(this, event)">');
 
-        if (length > 0 && control.__visible)
+        if ((any = control.length) > 0 && control.__visible)
         {
             control.__content_render = true;
-            this.__render_children(writer, control, control, 0, length);
+            this.__render_children(writer, control, control, 0, any);
         }
 
         //滚动位置控制(解决有右或底边距时拖不到底的问题)
@@ -251,14 +259,9 @@ flyingon.renderer('TreeNode', function (base) {
 
         node.rendered = true;
 
-        text = node.__class1;
+        text = node.defaultClass;
 
-        if (any = node.__class2)
-        {
-            text += ' ' + any;
-        }
-
-        if (any = node.__class3)
+        if (any = node.__className)
         {
             text += encode(any);
         }

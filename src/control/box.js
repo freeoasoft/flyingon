@@ -41,8 +41,8 @@ flyingon.Control.extend('Box', function (base) {
 
         if (target)
         {
-            target.__validate_text = error.text;
-            target.visible(error);
+            target.__validate_text = error ? error.text : '';
+            target.visible(!!error);
 
             if (error && !target.__no_text)
             {

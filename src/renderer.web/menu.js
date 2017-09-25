@@ -1,5 +1,8 @@
-flyingon.renderer('ToolTip', function (base) {
+flyingon.renderer('Menu', function (base) {
 
+
+    //弹出菜单堆栈
+    var stack = [];
 
     //当前弹出层
     var current = null;
@@ -7,29 +10,6 @@ flyingon.renderer('ToolTip', function (base) {
     //注册事件函数
     var on = flyingon.dom_on;
 
-    
-
-    //处理全局点击事件,点击当前弹出层以外的区域则关闭当前弹出层
-    on(document, 'mousedown', function (e) { 
-
-        if (current) 
-        {
-            var view = current.view,
-                any = e.target;
-
-            while (any)
-            {
-                if (any === view)
-                {
-                    return;
-                }
-
-                any = any.parentNode;
-            }
-
-            current.close();
-        }
-    });
     
 
     //处理全局键盘事件,点击Esc则退出当前窗口
@@ -47,28 +27,13 @@ flyingon.renderer('ToolTip', function (base) {
     //reference: 停靠参考物
     this.show = function (control, reference) {
 
-        var view = control.view,
+        var view = document.createElement('div'),
             direction = control.direction(), 
             reverse = control.reverse(),
             any;
 
-        if (!view)
-        {
-            view = control.view = document.createElement('div');
-            view.innerHTML = '<div class="f-tooltip-body"></div><div class="f-tooltip-arrow1"></div><div class="f-tooltip-arrow2"></div>';
-        }
-
-        view.className = 'f-tooltip f-tooltip-' + direction;
+        view.className = 'f-Menu';
         view.style.width = (any = control.width()) > 0 ? any + 'px' : any;
-
-        if (control.html())
-        {
-            view.firstChild.innerHTML = control.text();
-        }
-        else
-        {
-            view.firstChild[this.__text_name] = control.text();
-        }
 
         document.body.appendChild(view);
 

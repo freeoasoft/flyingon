@@ -3699,11 +3699,9 @@ flyingon.fragment('f-dataset', function () {
     /**
      * 加载数据
      * @param {object[]} list 数据列表
-     * @param {string} [primaryKey] 主键
-     * @param {string} [children] 树型数据的子项属性名, 传入此值则当作树型数据解析
      * @return {object} 当前实例对象
      */
-    this.load = function (list, primaryKey, children) {
+    this.load = function (list) {
         
         if (list && list.length > 0)
         {
@@ -3715,8 +3713,8 @@ flyingon.fragment('f-dataset', function () {
             dataset.__new_id = load_data(dataset, 
                 parent, 
                 list, 
-                dataset.primaryKey = primaryKey, 
-                children, 
+                dataset.primaryKey, 
+                dataset.childrenName, 
                 dataset.__new_id++);
             
             dataset.trigger('load', 'parent', parent);
@@ -3726,7 +3724,7 @@ flyingon.fragment('f-dataset', function () {
     };
     
     
-    function load_data(dataset, parent, list, primaryKey, children, uniqueId) {
+    function load_data(dataset, parent, list, primaryKey, childrenName, uniqueId) {
         
         var target = parent || dataset,
             rowType = flyingon.DataRow,
@@ -3759,9 +3757,9 @@ flyingon.fragment('f-dataset', function () {
 
             target[index++] = row;
             
-            if (children && (data = data[children]) && data.length > 0)
+            if (childrenName && (data = data[childrenName]) && data.length > 0)
             {
-                uniqueId = load_data(dataset, row, data, primaryKey, children, uniqueId)
+                uniqueId = load_data(dataset, row, data, primaryKey, childrenName, uniqueId)
             }
         }
 
@@ -3785,10 +3783,11 @@ flyingon.fragment('f-dataset', function () {
             parent = null,
             keys1,
             keys2,
+            uniqueId,
             primaryKey,
             row,
             data;
-                
+
         if (dataset)
         {
             parent = this;
@@ -3798,8 +3797,11 @@ flyingon.fragment('f-dataset', function () {
             dataset = this;
         }
 
+        uniqueId = dataset.__new_id++;
+        primaryKey = dataset.primaryKey;
+
         keys1 = dataset.__keys1;
-        keys2 = (primaryKey = dataset.primaryKey) && dataset.__keys2;
+        keys2 = primaryKey && dataset.__keys2;
 
         for (var i = start, l = items.length; i < l; i++)
         {
@@ -3814,20 +3816,22 @@ flyingon.fragment('f-dataset', function () {
                 row.dataset = dataset;
                 row.parent = parent;
                 row.data = data = data || {};
-                row.state = 'add';
             }
+
+            row.state = 'add';
             
-            keys1[row.uniqueId = dataset.__new_id++] = row;
+            keys1[row.uniqueId = uniqueId++] = row;
             
             if (primaryKey)
             {
                 keys2[row.id = data[primaryKey]] = row;
             }
-        
+
             dataset.__change_rows.push(row);
             rows.push(row);
         }
 
+        dataset.__new_id = uniqueId;
         dataset.trigger('add', 'parent', parent, 'index', index, 'rows', rows);
     };
 
@@ -3858,7 +3862,7 @@ flyingon.fragment('f-dataset', function () {
 
         for (var i = 0, l = items.length; i < l; i++)
         {
-            row = this[i];
+            row = items[i];
  
             delete keys1[row.uniqueId];
 
@@ -4113,8 +4117,11 @@ flyingon.DataSet = flyingon.defineClass(flyingon.RowCollection, function () {
     
     
     
-    this.init = function () {
+    this.init = function (primaryKey, childrenName) {
        
+       this.primaryKey = primaryKey || '';
+       this.childrenName = childrenName || '';
+
         //id生成器
         this.__new_id = 1;
         
@@ -4132,6 +4139,10 @@ flyingon.DataSet = flyingon.defineClass(flyingon.RowCollection, function () {
 
     //主键
     this.primaryKey = '';
+
+
+    //子节点属性名
+    this.childrenName = '';
 
     
         
@@ -4940,20 +4951,17 @@ flyingon.fragment('f-visual', function () {
     });
 
 
-    //class1: 默认class
-    //class2: 系统自动生成的class
-    //class3: 用户设置的class
-    this.__class1 = this.__class2 = this.__class3 = '';
 
+    this.__className = '';
 
-    //指定class名 与html一样
+    //指定class名
     this['class'] = this.defineProperty('className', '', {
 
         set: function (value) {
 
             var any;
 
-            this.__class3 = value;
+            this.__className = value;
 
             if (this.rendered)
             {
@@ -5019,7 +5027,7 @@ flyingon.fragment('f-visual', function () {
     //移除class
     this.removeClass = function (name) {
 
-        var list, keys, index;
+        var list, keys, index, flag;
 
         if (name && (keys = this.__class_keys) && (list = name.match(/[\w-]+/g)))
         {
@@ -5029,6 +5037,7 @@ flyingon.fragment('f-visual', function () {
             {
                 if (keys[name = list[index]])
                 {
+                    flag = true;
                     delete keys[name];
                 }
                 else
@@ -5037,7 +5046,7 @@ flyingon.fragment('f-visual', function () {
                 }
             }
             
-            sync_class(this, keys);
+            flag && sync_class(this, keys);
         }
 
         return this;
@@ -5152,12 +5161,12 @@ flyingon.fragment('f-visual', function () {
         {
             name = ((module.className || module.moduleName) + '-' + name).toLowerCase();
             
-            if (base = base.__class1)
+            if (base = base.defaultClass)
             {
                  name = base + ' ' + name;
             }
             
-            this.__class1 = name;
+            this.defaultClass = name;
         }
     };
     
@@ -5180,112 +5189,19 @@ flyingon.validator = (function () {
 
 
 
-    function validate(control, errors) {
+    (flyingon.validate = function (control, show) {
 
-        var any = control.__validator;
-         
-        if ((length = any && any.length) || control.__required)
+        var errors = [],
+            fn;
+
+        if (control && (fn = control.__validate))
         {
-            validate_control(control, any, length, errors);
+            fn.call(control, errors, show);
         }
-        
-        if ((any = control.length) > 0)
-        {
-            for (var i = 0; i < any; i++)
-            {
-                validate(control[i], errors);
-            }
-        }
-    };
-
-
-    function validate_control(control, validator, length, errors) {
-
-        var text, args, any;
-
-        if (text = control.value || control.text)
-        {
-            text = text.call(control);
-
-            if (control.__required)
-            {
-                if (!text.length)
-                {
-                    any = create_error(control, 'required', i18n('validator.required'));
-                    errors.push(any);
-                    return;
-                }
-            }
-
-            for (var i = 0; i < length; i++)
-            {
-                if ((any = all[validator[i++]]) && 
-                    (any = any.apply(control, (args = validator[i].slice(0), args[0] = text, args))) &&
-                    (any = i18n(any, null)))
-                {
-                    any = create_error(control, '', any, validator[i]);
-                    errors.push(any);
-                    return;
-                }
-            }
-        }
-
-        //清空错误信息
-        set_error(control);
-    };
-
-
-    function create_error(control, name, text, args) {
-
-        var error = {
-
-            control: control, 
-            name: name || (name = args[0]), 
-            text: text.replace(/\{\{([^{}]*)\}\}/g, function (text, key) {
-
-                switch (key)
-                {
-                    case 'name':
-                        return name;
-
-                    case 'title':
-                        return (key = control.parent) ? key.__error_title() : text;
-                }
-
-                return args && args[key] || text;
-            })
-        };
-
-        set_error(control, error);
-
-        return error;
-    };
-
-
-    function set_error(control, error) {
-
-        var parent = control.parent;
-
-        if (parent && parent.__validate_box)
-        {
-            parent.__set_validate(error, control);
-        }
-        else
-        {
-            control.__set_validate(error);
-        }
-    };
-
-
-
-    flyingon.validate = function (control) {
-
-        var errors = [];
-
-        validate(control, errors);
 
         return errors;
-    };
+
+    }).all = all;
 
 
     flyingon.validate.mouseover = function (e) {
@@ -5418,6 +5334,10 @@ flyingon.fragment('f-validate', function () {
 
     var validate = flyingon.validate;
 
+    var all = validate.all;
+    
+    var i18n = flyingon.i18ntext;
+
 
 
     //是否必填
@@ -5451,9 +5371,9 @@ flyingon.fragment('f-validate', function () {
 
                 for (var i = 0, l = value.length; i < l; i++)
                 {
-                    if ((item = value[i]) && (item = item.split(':'))[0])
+                    if (item = value[i])
                     {
-                        list.push(item[0], item);
+                        list.push(item.split(':'));
                     }
                 }
             }
@@ -5462,6 +5382,96 @@ flyingon.fragment('f-validate', function () {
         }
     });
 
+
+
+    //内部校验方法
+    this.__validate = function (errors, show) {
+        
+        var required = this.__required,
+            validator = this.__validator;
+
+        if (required || validator)
+        {
+            var text = (this.value || this.text).call(this),
+                items,
+                any;
+            
+            if (required && !text.length)
+            {
+                any = create_error(this, 'required', i18n('validator.required'));
+
+                show !== false && set_error(this, any);
+                errors.push(any);
+                return;
+            }
+
+            if (validator)
+            {
+                for (var i = 0, l = validator.length; i < l; i++)
+                {
+                    items = validator[i++];
+
+                    if (any = all[items[0]])
+                    {
+                        items = items.slice(0);
+                        items[0] = text;
+
+                        if ((any = any.apply(this, items)) && (any = i18n(any, null)))
+                        {
+                            any = create_error(this, '', any, items);
+
+                            show !== false && set_error(this, any);
+                            errors.push(any);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+   
+        //清空错误信息
+        show !== false && set_error(this);
+    };
+
+
+    function create_error(control, name, text, items) {
+
+        var error = {
+
+            control: control, 
+            name: name || (name = items[0]), 
+            text: text.replace(/\{([^{}]*)\}/g, function (text, key) {
+
+                switch (key)
+                {
+                    case 'name':
+                        return name;
+
+                    case 'title':
+                        return (key = control.parent) ? key.__error_title() : text;
+                }
+
+                return items && items[key] || text;
+            })
+        };
+
+        return error;
+    };
+
+
+    function set_error(control, error) {
+
+        var parent = control.parent;
+
+        if (parent && parent.__validate_box)
+        {
+            parent.__set_validate(error, control);
+        }
+        else
+        {
+            control.__set_validate(error);
+        }
+    };
 
 
     //设置或清除检验信息
@@ -8251,6 +8261,8 @@ flyingon.jsonpPost = function (url, options) {
 
                 page.closable(options.closable !== false);
                 page.parent.selectedPage(page, 'route');
+
+                page.loading(200);
  
                 any = this;
 
@@ -8259,6 +8271,7 @@ flyingon.jsonpPost = function (url, options) {
                     var route = any,
                         plugin;
 
+                    page.loading(false);
                     page.push(plugin = new Class());
 
                     plugin.loadPlugin(route = route.next());
@@ -9870,7 +9883,6 @@ flyingon.Query = Object.extend(function () {
     function render(writer, control) {
 
         var storage = control.__storage || control.__defaults,
-            encode = flyingon.html_encode,
             html = control.__as_html,
             text,
             any;
@@ -9879,19 +9891,17 @@ flyingon.Query = Object.extend(function () {
         
         if (any = control.__id || storage.id)
         {
-            writer.push(' id="', encode(any), '"');
+            writer.push(' id="', any, '"');
         }
 
-        any = html ? ' f-html' : ' f-absolute';
+        text = control.defaultClass + (html ? ' f-html' : ' f-absolute');
 
-        text = (text = control.__class2) ? any + ' ' + text : any;
-
-        if (any = control.__class3)
+        if (any = control.__className)
         {
-            text += ' ' + encode(any);
+            text += ' ' + any;
         }
 
-        writer.push(' class="', control.__class1 + text, '" style="');
+        writer.push(' class="', text, '" style="');
 
         if (any = render.cssText)
         {
@@ -9901,7 +9911,7 @@ flyingon.Query = Object.extend(function () {
 
         if (any = control.__style)
         {
-            this.__render_style(writer, control, any, encode);
+            this.__render_style(writer, control, any);
         }
 
         if (any = control.__location_dirty)
@@ -9938,7 +9948,7 @@ flyingon.Query = Object.extend(function () {
     this.__render_default = render;
 
 
-    this.__render_style = function (writer, control, values, encode) {
+    this.__render_style = function (writer, control, values) {
 
         var map = css_map,
             value, 
@@ -9954,11 +9964,11 @@ flyingon.Query = Object.extend(function () {
             switch (any = this[name])
             {
                 case 1: //直接设置样式
-                    writer.push(name, ':', encode(value), ';');
+                    writer.push(name, ':', value, ';');
                     break;
 
                 case 2: //需要检测前缀
-                    writer.push(map[name], ':', encode(value), ';');
+                    writer.push(map[name], ':', value, ';');
                     break;
 
                 case 9: //特殊样式
@@ -9970,7 +9980,7 @@ flyingon.Query = Object.extend(function () {
                     {
                         if (any = map[name])
                         {
-                            writer.push(any, ':', encode(value), ';');
+                            writer.push(any, ':', value, ';');
                             self[name] = any === name ? 1 : 2; //直接设置样式标记为1,需要加前缀标记为2
                             break;
                         }
@@ -10130,7 +10140,7 @@ flyingon.Query = Object.extend(function () {
 
         var view = control.view,
             key = ' f-rtl',
-            index = control.__class1.indexOf(key);
+            index = control.defaultClass.indexOf(key);
 
         control.__location_values = null;
         control.left = control.top = 0;
@@ -10141,13 +10151,13 @@ flyingon.Query = Object.extend(function () {
         {
             if (index < 0)
             {
-                control.__class1 += key;
+                control.defaultClass += key;
                 view.className += key;
             }
         }
         else if (index >= 0)
         {
-            control.__class1 = control.__class1.replace(key, '');
+            control.defaultClass = control.defaultClass.replace(key, '');
             view.className = view.className.replace(key, '');
         }
         
@@ -10569,14 +10579,38 @@ flyingon.Query = Object.extend(function () {
 
     this.className = function (control, view, value) {
 
-        var name = control.__class1 + (control.__as_html ? ' f-html' : ' f-absolute');
-        view.className = value ? (name + ' ' + value) : name;
+        var name = control.defaultClass + (control.__as_html ? ' f-html' : ' f-absolute');
+
+        if (control.__disabled)
+        {
+            name += ' f-disabled';
+        }
+
+        if (value)
+        {
+            name += ' ' + value;
+        }
+
+        view.className = name;
     };
 
 
     this.visible = function (control, view, value) {
 
         view.style.display = value ? '' : 'none';
+    };
+
+
+    this.disabled = function (control, view, value) {
+
+        if (value)
+        {
+            view.className += ' f-disabled';
+        }
+        else
+        {
+            view.className = view.className.replace(' f-disabled', '');
+        }
     };
 
 
@@ -11141,6 +11175,16 @@ flyingon.renderer('Label', function (base) {
 
         if (auto & 1)
         {
+            view.style.width = 'auto';
+        }
+
+        if (auto & 2)
+        {
+            view.style.height = 'auto';
+        }
+
+        if (auto & 1)
+        {
             control.offsetWidth = view && view.offsetWidth || 0;
         }
 
@@ -11165,6 +11209,44 @@ flyingon.renderer('Label', function (base) {
         {
             view[this.__text_name] = storage.text;
         }
+    };
+
+
+
+});
+
+
+
+
+flyingon.renderer('Icon', function (base) {
+
+
+
+    this.render = function (writer, control, render) {
+
+        var icon = control.icon();
+
+        writer.push('<a');
+        
+        render.call(this, writer, control);
+        
+        writer.push('><span class="f-icon-body', icon ? ' ' + icon : '', '"></span></a>');
+    };
+
+
+
+    this.icon = function (control, view, value) {
+
+        view.firstChild.className = 'f-icon-body' + (value ? ' ' + value : '');
+    };
+
+
+    this.size = function (control, view, value) {
+
+        var style = view.firstChild.style;
+
+        style.width = style.height = value + 'px';
+        style.marginLeft = style.marginTop = (value >> 1) + 'px';
     };
 
 
@@ -11710,11 +11792,10 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
         }
 
         writer.push('>',
-            '<div class="f-groupbox-head" style="height:', head, 'px;line-height:', head, 'px;text-align:', storage.align, ';" onclick="flyingon.GroupBox.onclick.call(this, event)">',
+            '<div class="f-groupbox-head" style="height:', head, 'px;line-height:', head - 1, 'px;text-align:', storage.align, ';" onclick="flyingon.GroupBox.onclick.call(this, event)">',
                 '<span class="f-groupbox-icon ', (any = storage.icon) ? any : '" style="display:none;', '"></span>',
                 '<span class="f-groupbox-text">', text, '</span>',
                 '<span class="f-groupbox-flag f-groupbox-', storage.collapsed ? 'close"' : 'open"', storage.collapsable === 2 ? '' : ' style="display:none;"', '></span>',
-                '<span class="f-groupbox-line"></span>',
             '</div>',
             '<div class="f-groupbox-body" style="top:', head, 'px;overflow:auto;', storage.collapsed ? '' : '', '">');
 
@@ -11749,7 +11830,10 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
 
     this.header = function (control, view, value) {
 
-        view.firstChild.style.height = view.lastChild.style.top = value + 'px';
+        var style = view.firstChild.style;
+
+        style.height = view.lastChild.style.top = value + 'px';
+        style.lineHeight = value - 1 + 'px';
     };
 
 
@@ -11789,7 +11873,7 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
 
     this.collapsed = function (control, view, value) {
 
-        view.firstChild.lastChild.previousSibling.className = 'f-groupbox-flag f-groupbox-' + (value ? 'close' : 'open');
+        view.firstChild.lastChild.className = 'f-groupbox-flag f-groupbox-' + (value ? 'close' : 'open');
         view.lastChild.style.display = value ? 'none' : '';
     };
 
@@ -13735,22 +13819,30 @@ flyingon.renderer('Tree', function (base) {
     this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
-            length = control.length;
+            any = ' f-tree-theme-' + storage.theme;
         
         writer.push('<div');
         
-        control.__class2 = 'f-tree-theme-' + storage.theme +
-            (!storage.checked ? ' f-tree-no-check' : '') + 
-            (!storage.icon ? ' f-tree-no-icon' : '');
+        if (!storage.checked)
+        {
+            any += ' f-tree-no-check';
+        }
+
+        if (!storage.icon)
+        {
+            any += ' f-tree-no-icon'
+        }
+
+        control.defaultClass += any;
 
         render.call(this, writer, control);
         
         writer.push(' onclick="flyingon.Tree.onclick.call(this, event)">');
 
-        if (length > 0 && control.__visible)
+        if ((any = control.length) > 0 && control.__visible)
         {
             control.__content_render = true;
-            this.__render_children(writer, control, control, 0, length);
+            this.__render_children(writer, control, control, 0, any);
         }
 
         //滚动位置控制(解决有右或底边距时拖不到底的问题)
@@ -13908,14 +14000,9 @@ flyingon.renderer('TreeNode', function (base) {
 
         node.rendered = true;
 
-        text = node.__class1;
+        text = node.defaultClass;
 
-        if (any = node.__class2)
-        {
-            text += ' ' + any;
-        }
-
-        if (any = node.__class3)
+        if (any = node.__className)
         {
             text += encode(any);
         }
@@ -14254,7 +14341,7 @@ flyingon.renderer('GridColumn', function (base) {
         cell.column = column;
 
         cell.__as_html = true;
-        cell.__class1 += ' f-grid-cell';
+        cell.defaultClass += ' f-grid-cell';
 
         render.cssText = 'left:' + column.__start +
             'px;top:' + y +
@@ -14514,13 +14601,11 @@ flyingon.renderer('GridRow', function (base) {
             'px;line-height:' + height + 'px;' +
             any;
 
-        cell.__class1 = 'f-grid-cell';
-
-        any = '';
+        any = ' f-grid-cell';
 
         if (row.__checked)
         {
-            any = ' f-grid-checked';
+            any += ' f-grid-checked';
         }
 
         if (row.__current)
@@ -14528,11 +14613,7 @@ flyingon.renderer('GridRow', function (base) {
             any += ' f-grid-current';
         }
 
-        if (any)
-        {
-            cell.__class3 = any;
-        }
-
+        cell.defaultClass += any;
         cell.renderer.render(writer, cell, render);
 
         return cell;
@@ -14717,7 +14798,7 @@ flyingon.renderer('GroupGridRow', 'GridRow', function (base) {
             cell.text(any);
         }
 
-        cell.__class1 += ' f-grid-group-row';
+        cell.defaultClass += ' f-grid-group-row';
 
         render.cssText = 'left:' + column.__start +
             'px;top:' + y + 
@@ -16330,7 +16411,7 @@ flyingon.renderer('Tab', function (base) {
 
         writer.push('<div');
         
-        control.__class2 += 'f-tab-direction-' + storage.direction;
+        control.defaultClass += ' f-tab-direction-' + storage.direction;
         
         render.call(this, writer, control);
         
@@ -17118,9 +17199,6 @@ flyingon.renderer('ToolTip', function (base) {
     //注册事件函数
     var on = flyingon.dom_on;
 
-    //注销事件函数
-    var off = flyingon.dom_off;
-
     
 
     //处理全局点击事件,点击当前弹出层以外的区域则关闭当前弹出层
@@ -17157,23 +17235,23 @@ flyingon.renderer('ToolTip', function (base) {
 
 
 
-    this.render = function (writer, control, render) {
-
-        writer.push('<div');
-
-        render.call(this, writer, control);
-        
-        writer.push('><div class="f-tooltip-body"></div><div class="f-tooltip-arrow1"></div><div class="f-tooltip-arrow2"></div></div>');
-    };
-
-
-
     //打开弹出层
     //reference: 停靠参考物
-    this.show = function (control, reference, direction, reverse) {
+    this.show = function (control, reference) {
 
-        var view = control.view || this.createView(control, false),
+        var view = control.view,
+            direction = control.direction(), 
+            reverse = control.reverse(),
             any;
+
+        if (!view)
+        {
+            view = control.view = document.createElement('div');
+            view.innerHTML = '<div class="f-tooltip-body"></div><div class="f-tooltip-arrow1"></div><div class="f-tooltip-arrow2"></div>';
+        }
+
+        view.className = 'f-tooltip f-tooltip-' + direction;
+        view.style.width = (any = control.width()) > 0 ? any + 'px' : any;
 
         if (control.html())
         {
@@ -17186,22 +17264,12 @@ flyingon.renderer('ToolTip', function (base) {
 
         document.body.appendChild(view);
 
-        control.measure(0, 0);
-        control.locate(0, 0);
-
-        flyingon.__update_patch();
-        
-        this.update(control);
-
         any = flyingon.dom_align(
             control.view, 
             (reference.view || reference).getBoundingClientRect(), 
             direction, direction === 'top' || direction === 'bottom' ? 'center' : 'middle', 
             reverse);
 
-        control.offsetLeft = any.left;
-        control.offsetTop = any.top;
-        
         if ((any = current) && any !== control)
         {
             any.close();
@@ -17529,6 +17597,95 @@ flyingon.showMessage = function (title, text, type, buttons, focus) {
     return dialog;
 
 };
+
+
+
+
+flyingon.renderer('Pagination1', 'HtmlElement', function (base) {
+
+
+
+    this.__line_height = 1;
+
+
+
+
+
+});
+
+
+
+
+flyingon.renderer('Menu', function (base) {
+
+
+    //弹出菜单堆栈
+    var stack = [];
+
+    //当前弹出层
+    var current = null;
+
+    //注册事件函数
+    var on = flyingon.dom_on;
+
+    
+
+    //处理全局键盘事件,点击Esc则退出当前窗口
+    on(document, 'keydown', function (e) {
+
+        if (current && e.which === 27)
+        {
+            current.close();
+        }
+    });
+
+
+
+    //打开弹出层
+    //reference: 停靠参考物
+    this.show = function (control, reference) {
+
+        var view = document.createElement('div'),
+            direction = control.direction(), 
+            reverse = control.reverse(),
+            any;
+
+        view.className = 'f-Menu';
+        view.style.width = (any = control.width()) > 0 ? any + 'px' : any;
+
+        document.body.appendChild(view);
+
+        any = flyingon.dom_align(
+            control.view, 
+            (reference.view || reference).getBoundingClientRect(), 
+            direction, direction === 'top' || direction === 'bottom' ? 'center' : 'middle', 
+            reverse);
+
+        if ((any = current) && any !== control)
+        {
+            any.close();
+        }
+
+        current = control;
+    };
+
+
+    //关闭弹出层(弹出多级窗口时只有最后一个可以成功关闭)
+    this.close = function (control) {
+
+        var view = control.view,
+            any;
+
+        current = null;
+
+        if (any = view && view.parentNode)
+        {
+            any.removeChild(view);
+        }
+    };
+
+
+});
 
 
 
@@ -17937,6 +18094,27 @@ Object.extend('Control', function () {
 
     
 
+    //是否禁用
+    this.defineProperty('disabled', false, {
+
+        set: function (value) {
+
+            var any;
+
+            this.__disabled = value;
+
+            if (any = this.__view_patch)
+            {
+                any.disabled = value;
+            }
+            else
+            {
+                this.renderer.set(this, 'disabled', value);
+            }
+        }
+    });
+    
+
     //定义attribute属性
     define = function (self, name, defaultValue, attributes) {
 
@@ -17964,10 +18142,6 @@ Object.extend('Control', function () {
     define(this, 'tabindex', 0);
     
     
-    //是否禁用
-    define(this, 'disabled', false);
-    
-
     //是否只读
     define(this, 'readonly', false);
 
@@ -18357,6 +18531,41 @@ Object.extend('Control', function () {
 
 
 
+    //显示或关闭加载进度
+    this.loading = function (delay) {
+
+        loading(this, 'f-loading', delay);
+    };
+
+
+    //显示或关闭等待信息
+    this.waiting = function (delay) {
+
+        loading(this, 'f-waiting', delay);
+    };
+
+
+    function loading(control, name, delay) {
+
+        if (delay === false)
+        {
+            control.removeClass(name);
+        }
+        else if (delay > 0)
+        {
+            setTimeout(function () {
+
+                control.removeClass(name);
+
+            }, delay | 0);
+        }
+        else
+        {
+            control.addClass(name);
+        }
+    };
+
+
     
     //扩展可序列化功能
     flyingon.fragment('f-serialize', this);
@@ -18565,6 +18774,40 @@ flyingon.Control.extend('Label', function (base) {
         }
     };
     
+
+
+}).register();
+
+
+
+
+flyingon.Control.extend('Icon', function (base) {
+
+
+
+    this.defaultWidth = 25;
+
+
+
+    this.defineProperty('icon', '', {
+            
+        set: function (value) {
+
+            this.rendered && this.renderer.set(this, 'icon', value);
+        }
+    });
+
+
+    this.defineProperty('size', 16, {
+        
+        dataType: 'int',
+
+        set: function (value) {
+
+            this.rendered && this.renderer.set(this, 'size', value);
+        }
+    });
+
 
 
 }).register();
@@ -19098,6 +19341,22 @@ flyingon.fragment('f-container', function (base, childrenClass, arrange) {
       
         return this;
     };
+
+
+
+    //排列时生成校验方法
+    arrange && (this.__validate = function (errors, show) {
+
+        var item, fn;
+
+        for (var i = 0, l = this.length; i < l; i++)
+        {
+            if ((item = this[i]) && (fn = item.__validate))
+            {
+                fn.call(item, errors, show);
+            }
+        }
+    });
     
   
 
@@ -19796,10 +20055,25 @@ flyingon.TextBox.extend('Password', function (base) {
 flyingon.TextBox.extend('Number', function (base) {
 
 
+    var pow = Math.pow;
+
+
     this.__scale = this.__value = 0;
 
 
     this.defineProperty('value', 0, {
+
+        check: function (value) {
+
+            var scale = this.scale;
+
+            if (scale <= 0)
+            {
+                return scale | 0;
+            }
+
+            return (value * scale | 0) / scale;
+        },
 
         set: function (value) {
 
@@ -19814,14 +20088,32 @@ flyingon.TextBox.extend('Number', function (base) {
 
         check: function (value) {
 
-            return this.__scale = (value |= 0) > 0 ? value : 0;
+            return this.__scale = (value |= 0) > 0 ? pow(10, value) : 0;
+        },
+
+        set: function (value) {
+
+            this.value(this.__value);
+        }
+    });
+
+
+    //格式化
+    this.defineProperty('format', '', {
+
+        set: function (value) {
+
+            this.__format = value;
         }
     });
 
 
     this.text = function () {
 
-        return this.__value.toFixed(this.__scale);
+        var value = this.__value,
+            format = this.__format;
+
+        return format ? format.replace('{0}', value) : '' + value;
     };
 
 
@@ -20102,6 +20394,8 @@ flyingon.TextButton.extend('ComboBox', function (base) {
             {
                 this.popup.close();
             }
+
+            this.target.trigger('change', 'value', e.value);
         });
     };
 
@@ -20477,8 +20771,8 @@ flyingon.Control.extend('Box', function (base) {
 
         if (target)
         {
-            target.__validate_text = error.text;
-            target.visible(error);
+            target.__validate_text = error ? error.text : '';
+            target.visible(!!error);
 
             if (error && !target.__no_text)
             {
@@ -20766,125 +21060,6 @@ flyingon.Control.extend('Error', function (base) {
 
 
 }).register();
-
-
-
-
-flyingon.HtmlElement.extend('Pagination', function (base) {
-
-
-    var template = [
-        { Class: 'span', className: 'f-page-button f-page-first' },
-        { Class: 'span', className: 'f-page-button f-page-previous' },
-        { Class: 'input', type: 'text', className: 'f-page-current' },
-        { Class: 'span', text: '/' },
-        { Class: 'span', className: 'f-page-pages' },
-        { Class: 'span', className: 'f-page-button f-page-next' },
-        { Class: 'span', className: 'f-page-button f-page-last' },
-        { Class: 'span', className: 'f-page-sep' },
-        { Class: 'span', className: 'f-page-button f-page-refresh' },
-        { Class: 'span', className: 'f-page-sep' },
-        { Class: 'ComboBox', className: 'f-page-records' }
-    ];
-
-
-    this.init = function () {
-
-        this.push.apply(this, template);
-    };
-
-
-
-    this.defaultHeight = 30;
-
-    this.defaultValue('border', 1);
-
-
-    //每页显示记录数
-    this.defineProperty('records', 20, { set: move });
-
-
-    //总记录数
-    this.defineProperty('total', 0, { set: move });
-
-
-
-    function move() {
-
-        var storage = this.__storage || this.__defaults;
-
-        this.__pages = Math.ceil(storage.total / storage.records);
-        this.moveTo(this.__index);
-    };
-
-
-
-    this.__index = this.__pages = 0;
-
-
-    //获取当前页码
-    this.current = function () {
-
-        return this.__index;
-    };
-
-
-    //获取总的页数
-    this.pages = function () {
-
-        return this.__pages;
-    };
-
-
-    //移动到第一页
-    this.first = function () {
-
-        this.moveTo(0);
-    };
-
-
-    //移动到上一页
-    this.previous = function () {
-
-        this.moveTo(this.__index - 1);
-    };
-
-
-    //移动到下一页
-    this.next = function () {
-
-        this.moveTo(this.__index + 1);
-    };
-
-
-    //移动到最后一页
-    this.last = function () {
-
-        this.moveTo(this.__pages - 1);
-    };
-
-
-    //移动到指定页
-    this.moveTo = function (index) {
-
-        if ((index |= 0) < 0)
-        {
-            index = 0;
-        }
-        else if (index >= this.__pages)
-        {
-            index = this.__pages - 1;
-        }
-
-        if (this.__index !== index)
-        {
-            this.trigger('change', 'index', this.__index = index);
-        }
-    };
-
-
-
-}).register(); 
 
 
 
@@ -21684,7 +21859,7 @@ flyingon.GridColumn.extend(function (base) {
 
         var control = new Class();
         
-        control.__class1 += ' f-grid-column-no';
+        control.defaultClass += ' f-grid-column-no';
 
         return control;
     };
@@ -21728,7 +21903,7 @@ flyingon.GridColumn.extend(function (base) {
        var control = new Class();
         
         control.__column_check = true;
-        control.__class1 += ' f-grid-column-check';
+        control.defaultClass += ' f-grid-column-check';
 
         if (row.__checked)
         {
@@ -22995,7 +23170,6 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
         }
 
         this.__dirty = true;
-        this.grid.update(false);
     };
 
 
@@ -23061,7 +23235,6 @@ flyingon.GridView = flyingon.defineClass(Array, function () {
         }
 
         this.__dirty = true;
-        this.grid.update(false);
     };
 
 
@@ -24198,22 +24371,7 @@ flyingon.Panel.extend('Popup', function () {
 
 
 
-flyingon.Control.extend('ToolTip', function () {
-
-
-
-    this.init = function () {
-
-        this.addClass('f-tooltip-right');
-    };
-
-
-
-    this.defaultValue('border', 1);
-
-    this.defaultValue('width', 'auto');
-
-    this.defaultValue('height', 'auto');
+Object.extend('ToolTip', function () {
 
 
 
@@ -24226,25 +24384,22 @@ flyingon.Control.extend('ToolTip', function () {
 
 
     //停靠方向 bottom:下面 top:上面 right:右边 left:左边
-    this.defineProperty('direction', 'right', {
-
-        set: function (value, oldValue) {
-
-            oldValue && this.removeClass('f-tooltip-' + oldValue);
-            value && this.addClass('f-tooltip-' + value);
-        }
-    });
+    this.defineProperty('direction', 'right');
     
     
     //空间不足时是否反转方向
     this.defineProperty('reverse', true);
 
 
+    //宽度
+    this.defineProperty('width', 'auto');
+
+
 
     //显示
     this.show = function (reference) {
 
-        this.renderer.show(this, reference, this.direction(), this.reverse());
+        this.renderer.show(this, reference);
         return this;
     };
 
@@ -24252,16 +24407,14 @@ flyingon.Control.extend('ToolTip', function () {
     //关闭
     this.close = function () {
 
-        this.rendered && this.renderer.close(this);
-
-        if (this.autoDispose)
-        {
-            this.dispose();
-        }
-
+        this.renderer.close(this);
         return this;
     };
     
+
+
+    flyingon.renderer.bind(this, 'ToolTip');
+
 
 
 }).register();
@@ -24464,6 +24617,405 @@ flyingon.Panel.extend('Dialog', function (base) {
     };
 
 
+
+}).register();
+
+
+
+
+flyingon.Panel.extend('Pagination', function (base) {
+
+
+    this.defaultHeight = 32;
+
+    this.defaultValue('border', 1);
+
+    this.defaultValue('padding', 4);
+
+    this.defaultValue('layout', 'dock');
+
+
+    var template = [
+        { Class: 'ComboBox', className: 'f-page-records', tag: 'records', width: 60, popupWidth: 60, items: [10, 20, 30, 50, 100, 200, 500] },
+        { Class: 'Label', className: 'f-page-sep', width: 1, margin: '2 4' },
+        { Class: 'Icon', className: 'f-page-button', tag: 'first', icon: 'f-page-first' },
+        { Class: 'Icon', className: 'f-page-button', tag: 'previous', icon: 'f-page-previous' },
+        { Class: 'TextBox', className: 'f-page-current', tag: 'current', width: 40, value: 0, style: 'text-align:center' },
+        { Class: 'Label', className: 'f-page-text', width: 10, text: '/' },
+        { Class: 'Label', className: 'f-page-pages', tag: 'pages', width: 'auto', text: 0 },
+        { Class: 'Icon', className: 'f-page-button', tag: 'next', icon: 'f-page-next' },
+        { Class: 'Icon', className: 'f-page-button', tag: 'last', icon: 'f-page-last' },
+        { Class: 'Label', className: 'f-page-sep', width: 1, margin: '2 4' },
+        { Class: 'Icon', className: 'f-page-button', tag: 'refresh', icon: 'f-page-refresh' },
+        { Class: 'Label', tag: 'total', dock: 'right' }
+    ];
+
+
+    this.init = function () {
+
+        this.push.apply(this, template);
+
+        this.on('click', click);
+        this.on('change', change);
+    };
+
+
+    function click(e) {
+
+        var any = e.target.tag();
+
+        if (any && (any = this[any]) && typeof any === 'function')
+        {
+            any.call(this);
+            e.stop();
+        }
+    };
+
+
+    function change(e) {
+
+        var control = e.target;
+
+        switch (control.tag())
+        {
+            case 'records':
+                this.records(control.value() | 0);
+                e.stop();
+                break;
+
+            case 'current':
+                this.moveTo(control.value() | 0);
+                e.stop();
+                break;
+        }
+    };
+
+
+    //每页显示记录数
+    this.defineProperty('records', 10, { set: move });
+
+
+    //总记录数
+    this.defineProperty('total', 0, { set: move });
+
+
+
+    function move() {
+
+        var storage = this.__storage || this.__defaults;
+
+        this.__pages = Math.ceil(storage.total / storage.records);
+        this.__arrange_delay(2);
+
+        if (!this.moveTo(this.__index))
+        {
+            this.refresh();
+            this.update();
+        }
+    };
+
+
+
+    this.__index = 1;
+
+    this.__pages = 0;
+
+
+    //获取当前页码
+    this.current = function () {
+
+        return this.__index;
+    };
+
+
+    //获取总的页数
+    this.pages = function () {
+
+        return this.__pages;
+    };
+
+
+    //移动到第一页
+    this.first = function () {
+
+        this.moveTo(1);
+    };
+
+
+    //移动到上一页
+    this.previous = function () {
+
+        this.moveTo(this.__index - 1);
+    };
+
+
+    //移动到下一页
+    this.next = function () {
+
+        this.moveTo(this.__index + 1);
+    };
+
+
+    //移动到最后一页
+    this.last = function () {
+
+        this.moveTo(this.__pages);
+    };
+
+
+    //刷新
+    this.refresh = function () {
+
+        this.trigger('refresh', 'index', this.__index);
+    };
+
+
+    //移动到指定页
+    this.moveTo = function (index) {
+
+        if ((index |= 0) < 1)
+        {
+            index = 1;
+        }
+        else if (index > this.__pages)
+        {
+            index = this.__pages;
+        }
+
+        if (this.__index !== index)
+        {
+            this.trigger('refresh', 'index', this.__index = index);
+            this.update();
+
+            return true;
+        }
+    };
+
+
+    //同步至其它分页控件
+    this.sync = function (pagination) {
+
+        if (pagination && pagination !== this)
+        {
+            var storage = this.__storage,
+                any;
+
+            pagination.__index = this.__index;
+            pagination.__pages = this.__pages;
+
+            if (storage)
+            {
+                any = pagination.storage();
+                any.total = storage.total;
+                any.records = storage.records;
+            }
+
+            pagination.update();
+        }
+    };
+
+
+    this.update = function () {
+
+        var index = this.__index,
+            pages = this.__pages;
+
+        for (var i = this.length - 1; i >= 0; i--)
+        {
+            var item = this[i];
+
+            switch (item.tag())
+            {
+                case 'records':
+                    item.value(this.records());
+                    break;
+
+                case 'first':
+                case 'previous':
+                    item.disabled(index <= 1);
+                    break;
+
+                case 'current':
+                    item.value(index);
+                    break;
+
+                case 'pages':
+                    item.text(pages);
+                    break;
+
+                case 'next':
+                case 'last':
+                    item.disabled(index >= pages);
+                    break;
+
+                case 'total':
+                    item.text(flyingon.i18ntext('page.total').replace('{0}', this.total()));
+                    break;
+            }
+        }
+    };
+
+
+
+}).register(); 
+
+
+
+
+flyingon.fragment('f-menu', function () {
+
+
+    flyingon.fragment('f-collection', this);
+
+
+    this.__check_items = function (index, items, start) {
+
+        var Class = flyingon.MenuItm,
+            item;
+
+        while (item = items[start])
+        {
+            //分隔条
+            if (item === '-')
+            {
+                continue;
+            }
+
+            if (!(item instanceof Class))
+            {
+                item = new Class().load(item);
+            }
+
+            item.parent = this;
+            start++;
+        }
+    };
+
+
+    this.dispose = function () {
+
+        var item;
+
+        for (var i = this.length - 1; i >= 0; i--)
+        {
+            if ((item = this[i]) && item.__events)
+            {
+                item.off();
+            }
+        }
+    };
+
+
+});
+
+
+
+Object.extend('MenuItem', function () {
+
+
+    this.load = function (options) {
+
+        if (options)
+        {
+            var storage = this.storage(),
+                value;
+
+            for (var name in options)
+            {
+                value = options[name];
+
+                switch (name)
+                {
+                    case 'icon':
+                    case 'text':
+                        storage[name] = '' + value;
+                        break;
+
+                    case 'disabled':
+                        storage[name] = !!value;
+                        break;
+
+                    case 'children':
+                        if (value instanceof Array && value.length > 0)
+                        {
+                            this.push.apply(this, value);
+                        }
+                        break;
+
+                    case 'click':
+                        if (typeof value === 'function')
+                        {
+                            this.on('click', value);
+                        }
+                        break;
+
+                    default:
+                        storage[name] = value;
+                        break;
+                }
+            }
+        }
+    };
+
+
+    this.defineProperty('icon', '');
+
+
+    this.defineProperty('text', '');
+
+
+    this.defineProperty('disabled', false);
+
+
+    this.defineProperty('tag', null);
+
+
+    flyingon.fragment('f-menu', this);
+
+
+});
+
+
+
+Object.extend('Menu', function () {
+
+
+
+    //宽度
+    this.defineProperty('width', 'auto');
+
+
+
+    //显示
+    this.show = function (reference) {
+
+        this.renderer.show(this, reference);
+        return this;
+    };
+
+
+    //关闭
+    this.close = function () {
+
+        this.renderer.close(this);
+        return this;
+    };
+    
+
+
+    flyingon.fragment('f-menu', this);
+
+
+    flyingon.renderer.bind(this, 'Menu');
+
+
+
+}).register();
+
+
+
+
+flyingon.Panel.extend('ToolBar', function () {
 
 }).register();
 
@@ -28453,7 +29005,7 @@ flyingon.view.Template = Object.extend(function () {
         if (!control.__top_control)
         {
             control.__top_control = true;
-            control.__class1 += ' f-host';
+            control.defaultClass += ' f-host';
         }
 
         host.appendChild(control.view || control.renderer.createView(control));
@@ -28476,7 +29028,7 @@ flyingon.view.Template = Object.extend(function () {
                 any.removeChild(view);
             }
 
-            control.__class1 = control.__class1.replace(' f-host', '');
+            control.defaultClass = control.defaultClass.replace(' f-host', '');
 
             if (dispose !== false)
             {

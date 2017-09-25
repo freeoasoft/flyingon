@@ -11,7 +11,6 @@ body {
 .f-grid-resize-thumb,
 .f-grid-group-line,
 .f-tab-line,
-.f-groupbox-line,
 .f-dialog-line {
     background-color: #95B8E7;
 }
@@ -114,7 +113,8 @@ input[type="text"],
 .f-tab-link,
 .f-tab-move-link,
 .f-groupbox-head,
-.f-dialog-head {
+.f-dialog-head,
+.f-toolbar {
     background-color: #EFF5FF;
     background: -webkit-linear-gradient(top,#EFF5FF 0,#E0ECFF 100%);
     background: -moz-linear-gradient(top,#EFF5FF 0,#E0ECFF 100%);
@@ -134,6 +134,11 @@ input[type="text"],
     background: linear-gradient(to bottom,#EFF5FF 0,white 100%);
     background-repeat: repeat-x;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#EFF5FF,endColorstr=white,GradientType=0);
+}
+
+.f-icon:hover {
+    border: 1px solid #95B8E7;
+    background-color: #EFF5FF;
 }
 
 .f-border,
@@ -169,6 +174,10 @@ input[type="text"],
 .f-grid-cell {
     border-style: solid;
     border-color: #95B8E7;
+}
+
+.f-groupbox-head {
+    border-bottom: 1px solid #95B8E7;
 }
 
 .f-tooltip-left .f-tooltip-arrow1 {
@@ -213,6 +222,7 @@ input[type="text"],
 }
 
 .f-control,
+.f-groupbox-head,
 .f-grid-group-box,
 .f-grid-column-head,
 .f-grid-filter,
@@ -236,6 +246,19 @@ input[type="text"],
     display: inline-block; /*解决inline元素无发设置高宽的问题*/
 }
 
+.f-required {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 14px;
+}
+
+.f-disabled {
+    opacity: 0.5;
+}
+
+.f-html {
+    display: inline-block;
+}
+
 .f-host, .f-html {
     position: relative;
 }
@@ -250,23 +273,51 @@ input[type="text"],
     height: 25px;
 }
 
+.f-waiting:after {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
+    background: url(loading16.gif) no-repeat;
+}
+
+.f-loading:after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 64px;
+    height: 64px;
+    margin-left: -32px;
+    margin-top: -32px;
+    background: url(loading64.gif) no-repeat;
+}
+
+
 .f-label {
     padding: 0 2px;
+}
+
+.f-icon {
+    width: 25px;
+}
+
+.f-icon-body {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    margin-left: -8px;
+    margin-top: -8px;
 }
 
 .f-title {
     text-align: right;
     padding: 0 2px;
-}
-
-.f-required {
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 14px;
-}
-
-
-.f-button span {
-    display: inline-block;
 }
 
 
@@ -890,7 +941,35 @@ input[type="text"],
 .f-page-button {
     display: inline-block;
     width: 40px;
-    height: 100%;
+}
+
+.f-page-text {
+    text-align: center;
+}
+
+.f-page-sep {
+    padding: 0;
+    background-color: #ADB3B9;
+}
+
+.f-page-first {
+    background: url(flyingon.png) no-repeat -14px -124px;
+}
+
+.f-page-previous {
+    background: url(flyingon.png) no-repeat -36px -124px;
+}
+
+.f-page-next {
+    background: url(flyingon.png) no-repeat -58px -124px;
+}
+
+.f-page-last {
+    background: url(flyingon.png) no-repeat -81px -125px;
+}
+
+.f-page-refresh {
+    background: url(flyingon.png) no-repeat -268px -129px;
 }
 
 
@@ -899,8 +978,7 @@ input[type="text"],
 }
 
 .f-groupbox-head,
-.f-groupbox-body,
-.f-groupbox-line {
+.f-groupbox-body {
     position: absolute;
     display: block;
     left: 0;
@@ -916,12 +994,9 @@ input[type="text"],
 .f-groupbox-head {
     padding: 0 4px;
     cursor: default;
+    z-index: 1;
 }
 
-.f-groupbox-line {
-    top: auto;
-    height: 1px;
-}
 
 .f-groupbox-icon {
     display: inline-block;

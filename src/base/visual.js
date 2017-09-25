@@ -253,20 +253,17 @@ flyingon.fragment('f-visual', function () {
     });
 
 
-    //class1: 默认class
-    //class2: 系统自动生成的class
-    //class3: 用户设置的class
-    this.__class1 = this.__class2 = this.__class3 = '';
 
+    this.__className = '';
 
-    //指定class名 与html一样
+    //指定class名
     this['class'] = this.defineProperty('className', '', {
 
         set: function (value) {
 
             var any;
 
-            this.__class3 = value;
+            this.__className = value;
 
             if (this.rendered)
             {
@@ -332,7 +329,7 @@ flyingon.fragment('f-visual', function () {
     //移除class
     this.removeClass = function (name) {
 
-        var list, keys, index;
+        var list, keys, index, flag;
 
         if (name && (keys = this.__class_keys) && (list = name.match(/[\w-]+/g)))
         {
@@ -342,6 +339,7 @@ flyingon.fragment('f-visual', function () {
             {
                 if (keys[name = list[index]])
                 {
+                    flag = true;
                     delete keys[name];
                 }
                 else
@@ -350,7 +348,7 @@ flyingon.fragment('f-visual', function () {
                 }
             }
             
-            sync_class(this, keys);
+            flag && sync_class(this, keys);
         }
 
         return this;
@@ -465,12 +463,12 @@ flyingon.fragment('f-visual', function () {
         {
             name = ((module.className || module.moduleName) + '-' + name).toLowerCase();
             
-            if (base = base.__class1)
+            if (base = base.defaultClass)
             {
                  name = base + ' ' + name;
             }
             
-            this.__class1 = name;
+            this.defaultClass = name;
         }
     };
     

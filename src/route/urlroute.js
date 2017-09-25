@@ -211,6 +211,8 @@
 
                 page.closable(options.closable !== false);
                 page.parent.selectedPage(page, 'route');
+
+                page.loading(200);
  
                 any = this;
 
@@ -219,6 +221,7 @@
                     var route = any,
                         plugin;
 
+                    page.loading(false);
                     page.push(plugin = new Class());
 
                     plugin.loadPlugin(route = route.next());

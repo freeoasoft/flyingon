@@ -29,15 +29,21 @@ flyingon.i18n('calendar', {
 
 flyingon.i18n('validator', {
 
-    required: '"{{title}}" not allow empty!',
-    min: '"{{title}}" can not less than {{1}}!',
-    max: '"{{title}}" can not greater than {{1}}!',
-    minLength: '"{{title}}" length can not less than {{1}}!',
-    maxLength: '"{{title}}" length can not greater than {{1}}!',
-    length: '"{{title}}" length must betwwen {{1}} to {{2}}!',
-    email: '"{{title}}" is not a email format!',
-    url: '"{{title}}" is not a url format!',
-    date: '"{{title}}" is not a valid date format!',
-    int: '"{{title}}" must be a integer!',
-    number: '"{{title}}" must be a number!'
+    required: '"{title}" not allow empty!',
+    min: '"{title}" can not less than {1}!',
+    max: '"{title}" can not greater than {1}!',
+    minLength: '"{title}" length can not less than {1}!',
+    maxLength: '"{title}" length can not greater than {1}!',
+    length: '"{title}" length must betwwen {1} to {2}!',
+    email: '"{title}" is not a email format!',
+    url: '"{title}" is not a url format!',
+    date: '"{title}" is not a valid date format!',
+    int: '"{title}" must be a integer!',
+    number: '"{title}" must be a number!'
+});
+
+
+flyingon.i18n('page', {
+
+    total: 'Total:{0}'
 });

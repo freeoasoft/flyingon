@@ -24,11 +24,10 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
         }
 
         writer.push('>',
-            '<div class="f-groupbox-head" style="height:', head, 'px;line-height:', head, 'px;text-align:', storage.align, ';" onclick="flyingon.GroupBox.onclick.call(this, event)">',
+            '<div class="f-groupbox-head" style="height:', head, 'px;line-height:', head - 1, 'px;text-align:', storage.align, ';" onclick="flyingon.GroupBox.onclick.call(this, event)">',
                 '<span class="f-groupbox-icon ', (any = storage.icon) ? any : '" style="display:none;', '"></span>',
                 '<span class="f-groupbox-text">', text, '</span>',
                 '<span class="f-groupbox-flag f-groupbox-', storage.collapsed ? 'close"' : 'open"', storage.collapsable === 2 ? '' : ' style="display:none;"', '></span>',
-                '<span class="f-groupbox-line"></span>',
             '</div>',
             '<div class="f-groupbox-body" style="top:', head, 'px;overflow:auto;', storage.collapsed ? '' : '', '">');
 
@@ -63,7 +62,10 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
 
     this.header = function (control, view, value) {
 
-        view.firstChild.style.height = view.lastChild.style.top = value + 'px';
+        var style = view.firstChild.style;
+
+        style.height = view.lastChild.style.top = value + 'px';
+        style.lineHeight = value - 1 + 'px';
     };
 
 
@@ -103,7 +105,7 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
 
     this.collapsed = function (control, view, value) {
 
-        view.firstChild.lastChild.previousSibling.className = 'f-groupbox-flag f-groupbox-' + (value ? 'close' : 'open');
+        view.firstChild.lastChild.className = 'f-groupbox-flag f-groupbox-' + (value ? 'close' : 'open');
         view.lastChild.style.display = value ? 'none' : '';
     };
 

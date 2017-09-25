@@ -1,19 +1,4 @@
-flyingon.Control.extend('ToolTip', function () {
-
-
-
-    this.init = function () {
-
-        this.addClass('f-tooltip-right');
-    };
-
-
-
-    this.defaultValue('border', 1);
-
-    this.defaultValue('width', 'auto');
-
-    this.defaultValue('height', 'auto');
+Object.extend('ToolTip', function () {
 
 
 
@@ -26,25 +11,22 @@ flyingon.Control.extend('ToolTip', function () {
 
 
     //停靠方向 bottom:下面 top:上面 right:右边 left:左边
-    this.defineProperty('direction', 'right', {
-
-        set: function (value, oldValue) {
-
-            oldValue && this.removeClass('f-tooltip-' + oldValue);
-            value && this.addClass('f-tooltip-' + value);
-        }
-    });
+    this.defineProperty('direction', 'right');
     
     
     //空间不足时是否反转方向
     this.defineProperty('reverse', true);
 
 
+    //宽度
+    this.defineProperty('width', 'auto');
+
+
 
     //显示
     this.show = function (reference) {
 
-        this.renderer.show(this, reference, this.direction(), this.reverse());
+        this.renderer.show(this, reference);
         return this;
     };
 
@@ -52,16 +34,14 @@ flyingon.Control.extend('ToolTip', function () {
     //关闭
     this.close = function () {
 
-        this.rendered && this.renderer.close(this);
-
-        if (this.autoDispose)
-        {
-            this.dispose();
-        }
-
+        this.renderer.close(this);
         return this;
     };
     
+
+
+    flyingon.renderer.bind(this, 'ToolTip');
+
 
 
 }).register();

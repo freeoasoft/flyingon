@@ -10,112 +10,19 @@ flyingon.validator = (function () {
 
 
 
-    function validate(control, errors) {
+    (flyingon.validate = function (control, show) {
 
-        var any = control.__validator;
-         
-        if ((length = any && any.length) || control.__required)
+        var errors = [],
+            fn;
+
+        if (control && (fn = control.__validate))
         {
-            validate_control(control, any, length, errors);
+            fn.call(control, errors, show);
         }
-        
-        if ((any = control.length) > 0)
-        {
-            for (var i = 0; i < any; i++)
-            {
-                validate(control[i], errors);
-            }
-        }
-    };
-
-
-    function validate_control(control, validator, length, errors) {
-
-        var text, args, any;
-
-        if (text = control.value || control.text)
-        {
-            text = text.call(control);
-
-            if (control.__required)
-            {
-                if (!text.length)
-                {
-                    any = create_error(control, 'required', i18n('validator.required'));
-                    errors.push(any);
-                    return;
-                }
-            }
-
-            for (var i = 0; i < length; i++)
-            {
-                if ((any = all[validator[i++]]) && 
-                    (any = any.apply(control, (args = validator[i].slice(0), args[0] = text, args))) &&
-                    (any = i18n(any, null)))
-                {
-                    any = create_error(control, '', any, validator[i]);
-                    errors.push(any);
-                    return;
-                }
-            }
-        }
-
-        //清空错误信息
-        set_error(control);
-    };
-
-
-    function create_error(control, name, text, args) {
-
-        var error = {
-
-            control: control, 
-            name: name || (name = args[0]), 
-            text: text.replace(/\{\{([^{}]*)\}\}/g, function (text, key) {
-
-                switch (key)
-                {
-                    case 'name':
-                        return name;
-
-                    case 'title':
-                        return (key = control.parent) ? key.__error_title() : text;
-                }
-
-                return args && args[key] || text;
-            })
-        };
-
-        set_error(control, error);
-
-        return error;
-    };
-
-
-    function set_error(control, error) {
-
-        var parent = control.parent;
-
-        if (parent && parent.__validate_box)
-        {
-            parent.__set_validate(error, control);
-        }
-        else
-        {
-            control.__set_validate(error);
-        }
-    };
-
-
-
-    flyingon.validate = function (control) {
-
-        var errors = [];
-
-        validate(control, errors);
 
         return errors;
-    };
+
+    }).all = all;
 
 
     flyingon.validate.mouseover = function (e) {
@@ -248,6 +155,10 @@ flyingon.fragment('f-validate', function () {
 
     var validate = flyingon.validate;
 
+    var all = validate.all;
+    
+    var i18n = flyingon.i18ntext;
+
 
 
     //是否必填
@@ -281,9 +192,9 @@ flyingon.fragment('f-validate', function () {
 
                 for (var i = 0, l = value.length; i < l; i++)
                 {
-                    if ((item = value[i]) && (item = item.split(':'))[0])
+                    if (item = value[i])
                     {
-                        list.push(item[0], item);
+                        list.push(item.split(':'));
                     }
                 }
             }
@@ -292,6 +203,96 @@ flyingon.fragment('f-validate', function () {
         }
     });
 
+
+
+    //内部校验方法
+    this.__validate = function (errors, show) {
+        
+        var required = this.__required,
+            validator = this.__validator;
+
+        if (required || validator)
+        {
+            var text = (this.value || this.text).call(this),
+                items,
+                any;
+            
+            if (required && !text.length)
+            {
+                any = create_error(this, 'required', i18n('validator.required'));
+
+                show !== false && set_error(this, any);
+                errors.push(any);
+                return;
+            }
+
+            if (validator)
+            {
+                for (var i = 0, l = validator.length; i < l; i++)
+                {
+                    items = validator[i++];
+
+                    if (any = all[items[0]])
+                    {
+                        items = items.slice(0);
+                        items[0] = text;
+
+                        if ((any = any.apply(this, items)) && (any = i18n(any, null)))
+                        {
+                            any = create_error(this, '', any, items);
+
+                            show !== false && set_error(this, any);
+                            errors.push(any);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+   
+        //清空错误信息
+        show !== false && set_error(this);
+    };
+
+
+    function create_error(control, name, text, items) {
+
+        var error = {
+
+            control: control, 
+            name: name || (name = items[0]), 
+            text: text.replace(/\{([^{}]*)\}/g, function (text, key) {
+
+                switch (key)
+                {
+                    case 'name':
+                        return name;
+
+                    case 'title':
+                        return (key = control.parent) ? key.__error_title() : text;
+                }
+
+                return items && items[key] || text;
+            })
+        };
+
+        return error;
+    };
+
+
+    function set_error(control, error) {
+
+        var parent = control.parent;
+
+        if (parent && parent.__validate_box)
+        {
+            parent.__set_validate(error, control);
+        }
+        else
+        {
+            control.__set_validate(error);
+        }
+    };
 
 
     //设置或清除检验信息

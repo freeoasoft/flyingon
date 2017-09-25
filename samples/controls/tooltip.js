@@ -27,9 +27,6 @@ flyingon.widget({
 
         var tooltip = new flyingon.ToolTip();
 
-        //关闭时不自动销毁
-        tooltip.autoDispose = false;
-
         this.on('mouseover', function (e) {
 
             if (e.target instanceof flyingon.Button)

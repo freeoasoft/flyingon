@@ -4957,7 +4957,7 @@ flyingon.fragment(&#x27;f-visual&#x27;, function () {
 
             var any;
 
-            this.fullClassName = value = value ? this.defaultClassName + &#x27; &#x27; + value : this.defaultClassName;
+            this.fullClassName = value = value ? this.defaultClass + &#x27; &#x27; + value : this.defaultClass;
 
             if (this.rendered)
             {
@@ -5155,12 +5155,12 @@ flyingon.fragment(&#x27;f-visual&#x27;, function () {
         {
             name = ((module.className || module.moduleName) + &#x27;-&#x27; + name).toLowerCase();
             
-            if (base = base.defaultClassName)
+            if (base = base.defaultClass)
             {
                  name = base + &#x27; &#x27; + name;
             }
             
-            this.fullClassName = this.defaultClassName = name;
+            this.fullClassName = this.defaultClass = name;
         }
     };
     
@@ -20218,16 +20218,16 @@ flyingon.Control.extend(&#x27;Tree&#x27;, function (base) {
     });
 
 
-    this.fullClassName = this.defaultClassName = &#x27;&#x27;;
+    this.fullClassName = this.defaultClass = &#x27;&#x27;;
 
     //自定义class
     this.defineProperty(&#x27;className&#x27;, &#x27;&#x27;, {
 
         set: function (value) {
 
-            if (value &amp;&amp; this.defaultClassName)
+            if (value &amp;&amp; this.defaultClass)
             {
-                value += &#x27; &#x27; + this.defaultClassName;
+                value += &#x27; &#x27; + this.defaultClass;
             }
 
             this.fullClassName = value ? &#x27; &#x27; + value : &#x27;&#x27;;
@@ -20466,7 +20466,7 @@ flyingon.Control.extend(&#x27;Tree&#x27;, function (base) {
      
         var any;
 
-        if (any = this.defaultClassName)
+        if (any = this.defaultClass)
         {
             this.fullClassName = &#x27; &#x27; + any;
         }
@@ -20497,7 +20497,7 @@ flyingon.Control.extend(&#x27;Tree&#x27;, function (base) {
 flyingon.GridColumn.extend(function (base) {
 
 
-    this.defaultClassName = &#x27;f-grid-column-no&#x27;;
+    this.defaultClass = &#x27;f-grid-column-no&#x27;;
 
 
     this.__name = &#x27;__column_no&#x27;;
@@ -20542,7 +20542,7 @@ flyingon.GridColumn.extend(function (base) {
     var Class = flyingon.CheckBox;
 
 
-    this.defaultClassName = &#x27;f-grid-column-check&#x27;;
+    this.defaultClass = &#x27;f-grid-column-check&#x27;;
 
 
     this.__name = &#x27;__column_check&#x27;;

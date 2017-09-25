@@ -42,6 +42,16 @@ flyingon.renderer('Label', function (base) {
 
         if (auto & 1)
         {
+            view.style.width = 'auto';
+        }
+
+        if (auto & 2)
+        {
+            view.style.height = 'auto';
+        }
+
+        if (auto & 1)
+        {
             control.offsetWidth = view && view.offsetWidth || 0;
         }
 

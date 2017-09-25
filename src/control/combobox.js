@@ -175,6 +175,8 @@ flyingon.TextButton.extend('ComboBox', function (base) {
             {
                 this.popup.close();
             }
+
+            this.target.trigger('change', 'value', e.value);
         });
     };
 

@@ -402,6 +402,27 @@ Object.extend('Control', function () {
 
     
 
+    //是否禁用
+    this.defineProperty('disabled', false, {
+
+        set: function (value) {
+
+            var any;
+
+            this.__disabled = value;
+
+            if (any = this.__view_patch)
+            {
+                any.disabled = value;
+            }
+            else
+            {
+                this.renderer.set(this, 'disabled', value);
+            }
+        }
+    });
+    
+
     //定义attribute属性
     define = function (self, name, defaultValue, attributes) {
 
@@ -429,10 +450,6 @@ Object.extend('Control', function () {
     define(this, 'tabindex', 0);
     
     
-    //是否禁用
-    define(this, 'disabled', false);
-    
-
     //是否只读
     define(this, 'readonly', false);
 
@@ -820,6 +837,41 @@ Object.extend('Control', function () {
         
     };
 
+
+
+    //显示或关闭加载进度
+    this.loading = function (delay) {
+
+        loading(this, 'f-loading', delay);
+    };
+
+
+    //显示或关闭等待信息
+    this.waiting = function (delay) {
+
+        loading(this, 'f-waiting', delay);
+    };
+
+
+    function loading(control, name, delay) {
+
+        if (delay === false)
+        {
+            control.removeClass(name);
+        }
+        else if (delay > 0)
+        {
+            setTimeout(function () {
+
+                control.removeClass(name);
+
+            }, delay | 0);
+        }
+        else
+        {
+            control.addClass(name);
+        }
+    };
 
 
     

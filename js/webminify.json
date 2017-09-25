@@ -32,6 +32,7 @@
             '../src/renderer.web/renderer.js',
             '../src/renderer.web/htmlelement.js',
             '../src/renderer.web/label.js',
+            '../src/renderer.web/icon.js',
             '../src/renderer.web/button.js',
             '../src/renderer.web/linkbutton.js',
             '../src/renderer.web/image.js',
@@ -62,9 +63,14 @@
             '../src/renderer.web/tooltip.js',
             '../src/renderer.web/dialog.js',
 
+            '../src/renderer.web/pagination.js',
+
+            '../src/renderer.web/menu.js',
+
 			'../src/control/control.js',
             '../src/control/htmlelement.js',
             '../src/control/label.js',
+            '../src/control/icon.js',
             '../src/control/button.js',
             '../src/control/linkbutton.js',
             '../src/control/image.js',
@@ -95,13 +101,17 @@
             '../src/control/title.js',
             '../src/control/error.js',
 
-            '../src/control/pagination.js',
             '../src/control/tree.js',
             '../src/control/grid.js',
             '../src/control/tab.js',
             '../src/control/popup.js',
             '../src/control/tooltip.js',
             '../src/control/dialog.js',
+
+            '../src/control/pagination.js',
+
+            '../src/control/menu.js',
+            '../src/control/toolbar.js',
 
             '../src/layout/sublayout.js',
             '../src/layout/layout.js',

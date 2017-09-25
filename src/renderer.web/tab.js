@@ -17,7 +17,7 @@ flyingon.renderer('Tab', function (base) {
 
         writer.push('<div');
         
-        control.__class2 += 'f-tab-direction-' + storage.direction;
+        control.defaultClass += ' f-tab-direction-' + storage.direction;
         
         render.call(this, writer, control);
         
