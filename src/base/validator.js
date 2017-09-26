@@ -27,9 +27,10 @@ flyingon.validator = (function () {
 
     flyingon.validate.mouseover = function (e) {
 
-        var tip = tooltip || (tooltip = new flyingon.ToolTip().addClass('f-validate-tip'));
+        var tip = tooltip || (tooltip = new flyingon.ToolTip()),
+            text = '<span class="f-validate-tip">' + this.__validate_text + '</span>';
 
-        tip.html(true).text(this.__validate_text).show(this);
+        tip.html(true).text(text).show(this);
     };
 
 

@@ -511,6 +511,45 @@
     on(document, 'keyup', key_event);
 
 
+    on(document, 'contextmenu', function (e) {
+
+        var control = flyingon.findControl(e.target);
+
+        if (control)
+        {
+            var event = new flyingon.Event(e.type);
+
+            event.original_event = e;
+            
+            if (control.trigger(event) === false)
+            {
+                return false;
+            }
+
+            var Class = flyingon.Menu,
+                menu;
+
+            do
+            {
+                if (menu = control.contextmenu())
+                {
+                    if (typeof menu === 'string')
+                    {
+                        menu = Class.all[menu];
+                    }
+
+                    if (menu instanceof Class)
+                    {
+                        menu.showAt(e.clientX, e.clientY);
+                        return false;
+                    }
+                }
+            }
+            while (control = control.parent);
+        }
+    });
+
+
 
     /* 各浏览器对focusin/focusout事件的支持区别
 

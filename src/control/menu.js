@@ -6,7 +6,7 @@ flyingon.fragment('f-menu', function () {
 
     this.__check_items = function (index, items, start) {
 
-        var Class = flyingon.MenuItm,
+        var Class = flyingon.MenuItem,
             item;
 
         while (item = items[start])
@@ -14,12 +14,13 @@ flyingon.fragment('f-menu', function () {
             //分隔条
             if (item === '-')
             {
+                start++;
                 continue;
             }
 
             if (!(item instanceof Class))
             {
-                item = new Class().load(item);
+                item = items[start] = new Class().load(item);
             }
 
             item.parent = this;
@@ -38,6 +39,8 @@ flyingon.fragment('f-menu', function () {
             {
                 item.off();
             }
+
+            this[i] = null;
         }
     };
 
@@ -47,6 +50,7 @@ flyingon.fragment('f-menu', function () {
 
 
 Object.extend('MenuItem', function () {
+
 
 
     this.load = function (options) {
@@ -78,20 +82,26 @@ Object.extend('MenuItem', function () {
                         }
                         break;
 
-                    case 'click':
+                    default:
                         if (typeof value === 'function')
                         {
-                            this.on('click', value);
+                            this.on(name, value);
                         }
-                        break;
-
-                    default:
-                        storage[name] = value;
+                        else
+                        {
+                            storage[name] = value;
+                        }
                         break;
                 }
             }
         }
+
+        return this;
     };
+
+
+
+    this.eventBubble = 'parent';
 
 
     this.defineProperty('icon', '');
@@ -117,15 +127,17 @@ Object.extend('Menu', function () {
 
 
 
-    //宽度
-    this.defineProperty('width', 'auto');
-
-
-
     //显示
     this.show = function (reference) {
 
         this.renderer.show(this, reference);
+        return this;
+    };
+
+
+    this.showAt = function (x, y) {
+
+        this.renderer.showAt(this, x, y);
         return this;
     };
 
@@ -146,4 +158,26 @@ Object.extend('Menu', function () {
 
 
 
-}).register();
+    var all = this.Class.all;
+
+
+    this.register = function (name, force) {
+
+        if (name)
+        {
+            var any = all;
+    
+            if (!force && any[name])
+            {
+                throw 'register name "' + name + '" has exist!';
+            }
+    
+            any[name] = this;
+        }
+
+        return this;
+    };
+
+
+
+}).register().all = flyingon.create(null);

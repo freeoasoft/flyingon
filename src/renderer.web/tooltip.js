@@ -7,10 +7,13 @@ flyingon.renderer('ToolTip', function (base) {
     //注册事件函数
     var on = flyingon.dom_on;
 
+    //注销事件函数
+    var off = flyingon.dom_off;
+
     
 
     //处理全局点击事件,点击当前弹出层以外的区域则关闭当前弹出层
-    on(document, 'mousedown', function (e) { 
+    function mousedown (e) { 
 
         if (current) 
         {
@@ -29,17 +32,17 @@ flyingon.renderer('ToolTip', function (base) {
 
             current.close();
         }
-    });
-    
+    };
+
 
     //处理全局键盘事件,点击Esc则退出当前窗口
-    on(document, 'keydown', function (e) {
+    function keydown(e) {
 
         if (current && e.which === 27)
         {
             current.close();
         }
-    });
+    };
 
 
 
@@ -84,6 +87,14 @@ flyingon.renderer('ToolTip', function (base) {
         }
 
         current = control;
+
+        if (!mousedown.on)
+        {
+            on(document, 'mousedown', mousedown);
+            on(document, 'keydown', keydown);
+
+            mousedown.on = 1;
+        }
     };
 
 
@@ -98,6 +109,14 @@ flyingon.renderer('ToolTip', function (base) {
         if (any = view && view.parentNode)
         {
             any.removeChild(view);
+        }
+
+        if (mousedown.on)
+        {
+            off(document, 'mousedown', mousedown);
+            off(document, 'keydown', keydown);
+
+            mousedown.on = 0;
         }
     };
 

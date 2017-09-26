@@ -11,11 +11,11 @@ flyingon.TextBox.extend('Number', function (base) {
 
         check: function (value) {
 
-            var scale = this.scale;
+            var scale = this.__scale;
 
             if (scale <= 0)
             {
-                return scale | 0;
+                return value | 0;
             }
 
             return (value * scale | 0) / scale;

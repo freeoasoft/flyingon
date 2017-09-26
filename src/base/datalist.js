@@ -10,7 +10,7 @@
 
     
     //注册的所有数据列表集合
-    Class.all = flyingon.create(null);
+    var all = Class.all = flyingon.create(null);
 
 
     //根据列表创建DataList
@@ -28,7 +28,7 @@
 
             if (typeof list === 'string')
             {
-                if (any = Class.all[list])
+                if (any = all[list])
                 {
                     callback && callback.call(context, any);
                 }
@@ -91,6 +91,8 @@
 })(flyingon.DataList = Object.extend(function () {
     
 
+    
+    var all = this.Class.all;
     
     var wait = this.Class.wait;
 
@@ -244,7 +246,7 @@
         
         if (name)
         {
-            var any = Class.all;
+            var any = all;
     
             if (!force && any[name])
             {

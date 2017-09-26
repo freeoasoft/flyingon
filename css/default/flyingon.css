@@ -1,10 +1,3 @@
-body {
-    margin: 0;
-    padding: 0;
-    font: 12px "PingFang SC","Lantinghei SC","Microsoft YaHei",arial,"\5b8b\4f53",sans-serif,tahoma;
-    background-color: white;
-}
-
 .f-slider-bar,
 .f-slider-button,
 .f-calendar-line,
@@ -24,6 +17,8 @@ input[type="text"],
     background-color: white;
 }
 
+.f-separator,
+.f-menu-sep,
 .f-overlay {
     background-color: silver;
 }
@@ -81,6 +76,7 @@ input[type="text"],
     background-color: #EFF5FF;
 }
 
+.f-menu,
 .f-tooltip-body,
 .f-grid-column-head .f-textbox,
 .f-grid-cell,
@@ -109,12 +105,13 @@ input[type="text"],
     background-color: #FEE2F0;
 }
 
+.f-menu-item:hover,
+.f-toolbar,
 .f-back, 
 .f-tab-link,
 .f-tab-move-link,
 .f-groupbox-head,
-.f-dialog-head,
-.f-toolbar {
+.f-dialog-head {
     background-color: #EFF5FF;
     background: -webkit-linear-gradient(top,#EFF5FF 0,#E0ECFF 100%);
     background: -moz-linear-gradient(top,#EFF5FF 0,#E0ECFF 100%);
@@ -158,7 +155,9 @@ input[type="text"],
 .f-progressbar,
 .f-grid,
 .f-grid-group-cell,
-.f-pagination {
+.f-pagination,
+.f-menu,
+.f-toolbar {
     border: 1px solid #95B8E7;
 }
 
@@ -216,6 +215,7 @@ input[type="text"],
     border-left-color: white;
 }
 
+.f-menu,
 .f-popup, 
 .f-dialog {
     box-shadow: 2px 2px 2px silver;
@@ -269,8 +269,9 @@ input[type="text"],
 
 
 .f-control {
-    width: 100px;
+    width: 200px;
     height: 25px;
+    font: 12px "PingFang SC","Lantinghei SC","Microsoft YaHei",arial,"\5b8b\4f53",sans-serif,tahoma;
 }
 
 .f-waiting:after {
@@ -281,7 +282,7 @@ input[type="text"],
     width: 16px;
     height: 16px;
     margin-top: -8px;
-    background: url(loading16.gif) no-repeat;
+    background: url(waiting.gif) no-repeat;
 }
 
 .f-loading:after {
@@ -293,7 +294,7 @@ input[type="text"],
     height: 64px;
     margin-left: -32px;
     margin-top: -32px;
-    background: url(loading64.gif) no-repeat;
+    background: url(loading.gif) no-repeat;
 }
 
 
@@ -318,6 +319,12 @@ input[type="text"],
 .f-title {
     text-align: right;
     padding: 0 2px;
+}
+
+.f-button-drop {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
 }
 
 
@@ -457,6 +464,7 @@ input[type="text"],
 }
 
 
+.f-button-drop,
 .f-combobox-button {
     background: url(flyingon.png) no-repeat -225px -12px;
 }
@@ -938,20 +946,6 @@ input[type="text"],
 }
 
 
-.f-page-button {
-    display: inline-block;
-    width: 40px;
-}
-
-.f-page-text {
-    text-align: center;
-}
-
-.f-page-sep {
-    padding: 0;
-    background-color: #ADB3B9;
-}
-
 .f-page-first {
     background: url(flyingon.png) no-repeat -14px -124px;
 }
@@ -1221,6 +1215,40 @@ input[type="text"],
 .f-tab-direction-right .f-tab-link {
     text-align: left;
     /*border-radius: 0 5px 5px 0;*/
+}
+
+
+.f-menu {
+    position: absolute;
+    padding: 2px;
+    min-width: 150px;
+    z-index: 100;
+}
+
+.f-menu-item {
+    display: block;
+    cursor: default;
+    height: 25px;
+    line-height: 25px;
+}
+
+.f-menu-sep {
+    margin: 2px 8px 2px 30px;
+    height: 1px;
+}
+
+.f-menu-icon,
+.f-menu-sub {
+    display: inline-block;
+    margin: 2px 8px;
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+}
+
+.f-menu-sub {
+    float: right;
+    background: url(flyingon.png) no-repeat -14px -36px;
 }
 
 

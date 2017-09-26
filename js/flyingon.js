@@ -3171,7 +3171,7 @@ flyingon.SerializeWriter = Object.extend(function () {
 
     
     //注册的所有数据列表集合
-    Class.all = flyingon.create(null);
+    var all = Class.all = flyingon.create(null);
 
 
     //根据列表创建DataList
@@ -3189,7 +3189,7 @@ flyingon.SerializeWriter = Object.extend(function () {
 
             if (typeof list === 'string')
             {
-                if (any = Class.all[list])
+                if (any = all[list])
                 {
                     callback && callback.call(context, any);
                 }
@@ -3252,6 +3252,8 @@ flyingon.SerializeWriter = Object.extend(function () {
 })(flyingon.DataList = Object.extend(function () {
     
 
+    
+    var all = this.Class.all;
     
     var wait = this.Class.wait;
 
@@ -3405,7 +3407,7 @@ flyingon.SerializeWriter = Object.extend(function () {
         
         if (name)
         {
-            var any = Class.all;
+            var any = all;
     
             if (!force && any[name])
             {
@@ -5206,9 +5208,10 @@ flyingon.validator = (function () {
 
     flyingon.validate.mouseover = function (e) {
 
-        var tip = tooltip || (tooltip = new flyingon.ToolTip().addClass('f-validate-tip'));
+        var tip = tooltip || (tooltip = new flyingon.ToolTip()),
+            text = '<span class="f-validate-tip">' + this.__validate_text + '</span>';
 
-        tip.html(true).text(this.__validate_text).show(this);
+        tip.html(true).text(text).show(this);
     };
 
 
@@ -11300,7 +11303,12 @@ flyingon.renderer('Button', function (base) {
                 any = encode(any);
             }
 
-            writer.push('<span>', any, '</span>');
+            writer.push('<span class="f-button-text">', any, '</span>');
+        }
+
+        if (any = storage.dropdown)
+        {
+            writer.push('<span class="f-button-drop"></span>');
         }
     };
 
@@ -11335,13 +11343,23 @@ flyingon.renderer('Button', function (base) {
 
         var storage = control.__storage || control.__defaults;
 
-        if (storage.html)
+        view = view.lastChild;
+
+        while (view)
         {
-            view.lastChild.innerHTML = storage.text;
-        }
-        else
-        {
-            view.lastChild[this.__text_name] = storage.text;
+            if (view.className.indexOf('f-button-text') >= 0)
+            {
+                if (storage.html)
+                {
+                    view.lastChild.pre.innerHTML = storage.text;
+                }
+                else
+                {
+                    view.lastChild[this.__text_name] = storage.text;
+                }
+            }
+
+            view = view.previousSibling;
         }
     };
 
@@ -16997,7 +17015,7 @@ flyingon.renderer('Popup', 'Panel', function (base) {
     
 
     //处理全局点击事件,点击当前弹出层以外的区域则关闭当前弹出层
-    on(document, 'mousedown', function (e) { 
+    function mousedown(e) { 
 
         var control = current;
 
@@ -17023,19 +17041,17 @@ flyingon.renderer('Popup', 'Panel', function (base) {
                 control.close('auto');
             }
         }
-    });
-    
+    }
+
 
     //处理全局键盘事件,点击Esc则退出当前窗口
-    on(document, 'keydown', function (e) { 
+    function keydown(e) { 
 
         if (current && e.which === 27)
         {
             current.close('cancel');
         }
-    });
-
-
+    }
 
 
     //打开弹出层
@@ -17093,6 +17109,14 @@ flyingon.renderer('Popup', 'Panel', function (base) {
             on(view, 'mouseout', closeLeave);
         }
         
+        if (!stack[1] && !mousedown.on)
+        {
+            mousedown.on = 1;
+
+            on(document, 'mousedown', mousedown);
+            on(document, 'keydown', keydown);
+        }
+
         control.trigger('shown');
     };
 
@@ -17181,6 +17205,14 @@ flyingon.renderer('Popup', 'Panel', function (base) {
         {
             any.removeChild(view);
         }
+
+        if (!stack[0] && mousedown.on)
+        {
+            mousedown.on = 0;
+            
+            off(document, 'mousedown', mousedown);
+            off(document, 'keydown', keydown);
+        }
     };
 
 
@@ -17199,10 +17231,13 @@ flyingon.renderer('ToolTip', function (base) {
     //注册事件函数
     var on = flyingon.dom_on;
 
+    //注销事件函数
+    var off = flyingon.dom_off;
+
     
 
     //处理全局点击事件,点击当前弹出层以外的区域则关闭当前弹出层
-    on(document, 'mousedown', function (e) { 
+    function mousedown (e) { 
 
         if (current) 
         {
@@ -17221,17 +17256,17 @@ flyingon.renderer('ToolTip', function (base) {
 
             current.close();
         }
-    });
-    
+    };
+
 
     //处理全局键盘事件,点击Esc则退出当前窗口
-    on(document, 'keydown', function (e) {
+    function keydown(e) {
 
         if (current && e.which === 27)
         {
             current.close();
         }
-    });
+    };
 
 
 
@@ -17276,6 +17311,14 @@ flyingon.renderer('ToolTip', function (base) {
         }
 
         current = control;
+
+        if (!mousedown.on)
+        {
+            on(document, 'mousedown', mousedown);
+            on(document, 'keydown', keydown);
+
+            mousedown.on = 1;
+        }
     };
 
 
@@ -17290,6 +17333,14 @@ flyingon.renderer('ToolTip', function (base) {
         if (any = view && view.parentNode)
         {
             any.removeChild(view);
+        }
+
+        if (mousedown.on)
+        {
+            off(document, 'mousedown', mousedown);
+            off(document, 'keydown', keydown);
+
+            mousedown.on = 0;
         }
     };
 
@@ -17601,88 +17652,244 @@ flyingon.showMessage = function (title, text, type, buttons, focus) {
 
 
 
-flyingon.renderer('Pagination1', 'HtmlElement', function (base) {
-
-
-
-    this.__line_height = 1;
-
-
-
-
-
-});
-
-
-
-
 flyingon.renderer('Menu', function (base) {
 
 
-    //弹出菜单堆栈
+    //菜单堆栈
     var stack = [];
-
-    //当前弹出层
-    var current = null;
 
     //注册事件函数
     var on = flyingon.dom_on;
 
+    //注销事件函数
+    var off = flyingon.dom_off;
+
+    //菜单标记
+    var tag = 1;
+
     
 
-    //处理全局键盘事件,点击Esc则退出当前窗口
-    on(document, 'keydown', function (e) {
+    function mousedown(e) {
 
-        if (current && e.which === 27)
+        var control = stack[0];
+
+        if (control)
         {
-            current.close();
+            var view = control.view,
+                any = e.target;
+
+            while (any)
+            {
+                if (any === view || any.__menu)
+                {
+                    return;
+                }
+
+                any = any.parentNode;
+            }
+
+            close(0, 1);
         }
-    });
+    };
 
 
+    function click(e) {
 
-    //打开弹出层
-    //reference: 停靠参考物
-    this.show = function (control, reference) {
-
-        var view = document.createElement('div'),
-            direction = control.direction(), 
-            reverse = control.reverse(),
+        var dom = e.target,
             any;
 
-        view.className = 'f-Menu';
-        view.style.width = (any = control.width()) > 0 ? any + 'px' : any;
+        while (dom)
+        {
+            if (dom.className.indexOf('f-menu-item') >= 0)
+            {
+                if ((any = dom.parentNode) && 
+                    (any = stack[any.__index]) && 
+                    (any = any[dom.getAttribute('index')]))
+                {
+                    close(0, 1);
+                    any.trigger('click');
+                }
 
+                break;
+            }
+
+            dom = dom.parentNode;
+        }
+
+        close(0, 1);
+    };
+
+
+    function mouseover(e) {
+
+        var dom = e.target;
+
+        if (dom.className.indexOf('f-menu-item') >= 0)
+        {
+            var view = dom.parentNode,
+                index = view.__index,
+                list = stack,
+                item,
+                any;
+
+            //查找应用菜单项
+            if (item = list[view.__index])
+            {
+                //如果下一个菜单不是是当前项的子菜单则创建新菜单
+                if (!(any = list[index + 1]) || item.__menu !== any.view.__menu)
+                {
+                    //关闭后续菜单
+                    any && close(index + 1);
+
+                    //如果当前项包含子菜单则创建并显示
+                    if ((any = item[dom.getAttribute('index')]) && any.length > 0)
+                    {
+                        flyingon.dom_align(
+                            create_view(any, any.__menu = ++tag),
+                            dom.getBoundingClientRect(),
+                            'right',
+                            'top',
+                            true);
+
+                        stack.push(any);
+                    }
+                }
+            }
+        }
+    };
+
+
+    function show(menu) {
+
+        stack.push(menu);
+        menu.trigger('shown');
+
+        if (!mouseover.on)
+        {
+            on(document, 'mousedown', mousedown);
+            on(document, 'mouseover', mouseover);
+            on(document, 'click', click);
+            
+            mouseover.on = 1;
+        }
+    };
+
+
+    function create_view(menu, tag) {
+
+        var writer = [],
+            view = document.createElement('div'),
+            item,
+            any;
+
+        menu.trigger('showing');
+
+        view.className = 'f-menu';
+        view.__menu = tag;
+        view.__index = stack.length;
+
+        for (var i = 0, l = menu.length; i < l; i++)
+        {
+            if ((item = menu[i]) && item !== '-')
+            {
+                any = item.__storage || item.__defaults;
+
+                writer.push('<a class="f-menu-item', any.disabled ? ' f-disabled' : '', '" index="', i, '">',
+                        '<span class="f-menu-icon ', any.icon || '', '"></span>',
+                        '<span class="f-menu-text">', any.text, '</span>',
+                        item.length > 0 ? '<span class="f-menu-sub"></span>' : '',
+                    '</a>');
+            }
+            else
+            {
+                writer.push('<div class="f-menu-sep"></div>');
+            }
+        }
+
+        view.innerHTML = writer.join('');
         document.body.appendChild(view);
 
-        any = flyingon.dom_align(
-            control.view, 
-            (reference.view || reference).getBoundingClientRect(), 
-            direction, direction === 'top' || direction === 'bottom' ? 'center' : 'middle', 
-            reverse);
+        menu.view = view;
 
-        if ((any = current) && any !== control)
-        {
-            any.close();
-        }
-
-        current = control;
+        return view;
     };
 
 
-    //关闭弹出层(弹出多级窗口时只有最后一个可以成功关闭)
-    this.close = function (control) {
+    function close(index, event_off) {
 
-        var view = control.view,
+        var list = stack,
+            item,
+            view,
             any;
 
-        current = null;
-
-        if (any = view && view.parentNode)
+        for (var i = list.length - 1; i >= index; i--)
         {
-            any.removeChild(view);
+            if (item = list[i])
+            {
+                item.trigger('close');
+
+                if ((view = item.view) && (any = view.parentNode))
+                {
+                    any.removeChild(view);
+
+                    item.view = null;
+                    item.innerHTML = '';
+                }
+            }
+        }
+
+        list.length = index;
+
+        if (event_off)
+        {
+            off(document, 'mousedown', mousedown);
+            off(document, 'mouseover', mouseover);
+            off(document, 'click', click);
+
+            mouseover.on = 0;
         }
     };
+
+
+
+    //打开菜单
+    //reference: 停靠参考物
+    this.show = function (menu, reference) {
+
+        stack[0] && close(0);
+
+        flyingon.dom_align(
+            create_view(menu, 1),
+            (reference.view || reference).getBoundingClientRect(),
+            'bottom',
+            'left',
+            true);
+
+        show(menu);
+    };
+
+
+    //在指定位置打开菜单
+    this.showAt = function (menu, x, y) {
+
+        var style;
+
+        stack[0] && close(0);
+
+        style = create_view(menu, 1).style;
+        style.left = x + 'px';
+        style.top = y + 'px';
+
+        show(menu);
+    };
+
+
+    //关闭菜单
+    this.close = function () {
+
+        close(0, 1);
+    };
+
 
 
 });
@@ -18179,6 +18386,10 @@ Object.extend('Control', function () {
     this.defineProperty('tag', null);
 
 
+    //弹出菜单
+    this.defineProperty('contextmenu', null);
+
+
 
 
     //获取定位属性值
@@ -18437,19 +18648,6 @@ Object.extend('Control', function () {
             }
         }
     };
-    
-
-    // this.clientWidth = function () {
-    
-    //     return this.offsetWidth - this.borderLeft - this.borderRight - this.paddingLeft - this.paddingRight;
-    // };
-
-
-    // this.clientHeight = function () {
-
-    //     return this.offsetHeight - this.borderTop - this.borderBottom - this.paddingTop - this.paddingBottom;
-    // };
-
     
 
     //是否可获取焦点
@@ -18854,6 +19052,50 @@ flyingon.Control.extend('Button', function (base) {
     //文本内容是否html格式
     define(this, 'html', false);
 
+
+    //是否显示下拉箭头
+    define(this, 'dropdown', false);
+
+
+    //下拉菜单
+    this.defineProperty('menu', null, {
+
+        set: function (value, oldValue) {
+
+            if (this.__menu = value)
+            {
+                if (!oldValue)
+                {
+                    this.on('click', show_menu);
+                }
+            }
+            else if (oldValue)
+            {
+                this.off('click', show_menu);
+            }
+        }
+    });
+
+
+    function show_menu(e) {
+
+        var Class = flyingon.Menu,
+            menu = this.__menu;
+
+        if (typeof menu === 'string')
+        {
+            menu = Class.all[menu];
+        }
+
+        if (menu instanceof Class)
+        {
+            menu.show(this);
+        }
+    };
+
+
+    //显示下拉菜单
+    this.showMenu = show_menu;
 
         
     //测量自动大小
@@ -20065,11 +20307,11 @@ flyingon.TextBox.extend('Number', function (base) {
 
         check: function (value) {
 
-            var scale = this.scale;
+            var scale = this.__scale;
 
             if (scale <= 0)
             {
-                return scale | 0;
+                return value | 0;
             }
 
             return (value * scale | 0) / scale;
@@ -24637,16 +24879,16 @@ flyingon.Panel.extend('Pagination', function (base) {
 
     var template = [
         { Class: 'ComboBox', className: 'f-page-records', tag: 'records', width: 60, popupWidth: 60, items: [10, 20, 30, 50, 100, 200, 500] },
-        { Class: 'Label', className: 'f-page-sep', width: 1, margin: '2 4' },
-        { Class: 'Icon', className: 'f-page-button', tag: 'first', icon: 'f-page-first' },
-        { Class: 'Icon', className: 'f-page-button', tag: 'previous', icon: 'f-page-previous' },
+        { Class: 'Separator' },
+        { Class: 'Icon', icon: 'f-page-first', tag: 'first' },
+        { Class: 'Icon', icon: 'f-page-previous', tag: 'previous' },
         { Class: 'TextBox', className: 'f-page-current', tag: 'current', width: 40, value: 0, style: 'text-align:center' },
-        { Class: 'Label', className: 'f-page-text', width: 10, text: '/' },
+        { Class: 'Label', width: 10, text: '/' },
         { Class: 'Label', className: 'f-page-pages', tag: 'pages', width: 'auto', text: 0 },
-        { Class: 'Icon', className: 'f-page-button', tag: 'next', icon: 'f-page-next' },
-        { Class: 'Icon', className: 'f-page-button', tag: 'last', icon: 'f-page-last' },
-        { Class: 'Label', className: 'f-page-sep', width: 1, margin: '2 4' },
-        { Class: 'Icon', className: 'f-page-button', tag: 'refresh', icon: 'f-page-refresh' },
+        { Class: 'Icon', icon: 'f-page-next', tag: 'next' },
+        { Class: 'Icon', icon: 'f-page-last', tag: 'last' },
+        { Class: 'Separator' },
+        { Class: 'Icon', icon: 'f-page-refresh', tag: 'refresh' },
         { Class: 'Label', tag: 'total', dock: 'right' }
     ];
 
@@ -24862,6 +25104,20 @@ flyingon.Panel.extend('Pagination', function (base) {
 
 
 
+flyingon.Control.extend('Separator', function (base) {
+
+
+    this.defaultWidth = 1;
+
+
+    this.defaultValue('margin', '2 4');
+
+
+}).register();
+
+
+
+
 flyingon.fragment('f-menu', function () {
 
 
@@ -24870,7 +25126,7 @@ flyingon.fragment('f-menu', function () {
 
     this.__check_items = function (index, items, start) {
 
-        var Class = flyingon.MenuItm,
+        var Class = flyingon.MenuItem,
             item;
 
         while (item = items[start])
@@ -24878,12 +25134,13 @@ flyingon.fragment('f-menu', function () {
             //分隔条
             if (item === '-')
             {
+                start++;
                 continue;
             }
 
             if (!(item instanceof Class))
             {
-                item = new Class().load(item);
+                item = items[start] = new Class().load(item);
             }
 
             item.parent = this;
@@ -24902,6 +25159,8 @@ flyingon.fragment('f-menu', function () {
             {
                 item.off();
             }
+
+            this[i] = null;
         }
     };
 
@@ -24911,6 +25170,7 @@ flyingon.fragment('f-menu', function () {
 
 
 Object.extend('MenuItem', function () {
+
 
 
     this.load = function (options) {
@@ -24942,20 +25202,26 @@ Object.extend('MenuItem', function () {
                         }
                         break;
 
-                    case 'click':
+                    default:
                         if (typeof value === 'function')
                         {
-                            this.on('click', value);
+                            this.on(name, value);
                         }
-                        break;
-
-                    default:
-                        storage[name] = value;
+                        else
+                        {
+                            storage[name] = value;
+                        }
                         break;
                 }
             }
         }
+
+        return this;
     };
+
+
+
+    this.eventBubble = 'parent';
 
 
     this.defineProperty('icon', '');
@@ -24981,15 +25247,17 @@ Object.extend('Menu', function () {
 
 
 
-    //宽度
-    this.defineProperty('width', 'auto');
-
-
-
     //显示
     this.show = function (reference) {
 
         this.renderer.show(this, reference);
+        return this;
+    };
+
+
+    this.showAt = function (x, y) {
+
+        this.renderer.showAt(this, x, y);
         return this;
     };
 
@@ -25010,12 +25278,48 @@ Object.extend('Menu', function () {
 
 
 
-}).register();
+    var all = this.Class.all;
+
+
+    this.register = function (name, force) {
+
+        if (name)
+        {
+            var any = all;
+    
+            if (!force && any[name])
+            {
+                throw 'register name "' + name + '" has exist!';
+            }
+    
+            any[name] = this;
+        }
+
+        return this;
+    };
+
+
+
+}).register().all = flyingon.create(null);
 
 
 
 
 flyingon.Panel.extend('ToolBar', function () {
+
+
+    this.defaultHeight = 32;
+
+
+    this.defaultValue('border', 1);
+
+    
+    this.defaultValue('padding', 2);
+
+
+    this.defaultValue('layout', 'dock');
+
+
 
 }).register();
 
@@ -29429,6 +29733,45 @@ flyingon.view.Template = Object.extend(function () {
     on(document, 'keypress', key_event);
     
     on(document, 'keyup', key_event);
+
+
+    on(document, 'contextmenu', function (e) {
+
+        var control = flyingon.findControl(e.target);
+
+        if (control)
+        {
+            var event = new flyingon.Event(e.type);
+
+            event.original_event = e;
+            
+            if (control.trigger(event) === false)
+            {
+                return false;
+            }
+
+            var Class = flyingon.Menu,
+                menu;
+
+            do
+            {
+                if (menu = control.contextmenu())
+                {
+                    if (typeof menu === 'string')
+                    {
+                        menu = Class.all[menu];
+                    }
+
+                    if (menu instanceof Class)
+                    {
+                        menu.showAt(e.clientX, e.clientY);
+                        return false;
+                    }
+                }
+            }
+            while (control = control.parent);
+        }
+    });
 
 
 

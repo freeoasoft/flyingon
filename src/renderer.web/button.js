@@ -42,7 +42,12 @@ flyingon.renderer('Button', function (base) {
                 any = encode(any);
             }
 
-            writer.push('<span>', any, '</span>');
+            writer.push('<span class="f-button-text">', any, '</span>');
+        }
+
+        if (any = storage.dropdown)
+        {
+            writer.push('<span class="f-button-drop"></span>');
         }
     };
 
@@ -77,13 +82,23 @@ flyingon.renderer('Button', function (base) {
 
         var storage = control.__storage || control.__defaults;
 
-        if (storage.html)
+        view = view.lastChild;
+
+        while (view)
         {
-            view.lastChild.innerHTML = storage.text;
-        }
-        else
-        {
-            view.lastChild[this.__text_name] = storage.text;
+            if (view.className.indexOf('f-button-text') >= 0)
+            {
+                if (storage.html)
+                {
+                    view.lastChild.pre.innerHTML = storage.text;
+                }
+                else
+                {
+                    view.lastChild[this.__text_name] = storage.text;
+                }
+            }
+
+            view = view.previousSibling;
         }
     };
 

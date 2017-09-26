@@ -17,7 +17,7 @@ flyingon.renderer('Popup', 'Panel', function (base) {
     
 
     //处理全局点击事件,点击当前弹出层以外的区域则关闭当前弹出层
-    on(document, 'mousedown', function (e) { 
+    function mousedown(e) { 
 
         var control = current;
 
@@ -43,19 +43,17 @@ flyingon.renderer('Popup', 'Panel', function (base) {
                 control.close('auto');
             }
         }
-    });
-    
+    }
+
 
     //处理全局键盘事件,点击Esc则退出当前窗口
-    on(document, 'keydown', function (e) { 
+    function keydown(e) { 
 
         if (current && e.which === 27)
         {
             current.close('cancel');
         }
-    });
-
-
+    }
 
 
     //打开弹出层
@@ -113,6 +111,14 @@ flyingon.renderer('Popup', 'Panel', function (base) {
             on(view, 'mouseout', closeLeave);
         }
         
+        if (!stack[1] && !mousedown.on)
+        {
+            mousedown.on = 1;
+
+            on(document, 'mousedown', mousedown);
+            on(document, 'keydown', keydown);
+        }
+
         control.trigger('shown');
     };
 
@@ -200,6 +206,14 @@ flyingon.renderer('Popup', 'Panel', function (base) {
         if (any = view.parentNode)
         {
             any.removeChild(view);
+        }
+
+        if (!stack[0] && mousedown.on)
+        {
+            mousedown.on = 0;
+            
+            off(document, 'mousedown', mousedown);
+            off(document, 'keydown', keydown);
         }
     };
 

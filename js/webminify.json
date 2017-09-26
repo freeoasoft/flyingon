@@ -63,8 +63,6 @@
             '../src/renderer.web/tooltip.js',
             '../src/renderer.web/dialog.js',
 
-            '../src/renderer.web/pagination.js',
-
             '../src/renderer.web/menu.js',
 
 			'../src/control/control.js',
@@ -110,6 +108,7 @@
 
             '../src/control/pagination.js',
 
+            '../src/control/separator.js',
             '../src/control/menu.js',
             '../src/control/toolbar.js',
 

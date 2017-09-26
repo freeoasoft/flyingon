@@ -38,6 +38,50 @@ flyingon.Control.extend('Button', function (base) {
     define(this, 'html', false);
 
 
+    //是否显示下拉箭头
+    define(this, 'dropdown', false);
+
+
+    //下拉菜单
+    this.defineProperty('menu', null, {
+
+        set: function (value, oldValue) {
+
+            if (this.__menu = value)
+            {
+                if (!oldValue)
+                {
+                    this.on('click', show_menu);
+                }
+            }
+            else if (oldValue)
+            {
+                this.off('click', show_menu);
+            }
+        }
+    });
+
+
+    function show_menu(e) {
+
+        var Class = flyingon.Menu,
+            menu = this.__menu;
+
+        if (typeof menu === 'string')
+        {
+            menu = Class.all[menu];
+        }
+
+        if (menu instanceof Class)
+        {
+            menu.show(this);
+        }
+    };
+
+
+    //显示下拉菜单
+    this.showMenu = show_menu;
+
         
     //测量自动大小
     this.onmeasure = function (auto) {

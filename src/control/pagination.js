@@ -12,16 +12,16 @@ flyingon.Panel.extend('Pagination', function (base) {
 
     var template = [
         { Class: 'ComboBox', className: 'f-page-records', tag: 'records', width: 60, popupWidth: 60, items: [10, 20, 30, 50, 100, 200, 500] },
-        { Class: 'Label', className: 'f-page-sep', width: 1, margin: '2 4' },
-        { Class: 'Icon', className: 'f-page-button', tag: 'first', icon: 'f-page-first' },
-        { Class: 'Icon', className: 'f-page-button', tag: 'previous', icon: 'f-page-previous' },
+        { Class: 'Separator' },
+        { Class: 'Icon', icon: 'f-page-first', tag: 'first' },
+        { Class: 'Icon', icon: 'f-page-previous', tag: 'previous' },
         { Class: 'TextBox', className: 'f-page-current', tag: 'current', width: 40, value: 0, style: 'text-align:center' },
-        { Class: 'Label', className: 'f-page-text', width: 10, text: '/' },
+        { Class: 'Label', width: 10, text: '/' },
         { Class: 'Label', className: 'f-page-pages', tag: 'pages', width: 'auto', text: 0 },
-        { Class: 'Icon', className: 'f-page-button', tag: 'next', icon: 'f-page-next' },
-        { Class: 'Icon', className: 'f-page-button', tag: 'last', icon: 'f-page-last' },
-        { Class: 'Label', className: 'f-page-sep', width: 1, margin: '2 4' },
-        { Class: 'Icon', className: 'f-page-button', tag: 'refresh', icon: 'f-page-refresh' },
+        { Class: 'Icon', icon: 'f-page-next', tag: 'next' },
+        { Class: 'Icon', icon: 'f-page-last', tag: 'last' },
+        { Class: 'Separator' },
+        { Class: 'Icon', icon: 'f-page-refresh', tag: 'refresh' },
         { Class: 'Label', tag: 'total', dock: 'right' }
     ];
 
