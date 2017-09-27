@@ -4,26 +4,21 @@
 flyingon.fragment('f-ComboTree', function () {
 
 
-    //选中类型
-    //none
-    //radio
-    //checkbox
-    this.defineProperty('checked', 'none');
+
+    //树风格
+    //default   默认风格
+    //blue      蓝色风格
+    //plus      加减风格
+    //line      线条风格
+    this.defineProperty('theme', 'default');
 
 
-
-    //指定渲染列数
-    //0     在同一行按平均宽度渲染
-    //大于0 按指定的列数渲染
-    this.defineProperty('columns', 1);
+    //是否显示检查框
+    this.defineProperty('checked', false);
 
 
-    //是否生成清除项
-    this.defineProperty('clear', false);
-
-
-    //子项模板
-    this.defineProperty('template', null);
+    //是否显示图标
+    this.defineProperty('icon', true);
 
 
     //子项高度
@@ -34,34 +29,7 @@ flyingon.fragment('f-ComboTree', function () {
     this['popup-width'] = this.defineProperty('popupWidth', 'default');
 
 
-    //最大显示项数量
-    this['max-items'] = this.defineProperty('maxItems', 10);
-
-
-
-    //下拉列表
-    this.defineProperty('items', null, {
-
-        set: function (value) {
-
-            //转换成flyingon.DataList
-            flyingon.DataList.create(value, this.__set_items, this);
-        }
-    });
-
-
-    //设置下拉列表
-    this.__set_items = function (list) {
-
-        this.__list = list;
-        this.rendered && this.renderer.set(this, 'text');
-    };
-
-
-    //多值时的分隔符
-    this.defineProperty('separator', ',');
-
-
+  
 });
 
 
@@ -70,17 +38,17 @@ flyingon.TextButton.extend('ComboTree', function (base) {
 
 
     
-    //缓存的列表控件
-    var listbox_cache; 
+    //缓存的树控件
+    var tree_cache; 
 
 
 
-    this.defaultValue('button', 'f-combobox-button');
+    this.defaultValue('button', 'f-combotree-button');
 
 
 
     //扩展下拉框定义
-    flyingon.fragment('f-ComboBox', this);
+    flyingon.fragment('f-ComboTree', this);
 
 
     //默认选中值
@@ -114,15 +82,15 @@ flyingon.TextButton.extend('ComboTree', function (base) {
 
         var popup = this.__get_popup(),
             storage = this.__storage || this.__defaults,
-            listbox = this.__get_listbox(),
+            tree = this.__get_tree(),
             length,
             height,
             any;
 
-        this.__before_popup(popup, listbox, storage);
+        this.__before_popup(popup, tree, storage);
 
-        listbox.border(0)
-            .checked(listbox.__checked = storage.checked)
+        tree.border(0)
+            .checked(tree.__checked = storage.checked)
             .columns(any = storage.columns)
             .clear(storage.clear)
             .template(storage.template)
@@ -151,23 +119,23 @@ flyingon.TextButton.extend('ComboTree', function (base) {
             height *= length;
         }
 
-        listbox.height(height + 2);
+        tree.height(height + 2);
 
-        listbox.target = this;
-        listbox.popup = popup;
+        tree.target = this;
+        tree.popup = popup;
 
-        popup.push(listbox);
+        popup.push(tree);
         popup.show(this);
     };
 
 
-    this.__before_popup = function (popup, listbox, storage) {
+    this.__before_popup = function (popup, tree, storage) {
     };
 
 
-    this.__get_listbox = function () {
+    this.__get_tree = function () {
 
-        return listbox_cache = new flyingon.ListBox().on('change', function (e) {
+        return tree_cache = new flyingon.tree().on('change', function (e) {
             
             this.target.value(e.value);
 

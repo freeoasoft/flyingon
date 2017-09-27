@@ -2,22 +2,9 @@ flyingon.TextBox.extend('Time', function (base) {
 
 
     //值
-    this.defineProperty('value', '', {
+    this.text = this.defineProperty('value', '', {
         
-        check: function (value) {
-
-            if (value && (value = value.match(/\d+/g)))
-            {
-                value.length = 3;
-
-                value[1] |= 0;
-                value[2] |= 0;
-
-                return value.join(':');
-            }
-
-            return '';
-        },
+        check: flyingon.Time.check,
 
         set: function () {
 
@@ -25,33 +12,48 @@ flyingon.TextBox.extend('Time', function (base) {
         }
 
     });
-
-
-    //格式化
-    this.defineProperty('format', '', {
-        
-        set: function () {
-
-            this.rendered && this.renderer.set(this, 'text');
-        }
-    });
-
-
-    this.text = function () {
-
-        var storage = this.__storage || this.__defaults,
-            value = storage.value,
-            format;
-
-        if (value && (format = storage.format))
-        {
-            value = value.split(':');
-            return new Date(2000, 1, 1, value[0] | 0, value[1] | 0, value[2] | 0).format(format);
-        }
-
-        return value;
-    };
-
 
 
 }).register();
+
+
+
+flyingon.Time.check = function () {
+
+    function check(value, max) {
+
+        if (value <= 0)
+        {
+            return '00';
+        }
+
+        if (value >= 100)
+        {
+            value = ('' + value).substring(0, 2) | 0;
+        }
+
+        if (value >= max)
+        {
+            return '00';
+        }
+        
+        return (value < 10 ? '0' : '') + value;
+    };
+
+    return function (value) {
+
+        if (value && (value = value.match(/\d+/g)))
+        {
+            value.length = 3;
+
+            value[0] = check(value[0] | 0, 24);
+            value[1] = check(value[1] | 0, 60);
+            value[2] = check(value[2] | 0, 60);
+
+            return value.join(':');
+        }
+
+        return '';
+    };
+
+}();

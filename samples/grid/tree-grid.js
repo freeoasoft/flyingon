@@ -59,10 +59,10 @@ flyingon.widget({
 
 
         var grid = this[0];
-        var dataset = new flyingon.DataSet();
+        var dataset = new flyingon.DataSet('F1', 'children');
         var data = create_data([100, 10, 10], 0, 1, Math.random);
 
-        dataset.load(data, 'id', 'children');
+        dataset.load(data);
 
         grid.dataset(dataset);
 

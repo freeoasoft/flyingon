@@ -36,7 +36,7 @@ flyingon.Control.extend('TextBox', function (base) {
     
 
 
-    this.defineProperty('value', '', {
+    this.text = this.defineProperty('value', '', {
 
         set: function (value) {
 
@@ -45,13 +45,15 @@ flyingon.Control.extend('TextBox', function (base) {
     });
 
 
-    this.text = function () {
-
-        return (this.__storage || this.__defaults).value;
-    };
-
 
     flyingon.fragment('f-textbox', this);
+
+
+
+    this.__to_value = function (text) {
+
+        return text;
+    };
     
 
 

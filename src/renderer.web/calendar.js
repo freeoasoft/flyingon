@@ -182,10 +182,8 @@ flyingon.renderer('Calendar', function (base) {
 
     flyingon.Calendar.onchange = function () {
 
-        var control = flyingon.findControl(this),
-            values = this.value.match(/\d+/g);
-
-        this.value = control.__data[3] = values ? check_time(values) : '00:00:00';
+        var control = flyingon.findControl(this);
+        this.value = control.__data[3] = flyingon.Time.check(this.value);
     };
 
 

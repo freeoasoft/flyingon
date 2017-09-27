@@ -321,6 +321,10 @@ input[type="text"],
     padding: 0 2px;
 }
 
+.f-memo {
+    resize: none;
+}
+
 .f-button-drop {
     display: inline-block;
     width: 16px;

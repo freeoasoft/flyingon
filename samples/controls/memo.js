@@ -4,16 +4,16 @@ flyingon.widget({
 
         Class: 'Plugin',
         padding: 8,
+        layout: 'vertical-line',
         children: [
             {
                 Class: 'Panel',
-                width: 780,
-                height: 40,
-
+                height: 120,
+                
                 children: [
                     {
-                        Class: 'Time',
-                        value: '10:10:10'
+                        Class: 'Memo',
+                        value: 'text ...'
                     }
                 ]
             },

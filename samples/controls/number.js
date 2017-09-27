@@ -9,11 +9,32 @@ flyingon.widget({
         children: [
             {
                 Class: 'Panel',
-                height: 40,
+                width: 780,
+                height: 60,
 
                 children: [
                     {
-                        Class: 'Number'
+                        Class: 'Number',
+                        value: 123456789
+                    },
+                    {
+                        Class: 'Number',
+                        value: 123456789.1234,
+                        scale: 4,
+                        thousands: true
+                    },
+                    {
+                        Class: 'Number',
+                        value: 123456789.12,
+                        scale: 2,
+                        format: '¥{0}'
+                    },
+                    {
+                        Class: 'Number',
+                        value: 123456789.12,
+                        scale: 2,
+                        thousands: true,
+                        format: '¥{0}'
                     }
                 ]
             },

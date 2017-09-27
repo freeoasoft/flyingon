@@ -31,12 +31,17 @@ flyingon.Control.extend('TextButton', function (base) {
 
 
 
-    this.text = function () {
+    this.text = function (value) {
 
-        var storage = this.__storage || this.__defaults,
-            format = storage.format;
+        if (value === void 0)
+        {
+            var storage = this.__storage || this.__defaults,
+                format = storage.format;
 
-        return format ? format.replace(/\{\{value\}\}/g, value) : '' + storage.value;
+            return format ? format.replace('{0}', value) : '' + storage.value;
+        }
+
+        this.value(value);
     };
 
 
@@ -52,6 +57,12 @@ flyingon.Control.extend('TextButton', function (base) {
 
     flyingon.fragment('f-textbox', this);
 
+
+
+    this.__to_value = function (text) {
+
+        return text;
+    };
 
 
     this.__on_click = function () {

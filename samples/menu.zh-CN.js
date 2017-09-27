@@ -48,6 +48,7 @@ var menuList = [
             { text: '单选框', url: url_controls + 'radiobutton.js' },
             { text: '检查框', url: url_controls + 'checkbox.js' },
             { text: '文本框', url: url_controls + 'textbox.js' },
+            { text: '多行文本', url: url_controls + 'memo.js' },
             { text: '文本按钮', url: url_controls + 'textbutton.js' },
             { text: '列表框', url: url_controls + 'listbox.js' },
             { text: '下拉框', url: url_controls + 'combobox.js' },
@@ -64,8 +65,8 @@ var menuList = [
             { text: '提示框', url: url_controls + 'tooltip.js' },
             { text: '弹出窗口', url: url_controls + 'dialog.js' },
             { text: '消息框', url: url_controls + 'showmessage.js' },
-            { text: '工具条', url: url_controls + 'toolbar.js' },
-            { text: '菜单', url: url_controls + 'menu.js' }
+            { text: '菜单', url: url_controls + 'menu.js' },
+            { text: '工具条', url: url_controls + 'toolbar.js' }
         ]
     },
 

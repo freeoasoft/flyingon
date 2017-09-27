@@ -12672,7 +12672,7 @@ flyingon.renderer('TextBox', function (base) {
 
     this.render = function (writer, control, render) {
 
-        var text = control.__text = control.text();
+        var text = control.text();
 
         if (text)
         {
@@ -12684,41 +12684,47 @@ flyingon.renderer('TextBox', function (base) {
         render.call(this, writer, control);
         
         writer.push(' type="text" value="', text, 
-            '" oninput="flyingon.TextBox.oninput.call(this)"',
-            ' onchange="flyingon.TextBox.onchange.call(this)"/>');
+            //'" oninput="flyingon.TextBox.oninput.call(this)',
+            '" onchange="flyingon.TextBox.onchange.call(this)"/>');
     };
 
 
-    flyingon.TextBox.oninput = function (e) {
+    // flyingon.TextBox.oninput = function (e) {
 
-        var control = flyingon.findControl(this);
-        control.renderer.oninput(control, this, e);
-    };
+    //     var control = flyingon.findControl(this);
+    //     control.renderer.oninput(control, this, e);
+    // };
 
 
     flyingon.TextBox.onchange = function () {
 
-        var control = flyingon.findControl(this);
+        var control = flyingon.findControl(this),
+            value;
 
         try
         {
             control.rendered = false;
-            control.value(this.value);
+            
+            value = control.__to_value(this.value);
+
+            if (value !== control.value())
+            {
+                control.value(value);
+                control.trigger('change', 'value', value);
+            }
+
+            this.value = control.text();
         }
         finally
         {
             control.rendered = true;
         }
-        
-        this.value = control.text();
-
-        control.trigger('change', 'value', control.value());
     };
 
 
-    this.oninput = function (control, view, event) {
+    // this.oninput = function (control, view, event) {
 
-    };
+    // };
 
 
     this.text = function (control, view, value) {
@@ -12782,21 +12788,47 @@ flyingon.renderer('Password', function () {
 
 
 
-flyingon.renderer('Number', 'TextBox', function (base) {
+flyingon.renderer('Memo', function (base) {
 
 
-    this.oninput = function (control, view) {
 
-        var value = +view.value;
+    this.render = function (writer, control, render) {
 
-        if (value !== value)
+        var text = control.text();
+
+        if (text)
         {
-            view.value = control.__text;
+            text = flyingon.html_encode(text);
         }
-        else
+
+        writer.push('<textarea');
+        
+        render.call(this, writer, control);
+        
+        writer.push(' onchange="flyingon.TextBox.onchange.call(this)">', text, '</textarea>');
+    };
+
+
+    flyingon.TextBox.onchange = function () {
+
+        var control = flyingon.findControl(this);
+
+        try
         {
-            control.__text = value;
+            control.rendered = false;
+            control.value(this.value);
+            control.trigger('change', 'value', value);
         }
+        finally
+        {
+            control.rendered = true;
+        }
+    };
+
+
+    this.text = function (control, view, value) {
+
+        view.value = control.text();
     };
 
 
@@ -13086,10 +13118,8 @@ flyingon.renderer('Calendar', function (base) {
 
     flyingon.Calendar.onchange = function () {
 
-        var control = flyingon.findControl(this),
-            values = this.value.match(/\d+/g);
-
-        this.value = control.__data[3] = values ? check_time(values) : '00:00:00';
+        var control = flyingon.findControl(this);
+        this.value = control.__data[3] = flyingon.Time.check(this.value);
     };
 
 
@@ -20252,7 +20282,7 @@ flyingon.Control.extend('TextBox', function (base) {
     
 
 
-    this.defineProperty('value', '', {
+    this.text = this.defineProperty('value', '', {
 
         set: function (value) {
 
@@ -20261,13 +20291,15 @@ flyingon.Control.extend('TextBox', function (base) {
     });
 
 
-    this.text = function () {
-
-        return (this.__storage || this.__defaults).value;
-    };
-
 
     flyingon.fragment('f-textbox', this);
+
+
+
+    this.__to_value = function (text) {
+
+        return text;
+    };
     
 
 
@@ -20297,66 +20329,124 @@ flyingon.TextBox.extend('Password', function (base) {
 flyingon.TextBox.extend('Number', function (base) {
 
 
+    //注: 不同浏览器toFixed有差异, chrome使用的是银行家舍入规则
+    //银行家舍入: 所谓银行家舍入法, 其实质是一种四舍六入五取偶(又称四舍六入五留双)法
+    //简单来说就是: 四舍六入五考虑, 五后非零就进一, 五后为零看奇偶, 五前为偶应舍去, 五前为奇要进一
+
     var pow = Math.pow;
 
+    var round = Math.round;
 
-    this.__scale = this.__value = 0;
 
 
-    this.defineProperty('value', 0, {
-
-        check: function (value) {
-
-            var scale = this.__scale;
-
-            if (scale <= 0)
-            {
-                return value | 0;
-            }
-
-            return (value * scale | 0) / scale;
-        },
-
-        set: function (value) {
-
-            this.__value = value;
-            this.rendered && this.renderer.set(this, 'text', value);
-        }
-    });
+    this.defineProperty('value', 0, { set: render });
 
 
     //小数位数
     this.defineProperty('scale', 0, {
 
+        dataType: 'int',
+
         check: function (value) {
 
-            return this.__scale = (value |= 0) > 0 ? pow(10, value) : 0;
+            return value > 0 ? value : 0;
         },
 
-        set: function (value) {
-
-            this.value(this.__value);
-        }
+        set: render
     });
+
+
+    //是否显示千分位
+    this.defineProperty('thousands', false, { set: render });
 
 
     //格式化
-    this.defineProperty('format', '', {
+    this.defineProperty('format', '', { set: render });
 
-        set: function (value) {
 
-            this.__format = value;
-        }
-    });
+
+    function render() {
+
+        this.rendered && this.renderer.set(this, 'text');
+    };
 
 
     this.text = function () {
 
-        var value = this.__value,
-            format = this.__format;
+        var storage = this.__storage || this.__defaults,
+            value = storage.value,
+            scale = storage.scale,
+            any;
 
-        return format ? format.replace('{0}', value) : '' + value;
+        if (scale > 0)
+        {
+            any = pow(10, scale);
+
+            //先四舍五入处理toFixed浏览器差异
+            //此处不能用a + 0.5 | 0的方法来进行四舍五入运算,位运算精度太小
+            value = (round(value * any) / any).toFixed(scale); 
+        }
+        else
+        {
+            value = '' + (value | 0);
+        }
+
+        if (storage.thousands)
+        {
+            value = value.replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
+
+            if (any > 3)
+            {
+                any = value.split('.');
+                any[1] = any[1].replace(/(\d{3})(?=(\d{1,3})+)/g, '$1,');
+
+                value = any.join('.');
+            }
+        }
+        
+        return (any = storage.format) ? any.replace('{0}', value) : value;
     };
+
+
+
+    this.__to_value = function (text) {
+
+        if (text = text.match(/[\d,.]+/))
+        {
+            return parseFloat(text[0].replace(/[,]/g, ''));
+        }
+
+        return 0;
+    };
+
+
+
+}).register();
+
+
+
+
+flyingon.Control.extend('Memo', function (base) {
+    
+
+
+    this.defaultWidth = 400;
+
+    this.defaultHeight = 100;
+
+
+
+    this.text = this.defineProperty('value', '', {
+
+        set: function (value) {
+
+            this.rendered && this.renderer.set(this, 'text', value);
+        }
+    });
+
+
+
+    flyingon.fragment('f-textbox', this);
 
 
 
@@ -20398,12 +20488,17 @@ flyingon.Control.extend('TextButton', function (base) {
 
 
 
-    this.text = function () {
+    this.text = function (value) {
 
-        var storage = this.__storage || this.__defaults,
-            format = storage.format;
+        if (value === void 0)
+        {
+            var storage = this.__storage || this.__defaults,
+                format = storage.format;
 
-        return format ? format.replace(/\{\{value\}\}/g, value) : '' + storage.value;
+            return format ? format.replace('{0}', value) : '' + storage.value;
+        }
+
+        this.value(value);
     };
 
 
@@ -20419,6 +20514,12 @@ flyingon.Control.extend('TextButton', function (base) {
 
     flyingon.fragment('f-textbox', this);
 
+
+
+    this.__to_value = function (text) {
+
+        return text;
+    };
 
 
     this.__on_click = function () {
@@ -20528,6 +20629,352 @@ flyingon.fragment('f-ComboBox', function () {
 
 
 flyingon.TextButton.extend('ComboBox', function (base) {
+
+
+    
+    //缓存的列表控件
+    var listbox_cache; 
+
+
+
+    this.defaultValue('button', 'f-combobox-button');
+
+
+
+    //扩展下拉框定义
+    flyingon.fragment('f-ComboBox', this);
+
+
+    //默认选中值
+    this.defineProperty('value', '', {
+
+        set: function () {
+
+            this.__list && this.renderer.set(this, 'text');
+        }
+    });
+
+
+
+    this.text = function () {
+
+        var list = this.__list;
+
+        if (list)
+        {
+            var storage = this.__storage || this.__defaults;
+            return list.text(storage.value, storage.checked === 'checkbox' ? storage.separator || ',' : '');
+        }
+
+        return '';
+    };
+
+
+
+    //弹出日历窗口
+    this.popup = this.__on_click = function () {
+
+        var popup = this.__get_popup(),
+            storage = this.__storage || this.__defaults,
+            listbox = this.__get_listbox(),
+            length,
+            height,
+            any;
+
+        this.__before_popup(popup, listbox, storage);
+
+        listbox.border(0)
+            .checked(listbox.__checked = storage.checked)
+            .columns(any = storage.columns)
+            .clear(storage.clear)
+            .template(storage.template)
+            .itemHeight(height = storage.itemHeight)
+            .width(storage.popupWidth)
+            .separator(storage.separator)
+            .items(storage.items)
+            .value(storage.value);
+
+        if (any > 0)
+        {
+            length = this.__list ? this.__list.length : 0;
+
+            if (storage.clear)
+            {
+                length++;
+            }
+
+            length = Math.min(length, storage.maxItems);
+
+            if (any > 1)
+            {
+                length = (length + any - 1) / any | 0;
+            }
+
+            height *= length;
+        }
+
+        listbox.height(height + 2);
+
+        listbox.target = this;
+        listbox.popup = popup;
+
+        popup.push(listbox);
+        popup.show(this);
+    };
+
+
+    this.__before_popup = function (popup, listbox, storage) {
+    };
+
+
+    this.__get_listbox = function () {
+
+        return listbox_cache = new flyingon.ListBox().on('change', function (e) {
+            
+            this.target.value(e.value);
+
+            if (this.__checked !== 'checkbox')
+            {
+                this.popup.close();
+            }
+
+            this.target.trigger('change', 'value', e.value);
+        });
+    };
+
+
+
+}).register();
+
+
+
+
+/**
+ * 下拉框定义
+ */
+flyingon.fragment('f-ComboTree', function () {
+
+
+
+    //树风格
+    //default   默认风格
+    //blue      蓝色风格
+    //plus      加减风格
+    //line      线条风格
+    this.defineProperty('theme', 'default');
+
+
+    //是否显示检查框
+    this.defineProperty('checked', false);
+
+
+    //是否显示图标
+    this.defineProperty('icon', true);
+
+
+    //子项高度
+    this['item-height'] = this.defineProperty('itemHeight', 21);
+
+
+    //下拉框宽度
+    this['popup-width'] = this.defineProperty('popupWidth', 'default');
+
+
+  
+});
+
+
+
+flyingon.TextButton.extend('ComboTree', function (base) {
+
+
+    
+    //缓存的树控件
+    var tree_cache; 
+
+
+
+    this.defaultValue('button', 'f-combotree-button');
+
+
+
+    //扩展下拉框定义
+    flyingon.fragment('f-ComboTree', this);
+
+
+    //默认选中值
+    this.defineProperty('value', '', {
+
+        set: function () {
+
+            this.__list && this.renderer.set(this, 'text');
+        }
+    });
+
+
+
+    this.text = function () {
+
+        var list = this.__list;
+
+        if (list)
+        {
+            var storage = this.__storage || this.__defaults;
+            return list.text(storage.value, storage.checked === 'checkbox' ? storage.separator || ',' : '');
+        }
+
+        return '';
+    };
+
+
+
+    //弹出日历窗口
+    this.popup = this.__on_click = function () {
+
+        var popup = this.__get_popup(),
+            storage = this.__storage || this.__defaults,
+            tree = this.__get_tree(),
+            length,
+            height,
+            any;
+
+        this.__before_popup(popup, tree, storage);
+
+        tree.border(0)
+            .checked(tree.__checked = storage.checked)
+            .columns(any = storage.columns)
+            .clear(storage.clear)
+            .template(storage.template)
+            .itemHeight(height = storage.itemHeight)
+            .width(storage.popupWidth)
+            .separator(storage.separator)
+            .items(storage.items)
+            .value(storage.value);
+
+        if (any > 0)
+        {
+            length = this.__list ? this.__list.length : 0;
+
+            if (storage.clear)
+            {
+                length++;
+            }
+
+            length = Math.min(length, storage.maxItems);
+
+            if (any > 1)
+            {
+                length = (length + any - 1) / any | 0;
+            }
+
+            height *= length;
+        }
+
+        tree.height(height + 2);
+
+        tree.target = this;
+        tree.popup = popup;
+
+        popup.push(tree);
+        popup.show(this);
+    };
+
+
+    this.__before_popup = function (popup, tree, storage) {
+    };
+
+
+    this.__get_tree = function () {
+
+        return tree_cache = new flyingon.tree().on('change', function (e) {
+            
+            this.target.value(e.value);
+
+            if (this.__checked !== 'checkbox')
+            {
+                this.popup.close();
+            }
+
+            this.target.trigger('change', 'value', e.value);
+        });
+    };
+
+
+
+}).register();
+
+
+
+
+/**
+ * 下拉框定义
+ */
+flyingon.fragment('f-ComboGrid', function () {
+
+
+    //选中类型
+    //none
+    //radio
+    //checkbox
+    this.defineProperty('checked', 'none');
+
+
+
+    //指定渲染列数
+    //0     在同一行按平均宽度渲染
+    //大于0 按指定的列数渲染
+    this.defineProperty('columns', 1);
+
+
+    //是否生成清除项
+    this.defineProperty('clear', false);
+
+
+    //子项模板
+    this.defineProperty('template', null);
+
+
+    //子项高度
+    this['item-height'] = this.defineProperty('itemHeight', 21);
+
+
+    //下拉框宽度
+    this['popup-width'] = this.defineProperty('popupWidth', 'default');
+
+
+    //最大显示项数量
+    this['max-items'] = this.defineProperty('maxItems', 10);
+
+
+
+    //下拉列表
+    this.defineProperty('items', null, {
+
+        set: function (value) {
+
+            //转换成flyingon.DataList
+            flyingon.DataList.create(value, this.__set_items, this);
+        }
+    });
+
+
+    //设置下拉列表
+    this.__set_items = function (list) {
+
+        this.__list = list;
+        this.rendered && this.renderer.set(this, 'text');
+    };
+
+
+    //多值时的分隔符
+    this.defineProperty('separator', ',');
+
+
+});
+
+
+
+flyingon.TextButton.extend('ComboGrid', function (base) {
 
 
     
@@ -20828,22 +21275,9 @@ flyingon.TextBox.extend('Time', function (base) {
 
 
     //值
-    this.defineProperty('value', '', {
+    this.text = this.defineProperty('value', '', {
         
-        check: function (value) {
-
-            if (value && (value = value.match(/\d+/g)))
-            {
-                value.length = 3;
-
-                value[1] |= 0;
-                value[2] |= 0;
-
-                return value.join(':');
-            }
-
-            return '';
-        },
+        check: flyingon.Time.check,
 
         set: function () {
 
@@ -20851,36 +21285,51 @@ flyingon.TextBox.extend('Time', function (base) {
         }
 
     });
-
-
-    //格式化
-    this.defineProperty('format', '', {
-        
-        set: function () {
-
-            this.rendered && this.renderer.set(this, 'text');
-        }
-    });
-
-
-    this.text = function () {
-
-        var storage = this.__storage || this.__defaults,
-            value = storage.value,
-            format;
-
-        if (value && (format = storage.format))
-        {
-            value = value.split(':');
-            return new Date(2000, 1, 1, value[0] | 0, value[1] | 0, value[2] | 0).format(format);
-        }
-
-        return value;
-    };
-
 
 
 }).register();
+
+
+
+flyingon.Time.check = function () {
+
+    function check(value, max) {
+
+        if (value <= 0)
+        {
+            return '00';
+        }
+
+        if (value >= 100)
+        {
+            value = ('' + value).substring(0, 2) | 0;
+        }
+
+        if (value >= max)
+        {
+            return '00';
+        }
+        
+        return (value < 10 ? '0' : '') + value;
+    };
+
+    return function (value) {
+
+        if (value && (value = value.match(/\d+/g)))
+        {
+            value.length = 3;
+
+            value[0] = check(value[0] | 0, 24);
+            value[1] = check(value[1] | 0, 60);
+            value[2] = check(value[2] | 0, 60);
+
+            return value.join(':');
+        }
+
+        return '';
+    };
+
+}();
 
 
 
