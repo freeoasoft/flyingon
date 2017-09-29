@@ -3,14 +3,35 @@
     
     {
         source: [
-            'flyingon.css'
+            '../../less/color.less',
+            '../../less/base.less',
+            '../../less/listbox.less',
+            '../../less/calendar.less',
+            '../../less/slider.less',
+            '../../less/progressbar.less',
+            '../../less/tree.less',
+            '../../less/grid.less',
+            '../../less/scrollpanel.less',
+            '../../less/groupbox.less',
+            '../../less/pagination.less',
+            '../../less/tab.less',
+            '../../less/dialog.less',
+            '../../less/popup.less',
+            '../../less/tooltip.less',
+            '../../less/error.less',
+            '../../less/message.less',
+            '../../less/menu.less'
         ],
 
-        output: 'flyingon.min.css',
+        output: 'flyingon.css',
         
         plugins: [
             {
-                name: './webminify_css'
+                name: './webminify_css',
+				options: {
+					less: true,
+					compress: true
+				}
             }
         ]
     }

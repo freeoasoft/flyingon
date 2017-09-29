@@ -140,9 +140,10 @@
     //通用鼠标事件处理
     function mouse_event(e) {
         
-        var control = flyingon.findControl(e.target);
+        var control = flyingon.findControl(e.target),
+            any;
         
-        if (control && !control.disabled())
+        if (control && !((any = control.__storage) && any.disabled))
         {
             control.trigger(new MouseEvent(e));
         }
@@ -152,9 +153,10 @@
     //通用键盘事件处理
     function key_event(e) {
         
-        var control = flyingon.findControl(e.target);
+        var control = flyingon.findControl(e.target),
+            any;
         
-        if (control && !control.disabled())
+        if (control && !((any = control.__storage) && any.disabled))
         {
             control.trigger(new KeyEvent(e));
         }
@@ -361,7 +363,8 @@
             parent,
             any;
         
-        if (control && !control.disabled() && control.trigger(mousedown = new MouseEvent(e)) !== false)
+        if (control && !((any = control.__storage) && any.disabled) && 
+            control.trigger(mousedown = new MouseEvent(e)) !== false)
         {
             if (any = resizable)
             {
@@ -432,11 +435,16 @@
                 control.trigger(e);
             }
         }
-        else if ((control = flyingon.findControl(e.target)) && 
-            !control.disabled() && control.trigger(new MouseEvent(e)) !== false &&
-            (any = control.resizable) && any.call(control) !== 'none')
+        else if (control = flyingon.findControl(e.target))
         {
-            resizable = (control.__check_resize || check_resize).call(control, any, e);
+            if ((any = control.resizable) && any.call(control) !== 'none')
+            {
+                resizable = (control.__check_resize || check_resize).call(control, any, e);
+            }
+            else if (!((any = control.__storage) && any.disabled))
+            {
+                control.trigger(new MouseEvent(e));
+            }
         }
     });
     
@@ -483,7 +491,7 @@
             
             mousedown = null;
         }
-        else if ((control = flyingon.findControl(e.target)) && !control.disabled())
+        else if ((control = flyingon.findControl(e.target)) && !((any = control.__storage) && any.disabled))
         {
             control.trigger(new MouseEvent(e));
         }
@@ -531,7 +539,7 @@
 
             do
             {
-                if (menu = control.contextmenu())
+                if ((menu = control.__storage) && (menu = menu.contextmenu))
                 {
                     if (typeof menu === 'string')
                     {
@@ -561,44 +569,26 @@
     */
 
     //IE
-    // if ('onfocusin' in document)
-    // {
-    //     on(document, 'focusin', focus);
-    //     on(document, 'focusout', blur);
-    // }
-    // else //w3c标准使用捕获模式
-    // {
-    //     on(document, 'focus', focus, true);
-    //     on(document, 'blur', blur, true);
-    // }
+    if ('onfocusin' in document)
+    {
+        on(document, 'focusin', focus);
+        on(document, 'focusout', blur);
+    }
+    else //w3c标准使用捕获模式
+    {
+        on(document, 'focus', focus, true);
+        on(document, 'blur', blur, true);
+    }
 
 
     function focus(e) {
 
-        if (focus.__disabled)
-        {
-            return true;
-        }
-
         var control = flyingon.findControl(e.target);
 
-        if (control && control.canFocus && !control.disabled() && control.canFocus() && 
-            control.trigger('focus') !== false)
+        if (flyingon.activeControl = control)
         {
-            control.focus();
-            flyingon.activeControl = control;
-        }
-        else if (control = flyingon.activeControl)
-        {
-            try
-            {
-                focus.__disabled = true;
-                control.renderer.focus(control);
-            }
-            finally
-            {
-                focus.__disabled = false;
-            }
+            control.trigger('focus');
+            control.renderer.__do_focus();
         }
     };
 
@@ -607,10 +597,12 @@
 
         var control = flyingon.findControl(e.target);
 
-        if (control && control === flyingon.activeControl && control.trigger('blur') !== false)
+        flyingon.activeControl = null;
+
+        if (control)
         {
-            control.blur();
-            flyingon.activeControl = null;
+            control.trigger('blur');
+            control.renderer.__do_blur();
         }
     };
 
@@ -619,13 +611,16 @@
     //滚事件不冒泡,每个控件自己绑定
     flyingon.__dom_scroll = function (event) {
       
-        var control = flyingon.findControl(this);
+        var control = flyingon.findControl(this),
+            any;
 
-        if (control && !control.disabled())
+        if (control && !((any = control.__storage) && any.disabled))
         {
             if (control.trigger('scroll') !== false)
             {
-                control.__do_scroll(control.scrollLeft = this.scrollLeft, control.scrollTop = this.scrollTop);
+                control.renderer.__do_scroll(control, 
+                    control.scrollLeft = this.scrollLeft, 
+                    control.scrollTop = this.scrollTop);
             }
             else
             {
@@ -637,7 +632,7 @@
                 }
                 finally
                 {
-                    this.onscroll = scroll;
+                    this.onscroll = flyingon.__dom_scroll;
                 }
             }
         }
@@ -648,9 +643,10 @@
     //滚轮事件兼容处理firefox和其它浏览器不一样
     on(document, document.mozHidden ? 'DOMMouseScroll' : 'mousewheel', function (e) {
 
-        var control = flyingon.findControl(e.target);
+        var control = flyingon.findControl(e.target),
+            any;
 
-        if (control && !control.disabled())
+        if (control && !((any = control.__storage) && any.disabled))
         {
             //firefox向下滚动是3 其它浏览器向下滚动是-120 此处统一转成-120
             control.trigger('mousewheel', 'original_event', e, 'wheelDelta', e.wheelDelta || -e.detail * 40 || -120);

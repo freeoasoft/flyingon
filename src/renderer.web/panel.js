@@ -18,7 +18,7 @@ flyingon.renderer('Panel', function (base) {
 
         writer.push('<div');
         
-        render.call(this, writer, control);
+        render.call(this, writer, control, false);
         
         writer.push(' onscroll="flyingon.__dom_scroll.call(this, event)">');
 

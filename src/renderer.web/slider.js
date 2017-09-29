@@ -1,6 +1,7 @@
 flyingon.renderer('Slider', function (base) {
 
 
+
     this.render = function (writer, control, render) {
 
         writer.push('<div');

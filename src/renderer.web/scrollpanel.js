@@ -23,7 +23,7 @@ flyingon.renderer('ScrollPanel', function (base) {
         //此处只渲染一个空的壳,实现渲染内容在locate的时候根据需要渲染
         writer.push('<div');
         
-        render.call(this, writer, control);
+        render.call(this, writer, control, false);
         
         writer.push('>',
             '<div class="f-scrollpanel-scroll" onscroll="flyingon.__dom_scroll.call(this, event)">',
@@ -205,10 +205,11 @@ flyingon.renderer('ScrollPanel', function (base) {
 
  
 
-    this.scroll = function (control, x, y) {
+    this.__do_scroll = function (control, x, y) {
 
         var view = control.view.lastChild;
 
+        this.__compute_visible();
         this.locate(control);
         
         if (view.scrollLeft !== x)

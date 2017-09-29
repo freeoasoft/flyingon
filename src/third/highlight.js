@@ -86,6 +86,13 @@ flyingon.Control.extend('Highlight', function (base) {
     this.defaultHeight = 200;
 
 
+    function set_render(value, _, name) {
+
+        this.renderer.set(this, name, value);
+    };
+
+
+
     //当前语言
     this.defineProperty('language', 'javascript', {
         
@@ -99,20 +106,14 @@ flyingon.Control.extend('Highlight', function (base) {
     //当前主题
     this.defineProperty('theme', 'vs', {
      
-        set: function (value) {
-
-            this.rendered && this.renderer.set(this, 'theme', value);
-        }
+        set: set_render
     });
 
 
     //代码内容
     this.defineProperty('code', '', {
         
-        set: function (value) {
-
-            this.renderer.set(this, 'code', value);
-        }
+        set: set_render
     });
 
 

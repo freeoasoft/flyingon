@@ -1,0 +1,93 @@
+.f-tooltip {
+    position: absolute;
+    width: auto;
+    height: auto;
+    z-index: 100;
+}
+
+.f-tooltip-body {
+    border-radius: 5px;
+    padding: 6px 8px;
+    border: 1px solid @border-color;
+    background-color: @back-color;
+}
+
+.f-tooltip-left {
+    padding-right: 6px;
+}
+
+.f-tooltip-right {
+    padding-left: 6px;
+}
+
+.f-tooltip-top {
+    padding-bottom: 6px;
+}
+
+.f-tooltip-bottom {
+    padding-top: 6px;
+}
+
+.f-tooltip-arrow1,
+.f-tooltip-arrow2 {
+    position: absolute;
+    border-style: solid;
+    border-color: transparent;
+    border-width: 6px;
+}
+
+.f-tooltip-left .f-tooltip-arrow1 {
+    right: -6px;
+    top: 50%;
+    margin-top: -6px;
+    border-left-color: @border-color;
+}
+
+.f-tooltip-left .f-tooltip-arrow2 {
+    right: -5px;
+    top: 50%;
+    margin-top: -6px;
+    border-left-color: @back-color;
+}
+
+.f-tooltip-right .f-tooltip-arrow1 {
+    left: -6px;
+    top: 50%;
+    margin-top: -6px;
+    border-right-color: @border-color;
+}
+
+.f-tooltip-right .f-tooltip-arrow2 {
+    left: -5px;
+    top: 50%;
+    margin-top: -6px;
+    border-right-color: @back-color;
+}
+
+.f-tooltip-top .f-tooltip-arrow1 {
+    bottom: -6px;
+    left: 50%;
+    margin-left: -6px;
+    border-top-color: @border-color;
+}
+
+.f-tooltip-top .f-tooltip-arrow2 {
+    bottom: -5px;
+    left: 50%;
+    margin-left: -6px;
+    border-top-color: @back-color;
+}
+
+.f-tooltip-bottom .f-tooltip-arrow1 {
+    top: -6px;
+    left: 50%;
+    margin-left: -6px;
+    border-bottom-color: @border-color;
+}
+
+.f-tooltip-bottom .f-tooltip-arrow2 {
+    top: -5px;
+    left: 50%;
+    margin-left: -6px;
+    border-bottom-color: @back-color;
+}

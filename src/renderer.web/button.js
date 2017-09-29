@@ -24,7 +24,7 @@ flyingon.renderer('Button', function (base) {
 
         if (any = storage.icon)
         {
-            writer.push('<span class="', encode(any), '" style="width:', 
+            writer.push('<span class="', encode(any), '" style="display:inline-block;width:', 
                 any = storage.iconSize, 'px;height:', any, 'px;">', '</span>');
             
             any = true;

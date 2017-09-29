@@ -36,7 +36,7 @@ flyingon.renderer('Memo', function (base) {
     };
 
 
-    this.text = function (control, view, value) {
+    this.value = function (control, view, value) {
 
         view.value = control.text();
     };

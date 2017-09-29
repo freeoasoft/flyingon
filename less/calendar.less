@@ -1,0 +1,132 @@
+.f-calendar {
+    border: 1px solid @border-color;
+    background-color: @back-color;
+}
+
+.f-calendar-head {
+    position: relative;
+    text-align: center;
+}
+
+.f-calendar-dark {
+    color: @shadow-color
+}
+
+.f-calendar-line {
+    background-color: @border-color;
+}
+
+.f-calendar-disabled {
+    background-color: @disable-back-color;
+    color: @disable-font-color;
+}
+
+.f-calendar-selected {
+    color: @selected-font-color;
+}
+
+.f-calendar-title span:hover,
+.f-calendar-today:hover,
+.f-calendar-clear:hover {
+    color: @hover-font-color;
+    text-decoration: underline;
+}
+
+.f-calendar-before1,
+.f-calendar-before2,
+.f-calendar-after1,
+.f-calendar-after2 {
+    position: absolute;
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    margin-top: -8px;
+}
+
+.f-calendar-before1 {
+    left: 20px;
+    background: @flyingon-img -30px -154px;
+    cursor: pointer;
+}
+
+.f-calendar-before2 {
+    left: 4px;
+    background: @flyingon-img -11px -153px;
+    cursor: pointer;
+}
+
+.f-calendar-title,
+.f-calendar-year,
+.f-calendar-month {
+    font-family: 'PT Sans',Tahoma;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.f-calendar-after1 {
+    right: 20px;
+    background: @flyingon-img -64px -153px;
+    cursor: pointer;
+}
+
+.f-calendar-after2 {
+    right: 4px;
+    background: @flyingon-img -85px -153px;
+    cursor: pointer;
+}
+
+.f-calendar-selected {
+    font-weight: bold;
+}
+
+.f-calendar-week,
+.f-calendar-date,
+.f-calendar-year,
+.f-calendar-month {
+    white-space: nowrap;
+}
+
+.f-calendar-week span,
+.f-calendar-date span {
+    display: inline-block;
+    width: 14.28%;
+    text-align: center;
+}
+
+.f-calendar-date span {
+    cursor: pointer;
+}
+
+.f-calendar-foot {
+    padding: 0 8px;
+}
+
+.f-calendar-time {
+    float: left;
+    width: 60px;
+    margin-top: 4px;
+    border: 0;
+    outline: none;
+}
+
+.f-calendar-today,
+.f-calendar-clear {
+    margin-left: 8px;
+    float: right;
+    cursor: pointer;
+}
+
+.f-calendar-year span {
+    display: inline-block;
+    width: 20%;
+    text-align: center;
+    cursor: pointer;
+}
+
+.f-calendar-month span {
+    display: inline-block;
+    width: 25%;
+    text-align: center;
+    cursor: pointer;
+}

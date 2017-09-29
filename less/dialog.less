@@ -1,0 +1,60 @@
+.f-dialog {
+    border: 1px solid @border-color;
+    overflow: hidden;
+    z-index: 99;
+    background-color: @back-color;
+    .box-shadow;
+}
+
+.f-dialog-active {
+    z-index: 100;
+}
+
+.f-dialog-head,
+.f-dialog-body,
+.f-dialog-line {
+    position: absolute;
+    display: block;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.f-dialog-head {
+    padding: 0 4px;
+    cursor: default;
+}
+
+.f-dialog-active .f-dialog-head {
+    .f-selected-back;
+}
+
+.f-dialog-line {
+    top: auto;
+    height: 1px;
+    background-color: @border-color;
+}
+
+.f-dialog-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-top: -4px;
+    vertical-align: middle;
+}
+
+.f-dialog-close {
+    position: absolute;
+    display: inline-block;
+    top: 50%;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
+    background: @flyingon-img -108px -15px;
+}

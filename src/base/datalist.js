@@ -2,93 +2,7 @@
  * @class flyingon.Dropdown
  * @description 数据列表, 主要给列表框, 下拉框及下拉树或需要翻译的地方等使用
  */
-(function (Class) {
-
-
-    //等待注册集合
-    var wait = Class.wait = flyingon.create(null);
-
-    
-    //注册的所有数据列表集合
-    var all = Class.all = flyingon.create(null);
-
-
-    //根据列表创建DataList
-    Class.create = function (list, callback, context) {
-
-        if (list)
-        {
-            var any;
-
-            if (list instanceof Class)
-            {
-                callback && callback.call(context, list);
-                return list;
-            }
-
-            if (typeof list === 'string')
-            {
-                if (any = all[list])
-                {
-                    callback && callback.call(context, any);
-                }
-                else if (callback)
-                {
-                    (wait[name] || (wait[name] = [])).push(callback, context);
-                }
-
-                return any;
-            }
-
-            list = list instanceof Array ? list : (list == null ? [] : [list]);
-
-            if ((any = list[0]) && typeof any === 'object')
-            {
-                any = create(any);
-            }
-            else
-            {
-                any = new flyingon.DataList();
-            }
-
-            any.load(list);
-
-            callback && callback.call(context, any);
-            return any;
-        }
-    };
-
-
-    function create(item) {
-
-        var keys = [];
-
-        if ('value' in item)
-        {
-            keys.push('value');
-
-            if ('text' in item)
-            {
-                keys.push('text');
-            }
-        }
-
-        for (var name in item)
-        {
-            keys.push(name);
-
-            if (keys.length > 1)
-            {
-                break;
-            }
-        }
-
-        return new flyingon.DataList(name = keys[0] || 'value', keys[1] || name);
-    };
-
-
-
-})(flyingon.DataList = Object.extend(function () {
+flyingon.DataList = Object.extend(function () {
     
 
     
@@ -277,4 +191,90 @@
     };
     
 
-}, false));
+}, false).statics(function (Class) {
+
+
+    //等待注册集合
+    var wait = Class.wait = flyingon.create(null);
+
+    
+    //注册的所有数据列表集合
+    var all = Class.all = flyingon.create(null);
+
+
+    //根据列表创建DataList
+    Class.create = function (list, callback, context) {
+
+        if (list)
+        {
+            var any;
+
+            if (list instanceof Class)
+            {
+                callback && callback.call(context, list);
+                return list;
+            }
+
+            if (typeof list === 'string')
+            {
+                if (any = all[list])
+                {
+                    callback && callback.call(context, any);
+                }
+                else if (callback)
+                {
+                    (wait[name] || (wait[name] = [])).push(callback, context);
+                }
+
+                return any;
+            }
+
+            list = list instanceof Array ? list : (list == null ? [] : [list]);
+
+            if ((any = list[0]) && typeof any === 'object')
+            {
+                any = create(any);
+            }
+            else
+            {
+                any = new flyingon.DataList();
+            }
+
+            any.load(list);
+
+            callback && callback.call(context, any);
+            return any;
+        }
+    };
+
+
+    function create(item) {
+
+        var keys = [];
+
+        if ('value' in item)
+        {
+            keys.push('value');
+
+            if ('text' in item)
+            {
+                keys.push('text');
+            }
+        }
+
+        for (var name in item)
+        {
+            keys.push(name);
+
+            if (keys.length > 1)
+            {
+                break;
+            }
+        }
+
+        return new flyingon.DataList(name = keys[0] || 'value', keys[1] || name);
+    };
+
+
+
+});

@@ -1,65 +1,62 @@
 /**
- * 下拉框定义
+ * 下拉框基本属性(同时给下拉框及表格下拉列使用)
  */
-flyingon.fragment('f-ComboBox', function () {
+flyingon.fragment('f-ComboBox', function (set_items, change) {
+
+
+    if (change)
+    {
+        var create = flyingon.create;
+
+        change = function (value, _, name) {
+
+            (this.__storage2 || (this.__storage2 = create(null)))[name] = value;
+        };
+    }
+
 
 
     //选中类型
     //none
     //radio
     //checkbox
-    this.defineProperty('checked', 'none');
+    this.defineProperty('checked', 'none', { set: change });
 
 
 
     //指定渲染列数
     //0     在同一行按平均宽度渲染
     //大于0 按指定的列数渲染
-    this.defineProperty('columns', 1);
+    this.defineProperty('columns', 1, { set: change });
 
 
     //是否生成清除项
-    this.defineProperty('clear', false);
+    this.defineProperty('clear', false, { set: change });
 
 
     //子项模板
-    this.defineProperty('template', null);
+    this.defineProperty('template', null, { set: change });
 
 
     //子项高度
-    this['item-height'] = this.defineProperty('itemHeight', 21);
+    this['item-height'] = this.defineProperty('itemHeight', 21, { set: change });
 
 
     //下拉框宽度
-    this['popup-width'] = this.defineProperty('popupWidth', 'default');
+    this['popup-width'] = this.defineProperty('popupWidth', 'default', { set: change });
 
 
     //最大显示项数量
-    this['max-items'] = this.defineProperty('maxItems', 10);
+    this['max-items'] = this.defineProperty('maxItems', 10, { set: change });
 
 
 
     //下拉列表
-    this.defineProperty('items', null, {
-
-        set: function (value) {
-
-            //转换成flyingon.DataList
-            flyingon.DataList.create(value, this.__set_items, this);
-        }
-    });
-
-
-    //设置下拉列表
-    this.__set_items = function (list) {
-
-        this.__list = list;
-        this.rendered && this.renderer.set(this, 'text');
-    };
+    this.defineProperty('items', null, { set: set_items });
 
 
     //多值时的分隔符
-    this.defineProperty('separator', ',');
+    this.defineProperty('separator', ',', { set: change });
 
 
 });
@@ -71,40 +68,57 @@ flyingon.TextButton.extend('ComboBox', function (base) {
 
     
     //缓存的列表控件
-    var listbox_cache; 
+    var cache; 
 
 
 
-    this.defaultValue('button', 'f-combobox-button');
+    this.defaultValue('icon', 'f-combobox-button');
 
 
 
     //扩展下拉框定义
-    flyingon.fragment('f-ComboBox', this);
+    flyingon.fragment('f-ComboBox', this, function (value) {
+
+        //转换成flyingon.DataList
+        flyingon.DataList.create(value, set_items, this);
+    });
 
 
-    //默认选中值
+    //设置下拉列表
+    function set_items(list) {
+
+        this.__data_list = list;
+        this.rendered && this.renderer.set(this, 'value');
+    };
+
+
+    //获取或设置选中值
     this.defineProperty('value', '', {
 
         set: function () {
 
-            this.__list && this.renderer.set(this, 'text');
+            this.__data_list && this.renderer.set(this, 'value');
         }
     });
 
 
+    //获取显示文本
+    this.text = function (value) {
 
-    this.text = function () {
-
-        var list = this.__list;
-
-        if (list)
+        if (value === void 0)
         {
-            var storage = this.__storage || this.__defaults;
-            return list.text(storage.value, storage.checked === 'checkbox' ? storage.separator || ',' : '');
+            var list = this.__data_list;
+
+            if (list)
+            {
+                var storage = this.__storage || this.__defaults;
+                return list.text(storage.value, storage.checked === 'checkbox' ? storage.separator || ',' : '');
+            }
+
+            return '';
         }
 
-        return '';
+        this.value(value);
     };
 
 
@@ -134,7 +148,7 @@ flyingon.TextButton.extend('ComboBox', function (base) {
 
         if (any > 0)
         {
-            length = this.__list ? this.__list.length : 0;
+            length = this.__data_list ? this.__data_list.length : 0;
 
             if (storage.clear)
             {
@@ -167,7 +181,7 @@ flyingon.TextButton.extend('ComboBox', function (base) {
 
     this.__get_listbox = function () {
 
-        return listbox_cache = new flyingon.ListBox().on('change', function (e) {
+        return cache = new flyingon.ListBox().on('change', function (e) {
             
             this.target.value(e.value);
 

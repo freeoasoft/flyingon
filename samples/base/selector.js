@@ -20,10 +20,10 @@ flyingon.widget({
                 children: [
                     { Class: 'Label', width: 50, text: '选择器', style: 'text-align:right;' },
                     { Class: 'TextBox', width: 100, value: 'TextBox:even' },
-                    { Class: 'Label', width: 50, text: '样式名', style: 'text-align:right;' },
-                    { Class: 'TextBox', width: 100, value: 'background-color' },
-                    { Class: 'Label', width: 50, text: '样式值', style: 'text-align:right;' },
-                    { Class: 'TextBox', width: 100, value: 'silver' },
+                    { Class: 'Label', width: 80, text: '属性', style: 'text-align:right;' },
+                    { Class: 'TextBox', width: 100, value: 'color' },
+                    { Class: 'Label', width: 50, text: '值', style: 'text-align:right;' },
+                    { Class: 'TextBox', width: 100, value: 'red' },
                     { Class: 'Button', text: '执行', margin: '0 0 0 8' }
                 ]
             },
@@ -72,7 +72,7 @@ flyingon.widget({
                     name = tool[3].value(),
                     value = tool[5].value();
 
-                host.find(selector).style(name, value);
+                host.find(selector).set(name, value);
             }
         });
     }

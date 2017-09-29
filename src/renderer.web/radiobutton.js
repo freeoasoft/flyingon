@@ -2,11 +2,15 @@ flyingon.renderer('RadioButton', function (base) {
 
 
 
+    this.padding = 0;
+
+
+
     this.render = function (writer, control, render) {
 
         writer.push('<div');
         
-        render.call(this, writer, control);
+        render.call(this, writer, control, false);
         
         writer.push('><input type="radio" name="', control.name(), control.checked() ? '" checked="checked' : '',
             '" class="f-radio-input" onchange="flyingon.RadioButton.onchange.call(this)" /></div>');

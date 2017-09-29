@@ -1,0 +1,224 @@
+@flyingon-img: url(flyingon.png) no-repeat;
+
+body, input {
+    font: 12px Arial,Helvetica,sans-serif,"宋体";
+}
+
+.f-border {
+    border: 1px solid @border-color;
+}
+
+.f-input {
+    background-color: @back-color;
+}
+
+.f-required,
+.f-error {
+    color: @error-font-color
+}
+
+.box-shadow {
+    box-shadow: 2px 2px 2px @shadow-color;
+}
+
+.f-required {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 14px;
+}
+
+.f-disabled {
+    opacity: 0.5;
+}
+
+.f-rtl {
+    direction: rtl;
+}
+
+.f-host, .f-html {
+    position: relative;
+}
+
+.f-absolute {
+    position: absolute;
+    margin: 0;
+    overflow: hidden; /*解决IE怪异模式无法设置高度小于一定值的问题*/
+    display: inline-block; /*解决inline元素无发设置高宽的问题*/
+}
+
+.f-border-box,
+.f-control {
+    -moz-box-sizing: border-box;  
+    -webkit-box-sizing: border-box; 
+    -o-box-sizing: border-box; 
+    -ms-box-sizing: border-box; 
+    box-sizing: border-box; 
+    *behavior: url(../css/box-sizing.htc);
+}
+
+.f-control {
+    width: 100px;
+    height: 25px;
+}
+
+.f-control.f-validate-error {
+    background-color: @error-back-color;
+}
+
+span.f-html,
+button.f-html {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.f-label.f-html {
+    height: auto;
+}
+
+.f-checkbox-input,
+.f-radio-input {
+    position: absolute;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    left: 50%;
+    top: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+}
+
+.f-label {
+    padding: 0 2px;
+}
+
+.f-title {
+    text-align: right;
+    padding: 0 2px;
+}
+
+.f-textbox {
+    border: 1px solid @border-color;
+    overflow: hidden;
+    width: 200px;
+}
+
+.f-textbox-text {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    margin: -0.5em 0 0 0;
+    border: 0;
+    padding: 0 2px;
+    outline: none;
+    width: 100%;
+    height: 1em;
+    line-height: 1em;
+    background-color: transparent;
+    vertical-align: middle;
+}
+
+.f-textbutton {
+    border: 1px solid @border-color;
+    overflow: hidden;
+    width: 200px;
+}
+
+.f-textbox-button {
+    position: absolute;
+    display: inline-block;
+    height: 16px;
+    left: auto;
+    right: 0;
+    top: 50%;
+    margin-top: -9px;
+    background: @flyingon-img -197px -11px;
+}
+
+.f-combobox-button {
+    background: @flyingon-img -225px -12px;
+}
+
+.f-date-button,
+.f-month-button {
+    background: @flyingon-img -255px -13px;
+}
+
+.f-memo {
+    resize: none;
+}
+
+.f-separator {
+    background-color: @shadow-color;
+}
+
+.f-button {
+    width: 80px;
+}
+
+.f-button-drop {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: @flyingon-img -225px -12px;
+}
+
+.f-icon {
+    width: 25px;
+}
+
+.f-icon-body {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    margin-left: -8px;
+    margin-top: -8px;
+}
+
+.f-icon:hover {
+    border: 1px solid @hover-border-color;
+    background-color: @hover-back-color;
+}
+
+.f-panel {
+    background-color: @back-color;
+}
+
+.f-toolbar {
+    border: 1px solid @border-color;
+}
+
+.f-overlay {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    filter: alpha(opacity=10);
+    opacity: 0.1;
+    z-index: 100;
+    background-color: @shadow-color;
+}
+
+.f-waiting:after {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
+    background: url(waiting.gif) no-repeat;
+}
+
+.f-loading:after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 64px;
+    height: 64px;
+    margin-left: -32px;
+    margin-top: -32px;
+    background: url(loading.gif) no-repeat;
+}

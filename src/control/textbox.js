@@ -1,9 +1,15 @@
-flyingon.fragment('f-textbox', function () {
+flyingon.fragment('f-TextBox', function () {
 
 
+    this.defaultWidth = 200;
 
-    this.defineProperty('placehodler', '');
 
+    //是否只读
+    this.defineProperty('readonly', false, {
+
+        set: this.__to_render   
+    });
+    
 
 
     this.selectionStart = function (value) {
@@ -36,17 +42,20 @@ flyingon.Control.extend('TextBox', function (base) {
     
 
 
+    this.__type = 'text';
+
+
+
     this.text = this.defineProperty('value', '', {
 
-        set: function (value) {
-
-            this.rendered && this.renderer.set(this, 'text', value);
-        }
+        set: this.__to_render
     });
 
 
+    this.defineProperty('placehodler', '', {
 
-    flyingon.fragment('f-textbox', this);
+        set: this.__to_render
+    });
 
 
 
@@ -54,7 +63,38 @@ flyingon.Control.extend('TextBox', function (base) {
 
         return text;
     };
+
+
+
+    flyingon.fragment('f-TextBox', this);
     
+
+
+    this.__do_change = function (value) {
+
+        var control = flyingon.findControl(this),
+            value;
+
+        try
+        {
+            control.rendered = false;
+            
+            value = control.__to_value(this.value);
+
+            if (value !== control.value())
+            {
+                control.value(value);
+                control.trigger('change', 'value', value);
+            }
+
+            this.value = control.text();
+        }
+        finally
+        {
+            control.rendered = true;
+        }
+    };
+
 
 
 }).register();

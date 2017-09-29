@@ -1076,6 +1076,7 @@ flyingon.Query = Object.extend(function () {
     //选择数量
     this.length = 0;
     
+
     
     this.init = function (selector, context) {
        
@@ -1097,8 +1098,7 @@ flyingon.Query = Object.extend(function () {
             }
         }
     };
-    
-    
+        
     
     this.find = function (selector) {
         
@@ -1239,6 +1239,30 @@ flyingon.Query = Object.extend(function () {
             while (item = this[index++])
             {
                 item.toggleClass(className);
+            }
+        }
+        
+        return this;
+    };
+
+
+    this.get = function (name) {
+
+        var item = name && item[0];
+        return item && item.get(name);
+    };
+
+
+    this.set = function (name, value) {
+
+        if (name)
+        {
+            var index = 0,
+                item;
+
+            while (item = this[index++])
+            {
+                item.set(name, value);
             }
         }
         

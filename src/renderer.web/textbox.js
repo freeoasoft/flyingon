@@ -2,67 +2,67 @@ flyingon.renderer('TextBox', function (base) {
 
 
 
+    this.__line_height = 1;
+
+
+
+    //注: onchange, onpropertychange在IE8下不冒泡
     this.render = function (writer, control, render) {
 
-        var text = control.text();
+        var text = control.text(),
+            padding;
 
         if (text)
         {
             text = flyingon.html_encode(text);
         }
 
-        writer.push('<input');
+        writer.push('<span');
         
-        render.call(this, writer, control);
-        
-        writer.push(' type="text" value="', text, 
-            //'" oninput="flyingon.TextBox.oninput.call(this)',
-            '" onchange="flyingon.TextBox.onchange.call(this)"/>');
+        padding = render.call(this, writer, control, 1);
+
+        writer.push('><input type="', control.__type || 'text', 
+            '" class="f-textbox-text f-border-box" value="', text, 
+            padding ? '" style="' + padding : '',
+            '" onchange="flyingon.TextBox.onchange.call(this)"/></span>');
     };
-
-
-    // flyingon.TextBox.oninput = function (e) {
-
-    //     var control = flyingon.findControl(this);
-    //     control.renderer.oninput(control, this, e);
-    // };
 
 
     flyingon.TextBox.onchange = function () {
 
         var control = flyingon.findControl(this),
-            value;
-
-        try
-        {
-            control.rendered = false;
-            
             value = control.__to_value(this.value);
 
-            if (value !== control.value())
+        if (value !== control.value())
+        {
+            control.rendered = false;
+        
+            try
             {
                 control.value(value);
                 control.trigger('change', 'value', value);
             }
+            finally
+            {
+                control.rendered = true;
+            }
+        }
 
-            this.value = control.text();
-        }
-        finally
-        {
-            control.rendered = true;
-        }
+        this.value = control.text();
     };
 
 
-    // this.oninput = function (control, view, event) {
+    this.value = function (control, view) {
 
-    // };
-
-
-    this.text = function (control, view, value) {
-
-        view.value = control.text();
+        view.firstChild.value = control.text();
     };
+
+
+    this.color = function (control, view, value) {
+
+        view.firstChild.style.color = value;
+    };
+
 
 
 });

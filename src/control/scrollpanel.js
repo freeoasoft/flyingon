@@ -62,16 +62,5 @@ flyingon.Panel.extend('ScrollPanel', function (base) {
 
 
 
-    //处理滚动
-    this.__do_scroll = function (x, y) {
-    
-        this.scrollLeft = x;
-        this.scrollTop = y;
-        
-        this.__compute_visible();
-        this.renderer.scroll(this, x, y);
-    };
-
-
 
 }).register();

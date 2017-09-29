@@ -22,7 +22,7 @@ Object.extend('Control', function () {
      * @type {int}
      * @description 控件默认宽度(width === 'default'时的宽度)
      */
-    this.defaultWidth = 200;
+    this.defaultWidth = 100;
 
     //控件默认高度(height === 'default'时的高度)
     this.defaultHeight = 25;
@@ -69,7 +69,12 @@ Object.extend('Control', function () {
 
 
 
-    this.__visible = true;
+    //同步变更到渲染器的方法
+    this.__to_render = function (value, _, name) {
+
+        this.rendered && this.renderer.set(this, name, value);
+    };
+
 
 
     /**
@@ -77,7 +82,7 @@ Object.extend('Control', function () {
      * @description 是否可见
      * @param {boolean} value
      */
-    this.defineProperty('visible', true, {
+    this.defineProperty('visible', this.__visible = true, {
         
         group: 'layout',
 
@@ -400,6 +405,13 @@ Object.extend('Control', function () {
         return style.cssText = list.join('');
     };
 
+
+
+    //字体颜色
+    this.defineProperty('color', '', {
+
+        set: this.__to_render
+    });
     
 
     //是否禁用
@@ -450,10 +462,6 @@ Object.extend('Control', function () {
     define(this, 'tabindex', 0);
     
     
-    //是否只读
-    define(this, 'readonly', false);
-
-
     //提示信息
     define(this, 'title', '');
 
@@ -751,12 +759,6 @@ Object.extend('Control', function () {
     };
     
 
-    //是否可获取焦点
-    this.canFocus = function () {
-
-        return !!this.tabindex;
-    };
-
 
     this.focus = function () {
 
@@ -821,14 +823,8 @@ Object.extend('Control', function () {
         }
     };
 
-        
-    
-    //滚动事件处理
-    this.__do_scroll = function (x, y) {
-        
-    };
 
-
+      
 
     //显示或关闭加载进度
     this.loading = function (delay) {

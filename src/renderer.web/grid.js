@@ -601,7 +601,7 @@ flyingon.renderer('Grid', function (base) {
 
         writer.push('<div');
 
-        render.call(this, writer, grid);
+        render.call(this, writer, grid, false);
 
         writer.push(' onclick="flyingon.Grid.onclick.call(this, event)" onkeydown="flyingon.Grid.onkeydown.call(this, event)">',
             '<div class="f-grid-head" onmousedown="flyingon.Grid.onmousedown.call(this, event)">',
@@ -663,7 +663,9 @@ flyingon.renderer('Grid', function (base) {
 
     function change_event(e) {
 
-        var control = e.target;
+        var control = e.target,
+            any,
+            fn;
 
         if (control.__column_check)
         {
@@ -671,7 +673,16 @@ flyingon.renderer('Grid', function (base) {
         }
         else
         {
-            control.parent.__change_value(control);
+            while (any = control.parent)
+            {
+                if (fn = any.__change_value)
+                {
+                    fn.call(any, control);
+                    break;
+                }
+
+                control = any;
+            }
         }
     };
     

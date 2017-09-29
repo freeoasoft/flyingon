@@ -20,28 +20,18 @@ Object.extend('TreeNode', function () {
     
 
 
-    function define(self, name, defaltValue) {
-
-        return self.defineProperty(name, defaltValue, {
-
-            set: function (value) {
-
-                this.rendered && this.renderer.set(this, name, value);
-            }
-        });
-    };
-
-
     //节点图标
-    define(this, 'icon', '');
+    this.defineProperty('icon', '', {
+
+        set: this.__to_render   
+    });
 
 
     //节点文本
-    define(this, 'text', '');
+    this.defineProperty('text', '', {
 
-
-    //是否禁用
-    define(this, 'disabled', false);
+        set: this.__to_render   
+    });
 
 
     //是否选中
@@ -157,33 +147,30 @@ flyingon.Control.extend('Tree', function (base) {
 
 
 
-    function define(self, name, defaltValue) {
-
-        return self.defineProperty(name, defaltValue, {
-
-            set: function (value) {
-
-                this.rendered && this.renderer.set(this, name, value);
-            }
-        });
-    };
-
-
     //树风格
     //default   默认风格
     //blue      蓝色风格
     //plus      加减风格
     //line      线条风格
-    define(this, 'theme', 'default');
+    this.defineProperty('theme', 'default', {
+
+        set: this.__to_render   
+    });
 
 
 
     //是否显示检查框
-    define(this, 'checked', false);
+    this.defineProperty('checked', false, {
+
+        set: this.__to_render   
+    });
 
 
     //是否显示图标
-    define(this, 'icon', true);
+    this.defineProperty('icon', true, {
+
+        set: this.__to_render   
+    });
 
 
     //是否可编辑

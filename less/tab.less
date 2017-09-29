@@ -1,0 +1,228 @@
+.f-tab {
+    overflow: hidden;
+    border: 1px solid @border-color;
+}
+
+.f-tab-head {
+    background-color: @head-back-color;
+}
+
+.f-tab-line {
+    background-color: @border-color;
+}
+
+.f-tab-selected .f-tab-link {
+    .f-selected-back;
+}
+
+.f-tab-direction-top .f-tab-selected .f-tab-link {
+    border-bottom-color: @back-color;
+}
+
+.f-tab-direction-bottom .f-tab-selected .f-tab-link {
+    border-top-color: @back-color;
+}
+
+.f-tab-direction-left .f-tab-selected .f-tab-link {
+    border-right-color: @back-color;
+}
+
+.f-tab-direction-right .f-tab-selected .f-tab-link {
+    border-left-color: @back-color;
+}
+
+.f-tab-head, 
+.f-tab-line,
+.f-tab-move,
+.f-tab-content, 
+.f-tab-body {
+    position: absolute;
+    display: block;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.f-tab-content {
+    overflow: visible;
+    white-space: nowrap;
+}
+
+.f-tab-item {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+}
+
+.f-tab-link {
+    display: block;
+    margin: 0;
+    padding: 0 8px;
+    width: auto;
+    height: auto;
+    white-space: nowrap;
+    cursor: pointer;
+    overflow: hidden;
+    text-align: center;
+    border: 1px solid @border-color;
+}
+
+.f-tab-icon, 
+.f-tab-button, 
+.f-tab-close {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+}
+
+.f-tab-icon-none {
+    display: none;
+}
+
+.f-tab-text {
+    padding: 0 2px;
+}
+
+.f-tab-close {
+    width: 12px;
+    background: @flyingon-img -110px -16px;
+}
+
+.f-tab-direction-left .f-tab-item,
+.f-tab-direction-right .f-tab-item {
+    display: block;
+}
+
+.f-tab-direction-top .f-tab-line {
+    top: auto;
+    height: 1px;
+}
+
+.f-tab-direction-bottom .f-tab-line {
+    bottom: auto;
+    height: 1px;
+}
+
+.f-tab-direction-left .f-tab-line {
+    left: auto;
+    width: 1px;
+}
+
+.f-tab-direction-right .f-tab-line {
+    right: auto;
+    width: 1px;
+}
+
+.f-tab-direction-top .f-tab-content, 
+.f-tab-direction-bottom .f-tab-content {
+    right: auto;
+}
+
+.f-rtl .f-tab-direction-top .f-tab-content, 
+.f-rtl .f-tab-direction-bottom .f-tab-content {
+    left: auto;
+}
+
+.f-tab-direction-left .f-tab-content, 
+.f-tab-direction-right .f-tab-content {
+    bottom: auto;
+}
+
+.f-tab-direction-top .f-tab-forward, 
+.f-tab-direction-bottom .f-tab-forward {
+    left: -1px;
+}
+
+.f-tab-direction-left .f-tab-forward, 
+.f-tab-direction-right .f-tab-forward {
+    top: -1px;
+}
+
+.f-tab-direction-top .f-tab-back, 
+.f-tab-direction-bottom .f-tab-back {
+    left: auto;
+    right: -1px;
+}
+
+.f-tab-direction-left .f-tab-back, 
+.f-tab-direction-right .f-tab-back {
+    top: auto;
+    bottom: -1px;
+}
+
+.f-tab-move-link {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: auto;
+    height: auto;
+    border: 1px solid @border-color;
+}
+
+.f-tab-move-icon {
+    position: absolute;
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+}
+
+.f-tab-direction-top .f-tab-move-icon, 
+.f-tab-direction-bottom .f-tab-move-icon {
+    left: 50%;
+    top: 50%;
+    margin: -6px 0 0 -6px; 
+}
+
+.f-tab-direction-left .f-tab-move-icon, 
+.f-tab-direction-right .f-tab-move-icon {
+    left: 50%;
+    top: 50%;
+    margin: -6px 0 0 -6px; 
+}
+
+.f-tab-direction-top .f-tab-forward .f-tab-move-icon, 
+.f-tab-direction-bottom .f-tab-forward .f-tab-move-icon {
+    background: @flyingon-img -18px -15px;
+}
+
+.f-tab-direction-top .f-tab-back .f-tab-move-icon, 
+.f-tab-direction-bottom .f-tab-back .f-tab-move-icon {
+    background: @flyingon-img -41px -15px;
+}
+
+.f-tab-direction-left .f-tab-forward .f-tab-move-icon, 
+.f-tab-direction-right .f-tab-forward .f-tab-move-icon {
+    background: @flyingon-img -63px -15px;
+}
+
+.f-tab-direction-left .f-tab-back .f-tab-move-icon, 
+.f-tab-direction-right .f-tab-back .f-tab-move-icon {
+    background: @flyingon-img -87px -16px;
+}
+
+/*.f-tab-direction-top .f-tab-link {
+    border-radius: 5px 5px 0 0;
+}
+
+.f-tab-direction-bottom .f-tab-link {
+    border-radius: 0 0 5px 5px;
+}*/
+
+.f-tab-direction-left .f-tab-link {
+    direction: rtl;
+    text-align: right;
+    /*border-radius: 5px 0 0 5px;*/
+}
+
+.f-tab-direction-right .f-tab-link {
+    text-align: left;
+    /*border-radius: 0 5px 5px 0;*/
+}

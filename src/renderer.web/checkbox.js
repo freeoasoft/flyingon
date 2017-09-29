@@ -6,7 +6,7 @@ flyingon.renderer('CheckBox', function (base) {
 
         writer.push('<div');
         
-        render.call(this, writer, control);
+        render.call(this, writer, control, false);
         
         writer.push('><input type="checkbox" name="', control.name(), control.checked() ? '" checked="checked' : '',
             '" class="f-checkbox-input" onchange="flyingon.CheckBox.onchange.call(this)" /></div>');

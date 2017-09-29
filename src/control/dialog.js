@@ -37,30 +37,21 @@ flyingon.Panel.extend('Dialog', function (base) {
     //窗口图标        
     this.defineProperty('icon', '', {
 
-        set: function (value) {
-
-            this.rendered && this.renderer.set(this, 'icon', value);
-        }
+        set: this.__to_render
     });
 
 
     //窗口标题
     this.defineProperty('text', '', {
 
-        set: function (value) {
-
-            this.rendered && this.renderer.set(this, 'text', value);
-        }
+        set: this.__to_render
     });
 
 
     //是否显示关闭按钮
     this.defineProperty('closable', true, {
 
-        set: function (value) {
-
-            this.rendered && this.renderer.set(this, 'closable', value);
-        }
+        set: this.__to_render
     });
 
 

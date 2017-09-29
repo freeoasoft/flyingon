@@ -17,7 +17,8 @@ flyingon.widget({
                         placehodler: '请输入文字'
                     },
                     {
-                        Class: 'Password'
+                        Class: 'Password',
+                        text: '123456'
                     }
                 ]
             },

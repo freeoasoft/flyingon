@@ -10,10 +10,7 @@ flyingon.Control.extend('Memo', function (base) {
 
     this.text = this.defineProperty('value', '', {
 
-        set: function (value) {
-
-            this.rendered && this.renderer.set(this, 'text', value);
-        }
+        set: this.__to_render
     });
 
 

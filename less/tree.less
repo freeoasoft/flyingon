@@ -1,0 +1,145 @@
+.f-tree {
+    overflow: auto;
+    border: 1px solid @border-color;
+    padding: 2px;
+    background-color: @back-color;
+}
+
+.f-tree-node-current {
+    color: @selected-font-color;
+}
+
+.f-tree-node {
+    white-space: nowrap;
+    cursor: pointer;
+    height: 18px;
+    border: 0;
+    padding: 0;
+}
+
+.f-tree-space, 
+.f-tree-folder, 
+.f-tree-file, 
+.f-tree-check, 
+.f-tree-icon, 
+.f-tree-text {
+    display: inline-block;
+    width: 16px;
+    height: 100%;
+    overflow: hidden;
+}
+
+.f-tree-text {
+    width: auto;
+    padding: 0 2px;
+    line-height: 18px;
+    white-space: nowrap;
+}
+
+.f-tree-no-check .f-tree-check {
+    display: none;
+}
+
+.f-tree-no-icon .f-tree-icon {
+    display: none;
+}
+
+.f-tree-open {
+    background: @flyingon-img -118px -40px;
+}
+
+.f-tree-close {
+    background: @flyingon-img -101px -40px;
+}
+
+.f-tree-theme-blue .f-tree-open {
+    background: @flyingon-img -36px -38px;
+}
+
+.f-tree-theme-blue .f-tree-close {
+    background: @flyingon-img -16px -38px;
+}
+
+.f-tree-theme-plus .f-tree-open {
+    background: @flyingon-img -36px -93px;
+}
+
+.f-tree-theme-plus .f-tree-close {
+    background: @flyingon-img -15px -93px;
+}
+
+.f-tree-theme-line .f-tree-open {
+    background: @flyingon-img -215px -96px;
+}
+
+.f-tree-theme-line .f-tree-close {
+    background: @flyingon-img -193px -96px;
+}
+
+.f-tree-theme-line .f-tree-file {
+    background: @flyingon-img -246px -67px;
+}
+
+.f-tree-theme-line .f-tree-space {
+    background: @flyingon-img -205px -65px;
+}
+
+.f-tree-theme-line .f-tree-node-last>.f-tree-open {
+    background: @flyingon-img -79px -94px;
+}
+
+.f-tree-theme-line .f-tree-node-last>.f-tree-close {
+    background: @flyingon-img -57px -94px;
+}
+
+.f-tree-theme-line .f-tree-node-last>.f-tree-file {
+    background: @flyingon-img -182px -73px;
+}
+
+.f-rtl .f-tree-theme-line .f-tree-open {
+    background: @flyingon-img -171px -96px;
+}
+
+.f-rtl .f-tree-theme-line .f-tree-close {
+    background: @flyingon-img -148px -96px;
+}
+
+.f-rtl .f-tree-theme-line .f-tree-file {
+    background: @flyingon-img -228px -67px;
+}
+
+.f-rtl .f-tree-theme-line .f-tree-node-last>.f-tree-open {
+    background: @flyingon-img -126px -94px;
+}
+
+.f-rtl .f-tree-theme-line .f-tree-node-last>.f-tree-close {
+    background: @flyingon-img -104px -94px;
+}
+
+.f-rtl .f-tree-theme-line .f-tree-node-last>.f-tree-file {
+    background: @flyingon-img -167px -73px;
+}
+
+.f-tree-checked {
+    background: @flyingon-img -42px -66px;
+}
+
+.f-tree-checked2 {
+    background: @flyingon-img -66px -66px;
+}
+
+.f-tree-unchecked {
+    background: @flyingon-img -18px -66px;
+}
+
+.f-tree-icon-open {
+    background: @flyingon-img -115px -67px;
+}
+
+.f-tree-icon-close {
+    background: @flyingon-img -90px -67px;
+}
+
+.f-tree-icon-file {
+    background: @flyingon-img -141px -66px;
+}

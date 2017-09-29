@@ -55,11 +55,7 @@
     //是否需要设置lineHeight
     this.__line_height = 0;
 
-
-    //是否设置padding
-    this.padding = 1;
-    
-
+  
 
 
     function css_sides(value) {
@@ -115,7 +111,7 @@
 
 
     //默认渲染方法
-    function render(writer, control) {
+    function render(writer, control, padding) {
 
         var storage = control.__storage || control.__defaults,
             html = control.__as_html,
@@ -164,9 +160,25 @@
             writer.push('border-width:', sides_cache[any] || css_sides(any), ';');
         }
         
-        if ((any = storage.padding) && this.padding)
+        if (padding !== false)
         {
-            writer.push('padding:', sides_cache[any] || css_sides(any), ';');
+            if (any = storage.padding)
+            {
+                any = 'padding:' + (sides_cache[any] || css_sides(any)) + ';';
+
+                if (padding)
+                {
+                    padding = any;
+                }
+                else
+                {
+                    writer.push(any);
+                }
+            }
+            else
+            {
+                padding = '';
+            }
         }
 
         if (!storage.visible)
@@ -175,6 +187,8 @@
         }
 
         writer.push('"');
+
+        return padding;
     };
 
 
@@ -466,14 +480,19 @@
                         break;
 
                     case 4:
-                    case 16:
-                        value = values[name = flag === 4 ? 'margin' : 'padding'];
-                        style[name] = sides_cache[value] || css_sides(value);
+                        style.margin = sides_cache[value] || css_sides(value);
                         break;
 
                     case 8:
                         value = values.border;
                         style.borderWidth = sides_cache[value] || css_sides(value);
+                        break;
+
+                    case 16:
+                        if (any = this.padding)
+                        {
+                            any.call(this, control, control.view, sides_cache[value] || css_sides(value));
+                        }
                         break;
 
                     case 32:
@@ -501,7 +520,8 @@
     //定位控件
     this.locate = function (control) {
 
-        var style = control.view.style,
+        var view = control.view,
+            style = view.style,
             cache = control.__style_cache,
             value = this.__auto_size && control.__auto_size,
             left = control.offsetLeft,
@@ -544,11 +564,11 @@
             }
             else
             {
-                style.height = height + 'px';
+                style.height = any = height + 'px';
 
                 if (this.__line_height)
                 {
-                    style.lineHeight = height + 'px';
+                    view.style.lineHeight = any;
                 }
             }
         }
@@ -563,10 +583,10 @@
                 style.borderWidth = sides_cache[value] || css_sides(value);
             }
 
-            if ((any & 16) && this.padding)
+            if ((any & 16) && (any = this.padding))
             {
                 value = control.padding();
-                style.padding = sides_cache[value] || css_sides(value);
+                any.call(this, control, control.view, sides_cache[value] || css_sides(value));
             }
         }
 
@@ -830,6 +850,12 @@
     };
 
 
+    this.padding = function (control, view, value) {
+
+        view.style.padding = value;
+    };
+
+
     this.visible = function (control, view, value) {
 
         view.style.display = value ? '' : 'none';
@@ -846,6 +872,26 @@
         {
             view.className = view.className.replace(' f-disabled', '');
         }
+
+        this.readonly(control, view, value);
+    };
+
+
+    this.readonly = function (control, view, value) {
+
+        var list = view.getElementsByTagName('input');
+
+        for (var i = list.length - 1; i >= 0; i--)
+        {
+            if (value)
+            {
+                list[i].setAttribute('readonly', 'readonly');
+            }
+            else
+            {
+                list[i].removeAttribute('readonly');
+            }
+        }
     };
 
 
@@ -858,6 +904,19 @@
     this.blur = function (control) {
 
         control.view.blur();
+    };
+
+
+
+    this.__do_scroll = function (control, x, y) {
+    };
+
+
+    this.__do_focus = function (control) {
+    };
+
+
+    this.__do_blur = function (control) {
     };
 
 

@@ -1,29 +1,26 @@
 flyingon.Control.extend('LinkButton', function (base) {
    
 
-
-    var define = function (self, name, defaultValue) {
-
-        return self.defineProperty(name, defaultValue, {
-
-            set: function (value) {
-
-                this.rendered && this.renderer.set(this, name, value);
-            }
-        });
-    };
-
     
     //文本内容
-    define(this, 'text', '');
+    this.defineProperty('text', '', {
+
+        set: this.__to_render   
+    });
     
     
     //文本内容是否html格式
-    define(this, 'html', false);
+    this.defineProperty('html', false, {
+
+        set: this.__to_render   
+    });
 
 
     //链接地址
-    define(this, 'href', '');
+    this.defineProperty('href', '', {
+
+        set: this.__to_render   
+    });
     
 
         

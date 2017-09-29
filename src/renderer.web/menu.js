@@ -140,7 +140,7 @@ flyingon.renderer('Menu', function (base) {
             {
                 any = item.__storage || item.__defaults;
 
-                writer.push('<a class="f-menu-item', any.disabled ? ' f-disabled' : '', '" index="', i, '">',
+                writer.push('<a class="f-menu-item f-hover-back', any.disabled ? ' f-disabled' : '', '" index="', i, '">',
                         '<span class="f-menu-icon ', any.icon || '', '"></span>',
                         '<span class="f-menu-text">', any.text, '</span>',
                         item.length > 0 ? '<span class="f-menu-sub"></span>' : '',

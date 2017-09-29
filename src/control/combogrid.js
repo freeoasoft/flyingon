@@ -54,7 +54,7 @@ flyingon.fragment('f-ComboGrid', function () {
     this.__set_items = function (list) {
 
         this.__list = list;
-        this.rendered && this.renderer.set(this, 'text');
+        this.rendered && this.renderer.set(this, 'value');
     };
 
 
@@ -75,7 +75,7 @@ flyingon.TextButton.extend('ComboGrid', function (base) {
 
 
 
-    this.defaultValue('button', 'f-combobox-button');
+    this.defaultValue('icon', 'f-combogrid-button');
 
 
 
@@ -88,7 +88,7 @@ flyingon.TextButton.extend('ComboGrid', function (base) {
 
         set: function () {
 
-            this.__list && this.renderer.set(this, 'text');
+            this.__list && this.renderer.set(this, 'value');
         }
     });
 

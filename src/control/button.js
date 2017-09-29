@@ -5,41 +5,47 @@ flyingon.Control.extend('Button', function (base) {
     this.defaultWidth = 80;
 
 
-
-    var define = function (self, name, defaultValue) {
-
-        return self.defineProperty(name, defaultValue, {
-
-            set: function (value) {
-
-                this.rendered && this.renderer.set(this, name, value);
-            }
-        });
-    };
-
     
     //图标
-    define(this, 'icon', '');
+    this.defineProperty('icon', '', {
+
+        set: this.__to_render    
+    });
 
 
     //图标大小
-    this['icon-size'] = define(this, 'iconSize', 16);
+    this['icon-size'] = this.defineProperty('iconSize', 16, {
+
+        set: this.__to_render    
+    });
 
 
     //图标和文字是否竖排
-    define(this, 'vertical', false);
+    this.defineProperty('vertical', false, {
+
+        set: this.__to_render    
+    });
 
 
     //文本内容
-    define(this, 'text', '');
+    this.defineProperty('text', '', {
+
+        set: this.__to_render    
+    });
     
     
     //文本内容是否html格式
-    define(this, 'html', false);
+    this.defineProperty('html', false, {
+
+        set: this.__to_render    
+    });
 
 
     //是否显示下拉箭头
-    define(this, 'dropdown', false);
+    this.defineProperty('dropdown', false, {
+
+        set: this.__to_render    
+    });
 
 
     //下拉菜单

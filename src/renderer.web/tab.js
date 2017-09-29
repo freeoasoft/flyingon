@@ -4,7 +4,8 @@ flyingon.renderer('Tab', function (base) {
 
 
     this.__scroll_html = '';
-
+    
+    this.padding = 0;
 
 
 
@@ -19,13 +20,13 @@ flyingon.renderer('Tab', function (base) {
         
         control.defaultClass += ' f-tab-direction-' + storage.direction;
         
-        render.call(this, writer, control);
+        render.call(this, writer, control, false);
         
         writer.push('><div class="f-tab-head f-tab-theme-', storage.theme, '">',
                     '<div class="f-tab-line"></div>',
                     '<div class="f-tab-content"></div>',
-                    '<div class="f-tab-move f-tab-forward" onclick="flyingon.Tab.forward.call(this)"><a class="f-tab-move-link"><span class="f-tab-move-icon"></span></a></div>',
-                    '<div class="f-tab-move f-tab-back" onclick="flyingon.Tab.back.call(this)"><a class="f-tab-move-link"><span class="f-tab-move-icon"></span></a></div>',
+                    '<div class="f-tab-move f-tab-forward" onclick="flyingon.Tab.forward.call(this)"><a class="f-tab-move-link f-back"><span class="f-tab-move-icon"></span></a></div>',
+                    '<div class="f-tab-move f-tab-back" onclick="flyingon.Tab.back.call(this)"><a class="f-tab-move-link f-back"><span class="f-tab-move-icon"></span></a></div>',
                 '</div>',
             '<div class="f-tab-body">');
 
@@ -476,7 +477,7 @@ flyingon.renderer('TabPage', 'Panel', function (base) {
 
         node.className = 'f-tab-item' + (control.selected() ? ' f-tab-selected' : '');
 
-        writer.push('<a class="f-tab-link">',
+        writer.push('<a class="f-tab-link f-back">',
             '<span class="f-tab-icon ', (any = storage.icon) ? encode(any) : 'f-tab-icon-none', '"></span>',
             '<span class="f-tab-text">', (any = storage.text) ? encode(any) : '', '</span>');
 

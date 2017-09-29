@@ -2,13 +2,17 @@ flyingon.renderer('Icon', function (base) {
 
 
 
+    this.padding = 0;
+
+
+
     this.render = function (writer, control, render) {
 
         var icon = control.icon();
 
         writer.push('<a');
         
-        render.call(this, writer, control);
+        render.call(this, writer, control, false);
         
         writer.push('><span class="f-icon-body', icon ? ' ' + icon : '', '"></span></a>');
     };

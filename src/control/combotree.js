@@ -43,7 +43,7 @@ flyingon.TextButton.extend('ComboTree', function (base) {
 
 
 
-    this.defaultValue('button', 'f-combotree-button');
+    this.defaultValue('icon', 'f-combotree-button');
 
 
 
@@ -56,7 +56,7 @@ flyingon.TextButton.extend('ComboTree', function (base) {
 
         set: function () {
 
-            this.__list && this.renderer.set(this, 'text');
+            this.__list && this.renderer.set(this, 'value');
         }
     });
 

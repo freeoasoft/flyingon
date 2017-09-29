@@ -1,12 +1,17 @@
 flyingon.renderer('TextButton', function (base) {
 
     
+    
+    this.__line_height = 1;
+
+
 
     this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
             text = control.text(),
-            size = storage.buttonSize;
+            size = storage.button,
+            padding;
 
         if (text)
         {
@@ -15,16 +20,15 @@ flyingon.renderer('TextButton', function (base) {
 
         writer.push('<span');
         
-        render.call(this, writer, control);
+        padding = render.call(this, writer, control, 1);
 
         writer.push('>',
-                '<span class="f-textbutton-body" style="right:', size, 'px;">',
-                    '<input type="text" class="f-textbutton-text" value="', text, 
+                '<input type="text" class="f-textbox-text f-border-box" value="', text, 
                     storage.inputable ? '' : '" readonly="readonly',
+                    padding ? '" style="' + padding : '',
                     '" onchange="flyingon.TextButton.onchange.call(this)"/>',
-                '</span>',
-                '<span class="f-textbutton-button ', storage.button, 
-                    '" style="width:', size, 'px;" onclick="flyingon.TextButton.onclick.call(this)"></span>',
+                    '<span class="f-textbox-button ', storage.icon, 
+                        '" style="width:', size, 'px;" onclick="flyingon.TextButton.onclick.call(this)"></span>',
             '</span>');
     };
 
@@ -56,27 +60,33 @@ flyingon.renderer('TextButton', function (base) {
 
 
 
+    this.icon = function (control, view, value) {
+
+        view.lastChild.className = 'f-textbox-button ' + value;
+    };
+
+
     this.button = function (control, view, value) {
 
-        view.lastChild.className = 'f-textbutton-button ' + value;
+        view.firstChild.style.marginRight = view.lastChild.style.width = value + 'px';
     };
 
 
-    this.buttonSize = function (control, view, value) {
+    this.value = function (control, view) {
 
-        view.firstChild.style.right = view.lastChild.style.width = value + 'px';
+        view.firstChild.value = control.text();
     };
 
 
-    this.text = function (control, view) {
+    this.color = function (control, view, value) {
 
-        view.firstChild.firstChild.value = control.text();
+        view.firstChild.style.color = value;
     };
 
 
     this.inputable = function (control, view, value) {
 
-        view = view.firstChild.firstChild;
+        view = view.firstChild;
 
         if (value)
         {

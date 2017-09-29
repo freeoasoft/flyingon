@@ -7,11 +7,12 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
         var storage = control.__storage || control.__defaults,
             head = storage.header,
             text = storage.text,
+            padding,
             any;
 
         writer.push('<div');
         
-        render.call(this, writer, control);
+        padding = render.call(this, writer, control, true);
         
         if (text)
         {
@@ -24,12 +25,12 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
         }
 
         writer.push('>',
-            '<div class="f-groupbox-head" style="height:', head, 'px;line-height:', head - 1, 'px;text-align:', storage.align, ';" onclick="flyingon.GroupBox.onclick.call(this, event)">',
+            '<div class="f-groupbox-head f-back" class="f-border-box f-back" style="height:', head, 'px;line-height:', head - 1, 'px;text-align:', storage.align, ';" onclick="flyingon.GroupBox.onclick.call(this, event)">',
                 '<span class="f-groupbox-icon ', (any = storage.icon) ? any : '" style="display:none;', '"></span>',
                 '<span class="f-groupbox-text">', text, '</span>',
                 '<span class="f-groupbox-flag f-groupbox-', storage.collapsed ? 'close"' : 'open"', storage.collapsable === 2 ? '' : ' style="display:none;"', '></span>',
             '</div>',
-            '<div class="f-groupbox-body" style="top:', head, 'px;overflow:auto;', storage.collapsed ? '' : '', '">');
+            '<div class="f-groupbox-body" style="top:', head, 'px;overflow:auto;', padding || '', storage.collapsed ? '' : '', '">');
 
         if (control.length > 0 && control.__visible)
         {

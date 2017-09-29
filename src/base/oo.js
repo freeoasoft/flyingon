@@ -673,6 +673,9 @@ var flyingon;
         //父类
         Class.superclass = superclass;
 
+        //静态扩展
+        Class.statics = statics;
+
         //注册组件
         Class.register = superclass.register || register;
 
@@ -879,7 +882,7 @@ var flyingon;
 
                 if (set)
                 {
-                    set.call(this, value, any);
+                    set.call(this, value, any, name);
                 }
 
                 if ((storage = this.__watches) && (storage[name] || storage['*']))
@@ -1417,6 +1420,33 @@ var flyingon;
         return this;
     };
     
+
+    /**
+     * @static
+     * @method statics
+     * @for Class
+     * @description 定义静态成员
+     * @param {function|object} fn 扩展方法
+     */
+    function statics(fn) {
+
+        if (fn)
+        {
+            if (typeof fn === 'function')
+            {
+                fn.call(this, this);
+            }
+            else
+            {
+                for (var name in fn)
+                {
+                    this[name] = fn[name];
+                }
+            }
+        }
+
+        return this;
+    };
 
 
     /**

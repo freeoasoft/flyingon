@@ -142,7 +142,7 @@ flyingon.fragment('f-collection', function () {
         }
         else //注:IE8不支持 array.splice(0)清空所有项,必须指明长度
         {
-            any = array.splice.call(this, 0, length === void 0 ? any : length);
+            any = array.splice.call(this, index, length === void 0 ? any : length);
         }
 
         if (any.length > 0)

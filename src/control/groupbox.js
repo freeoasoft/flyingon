@@ -17,36 +17,36 @@ flyingon.Panel.extend('GroupBox', function (base) {
     });
 
 
-
-    function define(self, name, defaultValue) {
-
-        self.defineProperty(name, defaultValue, {
-
-            set: function (value) {
-                
-                this.rendered && this.renderer.set(this, name, value);
-            }
-        });
-    };
-
  
     //文字对齐
-    define(this, 'align', 'left');
+    this.defineProperty('align', 'left', {
+
+        set: this.__to_render   
+    });
 
 
     //图标
-    define(this, 'icon', '');
+    this.defineProperty('icon', '', {
+
+        set: this.__to_render   
+    });
 
 
     //text
-    define(this, 'text', '');
+    this.defineProperty('text', '', {
+
+        set: this.__to_render   
+    });
 
 
     //是否可收收拢
     //0: 不可折叠
     //1: 可折叠不显示折叠图标
     //2: 可折叠且显示折叠图标
-    define(this, 'collapsable', 0);
+    this.defineProperty('collapsable', 0, {
+
+        set: this.__to_render   
+    });
 
 
     //是否折叠

@@ -5,7 +5,7 @@ flyingon.fragment('f-Date', function () {
         
         set: function () {
 
-            this.rendered && this.renderer.set(this, 'text');
+            this.rendered && this.renderer.set(this, 'value');
         }
     });
 
@@ -42,7 +42,7 @@ flyingon.TextButton.extend('Date', function (base) {
     var calendar_cache;
 
 
-    this.defaultValue('button', 'f-date-button');
+    this.defaultValue('icon', 'f-date-button');
 
 
     //日期值
@@ -52,7 +52,7 @@ flyingon.TextButton.extend('Date', function (base) {
 
         set: function () {
 
-            this.rendered && this.renderer.set(this, 'text');
+            this.rendered && this.renderer.set(this, 'value');
         }
     });
 

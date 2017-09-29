@@ -8,21 +8,14 @@ flyingon.Control.extend('Icon', function (base) {
 
     this.defineProperty('icon', '', {
             
-        set: function (value) {
-
-            this.rendered && this.renderer.set(this, 'icon', value);
-        }
+        set: this.__to_render
     });
 
 
     this.defineProperty('size', 16, {
         
         dataType: 'int',
-
-        set: function (value) {
-
-            this.rendered && this.renderer.set(this, 'size', value);
-        }
+        set: this.__to_render
     });
 
 

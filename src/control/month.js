@@ -6,7 +6,7 @@ flyingon.TextButton.extend('Month', function (base) {
     var calendar_cache;
 
 
-    this.defaultValue('button', 'f-date-button');
+    this.defaultValue('icon', 'f-date-button');
 
 
 
@@ -17,7 +17,7 @@ flyingon.TextButton.extend('Month', function (base) {
 
         set: function () {
 
-            this.rendered && this.renderer.set(this, 'text');
+            this.rendered && this.renderer.set(this, 'value');
         }
     });
 
@@ -26,7 +26,7 @@ flyingon.TextButton.extend('Month', function (base) {
         
         set: function () {
 
-            this.rendered && this.renderer.set(this, 'text');
+            this.rendered && this.renderer.set(this, 'value');
         }
     });
 

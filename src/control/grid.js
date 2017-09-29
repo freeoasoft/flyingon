@@ -551,18 +551,19 @@ flyingon.GridColumn.extend(function (base) {
 
     var Class = flyingon.ComboBox;
 
-    var keys = 'inputable,checked,columns,clear,template,itemHeight,separator,popupWidth,maxItems'.split(',').pair();
-
-
-    //是否可输入
-    this.defineProperty('inputable', false);
-
 
     //扩展下拉框定义
-    flyingon.fragment('f-ComboBox', this);
+    flyingon.fragment('f-ComboBox', this, function (value) {
+
+        (this.__storage2 || (this.__storage2 = flyingon.create(null))).items = value;
+        
+        //转换成flyingon.DataList
+        flyingon.DataList.create(value, set_items, this);
+
+    }, true);
 
 
-    this.__set_items = function (list) {
+    function set_items(list) {
 
         var controls = this.__wait;
 
@@ -584,7 +585,6 @@ flyingon.GridColumn.extend(function (base) {
     this.createControl = function (row, name) {
 
         var control = new Class(),
-            names,
             any;
 
         if (any = this.__list)
@@ -596,16 +596,11 @@ flyingon.GridColumn.extend(function (base) {
             (this.__wait || (this.__wait = [])).push(control);
         }
         
-        if (any = this.__storage)
+        if (any = this.__storage2)
         {
-            names = keys;
-
             for (var key in any)
             {
-                if (names[key])
-                {
-                    control[key](any[key]);
-                }
+                control[key](any[key]);
             }
         }
         
@@ -2311,9 +2306,9 @@ flyingon.Control.extend('Grid', function (base) {
             name,
             any;
 
-        if (dataset && column && (name = column.__name))
+        if (dataset && column && (name = column.__name) && (any = control.row))
         {
-            if (any = dataset.uniqueId(control.row.id))
+            if (any = dataset.uniqueId(any.id))
             {
                 any.set(name, (control.value || control.text).call(control));
             }

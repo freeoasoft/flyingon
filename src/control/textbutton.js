@@ -1,33 +1,51 @@
-flyingon.Control.extend('TextButton', function (base) {
+flyingon.TextBox.extend('TextButton', function (base) {
 
 
 
     //弹出层控件
-    var popup_cache;
+    var cache;
 
 
-    function define(self, name, defaultValue, key) {
 
-        return self.defineProperty(name, defaultValue, {
+    function set_value() {
 
-            set: function (value) {
-    
-                this.rendered && this.renderer.set(this, key || name, value);
-            }
-        });
+        this.rendered && this.renderer.set(this, 'value');
     };
 
 
-    //值
-    define(this, 'value', null, 'text');
-
-
     //格式化
-    define(this, 'format', '', 'text');
+    this.defineProperty('format', '', { 
+        
+        set: set_value
+    });
 
 
     //是否可输入
-    define(this, 'inputable', false);
+    this.defineProperty('inputable', false, { 
+        
+        set: this.__to_render 
+    });
+
+
+    //按钮图标
+    this.defineProperty('icon', '', { 
+        
+        set: this.__to_render 
+    });
+
+
+    //按钮大小
+    this.defineProperty('button', 16, { 
+        
+        set: this.__to_render 
+    });
+
+
+    //值
+    this.defineProperty('value', null, { 
+        
+        set: set_value 
+    });
 
 
 
@@ -46,19 +64,6 @@ flyingon.Control.extend('TextButton', function (base) {
 
 
 
-    //按钮图片
-    define(this, 'button', '');
-
-
-    //按钮大小
-    this['button-size'] = define(this, 'buttonSize', 16);
-
-
-
-    flyingon.fragment('f-textbox', this);
-
-
-
     this.__to_value = function (text) {
 
         return text;
@@ -73,7 +78,7 @@ flyingon.Control.extend('TextButton', function (base) {
 
     this.__get_popup = function () {
 
-        var popup = popup_cache;
+        var popup = cache;
 
         if (popup)
         {
@@ -81,7 +86,7 @@ flyingon.Control.extend('TextButton', function (base) {
         }
         else
         {
-            popup = popup_cache = new flyingon.Popup();
+            popup = cache = new flyingon.Popup();
 
             popup.autoDispose = false;
 

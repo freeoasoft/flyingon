@@ -39,7 +39,7 @@ flyingon.TextBox.extend('Number', function (base) {
 
     function render() {
 
-        this.rendered && this.renderer.set(this, 'text');
+        this.rendered && this.renderer.set(this, 'value');
     };
 
 

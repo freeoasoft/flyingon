@@ -8,7 +8,7 @@ flyingon.TextBox.extend('Time', function (base) {
 
         set: function () {
 
-            this.rendered && this.renderer.set(this, 'text');
+            this.rendered && this.renderer.set(this, 'value');
         }
 
     });

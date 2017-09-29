@@ -31,7 +31,7 @@ flyingon.widget({
 
             flyingon.showMessage('title', 'text', 'question', 'yes,no,cancel').on('closed', function (e) {
 
-                self.value(e.closeType);
+                self[0].value(e.closeType);
             });
         });
     }

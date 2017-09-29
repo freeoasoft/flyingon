@@ -47,7 +47,6 @@
             '../src/renderer.web/radiobutton.js',
             '../src/renderer.web/checkbox.js',
             '../src/renderer.web/textbox.js',
-            '../src/renderer.web/password.js',
             '../src/renderer.web/memo.js',
             '../src/renderer.web/textbutton.js',
             '../src/renderer.web/calendar.js',

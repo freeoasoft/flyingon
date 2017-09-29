@@ -393,59 +393,61 @@ flyingon.Ajax = flyingon.Async.extend(function () {
 
     
 
+}).statics(function (Ajax) {
+
+
+    //自定义ajax开始提交方法
+    flyingon.ajaxStart = function (fn) {
+
+        (Ajax.start || (Ajax.start = [])).push(fn);
+    };
+
+
+    //自定义ajax执行结束方法
+    flyingon.ajaxEnd = function (fn) {
+
+        (Ajax.end || (Ajax.end = [])).push(fn);
+    };
+
+
+    //ajax提交(默认为GET方式提交)
+    flyingon.ajax = function (url, options) {
+
+        return new Ajax().send(url, options);
+    };
+
+
+    //POST提交
+    //在IE6时会可能会出错, asp.net服务端可实现IHttpAsyncHandler接口解决些问题 
+    flyingon.ajaxPost = function (url, options) {
+
+        options = options || {};
+        options.method = 'POST';
+
+        return new Ajax().send(url, options);
+    };
+
+
+    //jsonp get提交
+    flyingon.jsonp = function (url, options) {
+
+        options = options || {};
+        options.dataType = 'jsonp';
+
+        return new Ajax().send(url, options);
+    };
+
+
+    //jsonp post提交
+    //服务器需返回 <script>window.name = 'xxx';</script> 形式的内容且不能超过2M大小
+    flyingon.jsonpPost = function (url, options) {
+
+        options = options || {};
+        options.dataType = 'jsonp';
+        options.method = 'POST';
+
+        return new Ajax().send(url, options);
+    };
+
+
 });
-
-
-
-//自定义ajax开始提交方法
-flyingon.ajaxStart = function (fn) {
-
-    (flyingon.Ajax.start || (flyingon.Ajax.start = [])).push(fn);
-};
-
-
-//自定义ajax执行结束方法
-flyingon.ajaxEnd = function (fn) {
-
-    (flyingon.Ajax.end || (flyingon.Ajax.end = [])).push(fn);
-};
-
-
-//ajax提交(默认为GET方式提交)
-flyingon.ajax = function (url, options) {
-
-    return new flyingon.Ajax().send(url, options);
-};
-
-
-//POST提交
-//在IE6时会可能会出错, asp.net服务端可实现IHttpAsyncHandler接口解决些问题 
-flyingon.ajaxPost = function (url, options) {
-
-    options = options || {};
-    options.method = 'POST';
-
-    return new flyingon.Ajax().send(url, options);
-};
-
-
-//jsonp get提交
-flyingon.jsonp = function (url, options) {
-
-    options = options || {};
-    options.dataType = 'jsonp';
-
-    return new flyingon.Ajax().send(url, options);
-};
-
-
-//jsonp post提交
-//服务器需返回 <script>window.name = 'xxx';</script> 形式的内容且不能超过2M大小
-flyingon.jsonpPost = function (url, options) {
-
-    options = options || {};
-    options.dataType = 'jsonp';
-    options.method = 'POST';
-
-    return new flyingon.Ajax().send(url, options);
-};

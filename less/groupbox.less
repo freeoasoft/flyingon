@@ -1,0 +1,52 @@
+.f-groupbox {
+    overflow: hidden;
+    border: 1px solid @border-color;
+}
+
+.f-groupbox-head,
+.f-groupbox-body {
+    position: absolute;
+    display: block;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    width: auto;
+    height: auto;
+}
+
+.f-groupbox-head {
+    border-bottom: 1px solid @border-color;
+    padding: 0 4px;
+    cursor: default;
+    z-index: 1;
+}
+
+
+.f-groupbox-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-top: -4px;
+    vertical-align: middle;
+}
+
+.f-groupbox-flag {
+    position: absolute;
+    display: inline-block;
+    top: 50%;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
+}
+
+.f-groupbox-open {
+    background: @flyingon-img -87px -16px;
+}
+
+.f-groupbox-close {
+    background: @flyingon-img -63px -15px;
+}
