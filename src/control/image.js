@@ -10,13 +10,13 @@ flyingon.Control.extend('Image', function (base) {
 
     this.defineProperty('src', '', {
             
-        set: this.__to_render
+        set: this.render
     });
 
 
     this.defineProperty('alt', '', {
             
-        set: this.__to_render
+        set: this.render
     });
 
 

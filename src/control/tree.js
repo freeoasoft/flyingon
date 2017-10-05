@@ -23,21 +23,21 @@ Object.extend('TreeNode', function () {
     //节点图标
     this.defineProperty('icon', '', {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
     //节点文本
     this.defineProperty('text', '', {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
     //是否选中
     this.defineProperty('checked', false, {
         
-        set: function (value) {
+        set: function (name, value) {
 
             var parent = this.parent;
 
@@ -46,13 +46,13 @@ Object.extend('TreeNode', function () {
                 if (!(value ? parent.checkedChildren++ : --parent.checkedChildren) && 
                     parent.view && !parent.checked())
                 {
-                    parent.renderer.set(parent, 'checked', false);
+                    parent.renderer.set(parent, name, false);
                 }
 
                 parent = parent.parent;
             }
 
-            this.rendered && this.renderer.set(this, 'checked', value);
+            this.view && this.renderer.set(this, name, value);
             this.trigger('checked-change', 'value', value);
         }
     });
@@ -154,7 +154,7 @@ flyingon.Control.extend('Tree', function (base) {
     //line      线条风格
     this.defineProperty('theme', 'default', {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
@@ -162,14 +162,14 @@ flyingon.Control.extend('Tree', function (base) {
     //是否显示检查框
     this.defineProperty('checked', false, {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
     //是否显示图标
     this.defineProperty('icon', true, {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
@@ -214,7 +214,7 @@ flyingon.Control.extend('Tree', function (base) {
         if (!node.expanded && this.trigger('expand', 'node', node) !== false)
         {
             node.expanded = true;
-            node.rendered && node.renderer.set(node, 'expand');
+            node.view && node.renderer.set(node, 'expand');
         }
     };
 
@@ -249,7 +249,7 @@ flyingon.Control.extend('Tree', function (base) {
                 }
 
                 node.expanded = true;
-                node.rendered && node.renderer.set(node, 'expand');
+                node.view && node.renderer.set(node, 'expand');
             }
 
             if (node.length > 0)
@@ -268,7 +268,7 @@ flyingon.Control.extend('Tree', function (base) {
                         if (item.expanded && this.trigger('collapse', 'node', node) !== false)
                         {
                             item.expanded = false;
-                            item.rendered && item.renderer.set(item, 'collapse');
+                            item.view && item.renderer.set(item, 'collapse');
                         }
                     }
                 }
@@ -302,7 +302,7 @@ flyingon.Control.extend('Tree', function (base) {
         if (node.expanded && node.length > 0 && this.trigger('collapse', 'node', node) !== false)
         {
             node.expanded = false;
-            node.rendered && node.renderer.set(node, 'collapse');
+            node.view && node.renderer.set(node, 'collapse');
         }
     };
 
@@ -360,7 +360,7 @@ flyingon.Control.extend('Tree', function (base) {
             node.__current = true;
         }
 
-        if (this.rendered)
+        if (this.view)
         {
             any && any.renderer.current(any, false);
             node && node.renderer.current(node, true);
@@ -370,7 +370,7 @@ flyingon.Control.extend('Tree', function (base) {
 
     this.scrollTo = function (node) {
 
-        this.rendered && this.renderer.scrollTo(this, node);
+        this.view && this.renderer.scrollTo(this, node);
     };
 
 

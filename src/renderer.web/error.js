@@ -2,7 +2,7 @@ flyingon.renderer('Error', 'Label', function (base) {
 
     
 
-    this.__line_height = 1;
+    this.lineHeight = 1;
     
 
 

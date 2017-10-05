@@ -4,30 +4,17 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
 
     this.render = function (writer, control, render) {
 
-        var storage = control.__storage || control.__defaults,
-            head = storage.header,
-            text = storage.text,
-            any;
+        var head = (control.__storage || control.__defaults).header;
 
         writer.push('<div');
         
         render.call(this, writer, control);
         
-        if (text)
-        {
-            text = flyingon.html_encode(text);
-        }
-
-        if (any = control.format)
-        {
-            text = any.call(control, text);
-        }
-
         writer.push('>',
             '<div class="f-dialog-head" class="f-back" style="height:', head, 'px;line-height:', head, 'px;" onmousedown="flyingon.Dialog.onmousedown.call(this, event)" onclick="flyingon.Dialog.onclick.call(this, event)">',
-                '<span class="f-dialog-icon ', (any = storage.icon) ? any : '" style="display:none;', '"></span>',
-                '<span class="f-dialog-text">', text, '</span>',
-                '<span class="f-dialog-close"', storage.closable ? '' : ' style="display:none;"', ' tag="close"></span>',
+                '<span class="f-dialog-icon" style="display:none;', '"></span>',
+                '<span class="f-dialog-text"></span>',
+                '<span class="f-dialog-close" tag="close"></span>',
                 '<span class="f-dialog-line"></span>',
             '</div>',
             '<div class="f-dialog-body" style="top:', head, 'px;">');
@@ -102,21 +89,17 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
 
     this.header = function (control, view, value) {
 
-        view.firstChild.style.height = view.lastChild.style.top = value + 'px';
+        var style = view.firstChild.style;
+        style.height = style.lineHeight = view.lastChild.style.top = value + 'px';
     };
 
 
     this.text = function (control, view, value) {
 
-        view = view.firstChild.firstChild.nextSibling;
+        view = view.firstChild.children[1];
 
         if (control.format)
         {
-            if (value)
-            {
-                value = flyingon.html_encode(value);
-            }
-
             view.innerHTML = control.format(value);
         }
         else
@@ -136,7 +119,7 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
 
     this.closable = function (control, view, value) {
 
-        view.firstChild.lastChild.style.display = value ? '' : 'none';
+        view.firstChild.children[2].style.display = value ? '' : 'none';
     };
 
 

@@ -882,7 +882,7 @@ var flyingon;
 
                 if (set)
                 {
-                    set.call(this, value, any, name);
+                    set.call(this, name, value, any);
                 }
 
                 if ((storage = this.__watches) && (storage[name] || storage['*']))

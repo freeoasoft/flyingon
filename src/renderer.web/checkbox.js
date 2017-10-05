@@ -4,12 +4,11 @@ flyingon.renderer('CheckBox', function (base) {
 
     this.render = function (writer, control, render) {
 
-        writer.push('<div');
+        writer.push('<span');
         
-        render.call(this, writer, control, false);
+        render.call(this, writer, control);
         
-        writer.push('><input type="checkbox" name="', control.name(), control.checked() ? '" checked="checked' : '',
-            '" class="f-checkbox-input" onchange="flyingon.CheckBox.onchange.call(this)" /></div>');
+        writer.push('><input type="checkbox" class="f-checkbox-input" onchange="flyingon.CheckBox.onchange.call(this)"/></span>');
     };
 
 
@@ -18,10 +17,7 @@ flyingon.renderer('CheckBox', function (base) {
 
         var control = flyingon.findControl(this);
 
-        control.rendered = false;
         control.checked(this.checked);
-        control.rendered = true;
-
         control.trigger('change', 'value', this.checked);
     };
 
@@ -29,6 +25,19 @@ flyingon.renderer('CheckBox', function (base) {
     this.checked = function (control, view, value) {
 
         view.firstChild.checked = value;
+    };
+
+
+    this.disabled = function (control, view, value) {
+
+        if (value)
+        {
+            view.firstChild.setAttribute('disabled', 'disabled');
+        }
+        else
+        {
+            view.firstChild.removeAttribute('disabled');
+        }
     };
 
 

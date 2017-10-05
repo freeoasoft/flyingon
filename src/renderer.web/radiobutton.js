@@ -8,12 +8,11 @@ flyingon.renderer('RadioButton', function (base) {
 
     this.render = function (writer, control, render) {
 
-        writer.push('<div');
+        writer.push('<span');
         
-        render.call(this, writer, control, false);
+        render.call(this, writer, control);
         
-        writer.push('><input type="radio" name="', control.name(), control.checked() ? '" checked="checked' : '',
-            '" class="f-radio-input" onchange="flyingon.RadioButton.onchange.call(this)" /></div>');
+        writer.push('><input type="radio" class="f-radio-input" name="" onchange="flyingon.RadioButton.onchange.call(this)" /></span>');
     };
 
 
@@ -22,11 +21,15 @@ flyingon.renderer('RadioButton', function (base) {
 
         var control = flyingon.findControl(this);
 
-        control.rendered = false;
         control.checked(this.checked);
-        control.rendered = true;
-
         control.trigger('change', 'value', this.checked);
+    };
+
+
+
+    this.name = function (control, view, value) {
+
+        view.firstChild.name = value ? value : '';
     };
 
 
@@ -35,5 +38,19 @@ flyingon.renderer('RadioButton', function (base) {
         view.firstChild.checked = value;
     };
 
+
+    this.disabled = function (control, view, value) {
+
+        if (value)
+        {
+            view.firstChild.setAttribute('disabled', 'disabled');
+        }
+        else
+        {
+            view.firstChild.removeAttribute('disabled');
+        }
+    };
+
     
+
 });

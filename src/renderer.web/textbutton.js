@@ -1,101 +1,154 @@
-flyingon.renderer('TextButton', function (base) {
+flyingon.renderer('TextButton', 'TextBox', function (base) {
 
     
     
-    this.__line_height = 1;
-
+    this.lineHeight = 1;
+    
 
 
     this.render = function (writer, control, render) {
 
-        var storage = control.__storage || control.__defaults,
-            text = control.text(),
-            size = storage.button,
-            padding;
-
-        if (text)
-        {
-            text = flyingon.html_encode(text);
-        }
+        var type = control.__type;
 
         writer.push('<span');
         
-        padding = render.call(this, writer, control, 1);
+        render.call(this, writer, control);
 
-        writer.push('>',
-                '<input type="text" class="f-textbox-text f-border-box" value="', text, 
-                    storage.inputable ? '' : '" readonly="readonly',
-                    padding ? '" style="' + padding : '',
+        writer.push(' onmouseover="flyingon.TextButton.onmouseover.call(this)"',
+            ' onmouseout="flyingon.TextButton.onmouseout.call(this)"',
+            ' onkeydown="return flyingon.TextButton.onkeydown.call(this, event)">',
+                '<input type="text" class="f-textbox-text f-border-box" style="',
+                    flyingon.rtl ? 'padding-left:22px;' : 'padding-right:22px;',
+                    (control.__storage || control.__defaults).inputable ? '' : ' readonly="readonly"',
                     '" onchange="flyingon.TextButton.onchange.call(this)"/>',
-                    '<span class="f-textbox-button ', storage.icon, 
-                        '" style="width:', size, 'px;" onclick="flyingon.TextButton.onclick.call(this)"></span>',
-            '</span>');
+                '<span class="f-textbox-button" style="width:20px;" onclick="flyingon.TextButton.onclick.call(this, event)">');
+
+        if (type === 'up-down')
+        {
+            writer.push('<span class="f-textbox-up"></span>',
+                '<span class="f-textbox-down"></span>');
+        }
+        else
+        {
+            writer.push('<span class="f-textbox-icon ', type, '"></span>');
+        }
+                    
+        writer.push('</span></span>');
     };
 
 
-    flyingon.TextButton.onclick = function () {
+    flyingon.TextButton.onmouseover = function () {
 
-        var control = flyingon.findControl(this),
-            storage = control.__storage;
-
-        if (!storage || !(storage.disabled || storage.readonly))
+        var control = flyingon.findControl(this);
+        
+        if (control.__button === 'hover')
         {
-            control.__on_click();
+            control.renderer.button(control, control.view, 1);
+        }
+    };
+
+
+    flyingon.TextButton.onmouseout = function () {
+
+        var control = flyingon.findControl(this);
+
+        if (control.__button === 'hover')
+        {
+            control.renderer.button(control, control.view);
+        }
+    };
+
+
+    flyingon.TextButton.onkeydown = function (event) {
+
+        switch (event.keyCode)
+        {
+            case 13: //回车
+            case 40: //向下箭头
+                flyingon.dom_stop(event);
+                flyingon.TextButton.onclick.call(this);
+                return false;
         }
     };
 
 
     flyingon.TextButton.onchange = function () {
 
-        var control = flyingon.findControl(this);
+        var control = flyingon.findControl(this),
+            value = control.__to_value(this.value);
 
-        control.rendered = false;
-        control.value(this.value);
-        control.rendered = true;
-
-        control.view.firstChild.firstChild.value = control.text();
-
-        control.trigger('change', 'value', this.value);
+        if (control.value() !== value)
+        {
+            control.value(value);
+            control.trigger('change', 'value', control.value());
+        }
+        else
+        {
+            control.renderer.value(control, control.view);
+        }
     };
 
+    
+    flyingon.TextButton.onclick = function (e) {
 
+        var control = flyingon.findControl(this),
+            any = control.__storage || control.__defaults;
 
-    this.icon = function (control, view, value) {
-
-        view.lastChild.className = 'f-textbox-button ' + value;
+        if (!any.disabled && !any.readonly)
+        {
+            if (control.__type === 'up-down')
+            {
+                if ((any = e.target) && any.parentNode === this)
+                {
+                    control.__on_click(any.className.indexOf('-up') >= 0); //参数表示是升还是降
+                }
+            }
+            else
+            {
+                control.__on_click();
+            }
+        }
     };
 
-
-    this.button = function (control, view, value) {
-
-        view.firstChild.style.marginRight = view.lastChild.style.width = value + 'px';
-    };
-
-
-    this.value = function (control, view) {
-
-        view.firstChild.value = control.text();
-    };
-
-
-    this.color = function (control, view, value) {
-
-        view.firstChild.style.color = value;
-    };
 
 
     this.inputable = function (control, view, value) {
 
-        view = view.firstChild;
-
         if (value)
         {
-            view.removeAttribute('readonly');
+            view.firstChild.removeAttribute('readonly');
         }
         else
         {
-            view.setAttribute('readonly', 'readonly');
+            view.firstChild.setAttribute('readonly', 'readonly');
         }
+    };
+
+
+    this.icon = function (control, view, value) {
+
+        view.lastChild.firstChild.className = 'f-textbox-icon ' + value;
+    };
+
+
+    this.button = function (control, view, focus) {
+
+        var storage = control.__storage || control.__defaults,
+            size = storage.buttonSize;
+
+        switch (control.__button = storage.button)
+        {
+            case 'hover':
+                focus || (size = 0);
+                break;
+
+            case 'none':
+                size = 0;
+                break;
+        }
+
+        view.firstChild.style[flyingon.rtl ? 'paddingLeft' : 'paddingRight'] = size + 2 + 'px';
+        view.lastChild.style.width = size + 'px';
     };
 
 

@@ -588,7 +588,7 @@
         if (flyingon.activeControl = control)
         {
             control.trigger('focus');
-            control.renderer.__do_focus();
+            control.renderer.__do_focus(control, e);
         }
     };
 
@@ -602,7 +602,7 @@
         if (control)
         {
             control.trigger('blur');
-            control.renderer.__do_blur();
+            control.renderer.__do_blur(control, e);
         }
     };
 

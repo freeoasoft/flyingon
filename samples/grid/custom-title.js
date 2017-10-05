@@ -40,8 +40,8 @@ flyingon.widget({
                             control: {
                                 Class: 'div',
                                 children: [
-                                    { Class: 'Label', text: 'F3', width: 'auto' },
-                                    { Class: 'TextBox', width: 60 }
+                                    { Class: 'Label', text: 'F3', style: 'width:auto;' },
+                                    { Class: 'TextBox', style: 'width:60px;' }
                                 ]
                             }
                         }

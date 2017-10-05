@@ -15,7 +15,7 @@ flyingon.Control.extend('Slider', function (base) {
 
             set: function () {
 
-                if (this.rendered && !this.__location_dirty)
+                if (this.view && !this.__location_dirty)
                 {
                     this.renderer.set(this, 'refresh');
                 }

@@ -20,19 +20,19 @@ flyingon.widget({
                     {
                         Class: 'Number',
                         value: 123456789.1234,
-                        scale: 4,
+                        digits: 4,
                         thousands: true
                     },
                     {
                         Class: 'Number',
                         value: 123456789.12,
-                        scale: 2,
+                        digits: 2,
                         format: '¥{0}'
                     },
                     {
                         Class: 'Number',
                         value: 123456789.12,
-                        scale: 2,
+                        digits: 2,
                         thousands: true,
                         format: '¥{0}'
                     }

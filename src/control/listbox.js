@@ -11,16 +11,10 @@ flyingon.Control.extend('ListBox', function (base) {
 
 
 
-    function define(self, name, defaultValue, clear) {
+    function render() {
 
-        return self.defineProperty(name, defaultValue, {
-
-            set: function () {
-
-                this.__template = null;
-                this.__list && this.renderer.set(this, 'content');
-            }
-        });
+        this.__template = null;
+        this.__data_list && this.renderer.set(this, 'content');
     };
 
 
@@ -29,32 +23,47 @@ flyingon.Control.extend('ListBox', function (base) {
     //none
     //radio
     //checkbox
-    define(this, 'checked', 'none');
+    this.defineProperty('checked', 'none', {
+
+        set: render   
+    });
 
 
     //指定渲染列数
     //0     在同一行按平均宽度渲染
     //大于0 按指定的列数渲染
-    define(this, 'columns', 1);
+    this.defineProperty('columns', 1, {
+
+        set: render   
+    });
 
 
     //是否可清除
-    define(this, 'clear', false);
+    this.defineProperty('clear', false, {
+
+        set: render   
+    });
 
 
     //子项模板
-    define(this, 'template', null);
+    this.defineProperty('template', null, {
+
+        set: render   
+    });
 
 
     //子项高度
-    this['item-height'] = define(this, 'itemHeight', 21);
+    this['item-height'] = this.defineProperty('itemHeight', 21, {
+
+        set: render   
+    });
 
 
 
     //列表项集合
     this.defineProperty('items', null, {
 
-        set: function (value) {
+        set: function (name, value) {
 
             //转换成flyingon.DataList
             flyingon.DataList.create(value, set_list, this);
@@ -64,18 +73,15 @@ flyingon.Control.extend('ListBox', function (base) {
 
     function set_list(list) {
 
-        this.__list = list;
-        this.rendered && this.renderer.set(this, 'content');
+        this.__data_list = list;
+        this.renderer.set(this, 'content');
     };
 
 
     //默认选中值
     this.defineProperty('value', '', {
 
-        set: function (value) {
-
-            this.rendered && this.renderer.set(this, 'change');
-        }
+        set: this.__render
     });
 
     

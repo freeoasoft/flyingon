@@ -257,8 +257,6 @@ flyingon.renderer('TreeNode', function (base) {
             text,
             any;
 
-        node.rendered = true;
-
         text = node.defaultClass;
 
         if (any = node.__className)

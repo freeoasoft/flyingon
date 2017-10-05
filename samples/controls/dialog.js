@@ -24,7 +24,7 @@ flyingon.widget({
 
         function onclick(e) {
 
-            var dialog = new flyingon.Dialog().resizable(true).text('演示窗口').padding(8);
+            var dialog = window.dialog = new flyingon.Dialog().resizable(true).text('演示窗口').padding(8);
 
             createControls(dialog);
             dialog[e.target.text()]();

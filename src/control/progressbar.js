@@ -22,7 +22,7 @@ flyingon.Control.extend('ProgressBar', function (base) {
             return value > 100 ? 100 : value;
         },
 
-        set: this.__to_render
+        set: this.render
     });
 
 

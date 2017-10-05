@@ -129,10 +129,6 @@ flyingon.fragment('f-visual', function () {
     this.parent = null;
 
 
-    //是否已经渲染
-    this.rendered = false;
-
-
 
     this.__uniqueId = 0;
     
@@ -234,11 +230,11 @@ flyingon.fragment('f-visual', function () {
     //id
     this.defineProperty('id', '', {
      
-        set: function (value) {
+        set: function (name, value) {
 
             var any;
 
-            if (this.rendered)
+            if (this.view)
             {
                 if (any = this.__view_patch)
                 {
@@ -246,7 +242,7 @@ flyingon.fragment('f-visual', function () {
                 }
                 else
                 {
-                    this.renderer.set(this, 'id', value);
+                    this.renderer.set(this, name, value);
                 }
             }
         }
@@ -259,21 +255,21 @@ flyingon.fragment('f-visual', function () {
     //指定class名
     this['class'] = this.defineProperty('className', '', {
 
-        set: function (value) {
+        set: function (name, value) {
 
             var any;
 
             this.__className = value;
 
-            if (this.rendered)
+            if (this.view)
             {
                 if (any = this.__view_patch)
                 {
-                    any['className'] = value;
+                    any[name] = value;
                 }
                 else
                 {
-                    this.renderer.set(this, 'className', value);
+                    this.renderer.set(this, name, value);
                 }
             }
         }

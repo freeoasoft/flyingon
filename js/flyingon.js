@@ -882,7 +882,7 @@ var flyingon;
 
                 if (set)
                 {
-                    set.call(this, value, any, name);
+                    set.call(this, name, value, any);
                 }
 
                 if ((storage = this.__watches) && (storage[name] || storage['*']))
@@ -1652,91 +1652,129 @@ Object.extend('Event', function () {
 
 
 
-//编码对象
-flyingon.encode = function encode(data) {
+(function () {
 
-    if (!data)
-    {
-        return '';
-    }
 
-    var list = [],
-        fn = encodeURIComponent,
-        value,
-        any;
 
-    for (var name in data)
-    {
-        value = data[name];
-        name = fn(name);
+    var encode = flyingon.create(null);
 
-        if (value === null)
+    var decode = flyingon.create(null);
+
+    var pow = flyingon.create(null);
+
+    var round = Math.round;
+
+
+    encode['&'] = '&amp;';
+    encode['<'] = '&lt;';
+    encode['>'] = '&gt;';
+    encode['\''] = '&apos;';
+    encode['"'] = '&quot;';
+
+    decode['amp'] = '&';
+    decode['lt'] = '<';
+    decode['gt'] = '>';
+    decode['apos'] = '\'';
+    decode['quot'] = '"';
+
+
+    //注: 不同浏览器toFixed有差异, chrome使用的是银行家舍入规则
+    //银行家舍入: 所谓银行家舍入法, 其实质是一种四舍六入五取偶(又称四舍六入五留双)法
+    //简单来说就是: 四舍六入五考虑, 五后非零就进一, 五后为零看奇偶, 五前为偶应舍去, 五前为奇要进一
+
+    //精确的带小数位的四舍五入方法
+    flyingon.round = function (value, digits, string) {
+
+        if (digits > 0)
         {
-            list.push(name, '=null', '&');
-            continue;
+            var any = pow[digits] || (pow[digits] = Math.pow(10, digits | 0));
+
+            value = round(value * any + 0.1) / any;
+
+            return string ? value.toFixed(digits) : value;
         }
 
-        switch (typeof value)
+        value = round(value + 0.1); //解决如2.135*100不等于213.5的问题
+        return string ? '' + value : value;
+    };
+
+
+
+    //编码对象
+    flyingon.encode = function encode(data) {
+
+        if (!data)
         {
-            case 'undefined':
-                list.push(name, '=&');
-                break;
+            return '';
+        }
 
-            case 'boolean':
-            case 'number':
-                list.push(name, '=', value, '&');
-                break;
+        var list = [],
+            fn = encodeURIComponent,
+            value,
+            any;
 
-            case 'string':
-            case 'function':
-                list.push(name, '=', fn(value), '&');
-                break;
+        for (var name in data)
+        {
+            value = data[name];
+            name = fn(name);
 
-            default:
-                if (value instanceof Array)
-                {
-                    for (var i = 0, l = value.length; i < l; i++)
+            if (value === null)
+            {
+                list.push(name, '=null', '&');
+                continue;
+            }
+
+            switch (typeof value)
+            {
+                case 'undefined':
+                    list.push(name, '=&');
+                    break;
+
+                case 'boolean':
+                case 'number':
+                    list.push(name, '=', value, '&');
+                    break;
+
+                case 'string':
+                case 'function':
+                    list.push(name, '=', fn(value), '&');
+                    break;
+
+                default:
+                    if (value instanceof Array)
                     {
-                        if ((any = value[i]) === void 0)
+                        for (var i = 0, l = value.length; i < l; i++)
                         {
-                            list.push(name, '=&');
-                        }
-                        else
-                        {
-                            list.push(name, '=', fn(any), '&'); //数组不支持嵌套
+                            if ((any = value[i]) === void 0)
+                            {
+                                list.push(name, '=&');
+                            }
+                            else
+                            {
+                                list.push(name, '=', fn(any), '&'); //数组不支持嵌套
+                            }
                         }
                     }
-                }
-                else
-                {
-                    list.push(name, '=', encode(value), '&');
-                }
-                break;
+                    else
+                    {
+                        list.push(name, '=', encode(value), '&');
+                    }
+                    break;
+            }
         }
-    }
 
-    list.pop();
-    return list.join('');
-};
-    
-    
+        list.pop();
+        return list.join('');
+    };
+        
+        
 
-//html编码函数
-flyingon.html_encode = (function () {
-    
-    var map = flyingon.create(null);
-
-    map['&'] = '&amp;';
-    map['<'] = '&lt;';
-    map['>'] = '&gt;';
-    map['\''] = '&apos;';
-    map['"'] = '&quot;';
-
-    return function (text) {
+    //html编码函数
+    flyingon.html_encode = function (text) {
 
         if (text && typeof text === 'string')
         {
-            var keys = map;
+            var keys = encode;
 
             return text.replace(/([&<>'"])/g, function (_, key) {
 
@@ -1747,23 +1785,11 @@ flyingon.html_encode = (function () {
         return '' + text;
     };
 
-})();
 
+    //html解码函数
+    flyingon.html_decode = function (text) {
 
-//html解码函数
-flyingon.html_decode = (function () {
-    
-    var map = flyingon.create(null);
-
-    map['amp'] = '&';
-    map['lt'] = '<';
-    map['gt'] = '>';
-    map['apos'] = '\'';
-    map['quot'] = '"';
-
-    return function (text) {
-
-        var keys = map;
+        var keys = decode;
 
         return text && text.replace(/&(\w+);/g, function (_, key) {
 
@@ -1771,31 +1797,36 @@ flyingon.html_decode = (function () {
         });
     };
 
-})();
 
 
+    /**
+     * 从字符串转换成json
+     */
+    flyingon.parseJSON = typeof JSON !== 'undefined' 
 
-flyingon.parseJSON = typeof JSON !== 'undefined' 
+        ? function (text) {
 
-    ? function (text) {
-
-        return JSON.parse(text);
-    }
-
-    : function (text) {
-
-        if (typeof text === 'string')
-        {
-            if (/[a-zA-Z_$]/.test(text.replace(/"(?:\\"|[^"])*?"|null|true|false|\d+[Ee][-+]?\d+/g, '')))
-            {
-                throw 'json parse error!';
-            }
-
-            return new Function('return ' + text)();
+            return JSON.parse(text);
         }
 
-        return text;
-    };
+        : function (text) {
+
+            if (typeof text === 'string')
+            {
+                if (/[a-zA-Z_$]/.test(text.replace(/"(?:\\"|[^"])*?"|null|true|false|\d+[Ee][-+]?\d+/g, '')))
+                {
+                    throw 'json parse error!';
+                }
+
+                return new Function('return ' + text)();
+            }
+
+            return text;
+        };
+
+
+
+})();
 
 
 
@@ -4859,10 +4890,6 @@ flyingon.fragment('f-visual', function () {
     this.parent = null;
 
 
-    //是否已经渲染
-    this.rendered = false;
-
-
 
     this.__uniqueId = 0;
     
@@ -4964,11 +4991,11 @@ flyingon.fragment('f-visual', function () {
     //id
     this.defineProperty('id', '', {
      
-        set: function (value) {
+        set: function (name, value) {
 
             var any;
 
-            if (this.rendered)
+            if (this.view)
             {
                 if (any = this.__view_patch)
                 {
@@ -4976,7 +5003,7 @@ flyingon.fragment('f-visual', function () {
                 }
                 else
                 {
-                    this.renderer.set(this, 'id', value);
+                    this.renderer.set(this, name, value);
                 }
             }
         }
@@ -4989,21 +5016,21 @@ flyingon.fragment('f-visual', function () {
     //指定class名
     this['class'] = this.defineProperty('className', '', {
 
-        set: function (value) {
+        set: function (name, value) {
 
             var any;
 
             this.__className = value;
 
-            if (this.rendered)
+            if (this.view)
             {
                 if (any = this.__view_patch)
                 {
-                    any['className'] = value;
+                    any[name] = value;
                 }
                 else
                 {
-                    this.renderer.set(this, 'className', value);
+                    this.renderer.set(this, name, value);
                 }
             }
         }
@@ -5376,15 +5403,15 @@ flyingon.fragment('f-validate', function () {
     //是否必填
     this.defineProperty('required', false, {
 
-        set: function (value) {
+        set: function (name, value) {
 
             var any = this.parent;
 
             this.__required = value;
 
-            if (any && any.__validate_box && any.rendered && (any = any.__find_title()))
+            if (any && any.__validate_box && any.view && (any = any.__find_title()))
             {
-                any.renderer.set(any, 'required', value);
+                any.renderer.set(any, name, value);
             }
         }
     });
@@ -5393,7 +5420,7 @@ flyingon.fragment('f-validate', function () {
     //校验器
     this.defineProperty('validator', '', {
         
-        set: function (value) {
+        set: function (name, value) {
 
             var list = [],
                 item;
@@ -6325,7 +6352,7 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
             x0 = dom.offsetLeft;
             y0 = dom.offsetTop;
         }
-        
+  
         flyingon.dom_suspend(dom, 'click', true);
         flyingon.css_value(document.body, 'user-select', 'none');
         
@@ -6333,7 +6360,7 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
         {
             dom.setCapture();
         }
-        
+
         start = null;
     };
     
@@ -6409,16 +6436,15 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
       
         flyingon.dom_resume(dom, 'click', true);
     };
-    
+      
+    on(document, 'mousemove', mousemove);
+    on(document, 'mouseup', mouseup);
+
     if (delay === false)
     {
         start(event);
+        flyingon.dom_stop(event, true);
     }
-
-    on(document, 'mousemove', mousemove);
-    on(document, 'mouseup', mouseup);
-    
-    flyingon.dom_stop(event, true);
 };
 
 
@@ -9876,10 +9902,18 @@ flyingon.Query = Object.extend(function () {
     this.__auto_size = 1;
 
 
-    //是否需要设置lineHeight
-    this.__line_height = 0;
+    //设置lineHeight方法
+    //0 不设置
+    //1 直接设置到控件style上
+    //function 自定义函数 
+    this.lineHeight = 0;
 
-  
+    //默认直接设置颜色
+    this.color = 1;
+
+    //默认直接设置文字对齐
+    this.textAlign = 1;
+
 
 
     function css_sides(value) {
@@ -9935,21 +9969,18 @@ flyingon.Query = Object.extend(function () {
 
 
     //默认渲染方法
-    function render(writer, control, padding) {
+    function render(writer, control) {
 
         var storage = control.__storage || control.__defaults,
-            html = control.__as_html,
             text,
             any;
 
-        control.rendered = true;
-        
-        if (any = control.__id || storage.id)
+        if (any = storage.id)
         {
             writer.push(' id="', any, '"');
         }
 
-        text = control.defaultClass + (html ? ' f-html' : ' f-absolute');
+        text = control.defaultClass + (control.__as_html ? ' f-html' : ' f-absolute');
 
         if (any = control.__className)
         {
@@ -9964,192 +9995,16 @@ flyingon.Query = Object.extend(function () {
             writer.push(any);
         }
 
-        if (any = control.__style)
-        {
-            this.__render_style(writer, control, any);
-        }
-
-        if (any = control.__location_dirty)
-        {
-            control.__location_dirty = 0;
-
-            if (html)
-            {
-                this.__render_location(writer, control, any);
-            }
-        }
-
-        if (any = storage.border)
-        {
-            writer.push('border-width:', sides_cache[any] || css_sides(any), ';');
-        }
-        
-        if (padding !== false)
-        {
-            if (any = storage.padding)
-            {
-                any = 'padding:' + (sides_cache[any] || css_sides(any)) + ';';
-
-                if (padding)
-                {
-                    padding = any;
-                }
-                else
-                {
-                    writer.push(any);
-                }
-            }
-            else
-            {
-                padding = '';
-            }
-        }
-
         if (!storage.visible)
         {
             writer.push('display:none;');
         }
 
         writer.push('"');
-
-        return padding;
     };
 
 
-    render.cssText = '';
-
-    this.__render_default = render;
-
-
-    this.__render_style = function (writer, control, values) {
-
-        var map = css_map,
-            value, 
-            any;
-
-        for (var name in values)
-        {
-            if (name === 'cssText' || (value = values[name]) === '')
-            {
-                continue;
-            }
-
-            switch (any = this[name])
-            {
-                case 1: //直接设置样式
-                    writer.push(name, ':', value, ';');
-                    break;
-
-                case 2: //需要检测前缀
-                    writer.push(map[name], ':', value, ';');
-                    break;
-
-                case 9: //特殊样式
-                    (control.__style_patch || (control.__style_patch = {}))[name] = value;
-                    break;
-
-                default:
-                    if (typeof any !== 'function')
-                    {
-                        if (any = map[name])
-                        {
-                            writer.push(any, ':', value, ';');
-                            self[name] = any === name ? 1 : 2; //直接设置样式标记为1,需要加前缀标记为2
-                            break;
-                        }
-
-                        self[name] = 9; //标记为特殊样式
-                    }
-                    
-                    if (!(any = control.__style_patch))
-                    {
-                        any = control.__view_patch || (control.__view_patch = {});
-                        any = any.__style_patch = controls.__style_patch = {};
-                    }
-
-                    any[name] = value;
-                    break;
-            }
-        }
-    };
-
-
-    this.__render_location = function (writer, control, dirty) {
-
-        var values = control.__storage || control.__defaults,
-            flag = 1,
-            name,
-            value,
-            any;
-
-        while (dirty >= flag)
-        {
-            if (dirty & flag)
-            {
-                switch (flag)
-                {
-                    case 1:
-                    case 2:
-                        if (value = values[name = flag === 1 ? 'width' : 'height'])
-                        {
-                            if (value === 'default' || value === 'auto')
-                            {
-                                writer.push(name, ':auto;');
-                            }
-                            else
-                            {
-                                writer.push(name, ':', value >= 0 ? value + 'px' : value, ';');
-                            }
-                        }
-                        break;
-
-                    case 4:
-                        if (value = values.margin)
-                        {
-                            writer.push('margin:', sides_cache[value] || css_sides(value), ';');
-                        }
-                        break;
-
-                    case 8:
-                        if (value = values.border)
-                        {
-                            writer.push('border-width:', sides_cache[value] || css_sides(value), ';');
-                        }
-                        break;
-
-                    case 16:
-                        if (this.padding && (value = values.padding))
-                        {
-                            writer.push('padding:', sides_cache[value] || css_sides(value), ';');
-                        }
-                        break;
-
-                    case 32:
-                    case 64:
-                    case 128:
-                    case 256:
-                        any = location_map[flag];
-
-                        if (value = values[any[0]])
-                        {
-                            writer.push(any[1], ':', value > 0 ? value + 'px' : value, ';');
-                        }
-                        break;
-
-                    case 512:
-                    case 1024:
-                        if (value = values[name = flag < 1000 ? 'left' : 'top'])
-                        {
-                            writer.push(name, ':', (any = +value) === any ? value + 'px' : value, ';');
-                        }
-                        break;
-                }
-            }
-
-            flag <<= 1;
-        }
-    };
-
+    (this.__render_default = render).cssText = '';
 
 
 
@@ -10255,89 +10110,81 @@ flyingon.Query = Object.extend(function () {
     };
 
 
-    //按照html方式定位
+    //按照html方式定位控件
     this.locate_html = function (control) {
 
         var dirty = control.__location_dirty;
         
         if (dirty)
         {
-            this.__locate_html(control);
+            var style = control.view.style,
+                values = control.__storage || control.__defaults,
+                flag = 1,
+                name,
+                value,
+                any;
+
+            control.__location_dirty = 0;
+
+            while (dirty >= flag)
+            {
+                if (dirty & flag)
+                {
+                    switch (flag)
+                    {
+                        case 1:
+                        case 2:
+                            if (value = values[name = flag === 1 ? 'width' : 'height'])
+                            {
+                                if (value === 'default' || value === 'auto')
+                                {
+                                    style[name] = 'auto';
+                                }
+                                else
+                                {
+                                    style[name] = value >= 0 ? value + 'px' : value;
+                                }
+                            }
+                            break;
+
+                        case 4:
+                            style.margin = sides_cache[value = values.margin] || css_sides(value);
+                            break;
+
+                        case 8:
+                            value = values.border;
+                            style.borderWidth = sides_cache[value = values.border] || css_sides(value);
+                            break;
+
+                        case 16:
+                            if (any = this.padding)
+                            {
+                                any.call(this, control, control.view, sides_cache[value = values.padding] || css_sides(value));
+                            }
+                            break;
+
+                        case 32:
+                        case 64:
+                        case 128:
+                        case 256:
+                            any = location_map[flag];
+                            value = values[name = any[0]];
+                            style[name] = value > 0 ? value + 'px' : value;
+                            break;
+
+                        case 512:
+                        case 1024:
+                            value = values[name = flag < 1000 ? 'left' : 'top'];
+                            style[name] = (any = +value) === any ? value + 'px' : value;
+                            break;
+                    }
+                }
+
+                flag <<= 1;
+            }
         }
 
         control.__update_dirty = false;
-    };
-
-
-    //按照html方式定位控件
-    this.__locate_html = function (control) {
-
-        var style = control.view.style,
-            values = control.__storage || control.__defaults,
-            dirty = control.__location_dirty,
-            flag = 1,
-            name,
-            value,
-            any;
-
-        control.__location_dirty = 0;
-
-        while (dirty >= flag)
-        {
-            if (dirty & flag)
-            {
-                switch (flag)
-                {
-                    case 1:
-                    case 2:
-                        if (value = values[name = flag === 1 ? 'width' : 'height'])
-                        {
-                            if (value === 'default' || value === 'auto')
-                            {
-                                style[name] = 'auto';
-                            }
-                            else
-                            {
-                                style[name] = value >= 0 ? value + 'px' : value;
-                            }
-                        }
-                        break;
-
-                    case 4:
-                        style.margin = sides_cache[value] || css_sides(value);
-                        break;
-
-                    case 8:
-                        value = values.border;
-                        style.borderWidth = sides_cache[value] || css_sides(value);
-                        break;
-
-                    case 16:
-                        if (any = this.padding)
-                        {
-                            any.call(this, control, control.view, sides_cache[value] || css_sides(value));
-                        }
-                        break;
-
-                    case 32:
-                    case 64:
-                    case 128:
-                    case 256:
-                        any = location_map[flag];
-                        value = values[name = any[0]];
-                        style[name] = value > 0 ? value + 'px' : value;
-                        break;
-
-                    case 512:
-                    case 1024:
-                        value = values[name = flag < 1000 ? 'left' : 'top'];
-                        style[name] = (any = +value) === any ? value + 'px' : value;
-                        break;
-                }
-            }
-
-            flag <<= 1;
-        }
     };
 
 
@@ -10388,11 +10235,18 @@ flyingon.Query = Object.extend(function () {
             }
             else
             {
-                style.height = any = height + 'px';
+                style.height = value = height + 'px';
 
-                if (this.__line_height)
+                if (any = this.lineHeight)
                 {
-                    view.style.lineHeight = any;
+                    if (any === 1)
+                    {
+                        view.style.lineHeight = value;
+                    }
+                    else
+                    {
+                        any.call(this, control, view, any);
+                    }
                 }
             }
         }
@@ -10660,7 +10514,7 @@ flyingon.Query = Object.extend(function () {
 
         var name = control.defaultClass + (control.__as_html ? ' f-html' : ' f-absolute');
 
-        if (control.__disabled)
+        if ((control.__storage || control.__defaults).disabled)
         {
             name += ' f-disabled';
         }
@@ -10695,26 +10549,6 @@ flyingon.Query = Object.extend(function () {
         else
         {
             view.className = view.className.replace(' f-disabled', '');
-        }
-
-        this.readonly(control, view, value);
-    };
-
-
-    this.readonly = function (control, view, value) {
-
-        var list = view.getElementsByTagName('input');
-
-        for (var i = list.length - 1; i >= 0; i--)
-        {
-            if (value)
-            {
-                list[i].setAttribute('readonly', 'readonly');
-            }
-            else
-            {
-                list[i].removeAttribute('readonly');
-            }
         }
     };
 
@@ -10800,6 +10634,34 @@ flyingon.Query = Object.extend(function () {
     };
 
 
+
+    this.__measure_auto = function (control, auto) {
+
+        var view = control.view;
+
+        if (auto & 1)
+        {
+            view.style.width = 'auto';
+        }
+
+        if (auto & 2)
+        {
+            view.style.height = 'auto';
+        }
+
+        if (auto & 1)
+        {
+            control.offsetWidth = view && view.offsetWidth || 0;
+        }
+
+        if (auto & 2)
+        {
+            view.style.width = control.offsetWidth + 'px';
+            control.offsetHeight = view && view.offsetHeight || 0;
+        }
+    };
+
+
     //排列
     this.__arrange = function (control) {
 
@@ -10871,6 +10733,7 @@ flyingon.Query = Object.extend(function () {
 
         control.__arrange_dirty = 0;
     };
+
 
 
     //同步滚动条状态
@@ -11126,16 +10989,7 @@ flyingon.renderer('HtmlElement', function (base) {
         
         writer.push('>');
 
-        if (any = storage.text)
-        {
-            if (!storage.html)
-            {
-                any = flyingon.html_encode(any);
-            }
-
-            writer.push(any);
-        }
-        else if (control.length > 0 && control.__visible)
+        if (control.length > 0 && control.__visible)
         {
             this.__render_children(writer, control, control, 0, control.length);
         }
@@ -11179,14 +11033,7 @@ flyingon.renderer('HtmlElement', function (base) {
     //按照html方式定位控件时
     this.locate_html = function (control) {
 
-        var dirty = control.__location_dirty;
-        
-        if (dirty)
-        {
-            this.__locate_html(control);
-        }
-
-        control.__update_dirty = false;
+        base.locate_html.call(this, control);
 
         if (control.length > 0)
         {
@@ -11209,23 +11056,6 @@ flyingon.renderer('HtmlElement', function (base) {
         }
 
         control.__arrange_dirty = 0;
-    };
-
-
-
-    this.__measure_auto = function (control, auto) {
-
-        var view = control.view;
-
-        if (auto & 2)
-        {
-            if (control.__content_render)
-            {
-                this.locate(control);
-            }
-            
-            control.offsetHeight = view && view.offsetHeight || 0;
-        }
     };
 
 
@@ -11255,19 +11085,11 @@ flyingon.renderer('Label', function (base) {
 
     this.render = function (writer, control, render) {
 
-        var storage = control.__storage || control.__defaults,
-            text = storage.text;
-
-        if (text && !storage.html)
-        {
-            text = flyingon.html_encode(text);
-        }
-
         writer.push('<span');
         
         render.call(this, writer, control);
         
-        writer.push('>', text, '</span>');
+        writer.push('></span>');
     };
 
 
@@ -11283,34 +11105,6 @@ flyingon.renderer('Label', function (base) {
         }
 
         return cache;
-    };
-
-
-
-    this.__measure_auto = function (control, auto) {
-
-        var view = control.view;
-
-        if (auto & 1)
-        {
-            view.style.width = 'auto';
-        }
-
-        if (auto & 2)
-        {
-            view.style.height = 'auto';
-        }
-
-        if (auto & 1)
-        {
-            control.offsetWidth = view && view.offsetWidth || 0;
-        }
-
-        if (auto & 2)
-        {
-            view.style.width = control.offsetWidth + 'px';
-            control.offsetHeight = view && view.offsetHeight || 0;
-        }
     };
 
 
@@ -11346,13 +11140,11 @@ flyingon.renderer('Icon', function (base) {
 
     this.render = function (writer, control, render) {
 
-        var icon = control.icon();
-
         writer.push('<a');
         
-        render.call(this, writer, control, false);
+        render.call(this, writer, control);
         
-        writer.push('><span class="f-icon-body', icon ? ' ' + icon : '', '"></span></a>');
+        writer.push('><span class="f-icon-body"></span></a>');
     };
 
 
@@ -11382,103 +11174,62 @@ flyingon.renderer('Button', function (base) {
 
     
 
+
     this.render = function (writer, control, render) {
 
         writer.push('<button type="button"');
         
         render.call(this, writer, control);
         
-        writer.push('>');
-
-        this.__render_content(writer, control);
-        
-        writer.push('</button>');
+        writer.push('><span class="f-button-icon" style="display:none;width:16px;height:16px;"></span>',
+                '<br style="display:none;"/>',
+                '<span class="f-button-text"></span>',
+                '<span class="f-button-drop" style="display:none;"></span>',
+            '</button>');
     };
 
 
-    this.__render_content = function (writer, control) {
 
-        var encode = flyingon.html_encode,
-            storage = control.__storage || control.__defaults,
-            any;
+    this.icon = function (control, view, value) {
 
-        if (any = storage.icon)
-        {
-            writer.push('<span class="', encode(any), '" style="display:inline-block;width:', 
-                any = storage.iconSize, 'px;height:', any, 'px;">', '</span>');
-            
-            any = true;
-        }
+        view = view.firstChild;
+        view.style.display = value ? 'inline-block' : 'none';
+        view.className = 'f-button-icon ' + value; 
+    };
+    
+    
+    this.iconSize = function (control, view, value) {
 
-        if (any = storage.text)
-        {
-            if (any && storage.vertical)
-            {
-                writer.push('<br/>');
-            }
+        var style = view.firstChild.style;
+        style.width = style.height = value + 'px';
+    };
+    
+    
+    this.vertical = function (control, view, value) {
 
-            if (!storage.html)
-            {
-                any = encode(any);
-            }
-
-            writer.push('<span class="f-button-text">', any, '</span>');
-        }
-
-        if (any = storage.dropdown)
-        {
-            writer.push('<span class="f-button-drop"></span>');
-        }
+        view.firstChild.nextSibling.style.display = value ? '' : 'none';
     };
 
 
-    this.__measure_auto = function (control, auto) {
+    this.dropdown = function (control, view, value) {
 
-        var view = control.view;
-
-        if (auto & 1)
-        {
-            control.offsetWidth = view && view.offsetWidth || 0;
-        }
-
-        if (auto & 2)
-        {
-            view.style.width = control.offsetWidth + 'px';
-            control.offsetHeight = view && view.offsetHeight || 0;
-        }
+        view.lastChild.style.display = value ? '' : 'none';
     };
 
 
-    this.icon = this.iconSize = this.vertical = function (control, view, value) {
-
-        var writer = [];
-
-        this.__render_content(writer, control);
-        view.innerHTML = writer.join('');
-    };
-
-
-    this.text = this.html = function (control, view) {
+    this.text = function (control, view) {
 
         var storage = control.__storage || control.__defaults;
 
-        view = view.lastChild;
+        view = view.lastChild.previousSibling;
 
-        while (view)
+        if (storage.html)
         {
-            if (view.className.indexOf('f-button-text') >= 0)
-            {
-                if (storage.html)
-                {
-                    view.lastChild.pre.innerHTML = storage.text;
-                }
-                else
-                {
-                    view.lastChild[this.__text_name] = storage.text;
-                }
-            }
-
-            view = view.previousSibling;
+            view.innerHTML = storage.text;
+        }
+        else
+        {
+            view[this.__text_name] = storage.text;
         }
     };
 
@@ -11493,55 +11244,22 @@ flyingon.renderer('LinkButton', function (base) {
 
 
 
+    this.lineHeight = 1;
+
+
+
     this.render = function (writer, control, render) {
 
-        var storage = control.__storage || control.__defaults,
-            any;
-        
         writer.push('<a type="button"');
         
         render.call(this, writer, control);
-
-        if (any = storage.href)
-        {
-            writer.push(' href="', flyingon.html_encode(any), '"');
-        }
         
-        writer.push('>');
-
-        if (any = storage.text)
-        {
-            if (!storage.html)
-            {
-                any = flyingon.html_encode(any);
-            }
-
-            writer.push(any);
-        }
-        
-        writer.push('</a>');
+        writer.push('></a>');
     };
 
 
 
-    this.__measure_auto = function (control, auto) {
-
-        var view = control.view;
-
-        if (auto & 1)
-        {
-            control.offsetWidth = view && view.offsetWidth || 0;
-        }
-
-        if (auto & 2)
-        {
-            view.style.width = control.offsetWidth + 'px';
-            control.offsetHeight = view && view.offsetHeight || 0;
-        }
-    };
-
-
-    this.text = this.html = function (control, view) {
+    this.text = function (control, view) {
 
         var storage = control.__storage || control.__defaults;
 
@@ -11574,26 +11292,11 @@ flyingon.renderer('Image', function (base) {
 
     this.render = function (writer, control, render) {
 
-        var encode = flyingon.html_encode,
-            storage = control.__storage || control.__defaults,
-            src = storage.src,
-            alt = storage.alt;
-
-        if (src)
-        {
-            src = encode(src);
-        }
-
-        if (alt)
-        {
-            alt = encode(alt);
-        }
-
         writer.push('<img');
         
         render.call(this, writer, control);
         
-        writer.push(' src="', src, '" alt="', alt, '"></img>');
+        writer.push('></img>');
     };
 
 
@@ -11696,12 +11399,16 @@ flyingon.renderer('Slider', function (base) {
     function move_end(e) {
 
         var control = this.control,
+            view = control.view,
             storage = control.__storage || control.__defaults,
             x = e.distanceX - this.min;
 
         x = (storage.max - storage.min) * x / this.size | 0;
 
+        control.view = null;
         control.value(x);
+        control.view = view;
+
         control.trigger('change', 'value', x);
     };
 
@@ -11728,15 +11435,13 @@ flyingon.renderer('ProgressBar', function (base) {
 
     this.render = function (writer, control, render) {
 
-        var value = (control.__storage || control.__defaults).value;
-
         writer.push('<div');
         
         render.call(this, writer, control);
 
         writer.push('>',
-                '<div class="f-progressbar-back" style="width:', value, '%;"></div>',
-                '<div class="f-progressbar-text"><span>', value, '%</span></div>',
+                '<div class="f-progressbar-back"></div>',
+                '<div class="f-progressbar-text"><span></span></div>',
             '</div>');
     };
 
@@ -11772,7 +11477,7 @@ flyingon.renderer('Panel', function (base) {
 
         writer.push('<div');
         
-        render.call(this, writer, control, false);
+        render.call(this, writer, control);
         
         writer.push(' onscroll="flyingon.__dom_scroll.call(this, event)">');
 
@@ -11834,9 +11539,7 @@ flyingon.renderer('Panel', function (base) {
             height = 0,
             any;
         
-        base.__locate_html.call(this, control);
-
-        control.__update_dirty = false;
+        base.locate_html.call(this, control);
 
         //如果需要适应容器,则计算容器大小(对性能有影响)
         if ((any = control.view) && (any = any.parentNode) && control.adaption())
@@ -11911,32 +11614,19 @@ flyingon.renderer('GroupBox', 'Panel', function (base) {
     this.render = function (writer, control, render) {
 
         var storage = control.__storage || control.__defaults,
-            head = storage.header,
-            text = storage.text,
-            padding,
-            any;
+            head = storage.header;
 
         writer.push('<div');
         
-        padding = render.call(this, writer, control, true);
-        
-        if (text)
-        {
-            text = flyingon.html_encode(text);
-        }
-
-        if (any = control.format)
-        {
-            text = any.call(control, text);
-        }
+        render.call(this, writer, control);
 
         writer.push('>',
             '<div class="f-groupbox-head f-back" class="f-border-box f-back" style="height:', head, 'px;line-height:', head - 1, 'px;text-align:', storage.align, ';" onclick="flyingon.GroupBox.onclick.call(this, event)">',
-                '<span class="f-groupbox-icon ', (any = storage.icon) ? any : '" style="display:none;', '"></span>',
-                '<span class="f-groupbox-text">', text, '</span>',
+                '<span class="f-groupbox-icon" style="display:none;', '"></span>',
+                '<span class="f-groupbox-text"></span>',
                 '<span class="f-groupbox-flag f-groupbox-', storage.collapsed ? 'close"' : 'open"', storage.collapsable === 2 ? '' : ' style="display:none;"', '></span>',
             '</div>',
-            '<div class="f-groupbox-body" style="top:', head, 'px;overflow:auto;', padding || '', storage.collapsed ? '' : '', '">');
+            '<div class="f-groupbox-body" style="top:', head, 'px;overflow:auto;', storage.collapsed ? '' : '', '">');
 
         if (control.length > 0 && control.__visible)
         {
@@ -12053,7 +11743,7 @@ flyingon.renderer('ScrollPanel', function (base) {
         //此处只渲染一个空的壳,实现渲染内容在locate的时候根据需要渲染
         writer.push('<div');
         
-        render.call(this, writer, control, false);
+        render.call(this, writer, control);
         
         writer.push('>',
             '<div class="f-scrollpanel-scroll" onscroll="flyingon.__dom_scroll.call(this, event)">',
@@ -12383,7 +12073,7 @@ flyingon.renderer('ListBox', function (base) {
         var storage = control.storage(),
             checked = storage.checked,
             selected = control.__selected,
-            value = index >= 0 ? (value = control.__list).value(value[index]) : '',
+            value = index >= 0 ? (value = control.__data_list).value(value[index]) : '',
             any;
 
         //多选
@@ -12475,14 +12165,14 @@ flyingon.renderer('ListBox', function (base) {
     this.locate = function (control) {
 
         base.locate.call(this, control);
-        control.__list && this.content(control);
+        control.__data_list && this.content(control);
     };
 
 
     this.content = function (control) {
 
         var writer = [],
-            list = control.__list,
+            list = control.__data_list,
             valueField = list.valueField,
             displayField = list.displayField,
             template = control.__template,
@@ -12720,12 +12410,11 @@ flyingon.renderer('RadioButton', function (base) {
 
     this.render = function (writer, control, render) {
 
-        writer.push('<div');
+        writer.push('<span');
         
-        render.call(this, writer, control, false);
+        render.call(this, writer, control);
         
-        writer.push('><input type="radio" name="', control.name(), control.checked() ? '" checked="checked' : '',
-            '" class="f-radio-input" onchange="flyingon.RadioButton.onchange.call(this)" /></div>');
+        writer.push('><input type="radio" class="f-radio-input" name="" onchange="flyingon.RadioButton.onchange.call(this)" /></span>');
     };
 
 
@@ -12734,11 +12423,15 @@ flyingon.renderer('RadioButton', function (base) {
 
         var control = flyingon.findControl(this);
 
-        control.rendered = false;
         control.checked(this.checked);
-        control.rendered = true;
-
         control.trigger('change', 'value', this.checked);
+    };
+
+
+
+    this.name = function (control, view, value) {
+
+        view.firstChild.name = value ? value : '';
     };
 
 
@@ -12747,7 +12440,21 @@ flyingon.renderer('RadioButton', function (base) {
         view.firstChild.checked = value;
     };
 
+
+    this.disabled = function (control, view, value) {
+
+        if (value)
+        {
+            view.firstChild.setAttribute('disabled', 'disabled');
+        }
+        else
+        {
+            view.firstChild.removeAttribute('disabled');
+        }
+    };
+
     
+
 });
 
 
@@ -12759,12 +12466,11 @@ flyingon.renderer('CheckBox', function (base) {
 
     this.render = function (writer, control, render) {
 
-        writer.push('<div');
+        writer.push('<span');
         
-        render.call(this, writer, control, false);
+        render.call(this, writer, control);
         
-        writer.push('><input type="checkbox" name="', control.name(), control.checked() ? '" checked="checked' : '',
-            '" class="f-checkbox-input" onchange="flyingon.CheckBox.onchange.call(this)" /></div>');
+        writer.push('><input type="checkbox" class="f-checkbox-input" onchange="flyingon.CheckBox.onchange.call(this)"/></span>');
     };
 
 
@@ -12773,10 +12479,7 @@ flyingon.renderer('CheckBox', function (base) {
 
         var control = flyingon.findControl(this);
 
-        control.rendered = false;
         control.checked(this.checked);
-        control.rendered = true;
-
         control.trigger('change', 'value', this.checked);
     };
 
@@ -12784,6 +12487,19 @@ flyingon.renderer('CheckBox', function (base) {
     this.checked = function (control, view, value) {
 
         view.firstChild.checked = value;
+    };
+
+
+    this.disabled = function (control, view, value) {
+
+        if (value)
+        {
+            view.firstChild.setAttribute('disabled', 'disabled');
+        }
+        else
+        {
+            view.firstChild.removeAttribute('disabled');
+        }
     };
 
 
@@ -12796,59 +12512,67 @@ flyingon.renderer('TextBox', function (base) {
 
 
 
-    this.__line_height = 1;
+    this.lineHeight = 1;
 
 
 
     //注: onchange, onpropertychange在IE8下不冒泡
     this.render = function (writer, control, render) {
 
-        var text = control.text(),
-            padding;
-
-        if (text)
-        {
-            text = flyingon.html_encode(text);
-        }
-
         writer.push('<span');
         
-        padding = render.call(this, writer, control, 1);
+        render.call(this, writer, control);
 
         writer.push('><input type="', control.__type || 'text', 
-            '" class="f-textbox-text f-border-box" value="', text, 
-            padding ? '" style="' + padding : '',
-            '" onchange="flyingon.TextBox.onchange.call(this)"/></span>');
+            '" class="f-textbox-text f-border-box" onchange="flyingon.TextBox.onchange.call(this)"/></span>');
     };
 
 
     flyingon.TextBox.onchange = function () {
 
-        var control = flyingon.findControl(this),
-            value = control.__to_value(this.value);
+        var control = flyingon.findControl(this);
 
-        if (value !== control.value())
+        if (control.value() !== this.value)
         {
-            control.rendered = false;
-        
-            try
-            {
-                control.value(value);
-                control.trigger('change', 'value', value);
-            }
-            finally
-            {
-                control.rendered = true;
-            }
+            control.value(this.value);
+            control.trigger('change', 'value', control.value());
         }
-
-        this.value = control.text();
+        else
+        {       
+            this.value = control.text();
+        }
     };
 
 
-    this.value = function (control, view) {
+    this.disabled = function (control, view, value) {
 
-        view.firstChild.value = control.text();
+        if (value)
+        {
+            view.firstChild.setAttribute('disabled', 'disabled');
+        }
+        else
+        {
+            view.firstChild.removeAttribute('disabled');
+        }
+    };
+
+    
+    this.readonly = function (control, view, value) {
+
+        if (value)
+        {
+            view.firstChild.setAttribute('readonly', 'readonly');
+        }
+        else
+        {
+            view.firstChild.removeAttribute('readonly');
+        }
+    };
+
+    
+    this.padding = function (control, view, value) {
+
+        view.firstChild.style.padding = value;
     };
 
 
@@ -12857,6 +12581,113 @@ flyingon.renderer('TextBox', function (base) {
         view.firstChild.style.color = value;
     };
 
+
+    this.lineHeight = function (control, view, value) {
+
+        view.firstChild.style.lineHeight = value;
+    };
+
+
+    this.textAlign = function (control, view, value) {
+
+        view.firstChild.style.textAlign = value;
+    };
+
+
+
+    function placeholder(control, view, value) {
+
+        if (view = view.firstChild)
+        {
+            if (value)
+            {
+                view.value = value;
+
+                if (!control.__placeholder)
+                {
+                    control.__placeholder = 1;
+                    view.className += ' f-placeholder';
+                }
+            }
+            else if (control.__placeholder)
+            {
+                view.value = control.__placeholder = '';
+                view.className = view.className.replace(' f-placeholder', '');
+            }
+        }
+    };
+
+
+    this.value = function (control, view) {
+
+        var storage = control.__storage,
+            any;
+
+        if ((any = control.__storage) && !any.value && (any = any.placeholder))
+        {
+            placeholder(control, view, any);
+        }
+        else
+        {
+            if (control.__placeholder)
+            {
+                placeholder(control, view, '');
+                control.__placeholder = 0;
+            }
+
+            view.firstChild.value = control.text();
+        }
+    };
+
+
+
+    this.__do_focus = function (control) {
+
+        if (control.__placeholder)
+        {
+            placeholder(control, control.view, '');
+        }
+    };
+
+
+    this.__do_blur = function (control) {
+
+        this.value(control, control.view);
+    };
+
+
+    this.selectionStart = function (control, value) {
+        
+        var view = control.view.firstChild;
+
+        if (value === void 0)
+        {
+            return view.selectionStart;
+        }
+
+        view.selectionStart = value | 0;
+        return control;
+    };
+
+
+    this.selectionEnd = function (control, value) {
+
+        var view = control.view.firstChild;
+
+        if (value === void 0)
+        {
+            return view.selectionEnd;
+        }
+
+        view.selectionEnd = value | 0;
+        return control;
+    };
+
+
+    this.select = function (control) {
+
+        control.view.firstChild.select();
+    };
 
 
 });
@@ -12870,18 +12701,11 @@ flyingon.renderer('Memo', function (base) {
 
     this.render = function (writer, control, render) {
 
-        var text = control.text();
-
-        if (text)
-        {
-            text = flyingon.html_encode(text);
-        }
-
         writer.push('<textarea');
         
         render.call(this, writer, control);
         
-        writer.push(' onchange="flyingon.TextBox.onchange.call(this)">', text, '</textarea>');
+        writer.push(' onchange="flyingon.TextBox.onchange.call(this)"></textarea>');
     };
 
 
@@ -12889,16 +12713,8 @@ flyingon.renderer('Memo', function (base) {
 
         var control = flyingon.findControl(this);
 
-        try
-        {
-            control.rendered = false;
-            control.value(this.value);
-            control.trigger('change', 'value', value);
-        }
-        finally
-        {
-            control.rendered = true;
-        }
+        control.value(this.value);
+        control.trigger('change', 'value', value);
     };
 
 
@@ -12913,104 +12729,157 @@ flyingon.renderer('Memo', function (base) {
 
 
 
-flyingon.renderer('TextButton', function (base) {
+flyingon.renderer('TextButton', 'TextBox', function (base) {
 
     
     
-    this.__line_height = 1;
-
+    this.lineHeight = 1;
+    
 
 
     this.render = function (writer, control, render) {
 
-        var storage = control.__storage || control.__defaults,
-            text = control.text(),
-            size = storage.button,
-            padding;
-
-        if (text)
-        {
-            text = flyingon.html_encode(text);
-        }
+        var type = control.__type;
 
         writer.push('<span');
         
-        padding = render.call(this, writer, control, 1);
+        render.call(this, writer, control);
 
-        writer.push('>',
-                '<input type="text" class="f-textbox-text f-border-box" value="', text, 
-                    storage.inputable ? '' : '" readonly="readonly',
-                    padding ? '" style="' + padding : '',
+        writer.push(' onmouseover="flyingon.TextButton.onmouseover.call(this)"',
+            ' onmouseout="flyingon.TextButton.onmouseout.call(this)"',
+            ' onkeydown="return flyingon.TextButton.onkeydown.call(this, event)">',
+                '<input type="text" class="f-textbox-text f-border-box" style="',
+                    flyingon.rtl ? 'padding-left:22px;' : 'padding-right:22px;',
+                    (control.__storage || control.__defaults).inputable ? '' : ' readonly="readonly"',
                     '" onchange="flyingon.TextButton.onchange.call(this)"/>',
-                    '<span class="f-textbox-button ', storage.icon, 
-                        '" style="width:', size, 'px;" onclick="flyingon.TextButton.onclick.call(this)"></span>',
-            '</span>');
+                '<span class="f-textbox-button" style="width:20px;" onclick="flyingon.TextButton.onclick.call(this, event)">');
+
+        if (type === 'up-down')
+        {
+            writer.push('<span class="f-textbox-up"></span>',
+                '<span class="f-textbox-down"></span>');
+        }
+        else
+        {
+            writer.push('<span class="f-textbox-icon ', type, '"></span>');
+        }
+                    
+        writer.push('</span></span>');
     };
 
 
-    flyingon.TextButton.onclick = function () {
+    flyingon.TextButton.onmouseover = function () {
 
-        var control = flyingon.findControl(this),
-            storage = control.__storage;
-
-        if (!storage || !(storage.disabled || storage.readonly))
+        var control = flyingon.findControl(this);
+        
+        if (control.__button === 'hover')
         {
-            control.__on_click();
+            control.renderer.button(control, control.view, 1);
+        }
+    };
+
+
+    flyingon.TextButton.onmouseout = function () {
+
+        var control = flyingon.findControl(this);
+
+        if (control.__button === 'hover')
+        {
+            control.renderer.button(control, control.view);
+        }
+    };
+
+
+    flyingon.TextButton.onkeydown = function (event) {
+
+        switch (event.keyCode)
+        {
+            case 13: //回车
+            case 40: //向下箭头
+                flyingon.dom_stop(event);
+                flyingon.TextButton.onclick.call(this);
+                return false;
         }
     };
 
 
     flyingon.TextButton.onchange = function () {
 
-        var control = flyingon.findControl(this);
+        var control = flyingon.findControl(this),
+            value = control.__to_value(this.value);
 
-        control.rendered = false;
-        control.value(this.value);
-        control.rendered = true;
-
-        control.view.firstChild.firstChild.value = control.text();
-
-        control.trigger('change', 'value', this.value);
+        if (control.value() !== value)
+        {
+            control.value(value);
+            control.trigger('change', 'value', control.value());
+        }
+        else
+        {
+            control.renderer.value(control, control.view);
+        }
     };
 
+    
+    flyingon.TextButton.onclick = function (e) {
 
+        var control = flyingon.findControl(this),
+            any = control.__storage || control.__defaults;
 
-    this.icon = function (control, view, value) {
-
-        view.lastChild.className = 'f-textbox-button ' + value;
+        if (!any.disabled && !any.readonly)
+        {
+            if (control.__type === 'up-down')
+            {
+                if ((any = e.target) && any.parentNode === this)
+                {
+                    control.__on_click(any.className.indexOf('-up') >= 0); //参数表示是升还是降
+                }
+            }
+            else
+            {
+                control.__on_click();
+            }
+        }
     };
 
-
-    this.button = function (control, view, value) {
-
-        view.firstChild.style.marginRight = view.lastChild.style.width = value + 'px';
-    };
-
-
-    this.value = function (control, view) {
-
-        view.firstChild.value = control.text();
-    };
-
-
-    this.color = function (control, view, value) {
-
-        view.firstChild.style.color = value;
-    };
 
 
     this.inputable = function (control, view, value) {
 
-        view = view.firstChild;
-
         if (value)
         {
-            view.removeAttribute('readonly');
+            view.firstChild.removeAttribute('readonly');
         }
         else
         {
-            view.setAttribute('readonly', 'readonly');
+            view.firstChild.setAttribute('readonly', 'readonly');
         }
+    };
+
+
+    this.icon = function (control, view, value) {
+
+        view.lastChild.firstChild.className = 'f-textbox-icon ' + value;
+    };
+
+
+    this.button = function (control, view, focus) {
+
+        var storage = control.__storage || control.__defaults,
+            size = storage.buttonSize;
+
+        switch (control.__button = storage.button)
+        {
+            case 'hover':
+                focus || (size = 0);
+                break;
+
+            case 'none':
+                size = 0;
+                break;
+        }
+
+        view.firstChild.style[flyingon.rtl ? 'paddingLeft' : 'paddingRight'] = size + 2 + 'px';
+        view.lastChild.style.width = size + 'px';
     };
 
 
@@ -13244,10 +13113,7 @@ flyingon.renderer('Calendar', function (base) {
 
         if (control.value() !== value)
         {
-            control.rendered = false;
             control.value(value);
-            control.rendered = true;
-
             control.trigger('change', 'value', value);
         }
 
@@ -13738,9 +13604,7 @@ flyingon.renderer('Box', function (base) {
             height = 0,
             any;
         
-        base.__locate_html.call(this, control);
-
-        control.__update_dirty = false;
+        base.locate_html.call(this, control);
 
         //如果需要适应容器,则计算容器大小(对性能有影响)
         if ((any = control.view) && (any = any.parentNode) && control.adaption())
@@ -13781,38 +13645,32 @@ flyingon.renderer('Title', function (base) {
 
 
 
-    this.__line_height = 1;
+    this.lineHeight = 1;
 
 
 
     this.render = function (writer, control, render) {
 
-        var storage = control.__storage || control.__defaults,
-            text = storage.text;
-
-        if (text && !storage.html)
-        {
-            text = flyingon.html_encode(text);
-        }
-
         writer.push('<span');
         
         render.call(this, writer, control);
         
-        writer.push('><span class="f-required"', control.__check() ? '' : ' style="display:none;"', '>*</span>',
-            '<span>', text, '</span></span>');
+        writer.push('><span class="f-required"', control.__check() ? '' : ' style="display:none;"', 
+            '>*</span><span></span></span>');
     };
 
 
     this.text = function (control, view, value) {
 
+        var storage = control.__storage || control.__defaults;
+
         if (storage.html)
         {
-            view.lastChild.innerHTML = value;
+            view.lastChild.innerHTML = storage.text;
         }
         else
         {
-            view.lastChild[this.__text_name] = value;
+            view.lastChild[this.__text_name] = storage.text;
         }
     };
 
@@ -13832,7 +13690,7 @@ flyingon.renderer('Error', 'Label', function (base) {
 
     
 
-    this.__line_height = 1;
+    this.lineHeight = 1;
     
 
 
@@ -14131,8 +13989,6 @@ flyingon.renderer('TreeNode', function (base) {
             icon,
             text,
             any;
-
-        node.rendered = true;
 
         text = node.defaultClass;
 
@@ -14602,60 +14458,62 @@ flyingon.renderer('GridRow', function (base) {
 
         while (start < end)
         {
-            column = columns[start];
-            any = column.__name || (column.__name = '__column_' + id++);
-
-            if (cell = cells[any])
+            if ((column = columns[start]) && column.__visible)
             {
-                //处理树列
-                if (column.__tree_cell)
+                any = column.__name || (column.__name = '__column_' + id++);
+
+                if (cell = cells[any])
                 {
-                    fragment.appendChild(view = row.view);
-                    
+                    //处理树列
+                    if (column.__tree_cell)
+                    {
+                        fragment.appendChild(view = row.view);
+                        
+                        if (cell.__top !== y)
+                        {
+                            view.style.top = y + 'px';
+                        }
+
+                        if (cell.__show_tag !== tag)
+                        {
+                            style = view.style;
+                            style.left = column.__start +  'px';
+                            style.height = ((any = cell.rowSpan) ? ++any * height : height) + 'px';
+                        }
+                    }
+
+                    fragment.appendChild(view = cell.view);
+
+                    //自定义显示前处理
+                    if (any = column.onshowing)
+                    {
+                        any.call(column, cell, row);
+                    }
+
                     if (cell.__top !== y)
                     {
-                        view.style.top = y + 'px';
+                        view.style.top = (cell.__top = y) + 'px';
                     }
 
                     if (cell.__show_tag !== tag)
                     {
+                        cell.__show_tag = tag;
+
                         style = view.style;
-                        style.left = column.__start +  'px';
+                        style.left = column.__start + 'px';
+
+                        any = (any = cell.columnSpan) ? column.__span_size(any) : 0;
+                        style.width = column.__size + any + 'px';
+
                         style.height = ((any = cell.rowSpan) ? ++any * height : height) + 'px';
                     }
                 }
-
-                fragment.appendChild(view = cell.view);
-
-                //自定义显示前处理
-                if (any = column.onshowing)
+                else if (cell = this.render(writer, row, column, y, height))
                 {
-                    any.call(column, cell, row);
-                }
-
-                if (cell.__top !== y)
-                {
-                    view.style.top = (cell.__top = y) + 'px';
-                }
-
-                if (cell.__show_tag !== tag)
-                {
+                    cell.__top = y;
                     cell.__show_tag = tag;
-
-                    style = view.style;
-                    style.left = column.__start + 'px';
-
-                    any = (any = cell.columnSpan) ? column.__span_size(any) : 0;
-                    style.width = column.__size + any + 'px';
-
-                    style.height = ((any = cell.rowSpan) ? ++any * height : height) + 'px';
+                    cells[any] = cell;
                 }
-            }
-            else if (cell = this.render(writer, row, column, y, height))
-            {
-                cell.__top = y;
-                cell.__show_tag = tag;
-                cells[any] = cell;
             }
 
             start++;
@@ -14667,6 +14525,7 @@ flyingon.renderer('GridRow', function (base) {
 
         var cell = column.createControl(row, column.__name),
             width = column.__size,
+            style = [],
             span,
             any;
 
@@ -14718,22 +14577,29 @@ flyingon.renderer('GridRow', function (base) {
 
         if (column.__tree_cell)
         {
-            this.render_tree(writer, row, column, y, height, cell);
+            any = this.render_tree(writer, row, column, y, height, cell);
+            style.push('padding-', flyingon.rtl ? 'right' : 'left', ':', any, 'px;');
         }
 
-        any = (any = column.__align) ? 'text-align:' + any + ';' : '';
+        style.push('left:', column.__start,
+            'px;top:', y, 
+            'px;width:', width, 
+            'px;height:', height, 
+            'px;');
 
         if (span)
         {
-            any += 'z-index:1;';
+            style.push('z-index:1;');
         }
 
-        render.cssText = 'left:' + column.__start + 
-            'px;top:' + y + 
-            'px;width:' + width + 
-            'px;height:' + height + 
-            'px;line-height:' + height + 'px;' +
-            any;
+        if (any = column.__align)
+        {
+            style.push('text-align:', any, ';');
+        }
+
+        style.push('line-height:', height + 'px;');
+
+        render.cssText = style.join('');
 
         any = ' f-grid-cell';
 
@@ -14781,16 +14647,16 @@ flyingon.renderer('GridRow', function (base) {
         }
 
         writer.push('<div class="f-grid-tree" style="',
-                'left:' + column.__start + 
-                'px;top:' + y + 
-                'px;width:' + width + 
-                'px;height:' + height + 
-                'px;line-height:' + height + 'px;">' +
+                'left:', column.__start,
+                'px;top:', y,
+                'px;width:', width,
+                'px;height:', height, 
+                'px;line-height:', height, 'px;">',
                 '<span class="f-grid-', expand, '" tag="', expand, '"', '></span>',
                 '<span class="f-grid-icon', icon ? ' ' + icon : '" style="display:none;', '"></span>',
             '</div>');
 
-        cell.padding('0 2 0 ' + (width + 2));
+        return width + 2;
     };
 
 
@@ -14840,6 +14706,8 @@ flyingon.renderer('GridRow', function (base) {
 
         var cells = row.__cells,
             any;
+
+        row.view = null;
 
         for (var name in cells)
         {
@@ -14901,6 +14769,8 @@ flyingon.renderer('GroupGridRow', 'GridRow', function (base) {
 
 
 
+    var round = flyingon.round;
+
     var render = this.__render_default;
 
 
@@ -14920,13 +14790,15 @@ flyingon.renderer('GroupGridRow', 'GridRow', function (base) {
             fn = column.__summary_fn || (column.__summary_fn = flyingon.Grid.summary(summary));
             any = row.compute(column, any, fn[0], fn[1]);
 
-            if ((fn = column.onsummary) && (fn = fn.call(column, row, any, summary)))
+            any = round(any, storage.precision, true);
+
+            if (fn = column.onsummary)
             {
-                any = fn;
+                any = fn.call(column, row, any, summary);
             }
             else
             {
-                any = summary + '=' + any.toFixed(storage.precision);
+                any = summary + '=' + any;
             }
 
             cell.text(any);
@@ -14980,9 +14852,6 @@ flyingon.renderer('Grid', function (base) {
     //是否禁止列头点击事件
     var click_disabled = false;
 
-    //可输入标签
-    var input_tag = 'input,select,textarea'.toUpperCase().split(',');
-
 
     //动态管理子节点的临时节点
     var dom_fragment = document.createDocumentFragment();
@@ -15022,10 +14891,11 @@ flyingon.renderer('Grid', function (base) {
 
         writer.push('<div');
 
-        render.call(this, writer, grid, false);
+        render.call(this, writer, grid);
 
-        writer.push(' onclick="flyingon.Grid.onclick.call(this, event)" onkeydown="flyingon.Grid.onkeydown.call(this, event)">',
-            '<div class="f-grid-head" onmousedown="flyingon.Grid.onmousedown.call(this, event)">',
+        writer.push(' onclick="flyingon.Grid.onclick.call(this, event)" onkeydown="flyingon.Grid.onkeydown.call(this, event)"',
+                ' onmousedown="flyingon.Grid.onmousedown.call(this, event)">',
+            '<div class="f-grid-head">',
                 '<div class="f-grid-group-box" style="height:', group, 'px;line-height:', group, 'px;', group < 2 ? 'display:none;' : '', '"></div>',
                 '<div class="f-grid-column-head" style="height:', header, 'px;', header < 2 ? 'display:none;' : '', '" onmouseover="flyingon.Grid.onmouseover.call(this, event)">', 
                     block,
@@ -15118,39 +14988,46 @@ flyingon.renderer('Grid', function (base) {
     };
     
 
-    //同步使用tab造成焦点位置变化的问题
-    function sync_focus() {
+    flyingon.Grid.onmousedown = function (e) {
 
-        var dom = document.activeElement,
-            cell,
+        var dom = e.target || e.srcElement,
             grid,
-            any,
-            x;
+            cell,
+            any;
 
-        if (dom && (cell = flyingon.findControl(dom)))
+        if (any = dom.getAttribute('column-name'))
         {
-            grid = cell.parent;
+            check_drag(this, dom, null, any, 1);
+        }
+        else
+        {
+            grid = flyingon.findControl(this);
+            cell = flyingon.findControl(dom);
 
-            change_focus(grid, cell);
-            grid.__set_current(cell.row);
-
-            dom = cell.view;
-            any = dom.parentNode;
-
-            x = dom.offsetLeft;
-
-            if (x < grid.scrollLeft || x + dom.offsetWidth > any.offsetWidth)
+            while (cell)
             {
-                grid.view_scroll.scrollLeft = cell.column.__start;
-            }
+                if (cell.parent === grid)
+                {
+                    if (cell.row) //数据行
+                    {
+                        if (!cell.__column_check)
+                        {
+                            change_focus(grid, cell);
+                            grid.__set_current(cell.row);
+                        }
+                    }
+                    else if (any = cell.column) //列头
+                    {
+                        check_drag(this, dom, any, '', (cell.columnSpan | 0) + 1);
+                    }
 
-            if (dom.offsetTop + dom.offsetHeight > any.offsetHeight)
-            {
-                grid.view_scroll.scrollTop = dom.offsetTop - 10;
+                    break;
+                }
+
+                cell = cell.parent;
             }
         }
     };
-
 
 
     flyingon.Grid.onclick = function (e) {
@@ -15178,98 +15055,14 @@ flyingon.renderer('Grid', function (base) {
                     break;
 
                 default:
-                    if ((any = flyingon.findControl(dom)) && !any.__column_check)
+                    if ((any = flyingon.findControl(dom)) &&
+                        !any.row && any.column &&
+                        !any.__column_check &&
+                        !any.columnSpan && any.column.name()) //列头且无跨列
                     {
-                        if (any.row) //数据行
-                        {
-                            change_focus(grid, any);
-                            grid.__set_current(any.row);
-                        }
-                        else if (any.column && !any.columnSpan && any.column.name()) //列头且无跨列
-                        {
-                            sort_column(grid, any);
-                        }
+                        sort_column(grid, any);
                     }
                     break;
-            }
-        }
-    };
-
-
-    function change_expand(grid, row, dom, name) {
-
-        dom.className = 'f-grid-' + name;
-        dom.setAttribute('tag', name);
-
-        if ((dom = dom.nextSibling) && dom.className.indexOf('f-grid-icon') >= 0)
-        {
-            var icon = grid.onicon;
-
-            if (icon)
-            {
-                icon = icon.call(grid, row, dom.parentNode.column);
-            }
-
-            if (!icon)
-            {
-                icon = 'f-grid-icon-' + name;
-            }
-
-            dom.className = 'f-grid-icon ' + icon;
-        }
-    };
-
-
-    function change_focus(grid, cell) {
-
-        var focus = grid.__focus_cell;
-
-        if (focus !== cell)
-        {
-            if (focus)
-            {
-                focus.view.className = focus.view.className.replace(' f-grid-cell-focus', '');
-            }
-
-            if (grid.__focus_cell = cell)
-            {
-                cell.view.className += ' f-grid-cell-focus';
-            }
-        }
-    };
-
-
-    function sort_column(grid, cell) {
-
-        var dom = grid.view_sort,
-            desc = dom.cell === cell && !dom.desc;
-
-        dom.cell = cell;
-        dom.desc = desc;
-        dom.className = 'f-grid-sort' + (desc ? ' f-grid-sort-desc' : '');
-
-        grid.sort(cell.column.name(), desc);
-
-        sync_sort(dom);
-    };
-
-
-    function sync_sort(dom) {
-
-        var cell = dom.cell,
-            view,
-            any;
-            
-        if (cell && (view = cell.view))
-        {
-            if (any = view.parentNode)
-            {
-                dom.style.left = any.offsetLeft + view.offsetLeft + view.offsetWidth - 18 + 'px';
-                dom.style.top = view.offsetTop + (view.offsetHeight - 16 >> 1) + 'px';
-            }
-            else
-            {
-                dom.style.left = '-100px';
             }
         }
     };
@@ -15338,6 +15131,143 @@ flyingon.renderer('Grid', function (base) {
     };
 
 
+    flyingon.Grid.onscroll = function () {
+
+        var grid = flyingon.findControl(this),
+            x = this.scrollLeft,
+            y = this.scrollTop;
+
+        if (grid.scrollLeft !== x)
+        {
+            grid.renderer.__do_hscroll(grid, grid.scrollLeft = x);
+            sync_sort(grid.view_sort);
+        }
+
+        if (grid.scrollTop !== y)
+        {
+            grid.renderer.__do_vscroll(grid, grid.scrollTop = y);
+        }
+    };
+
+
+    //同步使用tab造成焦点位置变化的问题
+    function sync_focus() {
+
+        var dom = document.activeElement,
+            cell,
+            grid,
+            any,
+            x;
+
+        if (dom && (cell = flyingon.findControl(dom)))
+        {
+            grid = cell.parent;
+
+            change_focus(grid, cell);
+            grid.__set_current(cell.row);
+
+            dom = cell.view;
+            any = dom.parentNode;
+
+            x = dom.offsetLeft;
+
+            if (x < grid.scrollLeft || x + dom.offsetWidth > any.offsetWidth)
+            {
+                grid.view_scroll.scrollLeft = cell.column.__start;
+            }
+
+            if (dom.offsetTop + dom.offsetHeight > any.offsetHeight)
+            {
+                grid.view_scroll.scrollTop = dom.offsetTop - 10;
+            }
+        }
+    };
+
+
+    function change_expand(grid, row, dom, name) {
+
+        dom.className = 'f-grid-' + name;
+        dom.setAttribute('tag', name);
+
+        if ((dom = dom.nextSibling) && dom.className.indexOf('f-grid-icon') >= 0)
+        {
+            var icon = grid.onicon;
+
+            if (icon)
+            {
+                icon = icon.call(grid, row, dom.parentNode.column);
+            }
+
+            if (!icon)
+            {
+                icon = 'f-grid-icon-' + name;
+            }
+
+            dom.className = 'f-grid-icon ' + icon;
+        }
+    };
+
+
+    function change_focus(grid, cell) {
+
+        var column = cell.column;
+
+        if (column && column.focused())
+        {
+            var focus = grid.__focus_cell;
+
+            if (focus !== cell)
+            {
+                if (focus)
+                {
+                    focus.view.className = focus.view.className.replace(' f-grid-cell-focus', '');
+                }
+
+                if (grid.__focus_cell = cell)
+                {
+                    cell.view.className += ' f-grid-cell-focus';
+                }
+            }
+        }
+    };
+
+
+    function sort_column(grid, cell) {
+
+        var dom = grid.view_sort,
+            desc = dom.cell === cell && !dom.desc;
+
+        dom.cell = cell;
+        dom.desc = desc;
+        dom.className = 'f-grid-sort' + (desc ? ' f-grid-sort-desc' : '');
+
+        grid.sort(cell.column.name(), desc);
+
+        sync_sort(dom);
+    };
+
+
+    function sync_sort(dom) {
+
+        var cell = dom.cell,
+            view,
+            any;
+            
+        if (cell && (view = cell.view))
+        {
+            if (any = view.parentNode)
+            {
+                dom.style.left = any.offsetLeft + view.offsetLeft + view.offsetWidth - 18 + 'px';
+                dom.style.top = view.offsetTop + (view.offsetHeight - 16 >> 1) + 'px';
+            }
+            else
+            {
+                dom.style.left = '-100px';
+            }
+        }
+    };
+
+
     function resize_start() {
 
         click_disabled = true;
@@ -15381,38 +15311,6 @@ flyingon.renderer('Grid', function (base) {
     };
 
 
-
-    flyingon.Grid.onmousedown = function (e) {
-
-        var dom = e.target || e.srcElement,
-            cell,
-            any;
-
-        if (input_tag.indexOf(dom.tagName) < 0)
-        {
-            if (any = dom.getAttribute('column-name'))
-            {
-                check_drag(this, dom, null, any, 1);
-            }
-            else
-            {
-                cell = flyingon.findControl(dom);
-
-                while (cell)
-                {
-                    if (any = cell.column)
-                    {
-                        check_drag(this, dom, any, '', (cell.columnSpan | 0) + 1);
-                        break;
-                    }
-
-                    cell = cell.parent;
-                }
-            }
-        }
-    };
-
-
     function check_drag(view, dom, column, name, count) {
 
         var grid = flyingon.findControl(view),
@@ -15440,7 +15338,9 @@ flyingon.renderer('Grid', function (base) {
             event,
             start_drag,
             do_drag,
-            end_drag);
+            end_drag,
+            '',
+            true);
     };
 
 
@@ -15468,8 +15368,10 @@ flyingon.renderer('Grid', function (base) {
             dom.style.cssText = 'position:absolute;z-index:2;left:' 
                 + dom.offsetLeft + 'px;top:' 
                 + dom.offsetTop + 'px;';
+            
+            //记录原分组信息
+            this.groups = (any = grid.__groups).join(' ');
 
-            any = grid.__groups;
             any.splice(any.indexOf(this.name), 1);
 
             //清空原分组信息避免拖动结束后无法设置groups
@@ -15675,7 +15577,17 @@ flyingon.renderer('Grid', function (base) {
                 any = list.join(' ');
             }
 
-            grid.groups(any);
+            //如果与拖动前相同的分组信息则不刷新数据
+            if (any === this.groups)
+            {
+                grid.__groups = any.split(' ');
+                grid.storage().groups = any;
+                grid.renderer.__render_group(grid);
+            }
+            else
+            {
+                grid.groups(any);
+            }
         }
         else 
         {
@@ -15724,26 +15636,6 @@ flyingon.renderer('Grid', function (base) {
             {
                 splice.call(columns, newIndex, 0, list[0]);
             }
-        }
-    };
-
-
-
-    flyingon.Grid.onscroll = function () {
-
-        var grid = flyingon.findControl(this),
-            x = this.scrollLeft,
-            y = this.scrollTop;
-
-        if (grid.scrollLeft !== x)
-        {
-            grid.renderer.__do_hscroll(grid, grid.scrollLeft = x);
-            sync_sort(grid.view_sort);
-        }
-
-        if (grid.scrollTop !== y)
-        {
-            grid.renderer.__do_vscroll(grid, grid.scrollTop = y);
         }
     };
 
@@ -16159,7 +16051,7 @@ flyingon.renderer('Grid', function (base) {
         }
 
         any = (rows.__arrange_size / rowHeight) | 0;
-        any += start + 3; //多渲染部分行以减少滚动处理
+        any += start + 5; //多渲染部分行以减少滚动处理
 
         if (any < end)
         {
@@ -16559,7 +16451,7 @@ flyingon.renderer('Tab', function (base) {
         
         control.defaultClass += ' f-tab-direction-' + storage.direction;
         
-        render.call(this, writer, control, false);
+        render.call(this, writer, control);
         
         writer.push('><div class="f-tab-head f-tab-theme-', storage.theme, '">',
                     '<div class="f-tab-line"></div>',
@@ -17010,17 +16902,16 @@ flyingon.renderer('TabPage', 'Panel', function (base) {
 
         var node = control.view_head = document.createElement('span'),
             writer = [],
-            encode = flyingon.html_encode,
             storage = control.__storage || control.__defaults,
             any;
 
         node.className = 'f-tab-item' + (control.selected() ? ' f-tab-selected' : '');
 
         writer.push('<a class="f-tab-link f-back">',
-            '<span class="f-tab-icon ', (any = storage.icon) ? encode(any) : 'f-tab-icon-none', '"></span>',
-            '<span class="f-tab-text">', (any = storage.text) ? encode(any) : '', '</span>');
+            '<span class="f-tab-icon ', (any = storage.icon) ? any : 'f-tab-icon-none', '"></span>',
+            '<span class="f-tab-text">', (any = storage.text) ? flyingon.html_encode(any) : '', '</span>');
 
-        if ((any = storage.buttons) && (any = encode(any).replace(/(\w+)\W*/g, '<span class="f-tab-button $1" tag="button"></span>')))
+        if ((any = storage.buttons) && (any = any.replace(/(\w+)\W*/g, '<span class="f-tab-button $1" tag="button"></span>')))
         {
             writer.push(any);
         }
@@ -17071,19 +16962,19 @@ flyingon.renderer('TabPage', 'Panel', function (base) {
 
 
 
-    this.icon = function (control, value) {
+    this.icon = function (control, view, value) {
 
         control.view_head.firstChild.firstChild.className = 'f-tab-icon ' + (value || 'f-tab-icon-none');
     };
 
 
-    this.text = function (control, value) {
+    this.text = function (control, view, value) {
 
         control.view_head.firstChild.firstChild.nextSibling[this.__text_name] = value;
     };
 
 
-    this.buttons = function (control, value) {
+    this.buttons = function (control, view, value) {
 
         var last = (view = control.view_head).firstChild.lastChild,
             node = last.previousSibling;
@@ -17102,7 +16993,7 @@ flyingon.renderer('TabPage', 'Panel', function (base) {
     };
 
 
-    this.closable = function (control, value) {
+    this.closable = function (control, view, value) {
 
         control.view_head.firstChild.lastChild.style.display = value ? '' : 'none';
     };
@@ -17484,30 +17375,17 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
 
     this.render = function (writer, control, render) {
 
-        var storage = control.__storage || control.__defaults,
-            head = storage.header,
-            text = storage.text,
-            any;
+        var head = (control.__storage || control.__defaults).header;
 
         writer.push('<div');
         
         render.call(this, writer, control);
         
-        if (text)
-        {
-            text = flyingon.html_encode(text);
-        }
-
-        if (any = control.format)
-        {
-            text = any.call(control, text);
-        }
-
         writer.push('>',
             '<div class="f-dialog-head" class="f-back" style="height:', head, 'px;line-height:', head, 'px;" onmousedown="flyingon.Dialog.onmousedown.call(this, event)" onclick="flyingon.Dialog.onclick.call(this, event)">',
-                '<span class="f-dialog-icon ', (any = storage.icon) ? any : '" style="display:none;', '"></span>',
-                '<span class="f-dialog-text">', text, '</span>',
-                '<span class="f-dialog-close"', storage.closable ? '' : ' style="display:none;"', ' tag="close"></span>',
+                '<span class="f-dialog-icon" style="display:none;', '"></span>',
+                '<span class="f-dialog-text"></span>',
+                '<span class="f-dialog-close" tag="close"></span>',
                 '<span class="f-dialog-line"></span>',
             '</div>',
             '<div class="f-dialog-body" style="top:', head, 'px;">');
@@ -17582,21 +17460,17 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
 
     this.header = function (control, view, value) {
 
-        view.firstChild.style.height = view.lastChild.style.top = value + 'px';
+        var style = view.firstChild.style;
+        style.height = style.lineHeight = view.lastChild.style.top = value + 'px';
     };
 
 
     this.text = function (control, view, value) {
 
-        view = view.firstChild.firstChild.nextSibling;
+        view = view.firstChild.children[1];
 
         if (control.format)
         {
-            if (value)
-            {
-                value = flyingon.html_encode(value);
-            }
-
             view.innerHTML = control.format(value);
         }
         else
@@ -17616,7 +17490,7 @@ flyingon.renderer('Dialog', 'Panel', function (base) {
 
     this.closable = function (control, view, value) {
 
-        view.firstChild.lastChild.style.display = value ? '' : 'none';
+        view.firstChild.children[2].style.display = value ? '' : 'none';
     };
 
 
@@ -18096,10 +17970,70 @@ Object.extend('Control', function () {
 
 
 
-    //同步变更到渲染器的方法
-    this.__to_render = function (value, _, name) {
+    //渲染指定属性值
+    this.render = function (name, value, oldValue) {
 
-        this.rendered && this.renderer.set(this, name, value);
+        var patch = this.__view_patch;
+        
+        if (patch)
+        {
+            patch[name] = value;
+        }
+        else
+        {
+            this.renderer.set(this, name, value);
+        }
+    };
+
+
+    //渲染文本方法
+    this.__render_text = function () {
+
+        var patch = this.__view_patch;
+        
+        if (patch)
+        {
+            patch.text = true;
+        }
+        else
+        {
+            this.renderer.set(this, 'text');
+        }
+    };
+
+
+    //渲染值方法
+    this.__render_value = function () {
+
+        var patch = this.__view_patch;
+        
+        if (patch)
+        {
+            patch.value = true;
+        }
+        else
+        {
+            this.renderer.set(this, 'value');
+        }
+    };
+
+
+    //生成指定名称的渲染方法
+    this.__render_fn = function (name) {
+
+        return function () {
+
+            var patch = this.__view_patch;
+            
+            if (patch)
+            {
+                patch[name] = true;
+            }
+            else
+            {
+                this.renderer.set(this, name);
+            }
+        };
     };
 
 
@@ -18113,21 +18047,21 @@ Object.extend('Control', function () {
         
         group: 'layout',
 
-        set: function (value) {
+        set: function (name, value) {
 
             var any;
 
             this.__visible = value;
             
-            if (this.rendered)
+            if (this.view)
             {
                 if (any = this.__view_patch)
                 {
-                    any.visible = value;
+                    any[name] = value;
                 }
                 else
                 {
-                    this.renderer.set(this, 'visible', value);
+                    this.renderer.set(this, name, value);
                 }
             }
 
@@ -18287,7 +18221,7 @@ Object.extend('Control', function () {
 
     
     //设置样式
-    this['style:'] = function (name, value) {
+    this['style:'] = this.__set_style = function (name, value) {
 
         var style = this.__style,
             watches,
@@ -18318,10 +18252,7 @@ Object.extend('Control', function () {
             style.cssText = false;
         }
 
-        if (this.rendered)
-        {
-            (this.__style_patch || style_patch(this))[name] = value;
-        }
+        (this.__style_patch || style_patch(this))[name] = value;
     };
 
 
@@ -18329,7 +18260,6 @@ Object.extend('Control', function () {
     function set_style(style, list) {
 
         var watches = this.__watches,
-            render = this.rendered,
             index = 0,
             length = list.length,
             name,
@@ -18370,13 +18300,13 @@ Object.extend('Control', function () {
                     this.notify('style:' + name, value, any);
                 }
 
-                if (render)
+                if (patch)
                 {
-                    (patch || (patch = this.__style_patch || style_patch(this)))[name] = value;
+                    patch[name] = value;
                 }
                 else
                 {
-                    patch = true;
+                    (patch = this.__style_patch || style_patch(this))[name] = value;
                 }
             }
         }
@@ -18399,19 +18329,19 @@ Object.extend('Control', function () {
     //创建样式补丁
     function style_patch(self) {
 
-        var view = self.__view_patch,
-            patch = self.__style_patch = {};
+        var patch = self.__view_patch,
+            style = self.__style_patch = {};
         
-        if (view)
+        if (patch)
         {
-            view.__style_patch = patch;
+            patch.__style_patch = style;
         }
         else
         {
-            self.renderer.set(self, '__style_patch', patch);
+            self.renderer.set(self, '__style_patch', style);
         }
 
-        return patch;
+        return style;
     };
 
 
@@ -18434,67 +18364,32 @@ Object.extend('Control', function () {
 
 
 
-    //字体颜色
-    this.defineProperty('color', '', {
-
-        set: this.__to_render
-    });
-    
-
     //是否禁用
     this.defineProperty('disabled', false, {
 
-        set: function (value) {
-
-            var any;
-
-            this.__disabled = value;
-
-            if (any = this.__view_patch)
-            {
-                any.disabled = value;
-            }
-            else
-            {
-                this.renderer.set(this, 'disabled', value);
-            }
-        }
+        set: this.render
     });
     
 
-    //定义attribute属性
-    define = function (self, name, defaultValue, attributes) {
-
-        attributes = attributes || {};
-
-        attributes.set = function (value) {
-
-            var any;
-
-            if (any = this.__view_patch)
-            {
-                any[name] = value;
-            }
-            else
-            {
-                this.renderer.set(this, name, value);
-            }
-        };
-
-        self.defineProperty(name, defaultValue, attributes);
-    };
-
-    
     //tab顺序
-    define(this, 'tabindex', 0);
+    this.defineProperty('tabindex', 0, {
+
+        set: this.render   
+    });
     
     
     //提示信息
-    define(this, 'title', '');
+    this.defineProperty('title', '', {
+
+        set: this.render   
+    });
 
 
     //快捷键
-    define(this, 'accesskey', '');
+    this.defineProperty('accesskey', '', {
+
+        set: this.render   
+    });
     
     
     
@@ -18789,13 +18684,13 @@ Object.extend('Control', function () {
 
     this.focus = function () {
 
-        this.rendered && this.renderer.focus(this);
+        this.view && this.renderer.focus(this);
     };
 
 
     this.blur = function () {
 
-        this.rendered && this.renderer.blur(this);
+        this.view && this.renderer.blur(this);
     };
     
            
@@ -18999,10 +18894,10 @@ flyingon.HtmlElement = flyingon.Control.extend(function (base) {
     //内容文本
     this.defineProperty('text', '', {
         
-        set: function (value) {
+        set: function (name, value) {
 
             this.length > 0 && this.splice(0);
-            this.rendered && this.renderer.set(this, 'text', value);
+            this.renderer.set(this, name, value);
         }
     });
 
@@ -19061,27 +18956,20 @@ flyingon.Control.extend('Label', function (base) {
 
 
     
-    function define(self, name, defaultValue) {
-
-        self.defineProperty(name, defaultValue, {
-            
-            set: function () {
-
-                this.rendered && this.renderer.set(this, 'text');
-            }
-        });
-    };
-
-
     //标签文本
-    define(this, 'text', '');
+    this.defineProperty('text', '', {
+        
+        set: this.__render_text
+    });
 
 
     //文本是否html
-    define(this, 'html', false);
+    this.defineProperty('html', false, {
+        
+        set: this.__render_text
+    });
 
 
-    
     
     //测量自动大小
     this.onmeasure = function (auto) {
@@ -19113,14 +19001,14 @@ flyingon.Control.extend('Icon', function (base) {
 
     this.defineProperty('icon', '', {
             
-        set: this.__to_render
+        set: this.render
     });
 
 
     this.defineProperty('size', 16, {
         
         dataType: 'int',
-        set: this.__to_render
+        set: this.render
     });
 
 
@@ -19133,57 +19021,53 @@ flyingon.Control.extend('Icon', function (base) {
 flyingon.Control.extend('Button', function (base) {
    
     
-
-    this.defaultWidth = 80;
-
-
     
     //图标
     this.defineProperty('icon', '', {
 
-        set: this.__to_render    
+        set: this.render    
     });
 
 
     //图标大小
     this['icon-size'] = this.defineProperty('iconSize', 16, {
 
-        set: this.__to_render    
+        set: this.render    
     });
 
 
     //图标和文字是否竖排
     this.defineProperty('vertical', false, {
 
-        set: this.__to_render    
+        set: this.render    
     });
 
 
     //文本内容
     this.defineProperty('text', '', {
 
-        set: this.__to_render    
+        set: this.__render_text    
     });
     
     
     //文本内容是否html格式
     this.defineProperty('html', false, {
 
-        set: this.__to_render    
+        set: this.__render_text   
     });
 
 
     //是否显示下拉箭头
     this.defineProperty('dropdown', false, {
 
-        set: this.__to_render    
+        set: this.render    
     });
 
 
     //下拉菜单
     this.defineProperty('menu', null, {
 
-        set: function (value, oldValue) {
+        set: function (name, value, oldValue) {
 
             if (this.__menu = value)
             {
@@ -19248,21 +19132,21 @@ flyingon.Control.extend('LinkButton', function (base) {
     //文本内容
     this.defineProperty('text', '', {
 
-        set: this.__to_render   
+        set: this.render   
     });
     
     
     //文本内容是否html格式
     this.defineProperty('html', false, {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
     //链接地址
     this.defineProperty('href', '', {
 
-        set: this.__to_render   
+        set: this.render   
     });
     
 
@@ -19299,13 +19183,13 @@ flyingon.Control.extend('Image', function (base) {
 
     this.defineProperty('src', '', {
             
-        set: this.__to_render
+        set: this.render
     });
 
 
     this.defineProperty('alt', '', {
             
-        set: this.__to_render
+        set: this.render
     });
 
 
@@ -19332,7 +19216,7 @@ flyingon.Control.extend('Slider', function (base) {
 
             set: function () {
 
-                if (this.rendered && !this.__location_dirty)
+                if (this.view && !this.__location_dirty)
                 {
                     this.renderer.set(this, 'refresh');
                 }
@@ -19384,7 +19268,7 @@ flyingon.Control.extend('ProgressBar', function (base) {
             return value > 100 ? 100 : value;
         },
 
-        set: this.__to_render
+        set: this.render
     });
 
 
@@ -19822,7 +19706,7 @@ flyingon.Control.extend('Panel', function (base) {
         group: 'locate',
         query: true,
 
-        set: function (value) {
+        set: function (name, value) {
 
             this.__layout = null;
             this.__arrent_dirty < 2 && this.__arrange_delay(2);
@@ -19914,9 +19798,9 @@ flyingon.Panel.extend('GroupBox', function (base) {
     //页头高度
     this.defineProperty('header', 25, {
 
-        set: function (value) {
+        set: function (name, value) {
             
-            this.rendered && this.renderer.set(this, 'header', value);
+            this.view && this.renderer.set(this, name, value);
             this.__update_dirty || this.invalidate();
         }
     });
@@ -19926,21 +19810,21 @@ flyingon.Panel.extend('GroupBox', function (base) {
     //文字对齐
     this.defineProperty('align', 'left', {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
     //图标
     this.defineProperty('icon', '', {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
     //text
     this.defineProperty('text', '', {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
@@ -19950,16 +19834,16 @@ flyingon.Panel.extend('GroupBox', function (base) {
     //2: 可折叠且显示折叠图标
     this.defineProperty('collapsable', 0, {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
     //是否折叠
     this.defineProperty('collapsed', false, {
 
-        set: function (value) {
+        set: function (name, value) {
 
-            this.rendered && this.renderer.set(this, 'collapsed', value);
+            this.view && this.renderer.set(this, name, value);
 
             if (!value && (value = this.mutex()))
             {
@@ -20183,16 +20067,10 @@ flyingon.Control.extend('ListBox', function (base) {
 
 
 
-    function define(self, name, defaultValue, clear) {
+    function render() {
 
-        return self.defineProperty(name, defaultValue, {
-
-            set: function () {
-
-                this.__template = null;
-                this.__list && this.renderer.set(this, 'content');
-            }
-        });
+        this.__template = null;
+        this.__data_list && this.renderer.set(this, 'content');
     };
 
 
@@ -20201,32 +20079,47 @@ flyingon.Control.extend('ListBox', function (base) {
     //none
     //radio
     //checkbox
-    define(this, 'checked', 'none');
+    this.defineProperty('checked', 'none', {
+
+        set: render   
+    });
 
 
     //指定渲染列数
     //0     在同一行按平均宽度渲染
     //大于0 按指定的列数渲染
-    define(this, 'columns', 1);
+    this.defineProperty('columns', 1, {
+
+        set: render   
+    });
 
 
     //是否可清除
-    define(this, 'clear', false);
+    this.defineProperty('clear', false, {
+
+        set: render   
+    });
 
 
     //子项模板
-    define(this, 'template', null);
+    this.defineProperty('template', null, {
+
+        set: render   
+    });
 
 
     //子项高度
-    this['item-height'] = define(this, 'itemHeight', 21);
+    this['item-height'] = this.defineProperty('itemHeight', 21, {
+
+        set: render   
+    });
 
 
 
     //列表项集合
     this.defineProperty('items', null, {
 
-        set: function (value) {
+        set: function (name, value) {
 
             //转换成flyingon.DataList
             flyingon.DataList.create(value, set_list, this);
@@ -20236,18 +20129,15 @@ flyingon.Control.extend('ListBox', function (base) {
 
     function set_list(list) {
 
-        this.__list = list;
-        this.rendered && this.renderer.set(this, 'content');
+        this.__data_list = list;
+        this.renderer.set(this, 'content');
     };
 
 
     //默认选中值
     this.defineProperty('value', '', {
 
-        set: function (value) {
-
-            this.rendered && this.renderer.set(this, 'change');
-        }
+        set: this.__render
     });
 
     
@@ -20264,23 +20154,20 @@ flyingon.Control.extend('ListBox', function (base) {
 flyingon.Control.extend('RadioButton', function (base) {
 
 
-    this.defineProperty('name', false, {
+    this.defineProperty('name', '', {
 
-        set: this.__to_render
+        set: this.render
     });
 
 
     this.value = this.defineProperty('checked', false, {
 
-        set: this.__to_render
+        set: this.render
     });
 
 
     //是否只读
-    this.defineProperty('readonly', false, {
-
-        set: this.__to_render
-    });
+    this.readonly = this.disabled;
     
 
 }).register();
@@ -20291,23 +20178,20 @@ flyingon.Control.extend('RadioButton', function (base) {
 flyingon.Control.extend('CheckBox', function (base) {
 
 
-    this.defineProperty('name', false, {
+    this.defineProperty('name', '', {
 
-        set: this.__to_render
+        set: this.render
     });
 
 
     this.value = this.defineProperty('checked', false, {
 
-        set: this.__to_render
+        set: this.render
     });
 
 
     //是否只读
-    this.defineProperty('readonly', false, {
-
-        set: this.__to_render   
-    });
+    this.readonly = this.disabled;
     
 
 }).register();
@@ -20324,26 +20208,37 @@ flyingon.fragment('f-TextBox', function () {
     //是否只读
     this.defineProperty('readonly', false, {
 
-        set: this.__to_render   
+        set: this.render   
     });
     
 
 
     this.selectionStart = function (value) {
         
-        return this.renderer.selectionStart(value);
+        if (this.view)
+        {
+            return this.renderer.selectionStart(this, value);
+        }
+
+        return value === void 0 ? 0 : this;
     };
 
 
     this.selectionEnd = function (value) {
 
-        return this.renderer.selectionEnd(value);
+        if (this.view)
+        {
+            return this.renderer.selectionEnd(this, value);
+        }
+
+        return value === void 0 ? 0 : this;
     };
 
 
     this.select = function () {
 
-        return this.renderer.select();
+        this.renderer.select(this);
+        return this;
     };
 
 
@@ -20363,55 +20258,22 @@ flyingon.Control.extend('TextBox', function (base) {
 
 
 
+    //无值时提醒信息
+    this.defineProperty('placeholder', '', {
+
+        set: this.__render_value
+    });
+
+
     this.text = this.defineProperty('value', '', {
 
-        set: this.__to_render
+        set: this.__render_value
     });
-
-
-    this.defineProperty('placehodler', '', {
-
-        set: this.__to_render
-    });
-
-
-
-    this.__to_value = function (text) {
-
-        return text;
-    };
 
 
 
     flyingon.fragment('f-TextBox', this);
     
-
-
-    this.__do_change = function (value) {
-
-        var control = flyingon.findControl(this),
-            value;
-
-        try
-        {
-            control.rendered = false;
-            
-            value = control.__to_value(this.value);
-
-            if (value !== control.value())
-            {
-                control.value(value);
-                control.trigger('change', 'value', value);
-            }
-
-            this.value = control.text();
-        }
-        finally
-        {
-            control.rendered = true;
-        }
-    };
-
 
 
 }).register();
@@ -20423,106 +20285,6 @@ flyingon.TextBox.extend('Password', function (base) {
 
 
     this.__type = 'password';
-
-
-
-}).register();
-
-
-
-
-flyingon.TextBox.extend('Number', function (base) {
-
-
-    //注: 不同浏览器toFixed有差异, chrome使用的是银行家舍入规则
-    //银行家舍入: 所谓银行家舍入法, 其实质是一种四舍六入五取偶(又称四舍六入五留双)法
-    //简单来说就是: 四舍六入五考虑, 五后非零就进一, 五后为零看奇偶, 五前为偶应舍去, 五前为奇要进一
-
-    var pow = Math.pow;
-
-    var round = Math.round;
-
-
-
-    this.defineProperty('value', 0, { set: render });
-
-
-    //小数位数
-    this.defineProperty('scale', 0, {
-
-        dataType: 'int',
-
-        check: function (value) {
-
-            return value > 0 ? value : 0;
-        },
-
-        set: render
-    });
-
-
-    //是否显示千分位
-    this.defineProperty('thousands', false, { set: render });
-
-
-    //格式化
-    this.defineProperty('format', '', { set: render });
-
-
-
-    function render() {
-
-        this.rendered && this.renderer.set(this, 'value');
-    };
-
-
-    this.text = function () {
-
-        var storage = this.__storage || this.__defaults,
-            value = storage.value,
-            scale = storage.scale,
-            any;
-
-        if (scale > 0)
-        {
-            any = pow(10, scale);
-
-            //先四舍五入处理toFixed浏览器差异
-            //此处不能用a + 0.5 | 0的方法来进行四舍五入运算,位运算精度太小
-            value = (round(value * any) / any).toFixed(scale); 
-        }
-        else
-        {
-            value = '' + (value | 0);
-        }
-
-        if (storage.thousands)
-        {
-            value = value.replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
-
-            if (any > 3)
-            {
-                any = value.split('.');
-                any[1] = any[1].replace(/(\d{3})(?=(\d{1,3})+)/g, '$1,');
-
-                value = any.join('.');
-            }
-        }
-        
-        return (any = storage.format) ? any.replace('{0}', value) : value;
-    };
-
-
-
-    this.__to_value = function (text) {
-
-        if (text = text.match(/[\d,.]+/))
-        {
-            return parseFloat(text[0].replace(/[,]/g, ''));
-        }
-
-        return 0;
-    };
 
 
 
@@ -20543,7 +20305,7 @@ flyingon.Control.extend('Memo', function (base) {
 
     this.text = this.defineProperty('value', '', {
 
-        set: this.__to_render
+        set: this.render
     });
 
 
@@ -20557,55 +20319,71 @@ flyingon.Control.extend('Memo', function (base) {
 
 
 
-flyingon.TextBox.extend('TextButton', function (base) {
+flyingon.Control.extend('TextButton', function (base) {
 
 
 
     //弹出层控件
     var cache;
 
+    //渲染button及buttonSize的方法
+    var render = this.__render_fn('button');
 
 
-    function set_value() {
-
-        this.rendered && this.renderer.set(this, 'value');
-    };
+    //类型
+    this.__type = '';
 
 
-    //格式化
-    this.defineProperty('format', '', { 
-        
-        set: set_value
-    });
+
+    flyingon.fragment('f-TextBox', this);
+
 
 
     //是否可输入
     this.defineProperty('inputable', false, { 
         
-        set: this.__to_render 
+        set: this.render
     });
 
 
     //按钮图标
-    this.defineProperty('icon', '', { 
+    this.defineProperty('icon', '', {
         
-        set: this.__to_render 
+        set: this.render
+    });
+
+
+    //按钮显示模式
+    //show      总是显示
+    //none      不显示
+    //hover     鼠标划过时显示
+    this.defineProperty('button', 'show', {
+        
+        set: render
     });
 
 
     //按钮大小
-    this.defineProperty('button', 16, { 
+    this['button-size'] = this.defineProperty('buttonSize', 20, {
         
-        set: this.__to_render 
+        set: render
+    });
+
+
+
+    //无值时提醒信息
+    this.defineProperty('placeholder', '', {
+
+        set: this.__render_value
     });
 
 
     //值
-    this.defineProperty('value', null, { 
+    this.defineProperty('value', '', {
         
-        set: set_value 
+        dataType: 'object',
+        set: this.__render_value
     });
-
 
 
     this.text = function (value) {
@@ -20620,7 +20398,6 @@ flyingon.TextBox.extend('TextButton', function (base) {
 
         this.value(value);
     };
-
 
 
     this.__to_value = function (text) {
@@ -20667,21 +20444,133 @@ flyingon.TextBox.extend('TextButton', function (base) {
 
 
 
+//数字控件公用属性, 同时给数字控件及表格数字列使用
+flyingon.fragment('f-Number', function (change) {
+
+
+    //小数位数
+    this.defineProperty('digits', 0, {
+
+        dataType: 'int',
+
+        check: function (value) {
+
+            return value > 0 ? value : 0;
+        },
+
+        set: change
+    });
+
+
+    //是否显示千分位
+    this.defineProperty('thousands', false, {
+        
+        set: change
+    });
+
+
+    //格式化
+    this.defineProperty('format', '', {
+        
+        set: change
+    });
+
+
+});
+
+
+
+flyingon.TextButton.extend('Number', function (base) {
+
+
+
+    var round = flyingon.round;
+
+
+
+    this.__type = 'up-down';
+
+
+    this.defaultValue('inputable', true);
+
+
+
+    flyingon.fragment('f-Number', this, this.__render_value);
+
+
+
+    this.defineProperty('value', 0, {
+        
+        set: this.__render_value
+    });
+
+
+    this.defineProperty('min', 0, {
+        
+        set: this.__render_value
+    });
+
+
+    this.defineProperty('max', 0, {
+        
+        set: this.__render_value
+    });
+
+
+    this.text = function () {
+
+        var storage = this.__storage || this.__defaults,
+            value = storage.value,
+            digits = storage.digits,
+            any;
+
+        value = round(value, digits, true);
+
+        if (storage.thousands)
+        {
+            value = value.replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
+
+            if (digits > 3)
+            {
+                any = value.split('.');
+                any[1] = any[1].replace(/(\d{3})(?=(\d{1,3})+)/g, '$1,');
+
+                value = any.join('.');
+            }
+        }
+        
+        return (any = storage.format) ? any.replace('{0}', value) : value;
+    };
+
+
+
+    this.__on_click = function (up) {
+
+        this.value(this.value() + (up ? 1 : -1));
+    };
+
+
+    this.__to_value = function (text) {
+
+        if (text = text.match(/[\d,.]+/))
+        {
+            return parseFloat(text[0].replace(/[,]/g, ''));
+        }
+
+        return 0;
+    };
+
+
+
+}).register();
+
+
+
+
 /**
  * 下拉框基本属性(同时给下拉框及表格下拉列使用)
  */
-flyingon.fragment('f-ComboBox', function (set_items, change) {
-
-
-    if (change)
-    {
-        var create = flyingon.create;
-
-        change = function (value, _, name) {
-
-            (this.__storage2 || (this.__storage2 = create(null)))[name] = value;
-        };
-    }
+flyingon.fragment('f-ComboBox', function (change) {
 
 
 
@@ -20689,43 +20578,62 @@ flyingon.fragment('f-ComboBox', function (set_items, change) {
     //none
     //radio
     //checkbox
-    this.defineProperty('checked', 'none', { set: change });
+    this.defineProperty('checked', 'none', {
+
+        set: change 
+    });
 
 
 
     //指定渲染列数
     //0     在同一行按平均宽度渲染
     //大于0 按指定的列数渲染
-    this.defineProperty('columns', 1, { set: change });
+    this.defineProperty('columns', 1, {
+        
+        set: change
+    });
 
 
     //是否生成清除项
-    this.defineProperty('clear', false, { set: change });
+    this.defineProperty('clear', false, {
+        
+        set: change
+    });
 
 
     //子项模板
-    this.defineProperty('template', null, { set: change });
+    this.defineProperty('template', null, {
+        
+        set: change
+    });
 
 
     //子项高度
-    this['item-height'] = this.defineProperty('itemHeight', 21, { set: change });
+    this['item-height'] = this.defineProperty('itemHeight', 21, {
+        
+        set: change
+    });
 
 
     //下拉框宽度
-    this['popup-width'] = this.defineProperty('popupWidth', 'default', { set: change });
+    this['popup-width'] = this.defineProperty('popupWidth', 'default', {
+        
+        set: change
+    });
 
 
     //最大显示项数量
-    this['max-items'] = this.defineProperty('maxItems', 10, { set: change });
-
-
-
-    //下拉列表
-    this.defineProperty('items', null, { set: set_items });
+    this['max-items'] = this.defineProperty('maxItems', 10, {
+        
+        set: change
+    });
 
 
     //多值时的分隔符
-    this.defineProperty('separator', ',', { set: change });
+    this.defineProperty('separator', ',', {
+        
+        set: change
+    });
 
 
 });
@@ -20741,15 +20649,23 @@ flyingon.TextButton.extend('ComboBox', function (base) {
 
 
 
-    this.defaultValue('icon', 'f-combobox-button');
+    this.__type = 'f-combobox-button';
 
 
 
     //扩展下拉框定义
-    flyingon.fragment('f-ComboBox', this, function (value) {
+    flyingon.fragment('f-ComboBox', this, this.render);
 
-        //转换成flyingon.DataList
-        flyingon.DataList.create(value, set_items, this);
+
+
+    //下拉列表
+    this.defineProperty('items', null, { 
+        
+        set: function (name, value) {
+
+            //转换成flyingon.DataList
+            flyingon.DataList.create(value, set_items, this);
+        }
     });
 
 
@@ -20757,17 +20673,14 @@ flyingon.TextButton.extend('ComboBox', function (base) {
     function set_items(list) {
 
         this.__data_list = list;
-        this.rendered && this.renderer.set(this, 'value');
+        this.renderer.set(this, 'value');
     };
 
 
     //获取或设置选中值
     this.defineProperty('value', '', {
 
-        set: function () {
-
-            this.__data_list && this.renderer.set(this, 'value');
-        }
+        set: this.__render_value
     });
 
 
@@ -20870,348 +20783,12 @@ flyingon.TextButton.extend('ComboBox', function (base) {
 
 
 
-/**
- * 下拉框定义
- */
-flyingon.fragment('f-ComboTree', function () {
 
 
 
-    //树风格
-    //default   默认风格
-    //blue      蓝色风格
-    //plus      加减风格
-    //line      线条风格
-    this.defineProperty('theme', 'default');
 
 
-    //是否显示检查框
-    this.defineProperty('checked', false);
 
-
-    //是否显示图标
-    this.defineProperty('icon', true);
-
-
-    //子项高度
-    this['item-height'] = this.defineProperty('itemHeight', 21);
-
-
-    //下拉框宽度
-    this['popup-width'] = this.defineProperty('popupWidth', 'default');
-
-
-  
-});
-
-
-
-flyingon.TextButton.extend('ComboTree', function (base) {
-
-
-    
-    //缓存的树控件
-    var tree_cache; 
-
-
-
-    this.defaultValue('icon', 'f-combotree-button');
-
-
-
-    //扩展下拉框定义
-    flyingon.fragment('f-ComboTree', this);
-
-
-    //默认选中值
-    this.defineProperty('value', '', {
-
-        set: function () {
-
-            this.__list && this.renderer.set(this, 'value');
-        }
-    });
-
-
-
-    this.text = function () {
-
-        var list = this.__list;
-
-        if (list)
-        {
-            var storage = this.__storage || this.__defaults;
-            return list.text(storage.value, storage.checked === 'checkbox' ? storage.separator || ',' : '');
-        }
-
-        return '';
-    };
-
-
-
-    //弹出日历窗口
-    this.popup = this.__on_click = function () {
-
-        var popup = this.__get_popup(),
-            storage = this.__storage || this.__defaults,
-            tree = this.__get_tree(),
-            length,
-            height,
-            any;
-
-        this.__before_popup(popup, tree, storage);
-
-        tree.border(0)
-            .checked(tree.__checked = storage.checked)
-            .columns(any = storage.columns)
-            .clear(storage.clear)
-            .template(storage.template)
-            .itemHeight(height = storage.itemHeight)
-            .width(storage.popupWidth)
-            .separator(storage.separator)
-            .items(storage.items)
-            .value(storage.value);
-
-        if (any > 0)
-        {
-            length = this.__list ? this.__list.length : 0;
-
-            if (storage.clear)
-            {
-                length++;
-            }
-
-            length = Math.min(length, storage.maxItems);
-
-            if (any > 1)
-            {
-                length = (length + any - 1) / any | 0;
-            }
-
-            height *= length;
-        }
-
-        tree.height(height + 2);
-
-        tree.target = this;
-        tree.popup = popup;
-
-        popup.push(tree);
-        popup.show(this);
-    };
-
-
-    this.__before_popup = function (popup, tree, storage) {
-    };
-
-
-    this.__get_tree = function () {
-
-        return tree_cache = new flyingon.tree().on('change', function (e) {
-            
-            this.target.value(e.value);
-
-            if (this.__checked !== 'checkbox')
-            {
-                this.popup.close();
-            }
-
-            this.target.trigger('change', 'value', e.value);
-        });
-    };
-
-
-
-}).register();
-
-
-
-
-/**
- * 下拉框定义
- */
-flyingon.fragment('f-ComboGrid', function () {
-
-
-    //选中类型
-    //none
-    //radio
-    //checkbox
-    this.defineProperty('checked', 'none');
-
-
-
-    //指定渲染列数
-    //0     在同一行按平均宽度渲染
-    //大于0 按指定的列数渲染
-    this.defineProperty('columns', 1);
-
-
-    //是否生成清除项
-    this.defineProperty('clear', false);
-
-
-    //子项模板
-    this.defineProperty('template', null);
-
-
-    //子项高度
-    this['item-height'] = this.defineProperty('itemHeight', 21);
-
-
-    //下拉框宽度
-    this['popup-width'] = this.defineProperty('popupWidth', 'default');
-
-
-    //最大显示项数量
-    this['max-items'] = this.defineProperty('maxItems', 10);
-
-
-
-    //下拉列表
-    this.defineProperty('items', null, {
-
-        set: function (value) {
-
-            //转换成flyingon.DataList
-            flyingon.DataList.create(value, this.__set_items, this);
-        }
-    });
-
-
-    //设置下拉列表
-    this.__set_items = function (list) {
-
-        this.__list = list;
-        this.rendered && this.renderer.set(this, 'value');
-    };
-
-
-    //多值时的分隔符
-    this.defineProperty('separator', ',');
-
-
-});
-
-
-
-flyingon.TextButton.extend('ComboGrid', function (base) {
-
-
-    
-    //缓存的列表控件
-    var listbox_cache; 
-
-
-
-    this.defaultValue('icon', 'f-combogrid-button');
-
-
-
-    //扩展下拉框定义
-    flyingon.fragment('f-ComboBox', this);
-
-
-    //默认选中值
-    this.defineProperty('value', '', {
-
-        set: function () {
-
-            this.__list && this.renderer.set(this, 'value');
-        }
-    });
-
-
-
-    this.text = function () {
-
-        var list = this.__list;
-
-        if (list)
-        {
-            var storage = this.__storage || this.__defaults;
-            return list.text(storage.value, storage.checked === 'checkbox' ? storage.separator || ',' : '');
-        }
-
-        return '';
-    };
-
-
-
-    //弹出日历窗口
-    this.popup = this.__on_click = function () {
-
-        var popup = this.__get_popup(),
-            storage = this.__storage || this.__defaults,
-            listbox = this.__get_listbox(),
-            length,
-            height,
-            any;
-
-        this.__before_popup(popup, listbox, storage);
-
-        listbox.border(0)
-            .checked(listbox.__checked = storage.checked)
-            .columns(any = storage.columns)
-            .clear(storage.clear)
-            .template(storage.template)
-            .itemHeight(height = storage.itemHeight)
-            .width(storage.popupWidth)
-            .separator(storage.separator)
-            .items(storage.items)
-            .value(storage.value);
-
-        if (any > 0)
-        {
-            length = this.__list ? this.__list.length : 0;
-
-            if (storage.clear)
-            {
-                length++;
-            }
-
-            length = Math.min(length, storage.maxItems);
-
-            if (any > 1)
-            {
-                length = (length + any - 1) / any | 0;
-            }
-
-            height *= length;
-        }
-
-        listbox.height(height + 2);
-
-        listbox.target = this;
-        listbox.popup = popup;
-
-        popup.push(listbox);
-        popup.show(this);
-    };
-
-
-    this.__before_popup = function (popup, listbox, storage) {
-    };
-
-
-    this.__get_listbox = function () {
-
-        return listbox_cache = new flyingon.ListBox().on('change', function (e) {
-            
-            this.target.value(e.value);
-
-            if (this.__checked !== 'checkbox')
-            {
-                this.popup.close();
-            }
-
-            this.target.trigger('change', 'value', e.value);
-        });
-    };
-
-
-
-}).register();
 
 
 
@@ -21229,49 +20806,63 @@ flyingon.Control.extend('Calendar', function (base) {
     this.defaultValue('padding', 8);
 
 
-    function define(self, name, defaultValue, type) {
+    function render() {
 
-        self.defineProperty(name, defaultValue, {
-
-            dataType: type,
-
-            set: function () {
-
-                if (this.rendered && !this.__location_dirty)
-                {
-                    this.renderer.set(this, 'refresh');
-                }
-            }
-        });
+        if (this.view && !this.__location_dirty)
+        {
+            this.renderer.set(this, 'refresh');
+        }
     };
 
 
     //日期值
-    define(this, 'value', null, 'date');
+    this.defineProperty('value', null, {
+        
+        dataType: 'date',
+        set: render
+    });
 
 
     //最小可选值
-    define(this, 'min', '');
+    this.defineProperty('min', '', {
+        
+        set: render
+    });
 
 
     //最大可选值
-    define(this, 'max', '');
+    this.defineProperty('max', '', {
+        
+        set: render
+    });
 
 
     //是否编辑年月
-    define(this, 'month', false);
+    this.defineProperty('month', false, {
+        
+        set: render
+    });
 
 
     //是否显示时间
-    define(this, 'time', false);
+    this.defineProperty('time', false, {
+        
+        set: render
+    });
 
 
     //是否显示今天按钮
-    define(this, 'today', false);
+    this.defineProperty('today', false, {
+        
+        set: render
+    });
 
 
     //是否显示清除按钮
-    define(this, 'clear', false);
+    this.defineProperty('clear', false, {
+        
+        set: render
+    });
     
     
     
@@ -21285,10 +20876,7 @@ flyingon.fragment('f-Date', function () {
 
     this.defineProperty('format', 'yyyy/M/dd', {
         
-        set: function () {
-
-            this.rendered && this.renderer.set(this, 'value');
-        }
+        set: this.__render_value
     });
 
 
@@ -21324,24 +20912,21 @@ flyingon.TextButton.extend('Date', function (base) {
     var calendar_cache;
 
 
-    this.defaultValue('icon', 'f-date-button');
+
+    this.__type = 'f-date-button';
+
+
+
+    flyingon.fragment('f-Date', this);
+
 
 
     //日期值
     this.defineProperty('value', null, {
         
         dataType: 'date',
-
-        set: function () {
-
-            this.rendered && this.renderer.set(this, 'value');
-        }
+        set: this.__render_value
     });
-
-
-
-    flyingon.fragment('f-Date', this);
-
 
 
     this.text = function () {
@@ -21399,12 +20984,7 @@ flyingon.TextBox.extend('Time', function (base) {
     this.text = this.defineProperty('value', '', {
         
         check: flyingon.Time.check,
-
-        set: function () {
-
-            this.rendered && this.renderer.set(this, 'value');
-        }
-
+        set: this.render
     });
 
 
@@ -21463,7 +21043,7 @@ flyingon.TextButton.extend('Month', function (base) {
     var calendar_cache;
 
 
-    this.defaultValue('icon', 'f-date-button');
+    this.__type = 'f-date-button';
 
 
 
@@ -21471,29 +21051,28 @@ flyingon.TextButton.extend('Month', function (base) {
     this.defineProperty('value', null, {
         
         dataType: 'date',
-
-        set: function () {
-
-            this.rendered && this.renderer.set(this, 'value');
-        }
+        set: this.__render_value
     });
 
 
     this.defineProperty('format', 'yyyy-MM', {
         
-        set: function () {
-
-            this.rendered && this.renderer.set(this, 'value');
-        }
+        set: this.__render_value
     });
 
 
     //最小可选值
-    this.defineProperty('min', '');
+    this.defineProperty('min', '', {
+        
+        set: this.__render_value
+    });
 
 
     //最大可选值
-    this.defineProperty('max', '');
+    this.defineProperty('max', '', {
+        
+        set: this.__render_value
+    });
 
 
 
@@ -21771,17 +21350,17 @@ flyingon.Control.extend('Title', function (base) {
 
     
     //文本内容
-    this.defineProperty('text', '', { set: set_text });
+    this.defineProperty('text', '', {
+        
+        set: this.__render_text
+    });
 
 
     //文本内容是否html格式
-    this.defineProperty('html', false, { set: set_text });
-
-
-    function set_text(value) {
-
-        this.rendered && this.renderer.set(this, 'text', value);
-    };
+    this.defineProperty('html', false, {
+        
+        set: this.__render_text
+    });
 
 
 
@@ -21838,7 +21417,7 @@ flyingon.Control.extend('Error', function (base) {
     //text
     this.defineProperty('type', 'text', {
         
-        set: function (value) {
+        set: function (name, value) {
 
             if (this.__no_text = value !== 'text')
             {
@@ -21855,7 +21434,7 @@ flyingon.Control.extend('Error', function (base) {
                 this.off('mouseout', validate.mouseout);
             }
 
-            this.renderer.set(this, 'type', value);
+            this.renderer.set(this, name, value);
         }
     });
 
@@ -21863,7 +21442,7 @@ flyingon.Control.extend('Error', function (base) {
     //在box中是否独占一行
     this.defineProperty('line', false, {
 
-        set: function (value) {
+        set: function (name, value) {
 
             this.__new_line = value;
         }
@@ -21901,21 +21480,21 @@ Object.extend('TreeNode', function () {
     //节点图标
     this.defineProperty('icon', '', {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
     //节点文本
     this.defineProperty('text', '', {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
     //是否选中
     this.defineProperty('checked', false, {
         
-        set: function (value) {
+        set: function (name, value) {
 
             var parent = this.parent;
 
@@ -21924,13 +21503,13 @@ Object.extend('TreeNode', function () {
                 if (!(value ? parent.checkedChildren++ : --parent.checkedChildren) && 
                     parent.view && !parent.checked())
                 {
-                    parent.renderer.set(parent, 'checked', false);
+                    parent.renderer.set(parent, name, false);
                 }
 
                 parent = parent.parent;
             }
 
-            this.rendered && this.renderer.set(this, 'checked', value);
+            this.view && this.renderer.set(this, name, value);
             this.trigger('checked-change', 'value', value);
         }
     });
@@ -22032,7 +21611,7 @@ flyingon.Control.extend('Tree', function (base) {
     //line      线条风格
     this.defineProperty('theme', 'default', {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
@@ -22040,14 +21619,14 @@ flyingon.Control.extend('Tree', function (base) {
     //是否显示检查框
     this.defineProperty('checked', false, {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
     //是否显示图标
     this.defineProperty('icon', true, {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
@@ -22092,7 +21671,7 @@ flyingon.Control.extend('Tree', function (base) {
         if (!node.expanded && this.trigger('expand', 'node', node) !== false)
         {
             node.expanded = true;
-            node.rendered && node.renderer.set(node, 'expand');
+            node.view && node.renderer.set(node, 'expand');
         }
     };
 
@@ -22127,7 +21706,7 @@ flyingon.Control.extend('Tree', function (base) {
                 }
 
                 node.expanded = true;
-                node.rendered && node.renderer.set(node, 'expand');
+                node.view && node.renderer.set(node, 'expand');
             }
 
             if (node.length > 0)
@@ -22146,7 +21725,7 @@ flyingon.Control.extend('Tree', function (base) {
                         if (item.expanded && this.trigger('collapse', 'node', node) !== false)
                         {
                             item.expanded = false;
-                            item.rendered && item.renderer.set(item, 'collapse');
+                            item.view && item.renderer.set(item, 'collapse');
                         }
                     }
                 }
@@ -22180,7 +21759,7 @@ flyingon.Control.extend('Tree', function (base) {
         if (node.expanded && node.length > 0 && this.trigger('collapse', 'node', node) !== false)
         {
             node.expanded = false;
-            node.rendered && node.renderer.set(node, 'collapse');
+            node.view && node.renderer.set(node, 'collapse');
         }
     };
 
@@ -22238,7 +21817,7 @@ flyingon.Control.extend('Tree', function (base) {
             node.__current = true;
         }
 
-        if (this.rendered)
+        if (this.view)
         {
             any && any.renderer.current(any, false);
             node && node.renderer.current(node, true);
@@ -22248,7 +21827,7 @@ flyingon.Control.extend('Tree', function (base) {
 
     this.scrollTo = function (node) {
 
-        this.rendered && this.renderer.scrollTo(this, node);
+        this.view && this.renderer.scrollTo(this, node);
     };
 
 
@@ -22308,13 +21887,13 @@ flyingon.Control.extend('Tree', function (base) {
     //绑定的字段名
     this.defineProperty('name', '', { 
         
-        set: function (value) {
+        set: function (name, value) {
 
             var grid = this.grid;
 
             this.__name = value;
                
-            if (grid && grid.rendered)
+            if (grid && grid.view)
             {
                 grid.__columns.__keys = null;
                 grid.update();
@@ -22326,7 +21905,7 @@ flyingon.Control.extend('Tree', function (base) {
     //标题 值为数组则为多行标题
     this.defineProperty('title', null, { 
         
-        set: function (value) {
+        set: function (name, value) {
 
             var any;
 
@@ -22365,7 +21944,7 @@ flyingon.Control.extend('Tree', function (base) {
     //列大小(支持固定数字及百分比)
     this.defineProperty('size', '100', {
 
-        set: function (value) {
+        set: function (name, value) {
 
             var grid;
             
@@ -22383,7 +21962,7 @@ flyingon.Control.extend('Tree', function (base) {
     //right
     this.defineProperty('align', '', {
 
-        set: function (value) {
+        set: function (name, value) {
 
             this.__align = value;
         }
@@ -22393,11 +21972,11 @@ flyingon.Control.extend('Tree', function (base) {
     //是否只读
     this.defineProperty('readonly', false, {
 
-        set: function (value) {
+        set: function (name, value) {
 
             this.__readonly = value;
             this.view && this.renderer.set(this, name, value);
-        }   
+        }
     });
 
 
@@ -22406,13 +21985,13 @@ flyingon.Control.extend('Tree', function (base) {
     //是否显示
     this.defineProperty('visible', true, {
 
-        set: function (value) {
+        set: function (name, value) {
 
             var grid = this.grid;
 
             this.__visible = value;
 
-            if (grid && grid.rendered)
+            if (grid && grid.view)
             {
                 grid.update(true);
             }
@@ -22432,8 +22011,12 @@ flyingon.Control.extend('Tree', function (base) {
     this.defineProperty('draggable', true);
 
 
+    //是否可获取焦点
+    this.defineProperty('focused', false);
+
+
     //过滤方式
-    this.defineProperty('filter', 'auto');
+    // this.defineProperty('filter', 'auto');
 
 
     //汇总设置
@@ -22447,7 +22030,7 @@ flyingon.Control.extend('Tree', function (base) {
 
             var grid = this.grid;
 
-            if (grid && grid.rendered)
+            if (grid && grid.view)
             {
                 grid.__summary_list = this.__summary_fn = null;
                 grid.update();
@@ -22456,8 +22039,11 @@ flyingon.Control.extend('Tree', function (base) {
     });
 
 
-    //汇总数字精度
-    this.defineProperty('precision', 0);
+    //汇总数字精度(小数位数)
+    this.defineProperty('precision', 0, {
+
+        dataType: 'int'   
+    });
 
 
 
@@ -22509,7 +22095,7 @@ flyingon.Control.extend('Tree', function (base) {
 
             if (title)
             {
-                (control.__storage = create(control.__defaults)).text = '' + title;
+                control.text(title);
             }
         }
 
@@ -22590,10 +22176,20 @@ flyingon.Control.extend('Tree', function (base) {
         
         if (name)
         {
-            (control.__storage = create(control.__defaults)).text = row.data[name];
+            control.text(row.data[name]);
         }
 
         return control;
+    };
+
+
+    //同步表格列处理(新创建的控件需要赋值,变更时需同步以前创建的控件值)
+    this.__sync_column = function (name, value) {
+
+        var storage = this.__storage2 || (this.__storage2 = flyingon.create(null));
+
+        storage[name] = value;
+        this.view && this.grid.__sync_value(name, value);
     };
 
 
@@ -22646,7 +22242,7 @@ flyingon.GridColumn.extend(function (base) {
     //是否显示行号
     this.defineProperty('no', false, {
 
-        set: function (value) {
+        set: function (name, value) {
             
             this.__show_no = value;
         }
@@ -22749,6 +22345,10 @@ flyingon.GridColumn.extend(function (base) {
     var Class = flyingon.TextBox;
 
 
+    //修改为可获取焦点
+    this.defaultValue('focused', true);
+
+
     //创建单元格控件
     this.createControl = function (row, name) {
 
@@ -22771,13 +22371,60 @@ flyingon.GridColumn.extend(function (base) {
 flyingon.GridColumn.extend(function (base) {
 
 
+
     var Class = flyingon.TextButton;
+
+
+
+    //修改为可获取焦点
+    this.defaultValue('focused', true);
+
+
+    //是否可输入
+    this.defineProperty('inputable', false, { 
+        
+        set: this.__sync_column
+    });
+
+
+    //按钮图标
+    this.defineProperty('icon', '', {
+        
+        set: this.__sync_column
+    });
+
+
+    //按钮显示模式
+    //show      总是显示
+    //none      不显示
+    //hover     鼠标划过时显示
+    this.defineProperty('button', 'show', {
+        
+        set: this.__sync_column
+    });
+
+
+    //按钮大小
+    this['button-size'] = this.defineProperty('buttonSize', 16, {
+        
+        set: this.__sync_column
+    });
+
 
 
     //创建单元格控件
     this.createControl = function (row, name) {
 
-       var control = new Class();
+        var control = new Class(),
+            storage = this.__storage2;
+        
+        if (storage)
+        {
+            for (var key in storage)
+            {
+                control[key](storage[key]);
+            }
+        }
         
         if (name)
         {
@@ -22799,11 +22446,30 @@ flyingon.GridColumn.extend(function (base) {
     var Class = flyingon.Number;
 
 
+    //修改为可获取焦点
+    this.defaultValue('focused', true);
+
+
+    this.defaultValue('align', 'right');
+
+
+    flyingon.fragment('f-Number', this, this.__sync_column);
+
+
     //创建单元格控件
     this.createControl = function (row, name) {
 
-       var control = new Class();
+        var control = new Class(),
+            storage = this.__storage2;
         
+        if (storage)
+        {
+            for (var key in storage)
+            {
+                control[key](storage[key]);
+            }
+        }
+
         if (name)
         {
             control.value(row.data[name]);
@@ -22823,33 +22489,32 @@ flyingon.GridColumn.extend(function (base) {
 
     var Class = flyingon.ComboBox;
 
+    var create = flyingon.create;
+
+
+    //修改为可获取焦点
+    this.defaultValue('focused', true);
+
 
     //扩展下拉框定义
-    flyingon.fragment('f-ComboBox', this, function (value) {
+    flyingon.fragment('f-ComboBox', this, this.__sync_column);
 
-        (this.__storage2 || (this.__storage2 = flyingon.create(null))).items = value;
+
+    //下拉数据
+    this.defineProperty('items', null, {
         
-        //转换成flyingon.DataList
-        flyingon.DataList.create(value, set_items, this);
+        set: function (name, value) {
 
-    }, true);
+            //转换成flyingon.DataList
+            flyingon.DataList.create(value, set_items, this);
+        }
+    });
 
 
     function set_items(list) {
 
-        var controls = this.__wait;
-
-        this.__list = list;
-
-        if (controls)
-        {
-            this.__wait = null;
-
-            for (var i = controls.length - 1; i >= 0; i--)
-            {
-                controls[i].items(list);
-            }
-        }
+        this.__data_list = list;
+        this.view && this.grid.__sync_value('items', list);        
     };
 
 
@@ -22859,13 +22524,9 @@ flyingon.GridColumn.extend(function (base) {
         var control = new Class(),
             any;
 
-        if (any = this.__list)
+        if (any = this.__data_list)
         {
             control.items(any);
-        }
-        else
-        {
-            (this.__wait || (this.__wait = [])).push(control);
         }
         
         if (any = this.__storage2)
@@ -22897,6 +22558,10 @@ flyingon.GridColumn.extend(function (base) {
     var Class = flyingon.Date;
 
     var keys = 'format,min,max,time,today,clear'.split(',').pair();
+
+
+    //修改为可获取焦点
+    this.defaultValue('focused', true);
 
 
     flyingon.fragment('f-Date', this);
@@ -22942,6 +22607,10 @@ flyingon.GridColumn.extend(function (base) {
     var Class = flyingon.Time;
 
 
+    //修改为可获取焦点
+    this.defaultValue('focused', true);
+
+    
     //创建单元格控件
     this.createControl = function (row, name) {
 
@@ -23006,7 +22675,7 @@ flyingon.GridColumns = Object.extend(function () {
             start++;
         }
 
-        grid.rendered && grid.update(true);
+        grid.view && grid.update(true);
     };
 
 
@@ -23028,7 +22697,7 @@ flyingon.GridColumns = Object.extend(function () {
             }
         }
 
-        grid.rendered && grid.update(true);
+        grid.view && grid.update(true);
     };
 
 
@@ -24134,14 +23803,14 @@ flyingon.Control.extend('Grid', function (base) {
     //分组框高度
     this.defineProperty('group', 0, {
 
-        set: function (value) {
+        set: function (name, value) {
             
             if (value > 0)
             {
                 this.renderer.set(this, '__render_group');
             }
 
-            if (this.rendered)
+            if (this.view)
             {
                 this.renderer.set(this, 'header', 1);
                 this.update();
@@ -24153,11 +23822,11 @@ flyingon.Control.extend('Grid', function (base) {
     //列头大小
     this.defineProperty('header', 30, {
 
-        set: function (value) {
+        set: function (name, value) {
 
-            if (this.rendered)
+            if (this.view)
             {
-                this.renderer.set(this, 'header', 2);
+                this.renderer.set(this, name, 2);
                 this.update();
             }
         }
@@ -24167,11 +23836,11 @@ flyingon.Control.extend('Grid', function (base) {
     //过滤栏高度
     this.defineProperty('filter', 0, {
 
-        set: function (value) {
+        set: function (name, value) {
 
-            if (this.rendered)
+            if (this.view)
             {
-                this.renderer.set(this, 'filter', value);
+                this.renderer.set(this, name, value);
                 this.update();
             }
         }
@@ -24181,7 +23850,7 @@ flyingon.Control.extend('Grid', function (base) {
     //锁定 锁定多个方向可按 left->right->top->bottom 顺序以空格分隔
     this.defineProperty('locked', '', {
 
-        set: function (value) {
+        set: function (name, value) {
 
             var locked = this.__columns.__locked;
 
@@ -24197,7 +23866,7 @@ flyingon.Control.extend('Grid', function (base) {
                 this.__locked_bottom = value[3] | 0;
             }
 
-            this.rendered && this.update(true);
+            this.view && this.update(true);
         }
     });
 
@@ -24209,7 +23878,7 @@ flyingon.Control.extend('Grid', function (base) {
     //分组设置
     this.defineProperty('groups', '', {
 
-        set: function (value) {
+        set: function (name, value) {
 
             var view = this.__view;
 
@@ -24224,13 +23893,17 @@ flyingon.Control.extend('Grid', function (base) {
             this.trigger(value ? 'group' : 'ungroup');
 
             this.renderer.set(this, '__render_group');
-            this.rendered && this.update(true);
+            this.view && this.update(true);
         }
     });
 
 
     //是否只读
     this.defineProperty('readonly', true);
+
+
+    //滚条时是否复用以前行的控件
+    this.defineProperty('reuse', true);
 
 
     //选择模式
@@ -24244,7 +23917,7 @@ flyingon.Control.extend('Grid', function (base) {
     //树列名
     this['tree-column'] = this.defineProperty('treeColumn', '', {
 
-        set: function (value) {
+        set: function (name, value) {
 
             this.__tree_column = value;
         }
@@ -24295,7 +23968,7 @@ flyingon.Control.extend('Grid', function (base) {
                 this.__view.dispose(false);
             }
 
-            this.rendered && this.update();
+            this.view && this.update();
 
             return this;
         }
@@ -24384,7 +24057,7 @@ flyingon.Control.extend('Grid', function (base) {
         if (dirty)
         {
             view.__dirty = true;
-            this.rendered && this.update();
+            this.view && this.update();
         }
 
         return this;
@@ -24403,7 +24076,7 @@ flyingon.Control.extend('Grid', function (base) {
         if (this.__expand_to(row || this.__view, level | 0))
         {
             this.__view.__dirty = true;
-            this.rendered && this.update();
+            this.view && this.update();
         }
 
         return this;
@@ -24491,7 +24164,7 @@ flyingon.Control.extend('Grid', function (base) {
         if (dirty)
         {
             view.__dirty = true;
-            this.rendered && this.update();
+            this.view && this.update();
         }
 
         return this;
@@ -24521,7 +24194,7 @@ flyingon.Control.extend('Grid', function (base) {
         {
             this.__current = row;
 
-            if (this.rendered)
+            if (this.view)
             {
                 any && any.renderer.set(any, 'current', any.__current = false);
                 row && row.renderer.set(row, 'current', row.__current = true);
@@ -24588,6 +24261,13 @@ flyingon.Control.extend('Grid', function (base) {
     };
 
 
+    //同步控件属性值
+    this.__sync_value = function (name, value) {
+
+
+    };
+
+
 
     this.sort = function (name, desc) {
 
@@ -24602,7 +24282,7 @@ flyingon.Control.extend('Grid', function (base) {
     //刷新表格
     this.update = function (change) {
 
-        if (this.rendered)
+        if (this.view)
         {
             var patch = this.__view_patch;
 
@@ -24808,33 +24488,33 @@ flyingon.Panel.extend('TabPage', function (base) {
     this.defineProperty('key', '');
 
 
-    
-    function define(self, name, defaultValue) {
-
-        return self[name] = self.defineProperty(name, defaultValue, {
-
-            set: function (value) {
-            
-                this.rendered && this.renderer[name](this, value);
-            }
-        });
-    };
-    
 
     //图标
-    define(this, 'icon', '');
+    this.defineProperty('icon', '', {
+    
+        set: this.render
+    });
 
 
     //页头文字
-    define(this, 'text', '');
+    this.defineProperty('text', '', {
+    
+        set: this.render
+    });
 
 
     //自定义button列表
-    define(this, 'buttons', '');
+    this.defineProperty('buttons', '', {
+    
+        set: this.render
+    });
 
     
     //是否可关闭
-    define(this, 'closable', false);
+    this.defineProperty('closable', false, {
+    
+        set: this.render
+    });
 
 
 
@@ -24876,26 +24556,26 @@ flyingon.Control.extend('Tab', function (base) {
     //dot       圆点样式
     this.defineProperty('theme', 'default', {
 
-        set: function (value) {
+        set: function (name, value) {
 
-            this.rendered && this.renderer.set(this, 'theme', value);
+            this.view && this.renderer.set(this, name, value);
         }
     });
 
 
 
-    //定义页面签属性
-    var define = function (self, name, defaultValue, view) {
+    function render1(name, value) {
 
-        self.defineProperty(name, defaultValue, {
-
-            set: function (value) {
-
-                this.__reset_header = true;
-                this.__update_dirty || this.invalidate();
-            }
-        });
+        this.__reset_header = true;
+        this.__update_dirty || this.invalidate();
     };
+
+
+    function render2(name, value) {
+
+        this.__update_dirty || this.invalidate();
+    };
+
 
 
     //页签方向
@@ -24903,60 +24583,74 @@ flyingon.Control.extend('Tab', function (base) {
     //left      左侧页签
     //right     右侧页签
     //bottom    底部页签
-    define(this, 'direction', 'top');
+    this.defineProperty('direction', 'top', {
+
+        set: render1
+    });
 
 
     //页头大小
-    define(this, 'header', 30);
+    this.defineProperty('header', 30, {
+
+        set: render1
+    });
 
 
     //页头偏移
-    define(this, 'offset', 2);
+    this.defineProperty('offset', 2, {
+
+        set: render1
+    });
 
 
     //滚动按钮大小
-    define(this, 'scroll', 16);
+    this.defineProperty('scroll', 16, {
 
-
-
-    define = function (self, name, defaultValue) {
-
-        self.defineProperty(name, defaultValue, {
-
-            set: function () {
-
-                this.__update_dirty || this.invalidate();
-            }
-        });
-    };
+        set: render1
+    });
 
 
 
     //页签大小
-    define(this, 'size', 60);
+    this.defineProperty('size', 60, {
+
+        set: render2
+    });
 
 
     //是否自动充满
-    define(this, 'fill', false);
+    this.defineProperty('fill', false, {
+
+        set: render2
+    });
 
 
     //开始位置
-    define(this, 'start', 0);
+    this.defineProperty('start', 0, {
+
+        set: render2
+    });
 
 
     //结束位置
-    define(this, 'end', 0);
+    this.defineProperty('end', 0, {
+
+        set: render2
+    });
 
 
     //页签间距
-    define(this, 'space', 2);
+    this.defineProperty('space', 2, {
+
+        set: render2
+    });
 
 
 
     //选中页索引
     this.defineProperty('selected', -1, { 
 
-        set: function (value) {
+        set: function (name, value) {
 
             this.__selectedPage !== true && this.selectedPage(this[value], false);
         }
@@ -24989,7 +24683,7 @@ flyingon.Control.extend('Tab', function (base) {
                     page.renderer.selected(page, true);
                 }
 
-                this.rendered && this.renderer.set(this, 'selected', page, 'tag', tag);
+                this.view && this.renderer.set(this, 'selected', page, 'tag', tag);
 
                 any = this.indexOf(page);
             }
@@ -25145,7 +24839,7 @@ flyingon.Panel.extend('Popup', function () {
             return false;
         }
 
-        this.rendered && this.renderer.close(this);
+        this.view && this.renderer.close(this);
         this.shown = false;
 
         this.trigger('closed', 'closeType', closeType);
@@ -25244,9 +24938,9 @@ flyingon.Panel.extend('Dialog', function (base) {
     //头部高度        
     this.defineProperty('header', 28, {
 
-        set: function (value) {
+        set: function (name, value) {
 
-            this.rendered && this.renderer.set(this, 'header', value);
+            this.view && this.renderer.set(this, name, value);
             this.__update_dirty || this.invalidate();
         }
     });
@@ -25255,21 +24949,21 @@ flyingon.Panel.extend('Dialog', function (base) {
     //窗口图标        
     this.defineProperty('icon', '', {
 
-        set: this.__to_render
+        set: this.render
     });
 
 
     //窗口标题
     this.defineProperty('text', '', {
 
-        set: this.__to_render
+        set: this.render
     });
 
 
     //是否显示关闭按钮
     this.defineProperty('closable', true, {
 
-        set: this.__to_render
+        set: this.render
     });
 
 
@@ -25383,7 +25077,7 @@ flyingon.Panel.extend('Dialog', function (base) {
 
         if (this.trigger('closing', 'closeType', closeType) !== false)
         {
-            this.rendered && this.renderer.close(this);
+            this.view && this.renderer.close(this);
             this.shown = false;
 
             stack.splice(stack.indexOf(this), 1);
@@ -25477,11 +25171,17 @@ flyingon.Panel.extend('Pagination', function (base) {
 
 
     //每页显示记录数
-    this.defineProperty('records', 10, { set: move });
+    this.defineProperty('records', 10, {
+        
+        set: move
+    });
 
 
     //总记录数
-    this.defineProperty('total', 0, { set: move });
+    this.defineProperty('total', 0, {
+        
+        set: move
+    });
 
 
 
@@ -25991,7 +25691,7 @@ flyingon.Layout = Object.extend(function () {
     //子项定位属性值
     this.defineProperty('location', null, {
 
-        set: function (value) {
+        set: function (name, value) {
 
             this.__location = typeof value === 'function' ? value : null;
         }
@@ -26001,14 +25701,14 @@ flyingon.Layout = Object.extend(function () {
     //分割子布局
     this.defineProperty('sublayouts', null, {
        
-        set: function (value) {
+        set: function (name, value) {
 
             this.__sublayouts = !!value;
         }
     });
     
     
-        
+
     
     //排列布局
     this.arrange = function (container, items, hscroll, vscroll) {
@@ -27654,7 +27354,6 @@ flyingon.Layout.extend(function (base) {
 
 
 
-
     //创建视图
     flyingon.view = function (options) {
 
@@ -27783,9 +27482,22 @@ flyingon.Layout.extend(function (base) {
                 any.call(this, vmodel.prototype);
             }
 
-            this.init = function () {
 
-                var vm = this.vmodel = new vmodel(null, defaults),
+            this.init = function (delay) {
+
+                this.vmodel = new vmodel(null, defaults);
+
+                if (delay !== false)
+                {
+                    this.__init_widget();
+                }
+            };
+
+
+            //初始化视图模型
+            this.__init_widget = function () {
+
+                var vm = this.vmodel,
                     any;
 
                 if (any = creating)
@@ -27800,6 +27512,7 @@ flyingon.Layout.extend(function (base) {
                     any.call(this, vm);
                 }
             };
+
 
             this.dispose = function () {
 
@@ -27860,12 +27573,13 @@ flyingon.Layout.extend(function (base) {
 
         self[key2] = self.defineProperty(key1, defaultValue || null, {
 
-            set: function (value) {
+            set: function (_, value) {
 
                 this.vmodel.$set(name, value);
             }
         });
     };
+
 
 
     function camelize(_, key) {
@@ -28337,7 +28051,7 @@ flyingon.Layout.extend(function (base) {
             }
         }
 
-        if (keys || this.__top.__created)
+        if (keys || this.__top.__vm_created)
         {
             keys = this.__keys2;
 
@@ -28483,52 +28197,21 @@ flyingon.Layout.extend(function (base) {
 
     function array_replace(value, update) {
 
-        var l1 = this.length,
-            l2 = (value && value.length) | 0,
-            any;
+        var length = this.length;
 
-        if (l2 <= 0)
+        if (length > 0)
         {
-            if (l1 > 0)
-            {
-                this.splice(0);
-            }
-            
-            return this;
+            this.splice(0, length);
         }
 
-        if (l1 > l2)
+        if (value && value.length > 0)
         {
-            this.splice(l2);
-            l1 = l2;
+            this.push.apply(this, value);
         }
 
-        if (l1 > 0)
+        if (update !== false)
         {
-            if (this.__item_fn)
-            {
-                for (var i = 0; i < l1; i++)
-                {
-                    this[i].$replace(value[i]);
-                }
-            }
-            else
-            {
-                any = slice.call(value, 0, l1);
-                any.unshift(0, l1);
-
-                splice.apply(this, any); 
-            }
-
-            if (update !== false)
-            {
-                this.$update();
-            }
-        }
-
-        if (l1 < l2)
-        {
-            this.push.apply(this, slice.call(value, l1));
+            this.$update();
         }
 
         return this;
@@ -28912,7 +28595,7 @@ flyingon.Layout.extend(function (base) {
             any;
 
         //标记已创建控件
-        vm.__created = true;
+        vm.__vm_created = true;
 
         bind_control(control, vm, scope, template);
 
@@ -29100,7 +28783,14 @@ flyingon.Layout.extend(function (base) {
             {
                 if (type)
                 {
-                    control = new type();
+                    if (type.__widget_template)
+                    {
+                        control = new type(false);
+                    }
+                    else
+                    {
+                        control = new type();
+                    }
                 }
                 else
                 {
@@ -29127,7 +28817,15 @@ flyingon.Layout.extend(function (base) {
                     scope[index] = control;
                 }
 
+                //绑定控件属性
                 bind_control(control, top, scope, template);
+
+                //如果是widget再初始化(需在绑定控件属性后执行)
+                if (any = control.__init_widget)
+                {
+                    any.call(control);
+                }
+
                 list.push(control);
 
                 if (any = template.children)
@@ -30355,7 +30053,7 @@ flyingon.view.Template = Object.extend(function () {
         if (flyingon.activeControl = control)
         {
             control.trigger('focus');
-            control.renderer.__do_focus();
+            control.renderer.__do_focus(control, e);
         }
     };
 
@@ -30369,7 +30067,7 @@ flyingon.view.Template = Object.extend(function () {
         if (control)
         {
             control.trigger('blur');
-            control.renderer.__do_blur();
+            control.renderer.__do_blur(control, e);
         }
     };
 
@@ -30516,19 +30214,12 @@ flyingon.Control.extend('Highlight', function (base) {
     this.defaultHeight = 200;
 
 
-    function set_render(value, _, name) {
-
-        this.renderer.set(this, name, value);
-    };
-
-
-
     //当前语言
     this.defineProperty('language', 'javascript', {
         
-        set: function (value) {
+        set: function (name, value) {
 
-            this.rendered && this.renderer.set(this, 'code', this.code());
+            this.renderer.set(this, 'code', this.code());
         }
     });
 
@@ -30536,14 +30227,14 @@ flyingon.Control.extend('Highlight', function (base) {
     //当前主题
     this.defineProperty('theme', 'vs', {
      
-        set: set_render
+        set: this.render
     });
 
 
     //代码内容
     this.defineProperty('code', '', {
         
-        set: set_render
+        set: this.render
     });
 
 

@@ -37,7 +37,7 @@ flyingon.renderer('ListBox', function (base) {
         var storage = control.storage(),
             checked = storage.checked,
             selected = control.__selected,
-            value = index >= 0 ? (value = control.__list).value(value[index]) : '',
+            value = index >= 0 ? (value = control.__data_list).value(value[index]) : '',
             any;
 
         //多选
@@ -129,14 +129,14 @@ flyingon.renderer('ListBox', function (base) {
     this.locate = function (control) {
 
         base.locate.call(this, control);
-        control.__list && this.content(control);
+        control.__data_list && this.content(control);
     };
 
 
     this.content = function (control) {
 
         var writer = [],
-            list = control.__list,
+            list = control.__data_list,
             valueField = list.valueField,
             displayField = list.displayField,
             template = control.__template,

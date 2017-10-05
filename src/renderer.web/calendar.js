@@ -222,10 +222,7 @@ flyingon.renderer('Calendar', function (base) {
 
         if (control.value() !== value)
         {
-            control.rendered = false;
             control.value(value);
-            control.rendered = true;
-
             control.trigger('change', 'value', value);
         }
 

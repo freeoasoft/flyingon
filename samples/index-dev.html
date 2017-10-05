@@ -41,9 +41,10 @@
     <script type="text/x-template" id="template">
         <Panel :layout="dock" height="100%">
             <Panel dock="top" height="50" class="f-back" border="1">
-                <span class="title" width="auto" height="100%">flyingon-samples</span>
+                <Label class="title" width="200" height="100%" text="flyingon-samples" />
             </Panel>
-            <Panel dock="bottom" height="25" class="f-back" border="1">foot</Panel>
+            <Panel dock="bottom" height="25" class="f-back" border="1">
+            </Panel>
             <Tree id="menu" dock="left" width="200" max-width="300" />
             <Splitter dock="left" />
             <Tab id="host" dock="fill" size="100" selected='0'>
@@ -75,7 +76,7 @@
 
             this.defineProperty('language', 'javascript', {
 
-                set: function (value) {
+                set: function (name, value) {
 
                     this[0].language(value);
                 }

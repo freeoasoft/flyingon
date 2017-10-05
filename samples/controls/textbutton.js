@@ -14,8 +14,16 @@ flyingon.widget({
                 children: [
                     {
                         Class: 'TextButton',
-                        width: 200,
-                        value: 'text'
+                        value: 'text ...'
+                    },
+                    {
+                        Class: 'TextButton',
+                        placeholder: '请点击按钮选择'
+                    },
+                    {
+                        Class: 'TextButton',
+                        button: 'hover',
+                        placeholder: '鼠标划过时才显示按钮'
                     }
                 ]
             },
@@ -27,11 +35,11 @@ flyingon.widget({
 
         this[0].on('button-click', function (e) {
 
-            var self = this;
+            var target = e.target;
 
             flyingon.showMessage('title', 'text', 'question', 'yes,no,cancel').on('closed', function (e) {
 
-                self[0].value(e.closeType);
+                target.value(e.closeType);
             });
         });
     }

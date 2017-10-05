@@ -67,11 +67,17 @@ flyingon.Panel.extend('Pagination', function (base) {
 
 
     //每页显示记录数
-    this.defineProperty('records', 10, { set: move });
+    this.defineProperty('records', 10, {
+        
+        set: move
+    });
 
 
     //总记录数
-    this.defineProperty('total', 0, { set: move });
+    this.defineProperty('total', 0, {
+        
+        set: move
+    });
 
 
 

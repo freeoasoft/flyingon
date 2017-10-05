@@ -28,6 +28,13 @@ flyingon.widget({
                     },
                     {
                         Class: 'Button',
+                        icon: 'f-tree-icon-file',
+                        text: 'button',
+                        width: 100,
+                        dropdown: true
+                    },
+                    {
+                        Class: 'Button',
                         height: 40,
                         vertical: true,
                         icon: 'f-tree-icon-file',

@@ -7,10 +7,10 @@ flyingon.HtmlElement = flyingon.Control.extend(function (base) {
     //内容文本
     this.defineProperty('text', '', {
         
-        set: function (value) {
+        set: function (name, value) {
 
             this.length > 0 && this.splice(0);
-            this.rendered && this.renderer.set(this, 'text', value);
+            this.renderer.set(this, name, value);
         }
     });
 

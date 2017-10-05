@@ -15,8 +15,8 @@ flyingon.widget({
 
                 columns: [
                     { name: 'F1', title: 'F1', type: 'checkbox' },
-                    { name: 'F2', title: 'F2', type: 'textbox' },
-                    { name: 'F3', title: 'F3', type: 'number' },
+                    { name: 'F2', title: 'F2', type: 'textbox', align: 'right' },
+                    { name: 'F3', title: 'F3', type: 'number', digits: 2, format: '¥{0}', button: 'none', align: 'right' },
                     { name: 'F4', title: 'F4', type: 'date' },
                     { name: 'F5', title: 'F5', type: 'time' },
                     { name: 'F6', title: 'F6', type: 'combobox', checked: 'checkbox', popupWidth: 100 },
@@ -53,7 +53,7 @@ flyingon.widget({
 
             item.F1 = i & 1 ? true : false;
             item.F2 = 'R' + (i + 1);
-            item.F3 = random() * 10000 | 0;
+            item.F3 = (random() * 1000000 | 0) / 100;
             item.F4 = date;
             item.F6 = 'R' + ((i % 5) + 1);
 

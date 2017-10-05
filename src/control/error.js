@@ -27,7 +27,7 @@ flyingon.Control.extend('Error', function (base) {
     //text
     this.defineProperty('type', 'text', {
         
-        set: function (value) {
+        set: function (name, value) {
 
             if (this.__no_text = value !== 'text')
             {
@@ -44,7 +44,7 @@ flyingon.Control.extend('Error', function (base) {
                 this.off('mouseout', validate.mouseout);
             }
 
-            this.renderer.set(this, 'type', value);
+            this.renderer.set(this, name, value);
         }
     });
 
@@ -52,7 +52,7 @@ flyingon.Control.extend('Error', function (base) {
     //在box中是否独占一行
     this.defineProperty('line', false, {
 
-        set: function (value) {
+        set: function (name, value) {
 
             this.__new_line = value;
         }

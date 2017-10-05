@@ -5,21 +5,21 @@ flyingon.Control.extend('LinkButton', function (base) {
     //文本内容
     this.defineProperty('text', '', {
 
-        set: this.__to_render   
+        set: this.render   
     });
     
     
     //文本内容是否html格式
     this.defineProperty('html', false, {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
     //链接地址
     this.defineProperty('href', '', {
 
-        set: this.__to_render   
+        set: this.render   
     });
     
 

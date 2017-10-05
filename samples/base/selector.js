@@ -21,7 +21,7 @@ flyingon.widget({
                     { Class: 'Label', width: 50, text: '选择器', style: 'text-align:right;' },
                     { Class: 'TextBox', width: 100, value: 'TextBox:even' },
                     { Class: 'Label', width: 80, text: '属性', style: 'text-align:right;' },
-                    { Class: 'TextBox', width: 100, value: 'color' },
+                    { Class: 'TextBox', width: 100, value: 'style:color' },
                     { Class: 'Label', width: 50, text: '值', style: 'text-align:right;' },
                     { Class: 'TextBox', width: 100, value: 'red' },
                     { Class: 'Button', text: '执行', margin: '0 0 0 8' }

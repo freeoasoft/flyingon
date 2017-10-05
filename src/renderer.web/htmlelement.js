@@ -39,16 +39,7 @@ flyingon.renderer('HtmlElement', function (base) {
         
         writer.push('>');
 
-        if (any = storage.text)
-        {
-            if (!storage.html)
-            {
-                any = flyingon.html_encode(any);
-            }
-
-            writer.push(any);
-        }
-        else if (control.length > 0 && control.__visible)
+        if (control.length > 0 && control.__visible)
         {
             this.__render_children(writer, control, control, 0, control.length);
         }
@@ -92,14 +83,7 @@ flyingon.renderer('HtmlElement', function (base) {
     //按照html方式定位控件时
     this.locate_html = function (control) {
 
-        var dirty = control.__location_dirty;
-        
-        if (dirty)
-        {
-            this.__locate_html(control);
-        }
-
-        control.__update_dirty = false;
+        base.locate_html.call(this, control);
 
         if (control.length > 0)
         {
@@ -122,23 +106,6 @@ flyingon.renderer('HtmlElement', function (base) {
         }
 
         control.__arrange_dirty = 0;
-    };
-
-
-
-    this.__measure_auto = function (control, auto) {
-
-        var view = control.view;
-
-        if (auto & 2)
-        {
-            if (control.__content_render)
-            {
-                this.locate(control);
-            }
-            
-            control.offsetHeight = view && view.offsetHeight || 0;
-        }
     };
 
 

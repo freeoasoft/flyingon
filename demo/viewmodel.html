@@ -29,7 +29,7 @@
 
     <script type="text/x-template" id="template">
         <Panel :layout="layout" height="100%" :class:silver="silver" :style:background-color="color" padding="10">
-            <div arrange="false" width="auto" height="65" #loop="items(item, index)" @click="operate_click(item, index)">
+            <div arrange="false" width="auto" height="75" #loop="items(item, index)" @click="operate_click(item, index)">
                 <Label width="90" :text="item_label(item, index)" style="display:inline-block;" />
                 <TextBox width="120" :value="item.text" #model="item.text" />
                 <Button tag="add" :text="operate.add" margin="0 5" />
@@ -109,7 +109,7 @@
                 
                 var data = [];
 
-                for (var i = 0; i < 100; i++)
+                for (var i = 0; i < 3; i++)
                 {
                     data.push({ text: 'text ' + i, items: ('' + (Math.random() * 100000 | 0)).split('') });
                 }

@@ -69,10 +69,70 @@ Object.extend('Control', function () {
 
 
 
-    //同步变更到渲染器的方法
-    this.__to_render = function (value, _, name) {
+    //渲染指定属性值
+    this.render = function (name, value, oldValue) {
 
-        this.rendered && this.renderer.set(this, name, value);
+        var patch = this.__view_patch;
+        
+        if (patch)
+        {
+            patch[name] = value;
+        }
+        else
+        {
+            this.renderer.set(this, name, value);
+        }
+    };
+
+
+    //渲染文本方法
+    this.__render_text = function () {
+
+        var patch = this.__view_patch;
+        
+        if (patch)
+        {
+            patch.text = true;
+        }
+        else
+        {
+            this.renderer.set(this, 'text');
+        }
+    };
+
+
+    //渲染值方法
+    this.__render_value = function () {
+
+        var patch = this.__view_patch;
+        
+        if (patch)
+        {
+            patch.value = true;
+        }
+        else
+        {
+            this.renderer.set(this, 'value');
+        }
+    };
+
+
+    //生成指定名称的渲染方法
+    this.__render_fn = function (name) {
+
+        return function () {
+
+            var patch = this.__view_patch;
+            
+            if (patch)
+            {
+                patch[name] = true;
+            }
+            else
+            {
+                this.renderer.set(this, name);
+            }
+        };
     };
 
 
@@ -86,21 +146,21 @@ Object.extend('Control', function () {
         
         group: 'layout',
 
-        set: function (value) {
+        set: function (name, value) {
 
             var any;
 
             this.__visible = value;
             
-            if (this.rendered)
+            if (this.view)
             {
                 if (any = this.__view_patch)
                 {
-                    any.visible = value;
+                    any[name] = value;
                 }
                 else
                 {
-                    this.renderer.set(this, 'visible', value);
+                    this.renderer.set(this, name, value);
                 }
             }
 
@@ -260,7 +320,7 @@ Object.extend('Control', function () {
 
     
     //设置样式
-    this['style:'] = function (name, value) {
+    this['style:'] = this.__set_style = function (name, value) {
 
         var style = this.__style,
             watches,
@@ -291,10 +351,7 @@ Object.extend('Control', function () {
             style.cssText = false;
         }
 
-        if (this.rendered)
-        {
-            (this.__style_patch || style_patch(this))[name] = value;
-        }
+        (this.__style_patch || style_patch(this))[name] = value;
     };
 
 
@@ -302,7 +359,6 @@ Object.extend('Control', function () {
     function set_style(style, list) {
 
         var watches = this.__watches,
-            render = this.rendered,
             index = 0,
             length = list.length,
             name,
@@ -343,13 +399,13 @@ Object.extend('Control', function () {
                     this.notify('style:' + name, value, any);
                 }
 
-                if (render)
+                if (patch)
                 {
-                    (patch || (patch = this.__style_patch || style_patch(this)))[name] = value;
+                    patch[name] = value;
                 }
                 else
                 {
-                    patch = true;
+                    (patch = this.__style_patch || style_patch(this))[name] = value;
                 }
             }
         }
@@ -372,19 +428,19 @@ Object.extend('Control', function () {
     //创建样式补丁
     function style_patch(self) {
 
-        var view = self.__view_patch,
-            patch = self.__style_patch = {};
+        var patch = self.__view_patch,
+            style = self.__style_patch = {};
         
-        if (view)
+        if (patch)
         {
-            view.__style_patch = patch;
+            patch.__style_patch = style;
         }
         else
         {
-            self.renderer.set(self, '__style_patch', patch);
+            self.renderer.set(self, '__style_patch', style);
         }
 
-        return patch;
+        return style;
     };
 
 
@@ -407,67 +463,32 @@ Object.extend('Control', function () {
 
 
 
-    //字体颜色
-    this.defineProperty('color', '', {
-
-        set: this.__to_render
-    });
-    
-
     //是否禁用
     this.defineProperty('disabled', false, {
 
-        set: function (value) {
-
-            var any;
-
-            this.__disabled = value;
-
-            if (any = this.__view_patch)
-            {
-                any.disabled = value;
-            }
-            else
-            {
-                this.renderer.set(this, 'disabled', value);
-            }
-        }
+        set: this.render
     });
     
 
-    //定义attribute属性
-    define = function (self, name, defaultValue, attributes) {
-
-        attributes = attributes || {};
-
-        attributes.set = function (value) {
-
-            var any;
-
-            if (any = this.__view_patch)
-            {
-                any[name] = value;
-            }
-            else
-            {
-                this.renderer.set(this, name, value);
-            }
-        };
-
-        self.defineProperty(name, defaultValue, attributes);
-    };
-
-    
     //tab顺序
-    define(this, 'tabindex', 0);
+    this.defineProperty('tabindex', 0, {
+
+        set: this.render   
+    });
     
     
     //提示信息
-    define(this, 'title', '');
+    this.defineProperty('title', '', {
+
+        set: this.render   
+    });
 
 
     //快捷键
-    define(this, 'accesskey', '');
+    this.defineProperty('accesskey', '', {
+
+        set: this.render   
+    });
     
     
     
@@ -762,13 +783,13 @@ Object.extend('Control', function () {
 
     this.focus = function () {
 
-        this.rendered && this.renderer.focus(this);
+        this.view && this.renderer.focus(this);
     };
 
 
     this.blur = function () {
 
-        this.rendered && this.renderer.blur(this);
+        this.view && this.renderer.blur(this);
     };
     
            

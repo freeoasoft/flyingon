@@ -29,22 +29,22 @@ flyingon.widget({
                     {
                         Class: 'Box', 
                         width: 265,
-                        children: [
-                            {
-                                Class: 'Title',
-                                text: '用户名'
-                            },
-                            {
-                                Class: 'TextBox', 
-                                required: true,
-                                validator: 'length:6:20'
-                            },
-                            {
-                                Class: 'Error', 
-                                line: true,
-                                style: 'text-align:right;'
-                            }
-                        ]
+                        // children: [
+                        //     {
+                        //         Class: 'Title',
+                        //         text: '用户名'
+                        //     },
+                        //     {
+                        //         Class: 'TextBox', 
+                        //         required: true,
+                        //         validator: 'length:6:20'
+                        //     },
+                        //     {
+                        //         Class: 'Error', 
+                        //         line: true,
+                        //         style: 'text-align:right;'
+                        //     }
+                        // ]
                     },
                     { 
                         Class: 'Box',
@@ -57,7 +57,7 @@ flyingon.widget({
                             {
                                 Class: 'Password', 
                                 required: true,
-                                validator: 'password'
+                                validator: 'minLength:2|password:6'
                             },
                             {
                                 Class: 'Error', 
@@ -93,7 +93,7 @@ flyingon.widget({
                             },
                             {
                                 Class: 'TextBox', 
-                                required: true,
+                                //required: true,
                                 validator: 'minLength:10' 
                             }
                         ]
@@ -107,13 +107,16 @@ flyingon.widget({
 
     created: function () {
 
+        var text = new flyingon.TextBox().validator('length:6:20');
+
+        this[1][0].push({ Class: 'Title', text: '用户名' }, text);
 
         //自定义密码校验器
-        flyingon.validator('password', function (text) {
+        flyingon.validator('password', function (text, length) {
 
-            if (text.length < 8 || text.length > 20 || !/[a-zA-Z]/.test(text) && /\d/.test(text))
+            if (text.length < length || text.length > 20 || !/[a-zA-Z]/.test(text) && /\d/.test(text))
             {
-                return '密码长度必须在8-20之间且同时包含字母及数字';
+                return '密码长度必须在6-20之间且同时包含字母及数字';
             }
         });
 

@@ -11,49 +11,63 @@ flyingon.Control.extend('Calendar', function (base) {
     this.defaultValue('padding', 8);
 
 
-    function define(self, name, defaultValue, type) {
+    function render() {
 
-        self.defineProperty(name, defaultValue, {
-
-            dataType: type,
-
-            set: function () {
-
-                if (this.rendered && !this.__location_dirty)
-                {
-                    this.renderer.set(this, 'refresh');
-                }
-            }
-        });
+        if (this.view && !this.__location_dirty)
+        {
+            this.renderer.set(this, 'refresh');
+        }
     };
 
 
     //日期值
-    define(this, 'value', null, 'date');
+    this.defineProperty('value', null, {
+        
+        dataType: 'date',
+        set: render
+    });
 
 
     //最小可选值
-    define(this, 'min', '');
+    this.defineProperty('min', '', {
+        
+        set: render
+    });
 
 
     //最大可选值
-    define(this, 'max', '');
+    this.defineProperty('max', '', {
+        
+        set: render
+    });
 
 
     //是否编辑年月
-    define(this, 'month', false);
+    this.defineProperty('month', false, {
+        
+        set: render
+    });
 
 
     //是否显示时间
-    define(this, 'time', false);
+    this.defineProperty('time', false, {
+        
+        set: render
+    });
 
 
     //是否显示今天按钮
-    define(this, 'today', false);
+    this.defineProperty('today', false, {
+        
+        set: render
+    });
 
 
     //是否显示清除按钮
-    define(this, 'clear', false);
+    this.defineProperty('clear', false, {
+        
+        set: render
+    });
     
     
     

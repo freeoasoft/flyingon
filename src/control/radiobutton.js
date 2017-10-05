@@ -1,23 +1,20 @@
 flyingon.Control.extend('RadioButton', function (base) {
 
 
-    this.defineProperty('name', false, {
+    this.defineProperty('name', '', {
 
-        set: this.__to_render
+        set: this.render
     });
 
 
     this.value = this.defineProperty('checked', false, {
 
-        set: this.__to_render
+        set: this.render
     });
 
 
     //是否只读
-    this.defineProperty('readonly', false, {
-
-        set: this.__to_render
-    });
+    this.readonly = this.disabled;
     
 
 }).register();

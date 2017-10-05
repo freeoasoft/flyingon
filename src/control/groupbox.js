@@ -9,9 +9,9 @@ flyingon.Panel.extend('GroupBox', function (base) {
     //页头高度
     this.defineProperty('header', 25, {
 
-        set: function (value) {
+        set: function (name, value) {
             
-            this.rendered && this.renderer.set(this, 'header', value);
+            this.view && this.renderer.set(this, name, value);
             this.__update_dirty || this.invalidate();
         }
     });
@@ -21,21 +21,21 @@ flyingon.Panel.extend('GroupBox', function (base) {
     //文字对齐
     this.defineProperty('align', 'left', {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
     //图标
     this.defineProperty('icon', '', {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
     //text
     this.defineProperty('text', '', {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
@@ -45,16 +45,16 @@ flyingon.Panel.extend('GroupBox', function (base) {
     //2: 可折叠且显示折叠图标
     this.defineProperty('collapsable', 0, {
 
-        set: this.__to_render   
+        set: this.render   
     });
 
 
     //是否折叠
     this.defineProperty('collapsed', false, {
 
-        set: function (value) {
+        set: function (name, value) {
 
-            this.rendered && this.renderer.set(this, 'collapsed', value);
+            this.view && this.renderer.set(this, name, value);
 
             if (!value && (value = this.mutex()))
             {

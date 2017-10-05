@@ -37,7 +37,6 @@
 
 
 
-
     //创建视图
     flyingon.view = function (options) {
 
@@ -166,9 +165,22 @@
                 any.call(this, vmodel.prototype);
             }
 
-            this.init = function () {
 
-                var vm = this.vmodel = new vmodel(null, defaults),
+            this.init = function (delay) {
+
+                this.vmodel = new vmodel(null, defaults);
+
+                if (delay !== false)
+                {
+                    this.__init_widget();
+                }
+            };
+
+
+            //初始化视图模型
+            this.__init_widget = function () {
+
+                var vm = this.vmodel,
                     any;
 
                 if (any = creating)
@@ -183,6 +195,7 @@
                     any.call(this, vm);
                 }
             };
+
 
             this.dispose = function () {
 
@@ -243,12 +256,13 @@
 
         self[key2] = self.defineProperty(key1, defaultValue || null, {
 
-            set: function (value) {
+            set: function (_, value) {
 
                 this.vmodel.$set(name, value);
             }
         });
     };
+
 
 
     function camelize(_, key) {
@@ -720,7 +734,7 @@
             }
         }
 
-        if (keys || this.__top.__created)
+        if (keys || this.__top.__vm_created)
         {
             keys = this.__keys2;
 
@@ -866,52 +880,21 @@
 
     function array_replace(value, update) {
 
-        var l1 = this.length,
-            l2 = (value && value.length) | 0,
-            any;
+        var length = this.length;
 
-        if (l2 <= 0)
+        if (length > 0)
         {
-            if (l1 > 0)
-            {
-                this.splice(0);
-            }
-            
-            return this;
+            this.splice(0, length);
         }
 
-        if (l1 > l2)
+        if (value && value.length > 0)
         {
-            this.splice(l2);
-            l1 = l2;
+            this.push.apply(this, value);
         }
 
-        if (l1 > 0)
+        if (update !== false)
         {
-            if (this.__item_fn)
-            {
-                for (var i = 0; i < l1; i++)
-                {
-                    this[i].$replace(value[i]);
-                }
-            }
-            else
-            {
-                any = slice.call(value, 0, l1);
-                any.unshift(0, l1);
-
-                splice.apply(this, any); 
-            }
-
-            if (update !== false)
-            {
-                this.$update();
-            }
-        }
-
-        if (l1 < l2)
-        {
-            this.push.apply(this, slice.call(value, l1));
+            this.$update();
         }
 
         return this;
@@ -1295,7 +1278,7 @@
             any;
 
         //标记已创建控件
-        vm.__created = true;
+        vm.__vm_created = true;
 
         bind_control(control, vm, scope, template);
 
@@ -1483,7 +1466,14 @@
             {
                 if (type)
                 {
-                    control = new type();
+                    if (type.__widget_template)
+                    {
+                        control = new type(false);
+                    }
+                    else
+                    {
+                        control = new type();
+                    }
                 }
                 else
                 {
@@ -1510,7 +1500,15 @@
                     scope[index] = control;
                 }
 
+                //绑定控件属性
                 bind_control(control, top, scope, template);
+
+                //如果是widget再初始化(需在绑定控件属性后执行)
+                if (any = control.__init_widget)
+                {
+                    any.call(control);
+                }
+
                 list.push(control);
 
                 if (any = template.children)

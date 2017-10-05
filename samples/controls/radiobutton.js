@@ -12,8 +12,9 @@ flyingon.widget({
                 height: 40,
 
                 children: [
-                    { Class: 'RadioButton', height: 18, value: true },
-                    { Class: 'RadioButton', height: 18, value: false }
+                    { Class: 'RadioButton', name: "key", height: 18, checked: true },
+                    { Class: 'RadioButton', name: "key", height: 18 },
+                    { Class: 'RadioButton', name: "key", height: 18, disabled: true }
                 ]
             },
             { Class: 'Code' }

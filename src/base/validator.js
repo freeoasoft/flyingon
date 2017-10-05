@@ -165,15 +165,15 @@ flyingon.fragment('f-validate', function () {
     //是否必填
     this.defineProperty('required', false, {
 
-        set: function (value) {
+        set: function (name, value) {
 
             var any = this.parent;
 
             this.__required = value;
 
-            if (any && any.__validate_box && any.rendered && (any = any.__find_title()))
+            if (any && any.__validate_box && any.view && (any = any.__find_title()))
             {
-                any.renderer.set(any, 'required', value);
+                any.renderer.set(any, name, value);
             }
         }
     });
@@ -182,7 +182,7 @@ flyingon.fragment('f-validate', function () {
     //校验器
     this.defineProperty('validator', '', {
         
-        set: function (value) {
+        set: function (name, value) {
 
             var list = [],
                 item;

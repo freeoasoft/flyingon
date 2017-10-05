@@ -18,7 +18,7 @@
 
         template: {
             Class: 'div',
-            height: 65,
+            height: 75,
             children: [
                 { Class: 'Label', width: 90, ':text': 'item_label(item-index)', style: 'display:inline-block;' },
                 { Class: 'TextBox', ':value': 'item-text', width: 120, '#model': 'item-text' },
@@ -63,7 +63,7 @@
 
     var data = [];
 
-    for (var i = 0; i < 1; i++)
+    for (var i = 0; i < 3; i++)
     {
         data.push({ text: 'text ' + i, items: ('' + (Math.random() * 100000 | 0)).split('') });
     }

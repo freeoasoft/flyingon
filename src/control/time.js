@@ -5,12 +5,7 @@ flyingon.TextBox.extend('Time', function (base) {
     this.text = this.defineProperty('value', '', {
         
         check: flyingon.Time.check,
-
-        set: function () {
-
-            this.rendered && this.renderer.set(this, 'value');
-        }
-
+        set: this.render
     });
 
 

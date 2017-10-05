@@ -20,7 +20,7 @@ flyingon.renderer('Tab', function (base) {
         
         control.defaultClass += ' f-tab-direction-' + storage.direction;
         
-        render.call(this, writer, control, false);
+        render.call(this, writer, control);
         
         writer.push('><div class="f-tab-head f-tab-theme-', storage.theme, '">',
                     '<div class="f-tab-line"></div>',
@@ -471,17 +471,16 @@ flyingon.renderer('TabPage', 'Panel', function (base) {
 
         var node = control.view_head = document.createElement('span'),
             writer = [],
-            encode = flyingon.html_encode,
             storage = control.__storage || control.__defaults,
             any;
 
         node.className = 'f-tab-item' + (control.selected() ? ' f-tab-selected' : '');
 
         writer.push('<a class="f-tab-link f-back">',
-            '<span class="f-tab-icon ', (any = storage.icon) ? encode(any) : 'f-tab-icon-none', '"></span>',
-            '<span class="f-tab-text">', (any = storage.text) ? encode(any) : '', '</span>');
+            '<span class="f-tab-icon ', (any = storage.icon) ? any : 'f-tab-icon-none', '"></span>',
+            '<span class="f-tab-text">', (any = storage.text) ? flyingon.html_encode(any) : '', '</span>');
 
-        if ((any = storage.buttons) && (any = encode(any).replace(/(\w+)\W*/g, '<span class="f-tab-button $1" tag="button"></span>')))
+        if ((any = storage.buttons) && (any = any.replace(/(\w+)\W*/g, '<span class="f-tab-button $1" tag="button"></span>')))
         {
             writer.push(any);
         }
@@ -532,19 +531,19 @@ flyingon.renderer('TabPage', 'Panel', function (base) {
 
 
 
-    this.icon = function (control, value) {
+    this.icon = function (control, view, value) {
 
         control.view_head.firstChild.firstChild.className = 'f-tab-icon ' + (value || 'f-tab-icon-none');
     };
 
 
-    this.text = function (control, value) {
+    this.text = function (control, view, value) {
 
         control.view_head.firstChild.firstChild.nextSibling[this.__text_name] = value;
     };
 
 
-    this.buttons = function (control, value) {
+    this.buttons = function (control, view, value) {
 
         var last = (view = control.view_head).firstChild.lastChild,
             node = last.previousSibling;
@@ -563,7 +562,7 @@ flyingon.renderer('TabPage', 'Panel', function (base) {
     };
 
 
-    this.closable = function (control, value) {
+    this.closable = function (control, view, value) {
 
         control.view_head.firstChild.lastChild.style.display = value ? '' : 'none';
     };

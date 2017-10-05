@@ -2,38 +2,32 @@ flyingon.renderer('Title', function (base) {
 
 
 
-    this.__line_height = 1;
+    this.lineHeight = 1;
 
 
 
     this.render = function (writer, control, render) {
 
-        var storage = control.__storage || control.__defaults,
-            text = storage.text;
-
-        if (text && !storage.html)
-        {
-            text = flyingon.html_encode(text);
-        }
-
         writer.push('<span');
         
         render.call(this, writer, control);
         
-        writer.push('><span class="f-required"', control.__check() ? '' : ' style="display:none;"', '>*</span>',
-            '<span>', text, '</span></span>');
+        writer.push('><span class="f-required"', control.__check() ? '' : ' style="display:none;"', 
+            '>*</span><span></span></span>');
     };
 
 
     this.text = function (control, view, value) {
 
+        var storage = control.__storage || control.__defaults;
+
         if (storage.html)
         {
-            view.lastChild.innerHTML = value;
+            view.lastChild.innerHTML = storage.text;
         }
         else
         {
-            view.lastChild[this.__text_name] = value;
+            view.lastChild[this.__text_name] = storage.text;
         }
     };
 

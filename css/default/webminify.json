@@ -30,7 +30,7 @@
                 name: './webminify_css',
 				options: {
 					less: true,
-					compress: true
+					compress: false
 				}
             }
         ]

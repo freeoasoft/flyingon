@@ -3,7 +3,7 @@ flyingon javascript library
 
 flyingon是一个100%使用原生javascript开发的前端开发库
 
-不依赖任何其它第三方库, 小巧轻便(包含标准控件不足250K, 再经过gzip压缩的话可能不到100K, 按需定制移除不使用部分可以更小)
+不依赖任何其它第三方库, 小巧轻便(包含标准控件不足250K, 再经过gzip压缩不到100K, 按需定制移除不使用部分可以更小)
 
 性能极好, 可在浏览器中打开相关示例使用开发者工具查看实际性能情况
 
@@ -19,7 +19,7 @@ flyingon是一个100%使用原生javascript开发的前端开发库
 4. 高级控件(Tree, Grid, TreeGrid...)
 
 
-浏览器支持：IE8+ chrome FF3+ Safari5+ Opera9+
+浏览器支持：IE8+ chrome2+ Firefox3+ Safari5+ Opera11+
 
 
 [在线演示](https://freeoasoft.github.io/flyingon/samples/index.html)(注:因为github的缘故,有时会出现卡顿或无法访问, 请耐心等待或下载示例到本地运行samples目录下的index.html)

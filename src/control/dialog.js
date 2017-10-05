@@ -26,9 +26,9 @@ flyingon.Panel.extend('Dialog', function (base) {
     //头部高度        
     this.defineProperty('header', 28, {
 
-        set: function (value) {
+        set: function (name, value) {
 
-            this.rendered && this.renderer.set(this, 'header', value);
+            this.view && this.renderer.set(this, name, value);
             this.__update_dirty || this.invalidate();
         }
     });
@@ -37,21 +37,21 @@ flyingon.Panel.extend('Dialog', function (base) {
     //窗口图标        
     this.defineProperty('icon', '', {
 
-        set: this.__to_render
+        set: this.render
     });
 
 
     //窗口标题
     this.defineProperty('text', '', {
 
-        set: this.__to_render
+        set: this.render
     });
 
 
     //是否显示关闭按钮
     this.defineProperty('closable', true, {
 
-        set: this.__to_render
+        set: this.render
     });
 
 
@@ -165,7 +165,7 @@ flyingon.Panel.extend('Dialog', function (base) {
 
         if (this.trigger('closing', 'closeType', closeType) !== false)
         {
-            this.rendered && this.renderer.close(this);
+            this.view && this.renderer.close(this);
             this.shown = false;
 
             stack.splice(stack.indexOf(this), 1);

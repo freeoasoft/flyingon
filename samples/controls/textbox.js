@@ -13,8 +13,12 @@ flyingon.widget({
                 children: [
                     {
                         Class: 'TextBox',
+                        width: 200
+                    },
+                    {
+                        Class: 'TextBox',
                         width: 200,
-                        placehodler: '请输入文字'
+                        placeholder: '请输入文字'
                     },
                     {
                         Class: 'Password',

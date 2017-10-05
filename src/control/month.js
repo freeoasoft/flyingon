@@ -6,7 +6,7 @@ flyingon.TextButton.extend('Month', function (base) {
     var calendar_cache;
 
 
-    this.defaultValue('icon', 'f-date-button');
+    this.__type = 'f-date-button';
 
 
 
@@ -14,29 +14,28 @@ flyingon.TextButton.extend('Month', function (base) {
     this.defineProperty('value', null, {
         
         dataType: 'date',
-
-        set: function () {
-
-            this.rendered && this.renderer.set(this, 'value');
-        }
+        set: this.__render_value
     });
 
 
     this.defineProperty('format', 'yyyy-MM', {
         
-        set: function () {
-
-            this.rendered && this.renderer.set(this, 'value');
-        }
+        set: this.__render_value
     });
 
 
     //最小可选值
-    this.defineProperty('min', '');
+    this.defineProperty('min', '', {
+        
+        set: this.__render_value
+    });
 
 
     //最大可选值
-    this.defineProperty('max', '');
+    this.defineProperty('max', '', {
+        
+        set: this.__render_value
+    });
 
 
 

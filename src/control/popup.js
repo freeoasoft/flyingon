@@ -79,7 +79,7 @@ flyingon.Panel.extend('Popup', function () {
             return false;
         }
 
-        this.rendered && this.renderer.close(this);
+        this.view && this.renderer.close(this);
         this.shown = false;
 
         this.trigger('closed', 'closeType', closeType);

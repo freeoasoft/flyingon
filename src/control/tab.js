@@ -10,33 +10,33 @@ flyingon.Panel.extend('TabPage', function (base) {
     this.defineProperty('key', '');
 
 
-    
-    function define(self, name, defaultValue) {
-
-        return self[name] = self.defineProperty(name, defaultValue, {
-
-            set: function (value) {
-            
-                this.rendered && this.renderer[name](this, value);
-            }
-        });
-    };
-    
 
     //图标
-    define(this, 'icon', '');
+    this.defineProperty('icon', '', {
+    
+        set: this.render
+    });
 
 
     //页头文字
-    define(this, 'text', '');
+    this.defineProperty('text', '', {
+    
+        set: this.render
+    });
 
 
     //自定义button列表
-    define(this, 'buttons', '');
+    this.defineProperty('buttons', '', {
+    
+        set: this.render
+    });
 
     
     //是否可关闭
-    define(this, 'closable', false);
+    this.defineProperty('closable', false, {
+    
+        set: this.render
+    });
 
 
 
@@ -78,26 +78,26 @@ flyingon.Control.extend('Tab', function (base) {
     //dot       圆点样式
     this.defineProperty('theme', 'default', {
 
-        set: function (value) {
+        set: function (name, value) {
 
-            this.rendered && this.renderer.set(this, 'theme', value);
+            this.view && this.renderer.set(this, name, value);
         }
     });
 
 
 
-    //定义页面签属性
-    var define = function (self, name, defaultValue, view) {
+    function render1(name, value) {
 
-        self.defineProperty(name, defaultValue, {
-
-            set: function (value) {
-
-                this.__reset_header = true;
-                this.__update_dirty || this.invalidate();
-            }
-        });
+        this.__reset_header = true;
+        this.__update_dirty || this.invalidate();
     };
+
+
+    function render2(name, value) {
+
+        this.__update_dirty || this.invalidate();
+    };
+
 
 
     //页签方向
@@ -105,60 +105,74 @@ flyingon.Control.extend('Tab', function (base) {
     //left      左侧页签
     //right     右侧页签
     //bottom    底部页签
-    define(this, 'direction', 'top');
+    this.defineProperty('direction', 'top', {
+
+        set: render1
+    });
 
 
     //页头大小
-    define(this, 'header', 30);
+    this.defineProperty('header', 30, {
+
+        set: render1
+    });
 
 
     //页头偏移
-    define(this, 'offset', 2);
+    this.defineProperty('offset', 2, {
+
+        set: render1
+    });
 
 
     //滚动按钮大小
-    define(this, 'scroll', 16);
+    this.defineProperty('scroll', 16, {
 
-
-
-    define = function (self, name, defaultValue) {
-
-        self.defineProperty(name, defaultValue, {
-
-            set: function () {
-
-                this.__update_dirty || this.invalidate();
-            }
-        });
-    };
+        set: render1
+    });
 
 
 
     //页签大小
-    define(this, 'size', 60);
+    this.defineProperty('size', 60, {
+
+        set: render2
+    });
 
 
     //是否自动充满
-    define(this, 'fill', false);
+    this.defineProperty('fill', false, {
+
+        set: render2
+    });
 
 
     //开始位置
-    define(this, 'start', 0);
+    this.defineProperty('start', 0, {
+
+        set: render2
+    });
 
 
     //结束位置
-    define(this, 'end', 0);
+    this.defineProperty('end', 0, {
+
+        set: render2
+    });
 
 
     //页签间距
-    define(this, 'space', 2);
+    this.defineProperty('space', 2, {
+
+        set: render2
+    });
 
 
 
     //选中页索引
     this.defineProperty('selected', -1, { 
 
-        set: function (value) {
+        set: function (name, value) {
 
             this.__selectedPage !== true && this.selectedPage(this[value], false);
         }
@@ -191,7 +205,7 @@ flyingon.Control.extend('Tab', function (base) {
                     page.renderer.selected(page, true);
                 }
 
-                this.rendered && this.renderer.set(this, 'selected', page, 'tag', tag);
+                this.view && this.renderer.set(this, 'selected', page, 'tag', tag);
 
                 any = this.indexOf(page);
             }

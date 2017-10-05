@@ -1,52 +1,68 @@
-flyingon.TextBox.extend('TextButton', function (base) {
+flyingon.Control.extend('TextButton', function (base) {
 
 
 
     //弹出层控件
     var cache;
 
+    //渲染button及buttonSize的方法
+    var render = this.__render_fn('button');
 
 
-    function set_value() {
-
-        this.rendered && this.renderer.set(this, 'value');
-    };
+    //类型
+    this.__type = '';
 
 
-    //格式化
-    this.defineProperty('format', '', { 
-        
-        set: set_value
-    });
+
+    flyingon.fragment('f-TextBox', this);
+
 
 
     //是否可输入
     this.defineProperty('inputable', false, { 
         
-        set: this.__to_render 
+        set: this.render
     });
 
 
     //按钮图标
-    this.defineProperty('icon', '', { 
+    this.defineProperty('icon', '', {
         
-        set: this.__to_render 
+        set: this.render
+    });
+
+
+    //按钮显示模式
+    //show      总是显示
+    //none      不显示
+    //hover     鼠标划过时显示
+    this.defineProperty('button', 'show', {
+        
+        set: render
     });
 
 
     //按钮大小
-    this.defineProperty('button', 16, { 
+    this['button-size'] = this.defineProperty('buttonSize', 20, {
         
-        set: this.__to_render 
+        set: render
+    });
+
+
+
+    //无值时提醒信息
+    this.defineProperty('placeholder', '', {
+
+        set: this.__render_value
     });
 
 
     //值
-    this.defineProperty('value', null, { 
+    this.defineProperty('value', '', {
         
-        set: set_value 
+        dataType: 'object',
+        set: this.__render_value
     });
-
 
 
     this.text = function (value) {
@@ -61,7 +77,6 @@ flyingon.TextBox.extend('TextButton', function (base) {
 
         this.value(value);
     };
-
 
 
     this.__to_value = function (text) {

@@ -27,7 +27,7 @@ flyingon.Layout = Object.extend(function () {
     //子项定位属性值
     this.defineProperty('location', null, {
 
-        set: function (value) {
+        set: function (name, value) {
 
             this.__location = typeof value === 'function' ? value : null;
         }
@@ -37,14 +37,14 @@ flyingon.Layout = Object.extend(function () {
     //分割子布局
     this.defineProperty('sublayouts', null, {
        
-        set: function (value) {
+        set: function (name, value) {
 
             this.__sublayouts = !!value;
         }
     });
     
     
-        
+
     
     //排列布局
     this.arrange = function (container, items, hscroll, vscroll) {

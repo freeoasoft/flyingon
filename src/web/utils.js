@@ -787,7 +787,7 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
             x0 = dom.offsetLeft;
             y0 = dom.offsetTop;
         }
-        
+  
         flyingon.dom_suspend(dom, 'click', true);
         flyingon.css_value(document.body, 'user-select', 'none');
         
@@ -795,7 +795,7 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
         {
             dom.setCapture();
         }
-        
+
         start = null;
     };
     
@@ -871,16 +871,15 @@ flyingon.dom_drag = function (context, event, begin, move, end, locked, delay) {
       
         flyingon.dom_resume(dom, 'click', true);
     };
-    
+      
+    on(document, 'mousemove', mousemove);
+    on(document, 'mouseup', mouseup);
+
     if (delay === false)
     {
         start(event);
+        flyingon.dom_stop(event, true);
     }
-
-    on(document, 'mousemove', mousemove);
-    on(document, 'mouseup', mouseup);
-    
-    flyingon.dom_stop(event, true);
 };
 
 

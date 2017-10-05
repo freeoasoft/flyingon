@@ -12,8 +12,9 @@ flyingon.widget({
                 height: 40,
 
                 children: [
-                    { Class: 'CheckBox', value: true },
-                    { Class: 'CheckBox', value: false }
+                    { Class: 'CheckBox', checked: true },
+                    { Class: 'CheckBox' },
+                    { Class: 'CheckBox', disabled: true }
                 ]
             },
             { Class: 'Code' }

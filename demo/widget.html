@@ -42,7 +42,7 @@
 
             template: {
                 Class: 'div',
-                height: 65,
+                height: 75,
                 arrange: false,
                 children: [
                     { Class: 'Label', width: 90, ':text': 'item_label(item-index)', style: 'display:inline-block;' },
@@ -122,7 +122,8 @@
                             break;
 
                         case 'edit':
-                            this.items.$set(index, { 'text': Math.random() * 10000000 | 0, items: ('' + (Math.random() * 100000 | 0)).split('') });
+                            this.items[index].$set('items', ('' + (Math.random() * 100000 | 0)).split(''));
+                            //this.items.$set(index, { 'text': Math.random() * 10000000 | 0, items: ('' + (Math.random() * 100000 | 0)).split('') });
                             break;
 
                         case 'remove':

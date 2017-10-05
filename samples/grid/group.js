@@ -15,7 +15,7 @@ flyingon.widget({
 
                 header: 40, //列头高度
                 group: 35, //分组框高度
-                groups: 'F1,F2', //设置默认分组
+                //groups: 'F1,F2', //设置默认分组
 
                 columns: [
 
@@ -109,7 +109,7 @@ flyingon.widget({
         //自定义列汇总
         columns[6].onsummary = function (row, value, summary) {
 
-            return '合计:' + value.toFixed(2);
+            return '合计:' + value;
         };
 
 
@@ -142,7 +142,7 @@ flyingon.widget({
         grid.dataset(dataset);
 
         //默认展开第一级
-        grid.expandTo(1);
+        //grid.expandTo(1);
     }
 
 

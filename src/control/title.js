@@ -10,17 +10,17 @@ flyingon.Control.extend('Title', function (base) {
 
     
     //文本内容
-    this.defineProperty('text', '', { set: set_text });
+    this.defineProperty('text', '', {
+        
+        set: this.__render_text
+    });
 
 
     //文本内容是否html格式
-    this.defineProperty('html', false, { set: set_text });
-
-
-    function set_text(value) {
-
-        this.rendered && this.renderer.set(this, 'text', value);
-    };
+    this.defineProperty('html', false, {
+        
+        set: this.__render_text
+    });
 
 
 

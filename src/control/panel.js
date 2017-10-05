@@ -34,7 +34,7 @@ flyingon.Control.extend('Panel', function (base) {
         group: 'locate',
         query: true,
 
-        set: function (value) {
+        set: function (name, value) {
 
             this.__layout = null;
             this.__arrent_dirty < 2 && this.__arrange_delay(2);

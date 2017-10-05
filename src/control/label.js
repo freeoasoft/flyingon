@@ -6,27 +6,20 @@ flyingon.Control.extend('Label', function (base) {
 
 
     
-    function define(self, name, defaultValue) {
-
-        self.defineProperty(name, defaultValue, {
-            
-            set: function () {
-
-                this.rendered && this.renderer.set(this, 'text');
-            }
-        });
-    };
-
-
     //标签文本
-    define(this, 'text', '');
+    this.defineProperty('text', '', {
+        
+        set: this.__render_text
+    });
 
 
     //文本是否html
-    define(this, 'html', false);
+    this.defineProperty('html', false, {
+        
+        set: this.__render_text
+    });
 
 
-    
     
     //测量自动大小
     this.onmeasure = function (auto) {

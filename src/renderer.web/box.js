@@ -47,9 +47,7 @@ flyingon.renderer('Box', function (base) {
             height = 0,
             any;
         
-        base.__locate_html.call(this, control);
-
-        control.__update_dirty = false;
+        base.locate_html.call(this, control);
 
         //如果需要适应容器,则计算容器大小(对性能有影响)
         if ((any = control.view) && (any = any.parentNode) && control.adaption())

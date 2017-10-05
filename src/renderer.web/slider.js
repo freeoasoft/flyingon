@@ -78,12 +78,16 @@ flyingon.renderer('Slider', function (base) {
     function move_end(e) {
 
         var control = this.control,
+            view = control.view,
             storage = control.__storage || control.__defaults,
             x = e.distanceX - this.min;
 
         x = (storage.max - storage.min) * x / this.size | 0;
 
+        control.view = null;
         control.value(x);
+        control.view = view;
+
         control.trigger('change', 'value', x);
     };
 

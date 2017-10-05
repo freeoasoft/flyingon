@@ -3,10 +3,7 @@ flyingon.fragment('f-Date', function () {
 
     this.defineProperty('format', 'yyyy/M/dd', {
         
-        set: function () {
-
-            this.rendered && this.renderer.set(this, 'value');
-        }
+        set: this.__render_value
     });
 
 
@@ -42,24 +39,21 @@ flyingon.TextButton.extend('Date', function (base) {
     var calendar_cache;
 
 
-    this.defaultValue('icon', 'f-date-button');
+
+    this.__type = 'f-date-button';
+
+
+
+    flyingon.fragment('f-Date', this);
+
 
 
     //日期值
     this.defineProperty('value', null, {
         
         dataType: 'date',
-
-        set: function () {
-
-            this.rendered && this.renderer.set(this, 'value');
-        }
+        set: this.__render_value
     });
-
-
-
-    flyingon.fragment('f-Date', this);
-
 
 
     this.text = function () {

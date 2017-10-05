@@ -52,10 +52,18 @@
     this.__auto_size = 1;
 
 
-    //是否需要设置lineHeight
-    this.__line_height = 0;
+    //设置lineHeight方法
+    //0 不设置
+    //1 直接设置到控件style上
+    //function 自定义函数 
+    this.lineHeight = 0;
 
-  
+    //默认直接设置颜色
+    this.color = 1;
+
+    //默认直接设置文字对齐
+    this.textAlign = 1;
+
 
 
     function css_sides(value) {
@@ -111,21 +119,18 @@
 
 
     //默认渲染方法
-    function render(writer, control, padding) {
+    function render(writer, control) {
 
         var storage = control.__storage || control.__defaults,
-            html = control.__as_html,
             text,
             any;
 
-        control.rendered = true;
-        
-        if (any = control.__id || storage.id)
+        if (any = storage.id)
         {
             writer.push(' id="', any, '"');
         }
 
-        text = control.defaultClass + (html ? ' f-html' : ' f-absolute');
+        text = control.defaultClass + (control.__as_html ? ' f-html' : ' f-absolute');
 
         if (any = control.__className)
         {
@@ -140,192 +145,16 @@
             writer.push(any);
         }
 
-        if (any = control.__style)
-        {
-            this.__render_style(writer, control, any);
-        }
-
-        if (any = control.__location_dirty)
-        {
-            control.__location_dirty = 0;
-
-            if (html)
-            {
-                this.__render_location(writer, control, any);
-            }
-        }
-
-        if (any = storage.border)
-        {
-            writer.push('border-width:', sides_cache[any] || css_sides(any), ';');
-        }
-        
-        if (padding !== false)
-        {
-            if (any = storage.padding)
-            {
-                any = 'padding:' + (sides_cache[any] || css_sides(any)) + ';';
-
-                if (padding)
-                {
-                    padding = any;
-                }
-                else
-                {
-                    writer.push(any);
-                }
-            }
-            else
-            {
-                padding = '';
-            }
-        }
-
         if (!storage.visible)
         {
             writer.push('display:none;');
         }
 
         writer.push('"');
-
-        return padding;
     };
 
 
-    render.cssText = '';
-
-    this.__render_default = render;
-
-
-    this.__render_style = function (writer, control, values) {
-
-        var map = css_map,
-            value, 
-            any;
-
-        for (var name in values)
-        {
-            if (name === 'cssText' || (value = values[name]) === '')
-            {
-                continue;
-            }
-
-            switch (any = this[name])
-            {
-                case 1: //直接设置样式
-                    writer.push(name, ':', value, ';');
-                    break;
-
-                case 2: //需要检测前缀
-                    writer.push(map[name], ':', value, ';');
-                    break;
-
-                case 9: //特殊样式
-                    (control.__style_patch || (control.__style_patch = {}))[name] = value;
-                    break;
-
-                default:
-                    if (typeof any !== 'function')
-                    {
-                        if (any = map[name])
-                        {
-                            writer.push(any, ':', value, ';');
-                            self[name] = any === name ? 1 : 2; //直接设置样式标记为1,需要加前缀标记为2
-                            break;
-                        }
-
-                        self[name] = 9; //标记为特殊样式
-                    }
-                    
-                    if (!(any = control.__style_patch))
-                    {
-                        any = control.__view_patch || (control.__view_patch = {});
-                        any = any.__style_patch = controls.__style_patch = {};
-                    }
-
-                    any[name] = value;
-                    break;
-            }
-        }
-    };
-
-
-    this.__render_location = function (writer, control, dirty) {
-
-        var values = control.__storage || control.__defaults,
-            flag = 1,
-            name,
-            value,
-            any;
-
-        while (dirty >= flag)
-        {
-            if (dirty & flag)
-            {
-                switch (flag)
-                {
-                    case 1:
-                    case 2:
-                        if (value = values[name = flag === 1 ? 'width' : 'height'])
-                        {
-                            if (value === 'default' || value === 'auto')
-                            {
-                                writer.push(name, ':auto;');
-                            }
-                            else
-                            {
-                                writer.push(name, ':', value >= 0 ? value + 'px' : value, ';');
-                            }
-                        }
-                        break;
-
-                    case 4:
-                        if (value = values.margin)
-                        {
-                            writer.push('margin:', sides_cache[value] || css_sides(value), ';');
-                        }
-                        break;
-
-                    case 8:
-                        if (value = values.border)
-                        {
-                            writer.push('border-width:', sides_cache[value] || css_sides(value), ';');
-                        }
-                        break;
-
-                    case 16:
-                        if (this.padding && (value = values.padding))
-                        {
-                            writer.push('padding:', sides_cache[value] || css_sides(value), ';');
-                        }
-                        break;
-
-                    case 32:
-                    case 64:
-                    case 128:
-                    case 256:
-                        any = location_map[flag];
-
-                        if (value = values[any[0]])
-                        {
-                            writer.push(any[1], ':', value > 0 ? value + 'px' : value, ';');
-                        }
-                        break;
-
-                    case 512:
-                    case 1024:
-                        if (value = values[name = flag < 1000 ? 'left' : 'top'])
-                        {
-                            writer.push(name, ':', (any = +value) === any ? value + 'px' : value, ';');
-                        }
-                        break;
-                }
-            }
-
-            flag <<= 1;
-        }
-    };
-
+    (this.__render_default = render).cssText = '';
 
 
 
@@ -431,89 +260,81 @@
     };
 
 
-    //按照html方式定位
+    //按照html方式定位控件
     this.locate_html = function (control) {
 
         var dirty = control.__location_dirty;
         
         if (dirty)
         {
-            this.__locate_html(control);
+            var style = control.view.style,
+                values = control.__storage || control.__defaults,
+                flag = 1,
+                name,
+                value,
+                any;
+
+            control.__location_dirty = 0;
+
+            while (dirty >= flag)
+            {
+                if (dirty & flag)
+                {
+                    switch (flag)
+                    {
+                        case 1:
+                        case 2:
+                            if (value = values[name = flag === 1 ? 'width' : 'height'])
+                            {
+                                if (value === 'default' || value === 'auto')
+                                {
+                                    style[name] = 'auto';
+                                }
+                                else
+                                {
+                                    style[name] = value >= 0 ? value + 'px' : value;
+                                }
+                            }
+                            break;
+
+                        case 4:
+                            style.margin = sides_cache[value = values.margin] || css_sides(value);
+                            break;
+
+                        case 8:
+                            value = values.border;
+                            style.borderWidth = sides_cache[value = values.border] || css_sides(value);
+                            break;
+
+                        case 16:
+                            if (any = this.padding)
+                            {
+                                any.call(this, control, control.view, sides_cache[value = values.padding] || css_sides(value));
+                            }
+                            break;
+
+                        case 32:
+                        case 64:
+                        case 128:
+                        case 256:
+                            any = location_map[flag];
+                            value = values[name = any[0]];
+                            style[name] = value > 0 ? value + 'px' : value;
+                            break;
+
+                        case 512:
+                        case 1024:
+                            value = values[name = flag < 1000 ? 'left' : 'top'];
+                            style[name] = (any = +value) === any ? value + 'px' : value;
+                            break;
+                    }
+                }
+
+                flag <<= 1;
+            }
         }
 
         control.__update_dirty = false;
-    };
-
-
-    //按照html方式定位控件
-    this.__locate_html = function (control) {
-
-        var style = control.view.style,
-            values = control.__storage || control.__defaults,
-            dirty = control.__location_dirty,
-            flag = 1,
-            name,
-            value,
-            any;
-
-        control.__location_dirty = 0;
-
-        while (dirty >= flag)
-        {
-            if (dirty & flag)
-            {
-                switch (flag)
-                {
-                    case 1:
-                    case 2:
-                        if (value = values[name = flag === 1 ? 'width' : 'height'])
-                        {
-                            if (value === 'default' || value === 'auto')
-                            {
-                                style[name] = 'auto';
-                            }
-                            else
-                            {
-                                style[name] = value >= 0 ? value + 'px' : value;
-                            }
-                        }
-                        break;
-
-                    case 4:
-                        style.margin = sides_cache[value] || css_sides(value);
-                        break;
-
-                    case 8:
-                        value = values.border;
-                        style.borderWidth = sides_cache[value] || css_sides(value);
-                        break;
-
-                    case 16:
-                        if (any = this.padding)
-                        {
-                            any.call(this, control, control.view, sides_cache[value] || css_sides(value));
-                        }
-                        break;
-
-                    case 32:
-                    case 64:
-                    case 128:
-                    case 256:
-                        any = location_map[flag];
-                        value = values[name = any[0]];
-                        style[name] = value > 0 ? value + 'px' : value;
-                        break;
-
-                    case 512:
-                    case 1024:
-                        value = values[name = flag < 1000 ? 'left' : 'top'];
-                        style[name] = (any = +value) === any ? value + 'px' : value;
-                        break;
-                }
-            }
-
-            flag <<= 1;
-        }
     };
 
 
@@ -564,11 +385,18 @@
             }
             else
             {
-                style.height = any = height + 'px';
+                style.height = value = height + 'px';
 
-                if (this.__line_height)
+                if (any = this.lineHeight)
                 {
-                    view.style.lineHeight = any;
+                    if (any === 1)
+                    {
+                        view.style.lineHeight = value;
+                    }
+                    else
+                    {
+                        any.call(this, control, view, any);
+                    }
                 }
             }
         }
@@ -836,7 +664,7 @@
 
         var name = control.defaultClass + (control.__as_html ? ' f-html' : ' f-absolute');
 
-        if (control.__disabled)
+        if ((control.__storage || control.__defaults).disabled)
         {
             name += ' f-disabled';
         }
@@ -871,26 +699,6 @@
         else
         {
             view.className = view.className.replace(' f-disabled', '');
-        }
-
-        this.readonly(control, view, value);
-    };
-
-
-    this.readonly = function (control, view, value) {
-
-        var list = view.getElementsByTagName('input');
-
-        for (var i = list.length - 1; i >= 0; i--)
-        {
-            if (value)
-            {
-                list[i].setAttribute('readonly', 'readonly');
-            }
-            else
-            {
-                list[i].removeAttribute('readonly');
-            }
         }
     };
 
@@ -976,6 +784,34 @@
     };
 
 
+
+    this.__measure_auto = function (control, auto) {
+
+        var view = control.view;
+
+        if (auto & 1)
+        {
+            view.style.width = 'auto';
+        }
+
+        if (auto & 2)
+        {
+            view.style.height = 'auto';
+        }
+
+        if (auto & 1)
+        {
+            control.offsetWidth = view && view.offsetWidth || 0;
+        }
+
+        if (auto & 2)
+        {
+            view.style.width = control.offsetWidth + 'px';
+            control.offsetHeight = view && view.offsetHeight || 0;
+        }
+    };
+
+
     //排列
     this.__arrange = function (control) {
 
@@ -1047,6 +883,7 @@
 
         control.__arrange_dirty = 0;
     };
+
 
 
     //同步滚动条状态
